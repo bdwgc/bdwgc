@@ -314,7 +314,8 @@ STATIC volatile LONG GC_max_thread_index = 0;
 STATIC GC_thread GC_threads[THREAD_TABLE_SZ];
 
 /* It may not be safe to allocate when we register the first thread.    */
-/* Thus we allocated one statically.                                    */
+/* Thus we allocated one statically.  It does not contain any field we  */
+/* need to push ("next" and "status" fields are unused).                */
 static struct GC_Thread_Rep first_thread;
 static GC_bool first_thread_used = FALSE;
 
@@ -622,9 +623,6 @@ STATIC void GC_delete_gc_thread(GC_vthread t)
       /* see GC_stop_world() for the information.                       */
       t -> stack_base = 0;
       t -> id = 0;
-#     ifdef GC_PTHREADS
-        GC_PTHREAD_PTRVAL(t->pthread_id) = 0;
-#     endif
       AO_store_release(&t->tm.in_use, FALSE);
     } else
 # endif
@@ -1092,18 +1090,11 @@ void GC_push_thread_structures(void)
   GC_ASSERT(I_HOLD_LOCK());
 # ifndef GC_NO_THREADS_DISCOVERY
     if (GC_win32_dll_threads) {
-      /* Unlike the other threads implementations, the thread table here */
-      /* contains no pointers to the collectable heap.  Thus we have     */
-      /* no private structures we need to preserve.                      */
-#     ifdef GC_PTHREADS
-        int i; /* pthreads may keep a pointer in the thread exit value */
-        LONG my_max = GC_get_max_thread_index();
-
-        for (i = 0; i <= my_max; i++)
-          if (dll_thread_table[i].tm.in_use)
-            GC_push_all((ptr_t)&(dll_thread_table[i].status),
-                        (ptr_t)(&(dll_thread_table[i].status)+1));
-#     endif
+      /* Unlike the other threads implementations, the thread table     */
+      /* here contains no pointers to the collectible heap (note also   */
+      /* that GC_PTHREADS is incompatible with DllMain-based thread     */
+      /* registration).  Thus we have no private structures we need     */
+      /* to preserve.                                                   */
     } else
 # endif
   /* else */ {
@@ -2682,9 +2673,7 @@ GC_INNER void GC_thr_init(void)
     return result;
   }
 
-#else /* !GC_PTHREADS */
-
-# ifndef GC_NO_THREADS_DISCOVERY
+#elif !defined(GC_NO_THREADS_DISCOVERY)
     /* We avoid acquiring locks here, since this doesn't seem to be     */
     /* preemptible.  This may run with an uninitialized collector, in   */
     /* which case we don't do much.  This implies that no threads other */
@@ -2692,9 +2681,9 @@ GC_INNER void GC_thr_init(void)
     /* collector.  (The alternative of initializing the collector here  */
     /* seems dangerous, since DllMain is limited in what it can do.)    */
 
-    /*ARGSUSED*/
-    BOOL WINAPI DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
-    {
+  /*ARGSUSED*/
+  BOOL WINAPI DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
+  {
       struct GC_stack_base sb;
       DWORD thread_id;
 #     ifdef GC_ASSERTIONS
@@ -2754,10 +2743,8 @@ GC_INNER void GC_thr_init(void)
         break;
       }
       return TRUE;
-    }
-# endif /* !GC_NO_THREADS_DISCOVERY */
-
-#endif /* !GC_PTHREADS */
+  }
+#endif /* !GC_NO_THREADS_DISCOVERY && !GC_PTHREADS */
 
 /* Perform all initializations, including those that    */
 /* may require allocation.                              */
