@@ -507,8 +507,7 @@ typedef struct {
 } refill_data;
 
 /* Executed with allocation lock. */
-static char refill_cache(client_data)
-refill_data * client_data;
+static char refill_cache(refill_data * client_data)
 {
     register lf_state * state = client_data -> state;
     register size_t file_pos = client_data -> file_pos;
