@@ -56,7 +56,12 @@
 /* not count on the presence of a type descriptor, and must handle this */
 /* case correctly somehow.                                              */
 #define GC_PROC_BYTES 100
-struct GC_ms_entry;
+
+#ifdef GC_BUILD
+  struct GC_ms_entry;
+#else
+  struct GC_ms_entry { void *opaque; };
+#endif
 typedef struct GC_ms_entry * (*GC_mark_proc)(GC_word * /* addr */,
                                 struct GC_ms_entry * /* mark_stack_ptr */,
                                 struct GC_ms_entry * /* mark_stack_limit */,
