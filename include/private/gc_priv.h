@@ -1532,19 +1532,18 @@ GC_INNER void GC_initiate_gc(void);
 GC_INNER GC_bool GC_collection_in_progress(void);
                         /* Collection is in progress, or was abandoned. */
 
-GC_API_PRIV void GC_push_all(ptr_t bottom, ptr_t top);
-                                /* Push everything in a range           */
-                                /* onto mark stack.                     */
 #ifndef GC_DISABLE_INCREMENTAL
-  GC_API_PRIV void GC_push_conditional(ptr_t b, ptr_t t, GC_bool all);
+# define GC_PUSH_CONDITIONAL(b, t, all) \
+                GC_push_conditional((ptr_t)(b), (ptr_t)(t), all)
+                        /* Do either of GC_push_all or GC_push_selected */
+                        /* depending on the third arg.                  */
 #else
-# define GC_push_conditional(b, t, all) GC_push_all(b, t)
+# define GC_PUSH_CONDITIONAL(b, t, all) GC_push_all((ptr_t)(b), (ptr_t)(t))
 #endif
-                                /* Do either of the above, depending    */
-                                /* on the third arg.                    */
+
 GC_INNER void GC_push_all_stack(ptr_t b, ptr_t t);
-                                    /* As above, but consider           */
-                                    /*  interior pointers as valid      */
+                                    /* As GC_push_all but consider      */
+                                    /* interior pointers as valid.      */
 GC_INNER void GC_push_all_eager(ptr_t b, ptr_t t);
                                     /* Same as GC_push_all_stack, but   */
                                     /* ensures that stack is scanned    */
