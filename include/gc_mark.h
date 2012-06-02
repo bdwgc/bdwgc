@@ -230,6 +230,13 @@ typedef void (GC_CALLBACK * GC_start_callback_proc)(void);
 GC_API void GC_CALL GC_set_start_callback(GC_start_callback_proc);
 GC_API GC_start_callback_proc GC_CALL GC_get_start_callback(void);
 
+/* Push everything in the given range onto the mark stack.              */
+/* (GC_push_conditional pushes either all or only dirty pages depending */
+/* on the third argument.)                                              */
+GC_API void GC_CALL GC_push_all(char * /* bottom */, char * /* top */);
+GC_API void GC_CALL GC_push_conditional(char * /* bottom */, char * /* top */,
+                                        int /* bool all */);
+
 #ifdef __cplusplus
   } /* end of extern "C" */
 #endif

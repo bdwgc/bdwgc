@@ -1289,12 +1289,12 @@ GC_INNER void GC_mark_init(void)
  * Should only be used if there is no possibility of mark stack
  * overflow.
  */
-void GC_push_all(ptr_t bottom, ptr_t top)
+GC_API void GC_CALL GC_push_all(char *bottom, char *top)
 {
     register word length;
 
-    bottom = (ptr_t)(((word) bottom + ALIGNMENT-1) & ~(ALIGNMENT-1));
-    top = (ptr_t)(((word) top) & ~(ALIGNMENT-1));
+    bottom = (char *)(((word) bottom + ALIGNMENT-1) & ~(ALIGNMENT-1));
+    top = (char *)(((word) top) & ~(ALIGNMENT-1));
     if (bottom >= top) return;
 
     GC_mark_stack_top++;
@@ -1364,15 +1364,15 @@ void GC_push_all(ptr_t bottom, ptr_t top)
     }
   }
 
-  void GC_push_conditional(ptr_t bottom, ptr_t top, GC_bool all)
+  GC_API void GC_CALL GC_push_conditional(char *bottom, char *top, int all)
   {
     if (!all) {
-      GC_push_selected(bottom, top, GC_page_was_dirty);
+      GC_push_selected((ptr_t)bottom, (ptr_t)top, GC_page_was_dirty);
     } else {
 #     ifdef PROC_VDB
         if (GC_incremental) {
           /* Pages that were never dirtied cannot contain pointers.     */
-          GC_push_selected(bottom, top, GC_page_was_ever_dirty);
+          GC_push_selected((ptr_t)bottom, (ptr_t)top, GC_page_was_ever_dirty);
         } else
 #     endif
       /* else */ {
@@ -1380,7 +1380,13 @@ void GC_push_all(ptr_t bottom, ptr_t top)
       }
     }
   }
-#endif /* !GC_DISABLE_INCREMENTAL */
+#else
+  /*ARGSUSED*/
+  GC_API void GC_CALL GC_push_conditional(char *bottom, char *top, int all)
+  {
+    GC_push_all(bottom, top);
+  }
+#endif /* GC_DISABLE_INCREMENTAL */
 
 #if defined(MSWIN32) || defined(MSWINCE)
   void __cdecl GC_push_one(word p)

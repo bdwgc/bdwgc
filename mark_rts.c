@@ -569,10 +569,10 @@ STATIC void GC_push_conditional_with_exclusions(ptr_t bottom, ptr_t top,
     while (bottom < top) {
         next = GC_next_exclusion(bottom);
         if (0 == next || (excl_start = next -> e_start) >= top) {
-            GC_push_conditional(bottom, top, all);
+            GC_PUSH_CONDITIONAL(bottom, top, all);
             return;
         }
-        if (excl_start > bottom) GC_push_conditional(bottom, excl_start, all);
+        if (excl_start > bottom) GC_PUSH_CONDITIONAL(bottom, excl_start, all);
         bottom = next -> e_end;
     }
 }
@@ -809,8 +809,9 @@ STATIC void GC_push_regs_and_stack(ptr_t cold_gc_frame)
 }
 
 /*
- * Call the mark routines (GC_tl_push for a single pointer, GC_push_conditional
- * on groups of pointers) on every top level accessible pointer.
+ * Call the mark routines (GC_tl_push for a single pointer,
+ * GC_push_conditional on groups of pointers) on every top level
+ * accessible pointer.
  * If all is FALSE, arrange to push only possibly altered values.
  * Cold_gc_frame is an address inside a GC frame that
  * remains valid until all marking is complete.
