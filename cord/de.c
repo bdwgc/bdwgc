@@ -256,7 +256,7 @@ CORD retrieve_line(CORD s, size_t pos, unsigned column)
 {
     CORD candidate = CORD_substr(s, pos, column + COLS);
     			/* avoids scanning very long lines	*/
-    int eol = CORD_chr(candidate, 0, '\n');
+    size_t eol = CORD_chr(candidate, 0, '\n');
     int len;
 
     if (eol == CORD_NOT_FOUND) eol = CORD_len(candidate);

@@ -68,7 +68,8 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
       if (RegisterClass (&wndclass) == 0) {
           char buf[50];
    	
-   	  sprintf(buf, "RegisterClass: error code: 0x%X", GetLastError());
+	  sprintf(buf, "RegisterClass: error code: 0x%X",
+	          (unsigned)GetLastError());
    	  de_error(buf);
    	  return(0);
       }
@@ -104,7 +105,8 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
    if (hwnd == NULL) {
    	char buf[50];
    	
-   	sprintf(buf, "CreateWindow: error code: 0x%X", GetLastError());
+	sprintf(buf, "CreateWindow: error code: 0x%X",
+	        (unsigned)GetLastError());
    	de_error(buf);
    	return(0);
    }
@@ -181,6 +183,7 @@ void update_cursor(void);
 INT_PTR CALLBACK AboutBoxCallback( HWND hDlg, UINT message,
                            WPARAM wParam, LPARAM lParam )
 {
+   (void)lParam;
    switch( message )
    {
       case WM_INITDIALOG:
