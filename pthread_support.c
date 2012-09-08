@@ -1738,7 +1738,7 @@ STATIC void GC_pause(void)
         __asm__ __volatile__ (" " : : : "memory");
 #     else
         /* Something that's unlikely to be optimized away. */
-        GC_noop(++dummy);
+        GC_noop1(++dummy);
 #     endif
     }
 }
