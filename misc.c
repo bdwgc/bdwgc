@@ -1042,19 +1042,6 @@ GC_API void GC_CALL GC_init(void)
 #   ifdef STUBBORN_ALLOC
         GC_stubborn_init();
 #   endif
-    /* Convince lint that some things are used */
-#   ifdef LINT
-      {
-          extern char * const GC_copyright[];
-          GC_noop(GC_copyright, GC_find_header, GC_push_one,
-                  GC_call_with_alloc_lock, GC_dont_expand,
-#                 ifndef NO_DEBUGGING
-                    GC_dump,
-#                 endif
-                  GC_register_finalizer_no_order);
-      }
-#   endif
-
     if (GC_find_leak) {
       /* This is to give us at least one chance to detect leaks.        */
       /* This may report some very benign leaks, but ...                */
