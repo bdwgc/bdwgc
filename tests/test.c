@@ -1508,21 +1508,6 @@ void GC_CALLBACK warn_proc(char *msg, GC_word p)
 #   ifndef MSWINCE
       fflush(stdout);
 #   endif
-#   ifdef LINT
-        /* Entry points we should be testing, but aren't.                  */
-        /* Some can be tested by defining GC_DEBUG at the top of this file */
-        /* This is a bit SunOS4 specific.                                  */
-        GC_noop(GC_expand_hp, GC_add_roots, GC_clear_roots,
-                GC_register_disappearing_link,
-                GC_register_finalizer_ignore_self,
-                GC_debug_register_displacement, GC_debug_change_stubborn,
-                GC_debug_end_stubborn_change, GC_debug_malloc_uncollectable,
-                GC_debug_free, GC_debug_realloc,
-                GC_generic_malloc_words_small, GC_init,
-                GC_malloc_ignore_off_page, GC_malloc_atomic_ignore_off_page,
-                GC_set_max_heap_size, GC_get_bytes_since_gc,
-                GC_get_total_bytes, GC_pre_incr, GC_post_incr);
-#   endif
 #   ifdef MSWIN32
       GC_win32_free_heap();
 #   endif
