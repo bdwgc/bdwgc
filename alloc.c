@@ -610,7 +610,8 @@ STATIC GC_bool GC_stopped_mark(GC_stop_func stop_func)
     /* Mark from all roots.  */
         /* Minimize junk left in my registers and on the stack */
             GC_clear_a_few_frames();
-            GC_noop(0,0,0,0,0,0);
+            GC_noop6(0,0,0,0,0,0);
+
         GC_initiate_gc();
         for (i = 0;;i++) {
           if ((*stop_func)()) {
@@ -971,7 +972,7 @@ STATIC GC_bool GC_try_to_collect_general(GC_stop_func stop_func,
 #   endif
     ENTER_GC();
     /* Minimize junk left in my registers */
-      GC_noop(0,0,0,0,0,0);
+      GC_noop6(0,0,0,0,0,0);
     result = GC_try_to_collect_inner(stop_func != 0 ? stop_func :
                                      GC_default_stop_func);
     EXIT_GC();

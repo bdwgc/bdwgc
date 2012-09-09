@@ -2041,15 +2041,7 @@ void GC_print_static_roots(void);
 #endif
 
 /* Make arguments appear live to compiler */
-#if defined(__BORLANDC__) || defined(__WATCOMC__) || defined(__CC_ARM)
-  void GC_noop(void*, ...);
-#else
-# ifdef __DMC__
-    void GC_noop(...);
-# else
-    void GC_noop();
-# endif
-#endif
+void GC_noop6(word, word, word, word, word, word);
 
 GC_API void GC_CALL GC_noop1(word);
 
