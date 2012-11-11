@@ -605,10 +605,11 @@ GC_INNER unsigned char *GC_check_finalizer_nested(void)
 /* in the table with the same win32 id.                         */
 /* This is OK, but we need a way to delete a specific one.      */
 /* Assumes we hold the allocation lock unless                   */
-/* GC_win32_dll_threads is set.                                 */
+/* GC_win32_dll_threads is set.  Does not actually free         */
+/* GC_thread entry (only unlinks it).                           */
 /* If GC_win32_dll_threads is set it should be called from the  */
 /* thread being deleted.                                        */
-STATIC void GC_delete_gc_thread(GC_vthread t)
+STATIC void GC_delete_gc_thread_no_free(GC_vthread t)
 {
 # ifndef MSWINCE
     CloseHandle(t->handle);
@@ -643,7 +644,6 @@ STATIC void GC_delete_gc_thread(GC_vthread t)
     } else {
       prev -> tm.next = p -> tm.next;
     }
-    GC_INTERNAL_FREE(p);
   }
 }
 
@@ -656,12 +656,12 @@ STATIC void GC_delete_gc_thread(GC_vthread t)
 STATIC void GC_delete_thread(DWORD id)
 {
   if (GC_win32_dll_threads) {
-    GC_thread t = GC_lookup_thread_inner(id);
+    GC_vthread t = GC_lookup_thread_inner(id);
 
     if (0 == t) {
       WARN("Removing nonexistent thread, id = %" GC_PRIdPTR "\n", id);
     } else {
-      GC_delete_gc_thread(t);
+      GC_delete_gc_thread_no_free(t);
     }
   } else {
     word hv = THREAD_TABLE_INDEX(id);
@@ -1145,7 +1145,7 @@ STATIC void GC_suspend(GC_thread t)
         /* this breaks pthread_join on Cygwin, which is guaranteed to  */
         /* only see user pthreads                                      */
         GC_ASSERT(GC_win32_dll_threads);
-        GC_delete_gc_thread(t);
+        GC_delete_gc_thread_no_free(t);
 #     endif
       return;
     }
@@ -1187,10 +1187,9 @@ GC_INNER void GC_stop_world(void)
     GC_ASSERT(!GC_write_disabled);
     EnterCriticalSection(&GC_write_cs);
     /* It's not allowed to call GC_printf() (and friends) here down to  */
-    /* LeaveCriticalSection (same applies recursively to                */
-    /* GC_get_max_thread_index(), GC_suspend(), GC_delete_gc_thread()   */
-    /* (only if GC_win32_dll_threads), GC_size() and                    */
-    /* GC_remove_protection()).                                         */
+    /* LeaveCriticalSection (same applies recursively to GC_suspend,    */
+    /* GC_delete_gc_thread_no_free, GC_get_max_thread_index, GC_size    */
+    /* and GC_remove_protection).                                       */
 #   ifdef GC_ASSERTIONS
       GC_write_disabled = TRUE;
 #   endif
@@ -2498,8 +2497,10 @@ GC_INNER void GC_thr_init(void)
         DCL_LOCK_STATE;
 
         LOCK();
-        if ((t -> flags & FINISHED) != 0)
-          GC_delete_gc_thread(t);
+        if ((t -> flags & FINISHED) != 0) {
+          GC_delete_gc_thread_no_free(t);
+          GC_INTERNAL_FREE(t);
+        }
         UNLOCK();
       }
     }
@@ -2656,6 +2657,7 @@ GC_INNER void GC_thr_init(void)
     DCL_LOCK_STATE;
 
     if (!parallel_initialized) GC_init_parallel();
+    GC_ASSERT(!GC_win32_dll_threads);
     /* The thread might not have registered itself yet. */
     /* TODO: Wait for registration of the created thread in pthread_create. */
     while ((t = GC_lookup_pthread(thread)) == NULL)
@@ -2666,7 +2668,8 @@ GC_INNER void GC_thr_init(void)
       t -> flags |= DETACHED;
       /* Here the pthread thread id may have been recycled. */
       if ((t -> flags & FINISHED) != 0) {
-        GC_delete_gc_thread(t);
+        GC_delete_gc_thread_no_free(t);
+        GC_INTERNAL_FREE(t);
       }
       UNLOCK();
     }
@@ -2735,7 +2738,7 @@ GC_INNER void GC_thr_init(void)
 
           for (i = 0; i <= my_max; ++i) {
            if (AO_load(&(dll_thread_table[i].tm.in_use)))
-             GC_delete_gc_thread(dll_thread_table + i);
+             GC_delete_gc_thread_no_free(&dll_thread_table[i]);
           }
           GC_deinit();
           DeleteCriticalSection(&GC_allocate_ml);
