@@ -1388,7 +1388,7 @@ GC_API int GC_CALL GC_get_force_unmap_on_gcollect(void);
 /* THREAD_LOCAL_ALLOC defined and the initial allocation call is not    */
 /* to GC_malloc() or GC_malloc_atomic().                                */
 
-#ifdef __CYGWIN32__
+#if defined(__CYGWIN32__) || defined(__CYGWIN__)
   /* Similarly gnu-win32 DLLs need explicit initialization from the     */
   /* main program, as does AIX.                                         */
   extern int _data_start__[], _data_end__[], _bss_start__[], _bss_end__[];

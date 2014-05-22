@@ -444,7 +444,11 @@
 #   define mach_type_known
 # endif
 # if defined(__CYGWIN32__) || defined(__CYGWIN__)
-#   define I386
+#   if defined(__LP64__)
+#     define X86_64
+#   else
+#     define I386
+#   endif
 #   define CYGWIN32
 #   define mach_type_known
 # endif
@@ -1857,6 +1861,17 @@
 #           define CLEAR_DOUBLE(x) \
               __stf_spill((void *)(x), 0)
 #         endif /* __INTEL_COMPILER */
+#       endif
+#   endif
+#   ifdef CYGWIN32
+#       define OS_TYPE "CYGWIN32"
+#       define DATASTART ((ptr_t)GC_DATASTART)  /* From gc.h */
+#       define DATAEND   ((ptr_t)GC_DATAEND)
+#       undef STACK_GRAN
+#       define STACK_GRAN 0x10000
+#       ifdef USE_MMAP
+#         define NEED_FIND_LIMIT
+#         define USE_MMAP_ANON
 #       endif
 #   endif
 #   ifdef MSWIN32

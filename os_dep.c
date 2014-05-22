@@ -768,11 +768,15 @@ GC_INNER size_t GC_page_size = 0;
     /* gcc version of boehm-gc).                                        */
     GC_API int GC_CALL GC_get_stack_base(struct GC_stack_base *sb)
     {
-      void * _tlsbase;
+#     ifdef X86_64
+        sb -> mem_base = ((NT_TIB*)NtCurrentTeb())->StackBase;
+#     else
+        void * _tlsbase;
 
-      __asm__ ("movl %%fs:4, %0"
-               : "=r" (_tlsbase));
-      sb -> mem_base = _tlsbase;
+        __asm__ ("movl %%fs:4, %0"
+                 : "=r" (_tlsbase));
+        sb -> mem_base = _tlsbase;
+#     endif
       return GC_SUCCESS;
     }
 # endif /* CYGWIN32 */
