@@ -1391,11 +1391,21 @@ GC_API int GC_CALL GC_get_force_unmap_on_gcollect(void);
 #if defined(__CYGWIN32__) || defined(__CYGWIN__)
   /* Similarly gnu-win32 DLLs need explicit initialization from the     */
   /* main program, as does AIX.                                         */
-  extern int _data_start__[], _data_end__[], _bss_start__[], _bss_end__[];
-# define GC_DATASTART (_data_start__ < _bss_start__ ? \
-                       (void *)_data_start__ : (void *)_bss_start__)
-# define GC_DATAEND (_data_end__ > _bss_end__ ? \
-                     (void *)_data_end__ : (void *)_bss_end__)
+# ifdef __x86_64__
+    /* Cygwin/x64 does not add leading underscore to symbols anymore.   */
+    extern int __data_start__[], __data_end__[];
+    extern int __bss_start__[], __bss_end__[];
+#   define GC_DATASTART (__data_start__ < __bss_start__ \
+                         ? (void *)__data_start__ : (void *)__bss_start__)
+#   define GC_DATAEND (__data_end__ > __bss_end__ \
+                       ? (void *)__data_end__ : (void *)__bss_end__)
+# else
+    extern int _data_start__[], _data_end__[], _bss_start__[], _bss_end__[];
+#   define GC_DATASTART (_data_start__ < _bss_start__ \
+                         ? (void *)_data_start__ : (void *)_bss_start__)
+#   define GC_DATAEND (_data_end__ > _bss_end__ \
+                      ? (void *)_data_end__ : (void *)_bss_end__)
+# endif /* !__x86_64__ */
 # define GC_INIT_CONF_ROOTS GC_add_roots(GC_DATASTART, GC_DATAEND); \
                                  GC_gcollect() /* For blacklisting. */
         /* Required at least if GC is in a DLL.  And doesn't hurt. */
