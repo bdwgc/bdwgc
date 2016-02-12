@@ -220,7 +220,7 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
                         if (prec != NONE && len > (size_t)prec) {
                           if (prec < 0) return(-1);
                           arg = CORD_substr(arg, 0, prec);
-                          len = prec;
+                          len = (unsigned)prec;
                         }
                         if (width != NONE && len < (size_t)width) {
                           char * blanks = GC_MALLOC_ATOMIC(width-len+1);
