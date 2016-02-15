@@ -36,7 +36,7 @@ typedef void (* finalization_mark_proc)(ptr_t /* finalizable_obj_ptr */);
 #define HASH3(addr,size,log_size) \
         ((((word)(addr) >> 3) ^ ((word)(addr) >> (3 + (log_size)))) \
          & ((size) - 1))
-#define HASH2(addr,log_size) HASH3(addr, 1 << log_size, log_size)
+#define HASH2(addr,log_size) HASH3(addr, (word)1 << (log_size), log_size)
 
 struct hash_chain_entry {
     word hidden_key;
@@ -103,7 +103,7 @@ STATIC void GC_grow_table(struct hash_chain_entry ***table,
     register struct hash_chain_entry *p;
     signed_word log_old_size = *log_size_ptr;
     signed_word log_new_size = log_old_size + 1;
-    word old_size = ((log_old_size == -1)? 0: (1 << log_old_size));
+    word old_size = log_old_size == -1 ? 0 : (word)1 << log_old_size;
     word new_size = (word)1 << log_new_size;
     /* FIXME: Power of 2 size often gets rounded up to one more page. */
     struct hash_chain_entry **new_table = (struct hash_chain_entry **)
@@ -533,8 +533,10 @@ GC_INNER void GC_finalize(void)
     struct finalizable_object * curr_fo, * prev_fo, * next_fo;
     ptr_t real_ptr, real_link;
     size_t i;
-    size_t dl_size = (log_dl_table_size == -1 ) ? 0 : (1 << log_dl_table_size);
-    size_t fo_size = (log_fo_table_size == -1 ) ? 0 : (1 << log_fo_table_size);
+    size_t dl_size = log_dl_table_size == -1 ? 0 :
+                                (size_t)1 << log_dl_table_size;
+    size_t fo_size = log_fo_table_size == -1 ? 0 :
+                                (size_t)1 << log_fo_table_size;
 
 #   ifndef SMALL_CONFIG
       /* Save current GC_dl_entries value for stats printing */
