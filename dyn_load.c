@@ -1415,12 +1415,13 @@ GC_INNER void GC_init_dyld(void)
      This WILL properly register already linked libraries and libraries
      linked in the future.
   */
-
-  _dyld_register_func_for_add_image(GC_dyld_image_add);
-  _dyld_register_func_for_remove_image(GC_dyld_image_remove);
-      /* Ignore 2 compiler warnings here: passing argument 1 of       */
-      /* '_dyld_register_func_for_add/remove_image' from incompatible */
-      /* pointer type.                                                */
+  _dyld_register_func_for_add_image(
+        (void (*)(const struct mach_header*, intptr_t))GC_dyld_image_add);
+  _dyld_register_func_for_remove_image(
+        (void (*)(const struct mach_header*, intptr_t))GC_dyld_image_remove);
+                        /* Structure mach_header64 has the same fields  */
+                        /* as mach_header except for the reserved one   */
+                        /* at the end, so these casts are OK.           */
 
   /* Set this early to avoid reentrancy issues. */
   initialized = TRUE;
