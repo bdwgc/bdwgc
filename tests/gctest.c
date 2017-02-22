@@ -848,6 +848,7 @@ test_generic_malloc_or_special(const void *p)
     FAIL;
   }
   GC_FREE(p2);
+  GC_FREE(checkOOM(GC_GENERIC_MALLOC(21, kind)));
 }
 
 #ifndef AO_HAVE_load_acquire

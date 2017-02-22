@@ -543,7 +543,7 @@ GC_debug_malloc_atomic_ignore_off_page(size_t lb, GC_EXTRA_PARAMS)
                           OPT_RA s, i);
 }
 
-STATIC void *
+GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_debug_generic_malloc(size_t lb, int kind, GC_EXTRA_PARAMS)
 {
   void *base = GC_generic_malloc_aligned(SIZET_SAT_ADD(lb, DEBUG_BYTES), kind,
