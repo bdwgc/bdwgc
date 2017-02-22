@@ -342,6 +342,9 @@ GC_API void GC_CALL GC_init_gcj_malloc_mp(unsigned /* `mp_index` */,
  */
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
     GC_generic_malloc(size_t /* `lb` */, int /* `kind` */);
+GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
+    GC_debug_generic_malloc(size_t /* `lb` */, int /* `kind` */,
+                            GC_EXTRA_PARAMS);
 
 /**
  * Same as `GC_generic_malloc()`, but pointers to past the first heap block
@@ -365,18 +368,20 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
  * kinds.
  */
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
-    GC_generic_or_special_malloc(size_t /* `size` */, int /* `kind` */);
+    GC_generic_or_special_malloc(size_t /* `lb` */, int /* `kind` */);
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
-    GC_debug_generic_or_special_malloc(size_t /* `size` */, int /* `kind` */,
+    GC_debug_generic_or_special_malloc(size_t /* `lb` */, int /* `kind` */,
                                        GC_EXTRA_PARAMS);
 
 #ifdef GC_DEBUG
+#  define GC_GENERIC_MALLOC(sz, k) GC_debug_generic_malloc(sz, k, GC_EXTRAS)
 #  define GC_GENERIC_OR_SPECIAL_MALLOC(sz, k) \
     GC_debug_generic_or_special_malloc(sz, k, GC_EXTRAS)
 #else
+#  define GC_GENERIC_MALLOC(sz, k) GC_generic_malloc(sz, k)
 #  define GC_GENERIC_OR_SPECIAL_MALLOC(sz, k) \
     GC_generic_or_special_malloc(sz, k)
-#endif /* !GC_DEBUG */
+#endif
 
 /**
  * Similar to `GC_size` but returns object kind.  The size is returned too
