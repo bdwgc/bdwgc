@@ -14,6 +14,16 @@
  *
  */
 
+#if defined(__MINGW32__) && !defined(__MINGW_EXCPT_DEFINE_PSDK) \
+    && defined(__i386__) /* cannot use macros from gcconfig.h */
+  /* Otherwise EXCEPTION_REGISTRATION type declaration from winnt.h     */
+  /* might be used.  That declaration has "handler" callback with NTAPI */
+  /* attribute.  The proper type (with "handler" field compatible with  */
+  /* GC mark_ex_handler) is declared in excpt.h.  The given macro is    */
+  /* defined before any system header include.                          */
+# define __MINGW_EXCPT_DEFINE_PSDK 1
+#endif
+
 #include "private/gc_pmark.h"
 
 #include <stdio.h>
