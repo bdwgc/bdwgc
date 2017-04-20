@@ -215,10 +215,10 @@ CORD CORD_cat_char_star(CORD x, const char * y, size_t leny)
         result = GC_NEW(struct Concatenation);
         if (result == 0) OUT_OF_MEMORY;
         result->header = CONCAT_HDR;
-        result->depth = depth;
+        result->depth = (char)depth;
         if (lenx <= MAX_LEFT_LEN)
             result->left_len = (unsigned char)lenx;
-        result->len = result_len;
+        result->len = (word)result_len;
         result->left = x;
         result->right = y;
         if (depth >= MAX_DEPTH) {
@@ -257,10 +257,10 @@ CORD CORD_cat(CORD x, CORD y)
         result = GC_NEW(struct Concatenation);
         if (result == 0) OUT_OF_MEMORY;
         result->header = CONCAT_HDR;
-        result->depth = depth;
+        result->depth = (char)depth;
         if (lenx <= MAX_LEFT_LEN)
             result->left_len = (unsigned char)lenx;
-        result->len = result_len;
+        result->len = (word)result_len;
         result->left = x;
         result->right = y;
         if (depth >= MAX_DEPTH) {
@@ -302,7 +302,7 @@ CORD CORD_from_fn(CORD_fn fn, void * client_data, size_t len)
         if (result == 0) OUT_OF_MEMORY;
         result->header = FN_HDR;
         /* depth is already 0 */
-        result->len = len;
+        result->len = (word)len;
         result->fn = fn;
         result->client_data = client_data;
         return((CORD) result);
@@ -428,8 +428,8 @@ CORD CORD_substr_checked(CORD x, size_t i, size_t n)
             char buf[SUBSTR_LIMIT+1];
             register char * p = buf;
             register char c;
-            register int j;
-            register int lim = i + n;
+            register size_t j;
+            register size_t lim = i + n;
 
             for (j = i; j < lim; j++) {
                 c = (*(f -> fn))(j, f -> client_data);
@@ -614,7 +614,7 @@ void CORD_init_min_len()
         previous = last;
         last = current;
     }
-    CORD_max_len = last - 1;
+    CORD_max_len = (int)last - 1;
     min_len_init = 1;
 }
 

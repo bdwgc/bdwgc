@@ -123,7 +123,7 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
          DispatchMessage (&msg);
       }
    }
-   return msg.wParam;
+   return (int)msg.wParam;
 }
 
 /* Return the argument with all control characters replaced by blanks.	*/

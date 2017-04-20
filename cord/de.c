@@ -180,7 +180,7 @@ size_t line_pos(int i, int *c)
         next = CORD_chr(current, cur, '\n');
         if (next == CORD_NOT_FOUND) next = current_len - 1;
         if (next < cur + *c) {
-            *c = next - cur;
+            *c = (int)(next - cur);
         }
         cur += *c;
     }
@@ -346,7 +346,8 @@ void fix_pos()
 {
     int my_col = col;
 
-    if ((size_t)line > current_len) line = current_len;
+    if ((size_t)line > current_len)
+        line = (int)current_len;
     file_pos = line_pos(line, &my_col);
     if (file_pos == CORD_NOT_FOUND) {
         for (line = current_map -> line, file_pos = current_map -> pos;
@@ -430,7 +431,7 @@ void do_command(int c)
               	if (file_pos > new_pos) break;
               	line++;
             }
-            col = new_pos - line_pos(line, 0);
+            col = (int)(new_pos - line_pos(line, 0));
             file_pos = new_pos;
             fix_cursor();
         } else {
@@ -461,7 +462,8 @@ void do_command(int c)
             locate_mode = 1;
             break;
           case TOP:
-            line = col = file_pos = 0;
+            line = col = 0;
+            file_pos = 0;
             break;
      	  case UP:
      	    if (line != 0) {
