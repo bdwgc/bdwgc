@@ -210,7 +210,8 @@ int CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
 
             if (avail > yavail) avail = yavail;
             count += (size_t)avail;
-            if (count > len) avail -= (count - len);
+            if (count > len)
+                avail -= (long)(count - len);
             result = memcmp(CORD_pos_cur_char_addr(xpos),
                             CORD_pos_cur_char_addr(ypos), (size_t)avail);
             if (result != 0) return(result);
@@ -327,7 +328,7 @@ size_t CORD_chr(CORD x, size_t i, int c)
     chr_data d;
 
     d.pos = i;
-    d.target = c;
+    d.target = (char)c;
     if (CORD_iter5(x, i, CORD_chr_proc, CORD_batched_chr_proc, &d)) {
         return(d.pos);
     } else {
@@ -340,7 +341,7 @@ size_t CORD_rchr(CORD x, size_t i, int c)
     chr_data d;
 
     d.pos = i;
-    d.target = c;
+    d.target = (char)c;
     if (CORD_riter4(x, i, CORD_rchr_proc, &d)) {
         return(d.pos);
     } else {
@@ -457,7 +458,7 @@ CORD CORD_from_file_eager(FILE * f)
             ecord[0].ec_cord = CORD_cat(ecord[0].ec_cord, CORD_nul(count));
         }
         if (c == EOF) break;
-        CORD_ec_append(ecord, c);
+        CORD_ec_append(ecord, (char)c);
     }
     (void) fclose(f);
     return(CORD_balance(CORD_ec_to_cord(ecord)));
@@ -516,7 +517,7 @@ static char refill_cache(refill_data * client_data)
     cache_line * new_cache = client_data -> new_cache;
 
     if (line_start != state -> lf_current
-        && fseek(f, line_start, SEEK_SET) != 0) {
+        && fseek(f, (long)line_start, SEEK_SET) != 0) {
             ABORT("fseek failed");
     }
     if (fread(new_cache -> data, sizeof(char), LINE_SZ, f)
