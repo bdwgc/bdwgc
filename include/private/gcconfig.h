@@ -2362,6 +2362,9 @@ EXTERN_C_BEGIN
 #     define DATAEND (ptr_t)(&__bss_end)
       void *switch_get_stack_bottom(void);
 #     define STACKBOTTOM ((ptr_t)switch_get_stack_bottom())
+#     define GETPAGESIZE() 4096
+#     undef USE_MMAP
+#     undef USE_MUNMAP
 #   endif
 #   ifdef MSWIN32   /* UWP */
 #     define OS_TYPE "MSWIN32"
