@@ -4592,7 +4592,7 @@ GC_soft_read_dirty(GC_bool output_unneeded)
 #ifndef NO_MANUAL_VDB
 GC_INNER GC_bool GC_manual_vdb = FALSE;
 
-GC_INNER void
+void
 GC_dirty_inner(const void *p)
 {
   size_t index = PHT_HASH(p);

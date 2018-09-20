@@ -324,6 +324,10 @@ EXTERN_C_END
 #  define GC_API_PRIV GC_API
 #endif
 
+#ifndef GC_API_PATCHABLE
+#  define GC_API_PATCHABLE GC_ATTR_NOINLINE GC_API
+#endif
+
 #if defined(THREADS) && !defined(NN_PLATFORM_CTR)
 #  include "gc_atomic_ops.h"
 #  ifndef AO_HAVE_compiler_barrier
@@ -3298,8 +3302,10 @@ GC_EXTERN GC_bool GC_manual_vdb;
 /*
  * Manually mark the page containing `p` as dirty.  Logically, this
  * dirties the entire object.  Does not require locking.
+ * Exported and marked as `noinline` for the purpose of some clients that
+ * need to patch the symbol when using write barrier validation.
  */
-GC_INNER void GC_dirty_inner(const void *p);
+GC_API_PATCHABLE void GC_dirty_inner(const void *p);
 
 #  define GC_dirty(p) (GC_manual_vdb ? GC_dirty_inner(p) : (void)0)
 #  define REACHABLE_AFTER_DIRTY(p) GC_reachable_here(p)
