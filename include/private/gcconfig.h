@@ -2140,6 +2140,9 @@ void *switch_get_stack_bottom(void);
 #    define STACKBOTTOM ((ptr_t)switch_get_stack_bottom())
 void *switch_get_mem(size_t lb);
 #    define GET_MEM(lb) switch_get_mem(lb)
+#    define GETPAGESIZE() 4096
+#    undef USE_MMAP
+#    undef USE_MUNMAP
 #    ifndef HAVE_CLOCK_GETTIME
 #      define HAVE_CLOCK_GETTIME 1
 #    endif
