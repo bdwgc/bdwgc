@@ -1863,17 +1863,6 @@
 #         endif /* __INTEL_COMPILER */
 #       endif
 #   endif
-#   ifdef CYGWIN32
-#       define OS_TYPE "CYGWIN32"
-#       define DATASTART ((ptr_t)GC_DATASTART)  /* From gc.h */
-#       define DATAEND   ((ptr_t)GC_DATAEND)
-#       undef STACK_GRAN
-#       define STACK_GRAN 0x10000
-#       ifdef USE_MMAP
-#         define NEED_FIND_LIMIT
-#         define USE_MMAP_ANON
-#       endif
-#   endif
 #   ifdef MSWIN32
       /* FIXME: This is a very partial guess.  There is no port, yet.   */
 #     define OS_TYPE "MSWIN32"
@@ -2306,6 +2295,12 @@
 #         define HEAP_START (ptr_t)0x40000000
 #       else
 #         define HEAP_START DATAEND
+#       endif
+#   endif
+#   ifdef CYGWIN32
+#       define OS_TYPE "CYGWIN32"
+#       ifdef USE_MMAP
+#         define USE_MMAP_ANON
 #       endif
 #   endif
 #   ifdef MSWIN32
