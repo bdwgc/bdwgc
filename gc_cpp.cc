@@ -37,7 +37,13 @@ built-in "new" and "delete".
 #ifdef GC_NEW_DELETE_NEED_THROW
 # include <new> /* for std::bad_alloc */
 # if (__cplusplus < 201103L || defined(__clang__))
-#   define GC_DECL_NEW_THROW throw(std::bad_alloc)
+#   if __cplusplus < 201703L
+#     define GC_DECL_NEW_THROW throw(std::bad_alloc)
+#   else
+      // The "dynamic exception" syntax was deprecated in C++11
+      // and removed in C++17.
+#     define GC_DECL_NEW_THROW noexcept(false)
+#   endif
 # else
 #   define GC_DECL_NEW_THROW /* empty */
 # endif
