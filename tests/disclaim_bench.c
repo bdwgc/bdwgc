@@ -22,8 +22,7 @@
 
 #include "gc_disclaim.h"
 
-/* Include gc_priv.h is done after including GC public headers, so      */
-/* that GC_BUILD has no effect on the public prototypes.                */
+#define NOT_GCBUILD
 #include "private/gc_priv.h" /* for CLOCK_TYPE, COVERT_DATAFLOW, GC_random */
 
 #ifdef LINT2

@@ -22,7 +22,7 @@
 # include "config.h"
 #endif
 
-#ifndef GC_BUILD
+#if !defined(GC_BUILD) && !defined(NOT_GCBUILD)
 # define GC_BUILD
 #endif
 
