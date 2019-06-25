@@ -49,6 +49,8 @@
 # endif
 
 # include "gc_typed.h"
+
+# define NOT_GCBUILD
 # include "private/gc_priv.h"   /* For output, locking, MIN_WORDS,      */
                                 /* some statistics and gcconfig.h.      */
 
