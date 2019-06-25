@@ -61,6 +61,7 @@
 # include "gc_typed.h"
 #endif
 
+#define NOT_GCBUILD
 #include "private/gc_priv.h"    /* For output, locking,                 */
                                 /* some statistics and gcconfig.h.      */
 
