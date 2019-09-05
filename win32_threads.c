@@ -1107,6 +1107,21 @@ void GC_push_thread_structures(void)
 # endif
 }
 
+#ifdef WOW64_THREAD_CONTEXT_WORKAROUND
+# ifndef CONTEXT_EXCEPTION_ACTIVE
+#   define CONTEXT_EXCEPTION_ACTIVE    0x08000000
+#   define CONTEXT_EXCEPTION_REQUEST   0x40000000
+#   define CONTEXT_EXCEPTION_REPORTING 0x80000000
+# endif
+  static BOOL isWow64;  /* Is running 32-bit code on Win64?     */
+# define GET_THREAD_CONTEXT_FLAGS (isWow64 \
+                        ? CONTEXT_INTEGER | CONTEXT_CONTROL \
+                          | CONTEXT_EXCEPTION_REQUEST | CONTEXT_SEGMENTS \
+                        : CONTEXT_INTEGER | CONTEXT_CONTROL)
+#else
+# define GET_THREAD_CONTEXT_FLAGS (CONTEXT_INTEGER | CONTEXT_CONTROL)
+#endif /* !WOW64_THREAD_CONTEXT_WORKAROUND */
+
 /* Suspend the given thread, if it's still active.      */
 STATIC void GC_suspend(GC_thread t)
 {
@@ -1330,10 +1345,6 @@ static GC_bool may_be_in_stack(ptr_t s)
           && !(last_info.Protect & PAGE_GUARD);
 }
 
-#if defined(I386)
-  static BOOL isWow64;  /* Is running 32-bit code on Win64?     */
-#endif
-
 STATIC word GC_push_stack_for(GC_thread thread, DWORD me)
 {
   ptr_t sp, stack_min;
@@ -1347,22 +1358,8 @@ STATIC word GC_push_stack_for(GC_thread thread, DWORD me)
               /* Use saved sp value for blocked threads. */
     /* For unblocked threads call GetThreadContext().   */
     CONTEXT context;
-#   if defined(I386)
-#     ifndef CONTEXT_EXCEPTION_ACTIVE
-#       define CONTEXT_EXCEPTION_ACTIVE    0x08000000
-#       define CONTEXT_EXCEPTION_REQUEST   0x40000000
-#       define CONTEXT_EXCEPTION_REPORTING 0x80000000
-#     endif
 
-      if (isWow64) {
-        context.ContextFlags = CONTEXT_INTEGER | CONTEXT_CONTROL
-                                | CONTEXT_EXCEPTION_REQUEST
-                                | CONTEXT_SEGMENTS;
-      } else
-#   endif
-    /* else */ {
-      context.ContextFlags = CONTEXT_INTEGER | CONTEXT_CONTROL;
-    }
+    context.ContextFlags = GET_THREAD_CONTEXT_FLAGS;
     if (!GetThreadContext(THREAD_HANDLE(thread), &context))
       ABORT("GetThreadContext failed");
 
@@ -1374,45 +1371,7 @@ STATIC word GC_push_stack_for(GC_thread thread, DWORD me)
 #   define PUSH4(r1,r2,r3,r4) PUSH2(r1,r2), PUSH2(r3,r4)
 #   if defined(I386)
       PUSH4(Edi,Esi,Ebx,Edx), PUSH2(Ecx,Eax), PUSH1(Ebp);
-      /* WoW64 workaround. */
-      if (isWow64
-          && (context.ContextFlags & CONTEXT_EXCEPTION_REPORTING) != 0
-          && (context.ContextFlags & (CONTEXT_EXCEPTION_ACTIVE
-                                      /* | CONTEXT_SERVICE_ACTIVE */)) != 0) {
-        LDT_ENTRY selector;
-        PNT_TIB tib;
-
-        if (!GetThreadSelectorEntry(THREAD_HANDLE(thread), context.SegFs,
-                                    &selector))
-          ABORT("GetThreadSelectorEntry failed");
-        tib = (PNT_TIB)(selector.BaseLow
-                        | (selector.HighWord.Bits.BaseMid << 16)
-                        | (selector.HighWord.Bits.BaseHi << 24));
-        /* GetThreadContext() might return stale register values, so    */
-        /* we scan the entire stack region (down to the stack limit).   */
-        /* There is no 100% guarantee that all the registers are pushed */
-        /* but we do our best (the proper solution would be to fix it   */
-        /* inside Windows OS).                                          */
-        sp = (ptr_t)tib->StackLimit;
-#       ifdef DEBUG_THREADS
-          GC_log_printf("TIB stack limit/base: %p .. %p\n",
-                        (void *)tib->StackLimit, (void *)tib->StackBase);
-#       endif
-        GC_ASSERT(!((word)thread->stack_base
-                    COOLER_THAN (word)tib->StackBase));
-      } else {
-#       ifdef DEBUG_THREADS
-          {
-            static GC_bool logged;
-            if (isWow64 && !logged
-                && (context.ContextFlags & CONTEXT_EXCEPTION_REPORTING) == 0) {
-              GC_log_printf("CONTEXT_EXCEPTION_REQUEST not supported\n");
-              logged = TRUE;
-            }
-          }
-#       endif
-        sp = (ptr_t)context.Esp;
-      }
+      sp = (ptr_t)context.Esp;
 #   elif defined(X86_64)
       PUSH4(Rax,Rcx,Rdx,Rbx); PUSH2(Rbp, Rsi); PUSH1(Rdi);
       PUSH4(R8, R9, R10, R11); PUSH4(R12, R13, R14, R15);
@@ -1446,6 +1405,45 @@ STATIC word GC_push_stack_for(GC_thread thread, DWORD me)
 #   else
 #     error "architecture is not supported"
 #   endif
+#   ifdef WOW64_THREAD_CONTEXT_WORKAROUND
+      /* WoW64 workaround. */
+      if (isWow64
+          && (context.ContextFlags & CONTEXT_EXCEPTION_REPORTING) != 0
+          && (context.ContextFlags & (CONTEXT_EXCEPTION_ACTIVE
+                                      /* | CONTEXT_SERVICE_ACTIVE */)) != 0) {
+        LDT_ENTRY selector;
+        PNT_TIB tib;
+
+        if (!GetThreadSelectorEntry(THREAD_HANDLE(thread), context.SegFs,
+                                    &selector))
+          ABORT("GetThreadSelectorEntry failed");
+        tib = (PNT_TIB)(selector.BaseLow
+                        | (selector.HighWord.Bits.BaseMid << 16)
+                        | (selector.HighWord.Bits.BaseHi << 24));
+        /* GetThreadContext() might return stale register values, so    */
+        /* we scan the entire stack region (down to the stack limit).   */
+        /* There is no 100% guarantee that all the registers are pushed */
+        /* but we do our best (the proper solution would be to fix it   */
+        /* inside Windows OS).                                          */
+        sp = (ptr_t)tib->StackLimit;
+#       ifdef DEBUG_THREADS
+          GC_log_printf("TIB stack limit/base: %p .. %p\n",
+                        (void *)tib->StackLimit, (void *)tib->StackBase);
+#       endif
+        GC_ASSERT(!((word)thread->stack_base
+                    COOLER_THAN (word)tib->StackBase));
+      } /* else */
+#     ifdef DEBUG_THREADS
+        else {
+          static GC_bool logged;
+          if (isWow64 && !logged
+              && (context.ContextFlags & CONTEXT_EXCEPTION_REPORTING) == 0) {
+            GC_log_printf("CONTEXT_EXCEPTION_REQUEST not supported\n");
+            logged = TRUE;
+          }
+        }
+#     endif
+#   endif /* WOW64_THREAD_CONTEXT_WORKAROUND */
   } /* ! current thread */
 
   /* Set stack_min to the lowest address in the thread stack,   */
@@ -2353,7 +2351,7 @@ GC_INNER void GC_thr_init(void)
       ABORT("pthread_atfork failed");
 # endif
 
-# if defined(I386)
+# ifdef WOW64_THREAD_CONTEXT_WORKAROUND
     /* Set isWow64 flag. */
     {
       HMODULE hK32 = GetModuleHandle(TEXT("kernel32.dll"));
