@@ -9,7 +9,7 @@
  */
 
 /*************************************************************************
-This implementation module for gc_c++.h provides an implementation of
+This implementation module for gc_cpp.h provides an implementation of
 the global operators "new" and "delete" that calls the Boehm
 allocator.  All objects allocated by this implementation will be
 uncollectible but part of the root set of the collector.
