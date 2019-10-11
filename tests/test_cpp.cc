@@ -16,7 +16,7 @@ Last modified on Mon Jul 10 21:06:03 PDT 1995 by ellis
 usage: test_cpp number-of-iterations
 
 This program tries to test the specific C++ functionality provided by
-gc_c++.h that isn't tested by the more general test routines of the
+gc_cpp.h that isn't tested by the more general test routines of the
 collector.
 
 A recommended value for number-of-iterations is 10, which will take a
