@@ -86,12 +86,33 @@ GC_INNER struct obj_kind GC_obj_kinds[MAXOBJKINDS] = {
     TRUE
         /*, */ OK_DISCLAIM_INITZ },
 #ifdef GC_ATOMIC_UNCOLLECTABLE
+  /* `AUNCOLLECTABLE` */
   { &GC_auobjfreelist[0], 0,
     /* `0 |` */ GC_DS_LENGTH, FALSE,
     FALSE
         /*, */ OK_DISCLAIM_INITZ },
 #endif
 };
+
+#ifndef GC_NO_DEINIT
+/* Note: keep this close to `GC_obj_kinds` definition. */
+GC_INNER void
+GC_reset_obj_kinds(void)
+{
+  unsigned i;
+
+  for (i = 0; i < GC_N_KINDS_INITIAL_VALUE; i++)
+    GC_obj_kinds[i].ok_reclaim_list = NULL;
+  GC_obj_kinds[PTRFREE].ok_freelist = &GC_aobjfreelist[0];
+  GC_obj_kinds[NORMAL].ok_freelist = &GC_objfreelist[0];
+  GC_obj_kinds[UNCOLLECTABLE].ok_freelist = &GC_uobjfreelist[0];
+#  ifdef GC_ATOMIC_UNCOLLECTABLE
+  GC_obj_kinds[AUNCOLLECTABLE].ok_freelist = &GC_auobjfreelist[0];
+#  endif
+  GC_obj_kinds[NORMAL].ok_descriptor = GC_DS_LENGTH;
+  GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
+}
+#endif
 
 #ifndef INITIAL_MARK_STACK_SIZE
 /*

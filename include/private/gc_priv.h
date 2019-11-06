@@ -3902,6 +3902,20 @@ GC_INNER GC_bool GC_gww_dirty_init(void);
 GC_INNER GC_bool GC_page_was_ever_dirty(struct hblk *h);
 #endif
 
+#ifndef GC_NO_DEINIT
+GC_INNER void GC_reset_freelist(void);
+GC_INNER void GC_reset_obj_kinds(void);
+#  ifdef CHECKSUMS
+void GC_reset_check_page(void);
+#  endif
+#  ifdef THREADS
+GC_INNER void GC_reset_threads(void);
+#  endif
+#  ifdef THREAD_LOCAL_ALLOC
+GC_INNER void GC_reset_thread_local_initialization(void);
+#  endif
+#endif
+
 #ifdef CHECKSUMS
 #  ifdef MPROTECT_VDB
 void GC_record_fault(struct hblk *h);

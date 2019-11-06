@@ -1782,7 +1782,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, WINMAIN_LPTSTR lpCmdLine,
   GetExitCodeThread(thread_h, &exit_code);
   CloseHandle(thread_h);
 
-#    ifdef MSWINCE
+#    if defined(MSWINCE) && !defined(GC_NO_DEINIT)
   GC_deinit();
 #    endif
   return (int)exit_code;
@@ -2051,7 +2051,9 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
         if (AO_load(&dll_thread_table[i].tm.in_use))
           GC_delete_thread((GC_thread)&dll_thread_table[i]);
       }
+#    ifndef GC_NO_DEINIT
       GC_deinit();
+#    endif
     }
     break;
   }

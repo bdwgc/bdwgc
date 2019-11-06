@@ -2455,7 +2455,9 @@ main(void)
 #  if defined(CPPCHECK)
   /* Entry points we should be testing, but are not. */
   UNTESTED(GC_abort_on_oom);
+#    ifndef GC_NO_DEINIT
   UNTESTED(GC_deinit);
+#    endif
 #    ifndef NO_DEBUGGING
   UNTESTED(GC_dump);
 #    endif

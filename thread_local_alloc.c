@@ -31,6 +31,15 @@ __declspec(thread) GC_ATTR_TLS_FAST
 
 static GC_bool keys_initialized;
 
+#  ifndef GC_NO_DEINIT
+GC_INNER void
+GC_reset_thread_local_initialization(void)
+{
+  keys_initialized = FALSE;
+  /* TODO: Dispose resources associated with `GC_thread_key`. */
+}
+#  endif
+
 /*
  * Return a single nonempty free list `fl` to the global one pointed to
  * by `gfl`.

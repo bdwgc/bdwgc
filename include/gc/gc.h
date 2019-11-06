@@ -614,8 +614,11 @@ GC_API int GC_CALL GC_is_init_called(void);
 
 /**
  * Perform the collector shutdown.  (E.g. dispose critical sections on
- * Win32 target.)  A duplicate invocation is a no-op.  `GC_INIT()` should
- * not be called after the shutdown.  See also `GC_win32_free_heap()`.
+ * Windows target.)  A duplicate invocation is a no-op.  In case of Windows,
+ * typically, the client should also call `GC_win32_free_heap()` before this
+ * function call.
+ * TODO: The collector reinitialization after shutdown might work in certain
+ * configurations, but not tested.
  */
 GC_API void GC_CALL GC_deinit(void);
 
