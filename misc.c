@@ -1657,24 +1657,45 @@ GC_start_mark_threads(void)
 #endif
 }
 
+#ifndef GC_NO_DEINIT
 GC_API void GC_CALL
 GC_deinit(void)
 {
-  if (GC_is_initialized) {
-    /* Prevent duplicate resource close. */
-    GC_is_initialized = FALSE;
-    GC_bytes_allocd = 0;
-    GC_bytes_allocd_before_gc = 0;
-#if defined(GC_WIN32_THREADS) && (defined(MSWIN32) || defined(MSWINCE))
-#  if !defined(CONSOLE_LOG) || defined(MSWINCE)
-    DeleteCriticalSection(&GC_write_cs);
+  /* Prevent duplicate resource close. */
+  if (!GC_is_initialized)
+    return;
+
+  BZERO(&GC_arrays, sizeof(GC_arrays)); /*< clears GC_is_initialized */
+#  ifdef SEPARATE_GLOBALS
+  GC_bytes_allocd = 0;
+  BZERO(GC_objfreelist, sizeof(GC_objfreelist));
+  BZERO(GC_aobjfreelist, sizeof(GC_aobjfreelist));
 #  endif
-#  if !defined(GC_PTHREADS) && !defined(USE_RWLOCK)
-    DeleteCriticalSection(&GC_allocate_ml);
+  GC_gc_no = 0;
+  GC_dont_gc = FALSE;
+  GC_non_gc_bytes = 0;
+  GC_reset_obj_kinds();
+  GC_n_mark_procs = GC_RESERVED_MARK_PROCS;
+  GC_reset_freelist();
+#  ifdef CHECKSUMS
+  GC_reset_check_page();
 #  endif
-#endif
-  }
+#  ifdef THREADS
+  GC_reset_threads();
+#  endif
+#  ifdef THREAD_LOCAL_ALLOC
+  GC_reset_thread_local_initialization();
+#  endif
+#  if defined(GC_WIN32_THREADS) && (defined(MSWIN32) || defined(MSWINCE))
+#    if !defined(CONSOLE_LOG) || defined(MSWINCE)
+  DeleteCriticalSection(&GC_write_cs);
+#    endif
+#    if !defined(GC_PTHREADS) && !defined(USE_RWLOCK)
+  DeleteCriticalSection(&GC_allocate_ml);
+#    endif
+#  endif
 }
+#endif
 
 #if (defined(MSWIN32) && !defined(CONSOLE_LOG)) || defined(MSWINCE)
 

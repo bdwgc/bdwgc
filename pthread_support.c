@@ -686,6 +686,16 @@ GC_INNER GC_thread GC_threads[THREAD_TABLE_SZ] = { 0 };
 static struct GC_StackContext_Rep first_crtn;
 static struct GC_Thread_Rep first_thread;
 
+#  ifndef GC_NO_DEINIT
+GC_INNER void
+GC_reset_threads(void)
+{
+  BZERO(GC_threads, sizeof(GC_threads));
+  BZERO(&first_crtn, sizeof(first_crtn));
+  BZERO(&first_thread, sizeof(first_thread));
+}
+#  endif
+
 /*
  * A place to retain a pointer to an allocated object while a thread
  * registration is ongoing.  Protected by the allocator lock.

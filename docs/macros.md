@@ -270,6 +270,8 @@ the initial value of `GC_finalize_on_demand` variable.
 `GC_TOGGLE_REFS_NOT_NEEDED` - Excludes toggle-refs support (for smaller code
 size).  Has no effect if `GC_NO_FINALIZATION` macro is defined.
 
+`GC_NO_DEINIT` - Excludes `GC_deinit()` functionality.
+
 `GC_ATOMIC_UNCOLLECTABLE` - Includes code for
 `GC_malloc_atomic_uncollectable`.  This is useful if either the vendor
 `malloc` implementation is poor, or if `REDIRECT_MALLOC` macro is defined.

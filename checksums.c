@@ -42,6 +42,15 @@ STATIC word GC_faulted[NSUMS] = { 0 };
 
 STATIC size_t GC_n_faulted = 0;
 
+#  ifndef GC_NO_DEINIT
+void
+GC_reset_check_page(void)
+{
+  BZERO(GC_sums, sizeof(GC_sums));
+  GC_n_faulted = 0;
+}
+#  endif
+
 #  ifdef MPROTECT_VDB
 void
 GC_record_fault(struct hblk *h)

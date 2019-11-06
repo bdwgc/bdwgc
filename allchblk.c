@@ -80,6 +80,15 @@ STATIC
 #endif
 word GC_free_bytes[N_HBLK_FLS + 1] = { 0 };
 
+#ifndef GC_NO_DEINIT
+GC_INNER void
+GC_reset_freelist(void)
+{
+  BZERO(GC_hblkfreelist, sizeof(GC_hblkfreelist));
+  BZERO(GC_free_bytes, sizeof(GC_free_bytes));
+}
+#endif
+
 /*
  * Return the largest `n` such that the number of free bytes on lists
  * `n` .. `N_HBLK_FLS` is greater or equal to `GC_max_large_allocd_bytes`
