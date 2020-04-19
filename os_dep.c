@@ -1600,10 +1600,10 @@ void GC_register_data_segments(void)
     typedef UINT (WINAPI * GetWriteWatch_type)(
                                 DWORD, PVOID, GC_ULONG_PTR /* SIZE_T */,
                                 PVOID *, GC_ULONG_PTR *, PULONG);
-    static GetWriteWatch_type GetWriteWatch_func;
+    static FARPROC GetWriteWatch_func;
     static DWORD GetWriteWatch_alloc_flag;
 
-#   define GC_GWW_AVAILABLE() (GetWriteWatch_func != NULL)
+#   define GC_GWW_AVAILABLE() (GetWriteWatch_func != 0)
 
     static void detect_GetWriteWatch(void)
     {
@@ -1634,8 +1634,7 @@ void GC_register_data_segments(void)
 
       hK32 = GetModuleHandle(TEXT("kernel32.dll"));
       if (hK32 != (HMODULE)0 &&
-          (GetWriteWatch_func = (GetWriteWatch_type)GetProcAddress(hK32,
-                                                "GetWriteWatch")) != NULL) {
+          (GetWriteWatch_func = GetProcAddress(hK32, "GetWriteWatch")) != 0) {
         /* Also check whether VirtualAlloc accepts MEM_WRITE_WATCH,   */
         /* as some versions of kernel32.dll have one but not the      */
         /* other, making the feature completely broken.               */
@@ -1649,24 +1648,23 @@ void GC_register_data_segments(void)
           /* Check that it actually works.  In spite of some            */
           /* documentation it actually seems to exist on Win2K.         */
           /* This test may be unnecessary, but ...                      */
-          if (GetWriteWatch_func(WRITE_WATCH_FLAG_RESET,
-                                 page, GC_page_size,
-                                 pages,
-                                 &count,
-                                 &page_size) != 0) {
+          if ((*(GetWriteWatch_type)(word)GetWriteWatch_func)(
+                                        WRITE_WATCH_FLAG_RESET, page,
+                                        GC_page_size, pages, &count,
+                                        &page_size) != 0) {
             /* GetWriteWatch always fails. */
-            GetWriteWatch_func = NULL;
+            GetWriteWatch_func = 0;
           } else {
             GetWriteWatch_alloc_flag = MEM_WRITE_WATCH;
           }
           VirtualFree(page, 0 /* dwSize */, MEM_RELEASE);
         } else {
           /* GetWriteWatch will be useless. */
-          GetWriteWatch_func = NULL;
+          GetWriteWatch_func = 0;
         }
       }
 #     ifndef SMALL_CONFIG
-        if (GetWriteWatch_func == NULL) {
+        if (!GetWriteWatch_func) {
           GC_COND_LOG_PRINTF("Did not find a usable GetWriteWatch()\n");
         } else {
           GC_COND_LOG_PRINTF("Using GetWriteWatch()\n");
@@ -2879,12 +2877,11 @@ GC_API GC_push_other_roots_proc GC_CALL GC_get_push_other_roots(void)
         /* loop condition. Since each partial call will reset the       */
         /* status of some pages, this should eventually terminate even  */
         /* in the overflow case.                                        */
-        if (GetWriteWatch_func(WRITE_WATCH_FLAG_RESET,
-                               GC_heap_sects[i].hs_start,
-                               GC_heap_sects[i].hs_bytes,
-                               pages,
-                               &count,
-                               &page_size) != 0) {
+        if ((*(GetWriteWatch_type)(word)GetWriteWatch_func)(
+                                        WRITE_WATCH_FLAG_RESET,
+                                        GC_heap_sects[i].hs_start,
+                                        GC_heap_sects[i].hs_bytes,
+                                        pages, &count, &page_size) != 0) {
           static int warn_count = 0;
           unsigned j;
           struct hblk * start = (struct hblk *)GC_heap_sects[i].hs_start;
