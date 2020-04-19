@@ -2655,8 +2655,8 @@ GC_INNER void GC_thr_init(void)
       if (hK32) {
         FARPROC pfn = GetProcAddress(hK32, "IsWow64Process");
         if (pfn
-            && !(*(BOOL (WINAPI*)(HANDLE, BOOL*))pfn)(GetCurrentProcess(),
-                                                      &isWow64))
+            && !(*(BOOL (WINAPI*)(HANDLE, BOOL*))(word)pfn)(
+                                        GetCurrentProcess(), &isWow64))
           isWow64 = FALSE; /* IsWow64Process failed */
       }
     }
