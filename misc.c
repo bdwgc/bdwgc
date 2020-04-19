@@ -895,14 +895,14 @@ GC_API void GC_CALL GC_init(void)
 #   if defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS)
      {
 #     ifndef MSWINCE
-        BOOL (WINAPI *pfn) (LPCRITICAL_SECTION, DWORD) = NULL;
+        FARPROC pfn = 0;
         HMODULE hK32 = GetModuleHandle(TEXT("kernel32.dll"));
         if (hK32)
-          pfn = (BOOL (WINAPI *) (LPCRITICAL_SECTION, DWORD))
-                GetProcAddress (hK32,
+          pfn = GetProcAddress (hK32,
                                 "InitializeCriticalSectionAndSpinCount");
         if (pfn)
-            pfn(&GC_allocate_ml, 4000);
+            (*(BOOL (WINAPI *)(LPCRITICAL_SECTION, DWORD))(word)pfn)(
+                                &GC_allocate_ml, 4000);
         else
 #     endif /* !MSWINCE */
         /* else */ InitializeCriticalSection (&GC_allocate_ml);
@@ -1702,7 +1702,7 @@ GC_API GC_warn_proc GC_CALL GC_get_warn_proc(void)
           if (hU32) {
             FARPROC pfn = GetProcAddress(hU32, "MessageBoxA");
             if (pfn)
-              (void)(*(int (WINAPI *)(HWND, LPCSTR, LPCSTR, UINT))pfn)(
+              (void)(*(int (WINAPI *)(HWND, LPCSTR, LPCSTR, UINT))(word)pfn)(
                                   NULL /* hWnd */, msg, "Fatal error in GC",
                                   MB_ICONERROR | MB_OK);
             (void)FreeLibrary(hU32);
