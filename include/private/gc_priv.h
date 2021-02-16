@@ -2332,10 +2332,12 @@ GC_API_PRIV struct _GC_arrays GC_arrays;
 
 /* Object kinds. */
 #ifndef MAXOBJKINDS
-#  ifdef SMALL_CONFIG
-#    define MAXOBJKINDS 16
-#  else
+#  ifdef GC_DEBUG
+#    define MAXOBJKINDS 32
+#  elif !defined(SMALL_CONFIG)
 #    define MAXOBJKINDS 24
+#  else
+#    define MAXOBJKINDS 16
 #  endif
 #endif
 GC_EXTERN struct obj_kind {
