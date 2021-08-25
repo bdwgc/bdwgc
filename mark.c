@@ -1435,6 +1435,18 @@ GC_API void GC_CALL GC_push_all(void *bottom, void *top)
       }
     }
   }
+
+# ifndef NO_VDB_FOR_STATIC_ROOTS
+    GC_INNER void GC_push_conditional_static(void *bottom, void *top,
+                                             GC_bool all)
+    {
+        /* Just redirect to the generic routine because PROC_VDB        */
+        /* implementation gets the dirty bits map for the whole         */
+        /* process memory.                                              */
+        GC_push_conditional(bottom, top, all);
+    }
+# endif /* !NO_VDB_FOR_STATIC_ROOTS */
+
 #else
   GC_API void GC_CALL GC_push_conditional(void *bottom, void *top,
                                           int all GC_ATTR_UNUSED)

@@ -1757,6 +1757,16 @@ GC_INNER GC_bool GC_collection_in_progress(void);
 # define GC_push_all_stack(b, t) GC_push_all_eager(b, t)
 #endif
 
+#ifdef NO_VDB_FOR_STATIC_ROOTS
+# define GC_push_conditional_static(b, t, all) \
+                ((void)(all), GC_push_all(b, t))
+#else
+  /* Same as GC_push_conditional (does either of GC_push_all or         */
+  /* GC_push_selected depending on the third argument) but the caller   */
+  /* guarantees the region belongs to the registered static roots.      */
+  GC_INNER void GC_push_conditional_static(void *b, void *t, GC_bool all);
+#endif
+
 #if defined(WRAP_MARK_SOME) && defined(PARALLEL_MARK)
   /* GC_mark_local does not handle memory protection faults yet.  So,   */
   /* the static data regions are scanned immediately by GC_push_roots.  */
