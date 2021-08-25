@@ -1656,14 +1656,10 @@ GC_INNER void GC_initiate_gc(void);
 GC_INNER GC_bool GC_collection_in_progress(void);
                         /* Collection is in progress, or was abandoned. */
 
-#ifndef GC_DISABLE_INCREMENTAL
 # define GC_PUSH_CONDITIONAL(b, t, all) \
-                GC_push_conditional((ptr_t)(b), (ptr_t)(t), all)
+                GC_push_conditional_static((ptr_t)(b), (ptr_t)(t), all)
                         /* Do either of GC_push_all or GC_push_selected */
                         /* depending on the third arg.                  */
-#else
-# define GC_PUSH_CONDITIONAL(b, t, all) GC_push_all((ptr_t)(b), (ptr_t)(t))
-#endif
 
 GC_INNER void GC_push_all_stack(ptr_t b, ptr_t t);
                                     /* As GC_push_all but consider      */
@@ -1673,6 +1669,16 @@ GC_INNER void GC_push_all_eager(ptr_t b, ptr_t t);
                                     /* ensures that stack is scanned    */
                                     /* immediately, not just scheduled  */
                                     /* for scanning.                    */
+
+#ifdef NO_VDB_FOR_STATIC_ROOTS
+# define GC_push_conditional_static(b, t, all) \
+                ((void)(all), GC_push_all(b, t))
+#else
+  /* Same as GC_push_conditional (does either of GC_push_all or         */
+  /* GC_push_selected depending on the third argument) but the caller   */
+  /* guarantees the region belongs to the registered static roots.      */
+  GC_INNER void GC_push_conditional_static(char *b, char *t, GC_bool all);
+#endif
 
   /* In the threads case, we push part of the current thread stack      */
   /* with GC_push_all_eager when we push the registers.  This gets the  */

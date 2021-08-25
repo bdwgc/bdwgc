@@ -593,7 +593,7 @@ GC_API void GC_CALL GC_exclude_static_roots(void *b, void *e)
 
 /* Invoke push_conditional on ranges that are not excluded. */
 STATIC void GC_push_conditional_with_exclusions(ptr_t bottom, ptr_t top,
-                                                GC_bool all GC_ATTR_UNUSED)
+                                                GC_bool all)
 {
     struct exclusion * next;
     ptr_t excl_start;
