@@ -3070,6 +3070,11 @@
 # define DEFAULT_VDB
 #endif
 
+#if !defined(PROC_VDB) && !defined(NO_VDB_FOR_STATIC_ROOTS)
+  /* Cannot determine whether a static root page is dirty?      */
+# define NO_VDB_FOR_STATIC_ROOTS
+#endif
+
 #if ((defined(UNIX_LIKE) && (defined(DARWIN) || defined(HAIKU) \
                              || defined(HURD) || defined(OPENBSD) \
                              || defined(ARM32) \
