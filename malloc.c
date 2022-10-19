@@ -477,9 +477,19 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
       LOCK(); /* to avoid assertion violation in GC_get_maps, at least */
       if (!GC_text_mapping("libpthread-",
                            &GC_libpthread_start, &GC_libpthread_end)) {
+        /* Some libc implementations like bionic, musl and glibc 2.34   */
+        /* do not have libpthread.so because the pthreads-related code  */
+        /* is located in libc.so, thus potential calloc calls from such */
+        /* code are forwarded to real (libc) calloc without any special */
+        /* handling on the libgc side.  Checking glibc version at       */
+        /* compile time to turn off the warning seems to be fine.       */
+        /* TODO: Remove GC_text_mapping() call for this case.           */
+#       if defined(__GLIBC__) \
+           && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 34))
           WARN("Failed to find libpthread.so text mapping: Expect crash\n", 0);
           /* This might still work with some versions of libpthread,      */
-          /* so we don't abort.  Perhaps we should.                       */
+          /* so we do not abort.                                          */
+#       endif
           /* Generate message only once:                                  */
             GC_libpthread_start = (ptr_t)1;
       }
