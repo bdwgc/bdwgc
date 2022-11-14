@@ -929,11 +929,11 @@ EXTERN_C_BEGIN
 /* page size to be a multiple of HBLKSIZE.  Since most modern   */
 /* architectures support variable page sizes down to 4 KB, and  */
 /* x86 is generally 4 KB, we now default to 4 KB, except for    */
-/*   Alpha: Seems to be used with 8 KB pages.                   */
+/*   Alpha, Sunway: 8 KB pages by default.                      */
 /*   SMALL_CONFIG: Want less block-level fragmentation.         */
 #ifndef HBLKSIZE
 # if defined(LARGE_CONFIG) || !defined(SMALL_CONFIG)
-#   ifdef ALPHA
+#   if defined(ALPHA) || defined(SW_64)
 #     define CPP_LOG_HBLKSIZE 13
 #   elif defined(SN_TARGET_PSP2)
 #     define CPP_LOG_HBLKSIZE 16    /* page size is set to 64 KB */

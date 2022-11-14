@@ -417,6 +417,10 @@ EXTERN_C_BEGIN
 #    define SPARC
 #    define mach_type_known
 # endif
+# if defined(LINUX) && defined(__sw_64__)
+#    define SW_64
+#    define mach_type_known
+# endif
 # if defined(LINUX) && defined(__sh__)
 #    define SH
 #    define mach_type_known
@@ -774,6 +778,8 @@ EXTERN_C_BEGIN
                     /*                  (LINUX and HPUX)                */
                     /*             SH         ==> Hitachi SuperH        */
                     /*                  (LINUX & MSWINCE)               */
+                    /*             SW_64      ==> Sunway (Shenwei)      */
+                    /*                  running LINUX                   */
                     /*             X86_64     ==> AMD x86-64            */
                     /*             POWERPC    ==> IBM/Apple PowerPC     */
                     /*                  (MACOS(<=9),DARWIN(incl.MACOSX),*/
@@ -1776,6 +1782,20 @@ EXTERN_C_BEGIN
 #     define ALIGNMENT (CPP_WORDSZ/8)
 #   endif
 # endif /* LOONGARCH */
+
+# ifdef SW_64
+#   define MACH_TYPE "SW_64"
+#   define CPP_WORDSZ 64
+#   ifdef LINUX
+#     ifdef __ELF__
+#       define SEARCH_FOR_DATA_START
+#     else
+#       define DATASTART ((ptr_t)0x140000000)
+        extern int _end[];
+#       define DATAEND ((ptr_t)_end)
+#     endif
+#   endif
+# endif /* SW_64 */
 
 # ifdef MIPS
 #   define MACH_TYPE "MIPS"
