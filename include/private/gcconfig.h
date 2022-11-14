@@ -1716,7 +1716,13 @@ extern int __data_start[];
 #  define MACH_TYPE "SW_64"
 #  define CPP_WORDSZ 64
 #  ifdef LINUX
-/* Nothing specific. */
+#    ifdef __ELF__
+#      define SEARCH_FOR_DATA_START
+#    else
+#      define DATASTART MAKE_CPTR(0x140000000)
+extern int _end[];
+#      define DATAEND ((ptr_t)_end)
+#    endif
 #  endif
 #endif /* SW_64 */
 
