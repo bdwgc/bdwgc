@@ -88,20 +88,20 @@ CORD_API char CORD__pos_fetch(CORD_pos);
 CORD_API void CORD__next(CORD_pos);
 CORD_API void CORD__prev(CORD_pos);
 
-#define CORD_pos_fetch(p)       \
-    (((p)[0].cur_end != 0)? \
+#define CORD_pos_fetch(p) \
+    ((p)[0].cur_end != 0 ? \
         (p)[0].cur_leaf[(p)[0].cur_pos - (p)[0].cur_start] \
         : CORD__pos_fetch(p))
 
-#define CORD_next(p)    \
-    (((p)[0].cur_pos + 1 < (p)[0].cur_end)? \
+#define CORD_next(p) \
+    ((p)[0].cur_pos + 1 < (p)[0].cur_end ? \
         (p)[0].cur_pos++ \
-        : (CORD__next(p), 0))
+        : (CORD__next(p), 0U))
 
-#define CORD_prev(p)    \
-    (((p)[0].cur_end != 0 && (p)[0].cur_pos > (p)[0].cur_start)? \
+#define CORD_prev(p) \
+    ((p)[0].cur_end != 0 && (p)[0].cur_pos > (p)[0].cur_start ? \
         (p)[0].cur_pos-- \
-        : (CORD__prev(p), 0))
+        : (CORD__prev(p), 0U))
 
 #define CORD_pos_to_index(p) ((p)[0].cur_pos)
 
@@ -110,7 +110,7 @@ CORD_API void CORD__prev(CORD_pos);
 #define CORD_pos_valid(p) ((p)[0].path_len != CORD_POS_INVALID)
 
 /* Some grubby stuff for performance-critical friends:  */
-#define CORD_pos_chars_left(p) ((long)((p)[0].cur_end)-(long)((p)[0].cur_pos))
+#define CORD_pos_chars_left(p) ((long)(p)[0].cur_end - (long)(p)[0].cur_pos)
         /* Number of characters in cache.  <= 0 ==> none        */
 
 #define CORD_pos_advance(p,n) ((p)[0].cur_pos += (n) - 1, CORD_next(p))
