@@ -137,7 +137,7 @@ int CORD_cmp(CORD x, CORD y)
 {
     CORD_pos xpos;
     CORD_pos ypos;
-    register size_t avail, yavail;
+    register long avail, yavail;
 
     if (y == CORD_EMPTY) return(x != CORD_EMPTY);
     if (x == CORD_EMPTY) return(-1);
@@ -168,10 +168,10 @@ int CORD_cmp(CORD x, CORD y)
 
             if (avail > yavail) avail = yavail;
             result = strncmp(CORD_pos_cur_char_addr(xpos),
-                         CORD_pos_cur_char_addr(ypos), avail);
+                             CORD_pos_cur_char_addr(ypos), (size_t)avail);
             if (result != 0) return(result);
-            CORD_pos_advance(xpos, avail);
-            CORD_pos_advance(ypos, avail);
+            CORD_pos_advance(xpos, (size_t)avail);
+            CORD_pos_advance(ypos, (size_t)avail);
         }
     }
 }
@@ -209,7 +209,7 @@ int CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
             register int result;
 
             if (avail > yavail) avail = yavail;
-            count += avail;
+            count += (size_t)avail;
             if (count > len) avail -= (count - len);
             result = strncmp(CORD_pos_cur_char_addr(xpos),
                          CORD_pos_cur_char_addr(ypos), (size_t)avail);
@@ -317,7 +317,7 @@ int CORD_batched_chr_proc(const char *s, void * client_data)
         d -> pos += strlen(s);
         return(0);
     } else {
-        d -> pos += occ - s;
+        d -> pos += (size_t)(occ - s);
         return(1);
     }
 }
@@ -409,7 +409,7 @@ size_t CORD_str(CORD x, size_t start, CORD s)
 
 void CORD_ec_flush_buf(CORD_ec x)
 {
-    register size_t len = x[0].ec_bufptr - x[0].ec_buf;
+    register size_t len = (size_t)(x[0].ec_bufptr - x[0].ec_buf);
     char * s;
 
     if (len == 0) return;
