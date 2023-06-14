@@ -50,9 +50,9 @@
                         abort(); \
                       } while (0)
 
-static int ec_len(CORD_ec x)
+static size_t ec_len(CORD_ec x)
 {
-    return(CORD_len(x[0].ec_cord) + (x[0].ec_bufptr - x[0].ec_buf));
+    return CORD_len(x[0].ec_cord) + (size_t)(x[0].ec_bufptr - x[0].ec_buf);
 }
 
 /* Possible non-numeric precision values.   */
@@ -208,17 +208,16 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
                     case 'n':
                         /* Assign length to next arg */
                         if (long_arg == 0) {
-                            int * pos_ptr;
-                            pos_ptr = va_arg(args, int *);
-                            *pos_ptr = ec_len(result);
+                            unsigned *pos_ptr = va_arg(args, unsigned *);
+                            *pos_ptr = (unsigned)ec_len(result);
                         } else if (long_arg > 0) {
-                            long * pos_ptr;
-                            pos_ptr = va_arg(args, long *);
-                            *pos_ptr = ec_len(result);
+                            unsigned long *pos_ptr =
+                                        va_arg(args, unsigned long *);
+                            *pos_ptr = (unsigned long)ec_len(result);
                         } else {
-                            short * pos_ptr;
-                            pos_ptr = va_arg(args, short *);
-                            *pos_ptr = ec_len(result);
+                            unsigned short *pos_ptr =
+                                        va_arg(args, unsigned short *);
+                            *pos_ptr = (unsigned short)ec_len(result);
                         }
                         goto done;
                     case 'r':
@@ -362,7 +361,7 @@ int CORD_vsprintf(CORD * out, CORD format, va_list args)
             CORD_ec_append(result, current);
         }
     }
-    count = ec_len(result);
+    count = (int)ec_len(result);
     *out = CORD_balance(CORD_ec_to_cord(result));
     return(count);
 }
