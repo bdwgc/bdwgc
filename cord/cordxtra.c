@@ -160,7 +160,7 @@ int CORD_cmp(CORD x, CORD y)
     CORD_set_pos(xpos, x, 0);
     CORD_set_pos(ypos, y, 0);
     for(;;) {
-        size_t avail, yavail;
+        long avail, yavail;
 
         if (!CORD_pos_valid(xpos)) {
             if (CORD_pos_valid(ypos)) {
@@ -186,10 +186,10 @@ int CORD_cmp(CORD x, CORD y)
 
             if (avail > yavail) avail = yavail;
             result = strncmp(CORD_pos_cur_char_addr(xpos),
-                         CORD_pos_cur_char_addr(ypos), avail);
+                             CORD_pos_cur_char_addr(ypos), (size_t)avail);
             if (result != 0) return(result);
-            CORD_pos_advance(xpos, avail);
-            CORD_pos_advance(ypos, avail);
+            CORD_pos_advance(xpos, (size_t)avail);
+            CORD_pos_advance(ypos, (size_t)avail);
         }
     }
 }
@@ -229,7 +229,7 @@ int CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
             int result;
 
             if (avail > yavail) avail = yavail;
-            count += avail;
+            count += (size_t)avail;
             if (count > len)
                 avail -= (long)(count - len);
             result = strncmp(CORD_pos_cur_char_addr(xpos),
@@ -339,7 +339,7 @@ int CORD_batched_chr_proc(const char *s, void * client_data)
         d -> pos += strlen(s);
         return(0);
     } else {
-        d -> pos += occ - s;
+        d -> pos += (size_t)(occ - s);
         return(1);
     }
 }
@@ -431,7 +431,7 @@ size_t CORD_str(CORD x, size_t start, CORD s)
 
 void CORD_ec_flush_buf(CORD_ec x)
 {
-    size_t len = x[0].ec_bufptr - x[0].ec_buf;
+    size_t len = (size_t)(x[0].ec_bufptr - x[0].ec_buf);
     char * s;
 
     if (len == 0) return;
