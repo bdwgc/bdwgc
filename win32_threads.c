@@ -81,7 +81,16 @@ static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext);
 # else
 #   define PUSHED_REGS_COUNT 7
 # endif
-#elif defined(X86_64) || defined(SHx)
+#elif defined(X86_64)
+# ifdef XMM_CANT_STORE_PTRS
+    /* If pointers can't be located in Xmm registers.   */
+#   define PUSHED_REGS_COUNT 15
+# else
+    /* gcc-13 may store pointers into SIMD registers when       */
+    /* certain compiler optimizations are enabled.              */
+#   define PUSHED_REGS_COUNT (15+32)
+# endif
+#elif defined(SHx)
 # define PUSHED_REGS_COUNT 15
 #elif defined(ARM32)
 # define PUSHED_REGS_COUNT 13
@@ -1148,9 +1157,12 @@ void GC_push_thread_structures(void)
                         ? CONTEXT_INTEGER | CONTEXT_CONTROL \
                           | CONTEXT_EXCEPTION_REQUEST | CONTEXT_SEGMENTS \
                         : CONTEXT_INTEGER | CONTEXT_CONTROL)
-#else
+#elif defined(I386) || defined(XMM_CANT_STORE_PTRS)
 # define GET_THREAD_CONTEXT_FLAGS (CONTEXT_INTEGER | CONTEXT_CONTROL)
-#endif /* !WOW64_THREAD_CONTEXT_WORKAROUND */
+#else
+# define GET_THREAD_CONTEXT_FLAGS (CONTEXT_INTEGER | CONTEXT_CONTROL \
+                                   | CONTEXT_FLOATING_POINT)
+#endif /* !WOW64_THREAD_CONTEXT_WORKAROUND && !I386 */
 
 /* Suspend the given thread, if it's still active.      */
 STATIC void GC_suspend(GC_thread t)
@@ -1429,6 +1441,8 @@ static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext) {
 #   define PUSH1(reg) (regs[cnt++] = (word)pcontext->reg)
 #   define PUSH2(r1,r2) PUSH1(r1), PUSH1(r2)
 #   define PUSH4(r1,r2,r3,r4) PUSH2(r1,r2), PUSH2(r3,r4)
+#   define PUSH8_LH(r1,r2,r3,r4) (PUSH4(r1.Low,r1.High,r2.Low,r2.High), \
+                                  PUSH4(r3.Low,r3.High,r4.Low,r4.High))
 #   if defined(I386)
 #     ifdef WOW64_THREAD_CONTEXT_WORKAROUND
         PUSH2(ContextFlags, SegFs); /* cannot contain pointers */
@@ -1438,6 +1452,12 @@ static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext) {
 #   elif defined(X86_64)
       PUSH4(Rax,Rcx,Rdx,Rbx); PUSH2(Rbp, Rsi); PUSH1(Rdi);
       PUSH4(R8, R9, R10, R11); PUSH4(R12, R13, R14, R15);
+#     ifndef XMM_CANT_STORE_PTRS
+        PUSH8_LH(Xmm0,  Xmm1,  Xmm2,  Xmm3);
+        PUSH8_LH(Xmm4,  Xmm5,  Xmm6,  Xmm7);
+        PUSH8_LH(Xmm8,  Xmm9,  Xmm10, Xmm11);
+        PUSH8_LH(Xmm12, Xmm13, Xmm14, Xmm15);
+#     endif
       sp = (ptr_t)context.Rsp;
 #   elif defined(ARM32)
       PUSH4(R0,R1,R2,R3),PUSH4(R4,R5,R6,R7),PUSH4(R8,R9,R10,R11);
