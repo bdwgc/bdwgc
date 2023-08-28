@@ -25,6 +25,13 @@
 #ifndef GCCONFIG_H
 #define GCCONFIG_H
 
+#ifndef GC_H
+# ifdef HAVE_CONFIG_H
+#   include "config.h"
+# endif
+# include "../gc.h"
+#endif
+
 # ifndef GC_PRIVATE_H
     /* Fake ptr_t declaration, just to avoid compilation errors.        */
     /* This avoids many instances if "ifndef GC_PRIVATE_H" below.       */
