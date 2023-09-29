@@ -205,14 +205,19 @@ free_list_index_of(const hdr *wanted)
 }
 
 GC_API void GC_CALL
-GC_dump_regions(void)
+GC_foreach_heap_section_inner(GC_heap_section_proc fn, void *client_data)
 {
   size_t i;
 
+  /*
+   * The collector memory is organized in heap sections that are split in
+   * blocks.  Each such block has a header (obtained by `HDR(p)`) and the
+   * block size is aligned to `HBLKSIZE`.  The block headers are kept
+   * separately from the memory they point to.
+   */
   for (i = 0; i < GC_n_heap_sects; ++i) {
     ptr_t start = GC_heap_sects[i].hs_start;
-    size_t bytes = GC_heap_sects[i].hs_bytes;
-    ptr_t finish = start + bytes;
+    ptr_t finish = start + GC_heap_sects[i].hs_bytes;
     ptr_t p;
 
     /* Merge in contiguous sections. */
@@ -221,38 +226,97 @@ GC_dump_regions(void)
       ++i;
       finish = GC_heap_sects[i].hs_start + GC_heap_sects[i].hs_bytes;
     }
-    GC_printf("***Section from %p to %p\n", (void *)start, (void *)finish);
+
+    fn(start, finish, GC_HEAP_SECTION_TYPE_WHOLE_SECT, client_data);
     for (p = start; ADDR_LT(p, finish);) {
+      /*
+       * Lookup into 2-level tree data structure which uses address
+       * as a hash key to find the block header.
+       */
       hdr *hhdr = HDR(p);
 
       if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
-        GC_printf("\t%p Missing header!!(%p)\n", (void *)p, (void *)hhdr);
+        /*
+         * The pointer has no header registered in the headers cache.
+         * Skip one `HBLKSIZE` and retry.  Might be mapped or not.
+         */
+        fn(p, p + HBLKSIZE, GC_HEAP_SECTION_TYPE_FORWARDING, client_data);
         p += HBLKSIZE;
         continue;
       }
-      if (HBLK_IS_FREE(hhdr)) {
-        int correct_index
-            = (int)GC_hblk_fl_from_blocks(divHBLKSZ(hhdr->hb_sz));
-        int actual_index;
 
-        GC_printf("\t%p\tfree block of size 0x%lx bytes%s\n", (void *)p,
-                  (unsigned long)hhdr->hb_sz,
-                  IS_MAPPED(hhdr) ? "" : " (unmapped)");
-        actual_index = free_list_index_of(hhdr);
-        if (-1 == actual_index) {
-          GC_printf("\t\tBlock not on free list %d!!\n", correct_index);
-        } else if (correct_index != actual_index) {
-          GC_printf("\t\tBlock on list %d, should be on %d!!\n", actual_index,
-                    correct_index);
-        }
+      if (HBLK_IS_FREE(hhdr)) {
+        /*
+         * The block is marked as free.  Note: `hb_sz` is the size in bytes
+         * of the whole block.
+         */
+        fn(p, p + hhdr->hb_sz,
+           IS_MAPPED(hhdr) ? GC_HEAP_SECTION_TYPE_FREE
+                           : GC_HEAP_SECTION_TYPE_UNMAPPED,
+           client_data);
         p += hhdr->hb_sz;
       } else {
-        GC_printf("\t%p\tused for blocks of size 0x%lx bytes\n", (void *)p,
-                  (unsigned long)hhdr->hb_sz);
-        p += HBLKSIZE * OBJ_SZ_TO_BLOCKS(hhdr->hb_sz);
+        /*
+         * This heap block is used.  Report also the padding, if any.
+         * Note: `hb_sz` is the size (in bytes) of objects in the block.
+         */
+        ptr_t blockEnd = p + HBLKSIZE * OBJ_SZ_TO_BLOCKS(hhdr->hb_sz);
+        ptr_t usedBlockEnd = p + hhdr->hb_sz;
+
+        fn(p, usedBlockEnd, GC_HEAP_SECTION_TYPE_USED, client_data);
+        if (ADDR_LT(usedBlockEnd, blockEnd))
+          fn(usedBlockEnd, blockEnd, GC_HEAP_SECTION_TYPE_PADDING,
+             client_data);
+        p = blockEnd;
       }
     }
   }
+}
+
+static void GC_CALLBACK
+dump_regions_proc(void *start, void *finish, GC_heap_section_type type,
+                  void *client_data)
+{
+  hdr *hhdr;
+  int correct_index, actual_index;
+
+  UNUSED_ARG(client_data);
+  switch (type) {
+  case GC_HEAP_SECTION_TYPE_WHOLE_SECT:
+    GC_printf("***Section from %p to %p\n", start, finish);
+    break;
+  case GC_HEAP_SECTION_TYPE_FORWARDING:
+    GC_printf("\t%p Missing header!!(%p)\n", start, (void *)HDR(start));
+    break;
+  case GC_HEAP_SECTION_TYPE_FREE:
+  case GC_HEAP_SECTION_TYPE_UNMAPPED:
+    hhdr = HDR(start);
+    GC_printf("\t%p\tfree block of size 0x%lx bytes%s\n", start,
+              (unsigned long)hhdr->hb_sz,
+              type == GC_HEAP_SECTION_TYPE_UNMAPPED ? " (unmapped)" : "");
+    actual_index = free_list_index_of(hhdr);
+    correct_index = (int)GC_hblk_fl_from_blocks(divHBLKSZ(hhdr->hb_sz));
+    if (-1 == actual_index) {
+      GC_printf("\t\tBlock not on free list %d!!\n", correct_index);
+    } else if (correct_index != actual_index) {
+      GC_printf("\t\tBlock on list %d, should be on %d!!\n", actual_index,
+                correct_index);
+    }
+    break;
+  case GC_HEAP_SECTION_TYPE_USED:
+    GC_printf("\t%p\tused for blocks of size 0x%lx bytes\n", start,
+              (unsigned long)(ADDR(finish) - ADDR(start)));
+    break;
+  case GC_HEAP_SECTION_TYPE_PADDING:
+    /* Empty. */
+    break;
+  }
+}
+
+GC_API void GC_CALL
+GC_dump_regions(void)
+{
+  GC_foreach_heap_section_inner(dump_regions_proc, NULL);
 }
 #endif /* !NO_DEBUGGING */
 

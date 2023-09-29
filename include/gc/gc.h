@@ -2307,6 +2307,30 @@ GC_API void GC_CALL GC_dump_regions(void);
  */
 GC_API void GC_CALL GC_dump_finalization(void);
 
+typedef enum {
+  GC_HEAP_SECTION_TYPE_FREE,
+  GC_HEAP_SECTION_TYPE_PADDING,
+  GC_HEAP_SECTION_TYPE_USED,
+  GC_HEAP_SECTION_TYPE_UNMAPPED,
+  GC_HEAP_SECTION_TYPE_FORWARDING,
+  GC_HEAP_SECTION_TYPE_WHOLE_SECT
+} GC_heap_section_type;
+
+typedef void(GC_CALLBACK *GC_heap_section_proc)(
+    void * /* `start` */, void * /* `finish` */,
+    GC_heap_section_type /* `type` */, void * /* `client_data` */);
+
+/**
+ * Apply `fn` to each heap section and each heap block inside.
+ * Similar to `GC_apply_to_all_blocks()`.  Assumes the allocator lock
+ * is held at least in the reader mode, but no assertion about it
+ * by design.  Defined only if the library has been compiled without
+ * `NO_DEBUGGING` macro defined.
+ */
+GC_API void GC_CALL GC_foreach_heap_section_inner(GC_heap_section_proc fn,
+                                                  void *client_data)
+    GC_ATTR_NONNULL(1);
+
 /*
  * Safer, but slow, pointer addition.  Probably useful mainly with
  * a preprocessor.  Useful only for heap pointers.  Only the macros
