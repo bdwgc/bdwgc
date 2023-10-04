@@ -391,14 +391,15 @@ GC_API void * GC_CALL GC_clear_stack(void *arg)
         return arg;
     }
 # else
-    if (GC_gc_no > GC_stack_last_cleared) {
-        /* Start things over, so we clear the entire stack again */
-        if (GC_stack_last_cleared == 0) GC_high_water = (ptr_t)GC_stackbottom;
+    if (GC_gc_no != GC_stack_last_cleared) {
+        /* Start things over, so we clear the entire stack again.   */
+        if (EXPECT(NULL == GC_high_water, FALSE))
+          GC_high_water = (ptr_t)GC_stackbottom;
         GC_min_sp = GC_high_water;
         GC_stack_last_cleared = GC_gc_no;
         GC_bytes_allocd_at_reset = GC_bytes_allocd;
     }
-    /* Adjust GC_high_water */
+    /* Adjust GC_high_water.  */
         MAKE_COOLER(GC_high_water, WORDS_TO_BYTES(DEGRADE_RATE) + GC_SLOP);
         if ((word)sp HOTTER_THAN (word)GC_high_water) {
             GC_high_water = sp;
