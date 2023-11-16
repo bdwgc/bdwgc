@@ -1,0 +1,62 @@
+# This workflow is for CMake-based build/test running on multiple platforms.
+name: cmake build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.c_compiler }} ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        os: [ macos-13, ubuntu-latest, windows-latest ]
+        c_compiler: [ cl, clang, gcc ]
+        build_type: [ Debug, Release ]
+        exclude:
+        - os: macos-13
+          c_compiler: cl
+        - os: macos-13
+          c_compiler: gcc
+        - os: ubuntu-latest
+          c_compiler: cl
+        - os: windows-latest
+          c_compiler: clang # cannot find curses.h
+        include:
+        - os: windows-latest
+          c_compiler: gcc
+          cmake_generator_opt: '-G "Unix Makefiles"'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      # Turn repeated input strings into step outputs.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory.
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        ${{ matrix.cmake_generator_opt }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+
+    - name: Build
+      # Build the code with the given configuration.
+      run: >
+        cmake --build ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ matrix.build_type }} --verbose --parallel
+
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Execute tests defined by the CMake configuration.
+      run: ctest --build-config ${{ matrix.build_type }} --verbose --parallel 8
