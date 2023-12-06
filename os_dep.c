@@ -74,7 +74,8 @@
 # include <errno.h>
 #endif
 
-#ifdef DARWIN
+#if defined(DARWIN) && !defined(DYNAMIC_LOADING) \
+    && !defined(GC_DONT_REGISTER_MAIN_STATIC_DATA)
   /* for get_etext and friends */
 # include <mach-o/getsect.h>
 #endif
@@ -2118,7 +2119,7 @@ void GC_register_data_segments(void)
       /* Avoid even referencing DATASTART and DATAEND as they are       */
       /* unnecessary and cause linker errors when bitcode is enabled.   */
       /* GC_register_data_segments() is not called anyway.              */
-#   elif defined(DYNAMIC_LOADING) && defined(HAIKU)
+#   elif defined(DYNAMIC_LOADING) && (defined(DARWIN) || defined(HAIKU))
       /* No-op.  GC_register_main_static_data() always returns false.   */
 #   elif !defined(PCR) && !defined(MACOS)
 #     if defined(REDIRECT_MALLOC) && defined(GC_SOLARIS_THREADS)
