@@ -387,10 +387,6 @@ if (enable_werror)
     add_compile_options(/we)
   else()
     add_compile_options(-Werror)
-    if (APPLE)
-      # _dyld_bind_fully_image_containing_address is deprecated in OS X 10.5+
-      add_compile_options(-Wno-deprecated-declarations)
-    endif()
   endif()
 endif(enable_werror)
 

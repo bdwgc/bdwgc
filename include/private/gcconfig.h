@@ -1747,10 +1747,6 @@ EXTERN_C_BEGIN
 #     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0xc0000000)
 #     define MPROTECT_VDB
-#     if TARGET_OS_IPHONE && !defined(NO_DYLD_BIND_FULLY_IMAGE)
-        /* iPhone/iPad simulator */
-#       define NO_DYLD_BIND_FULLY_IMAGE
-#     endif
 #   endif /* DARWIN */
 # endif
 
@@ -2225,9 +2221,6 @@ EXTERN_C_BEGIN
 #     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0x16fdfffff)
 #     if TARGET_OS_IPHONE
-#       ifndef NO_DYLD_BIND_FULLY_IMAGE
-#         define NO_DYLD_BIND_FULLY_IMAGE
-#       endif
         /* MPROTECT_VDB causes use of non-public API like exc_server,   */
         /* this could be a reason for blocking the client application   */
         /* in the store.                                                */
@@ -2311,9 +2304,6 @@ EXTERN_C_BEGIN
 #     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0x30000000)
       /* MPROTECT_VDB causes use of non-public API.     */
-#     if TARGET_OS_IPHONE && !defined(NO_DYLD_BIND_FULLY_IMAGE)
-#       define NO_DYLD_BIND_FULLY_IMAGE
-#     endif
 #   endif
 #   ifdef OPENBSD
       /* Nothing specific. */
@@ -2469,10 +2459,6 @@ EXTERN_C_BEGIN
 #     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0x7fff5fc00000)
 #     define MPROTECT_VDB
-#     if TARGET_OS_IPHONE && !defined(NO_DYLD_BIND_FULLY_IMAGE)
-        /* iPhone/iPad simulator */
-#       define NO_DYLD_BIND_FULLY_IMAGE
-#     endif
 #   endif
 #   ifdef FREEBSD
 #       ifdef __GLIBC__

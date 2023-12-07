@@ -45,6 +45,11 @@
 # define GC_MUST_RESTORE_REDEFINED_DLOPEN
 #endif /* !GC_NO_DLOPEN */
 
+#if defined(SOLARISDL) && defined(THREADS) && !defined(PCR) \
+    && !defined(GC_SOLARIS_THREADS) && !defined(CPPCHECK)
+#  error Fix mutual exclusion with dlopen
+#endif
+
 /* A user-supplied routine (custom filter) that might be called to      */
 /* determine whether a DSO really needs to be scanned by the GC.        */
 /* 0 means no filter installed.  May be unused on some platforms.       */
@@ -69,6 +74,12 @@ STATIC GC_has_static_roots_func GC_has_static_roots = 0;
 #endif
 
 #include <stdio.h>
+
+#if defined(DARWIN) && !defined(USE_DYLD_TO_BIND) \
+    && !defined(NO_DYLD_BIND_FULLY_IMAGE)
+# include <dlfcn.h>
+#endif
+
 #ifdef SOLARISDL
 #   include <sys/elf.h>
 #   include <dlfcn.h>
@@ -215,27 +226,11 @@ STATIC GC_has_static_roots_func GC_has_static_roots = 0;
     return cachedResult;
   }
 
-#endif /* SOLARISDL ... */
+  GC_INNER void GC_register_dynamic_libraries(void)
+  {
+    struct link_map *lm;
 
-/* BTL: added to fix circular dlopen definition if GC_SOLARIS_THREADS defined */
-# ifdef GC_MUST_RESTORE_REDEFINED_DLOPEN
-#   define dlopen GC_dlopen
-# endif
-
-# if defined(SOLARISDL)
-
-/* Add dynamic library data sections to the root set.           */
-# if !defined(PCR) && !defined(GC_SOLARIS_THREADS) && defined(THREADS) \
-     && !defined(CPPCHECK)
-#   error Fix mutual exclusion with dlopen
-# endif
-
-# ifndef USE_PROC_FOR_LIBRARIES
-GC_INNER void GC_register_dynamic_libraries(void)
-{
-  struct link_map *lm;
-
-  for (lm = GC_FirstDLOpenedLinkMap(); lm != 0; lm = lm->l_next) {
+    for (lm = GC_FirstDLOpenedLinkMap(); lm != 0; lm = lm->l_next) {
         ElfW(Ehdr) * e;
         ElfW(Phdr) * p;
         unsigned long offset;
@@ -259,10 +254,9 @@ GC_INNER void GC_register_dynamic_libraries(void)
           }
         }
     }
-}
+  }
 
-# endif /* !USE_PROC_FOR_LIBRARIES */
-# endif /* SOLARISDL */
+#endif /* SOLARISDL && !USE_PROC_FOR_LIBRARIES */
 
 #if defined(SCO_ELF) || defined(DGUX) || defined(HURD) || defined(NACL) \
     || defined(SERENITY) \
@@ -1453,6 +1447,10 @@ GC_INNER void GC_register_dynamic_libraries(void)
    This should be called BEFORE any thread is created and WITHOUT the
    allocation lock held. */
 
+/* _dyld_bind_fully_image_containing_address is deprecated, so use      */
+/* dlopen(0,RTLD_NOW) instead; define USE_DYLD_TO_BIND to override this */
+/* if needed.                                                           */
+
 GC_INNER void GC_init_dyld(void)
 {
   static GC_bool initialized = FALSE;
@@ -1484,25 +1482,36 @@ GC_INNER void GC_init_dyld(void)
   /* Set this early to avoid reentrancy issues. */
   initialized = TRUE;
 
-# ifdef NO_DYLD_BIND_FULLY_IMAGE
-    /* FIXME: What should we do in this case?   */
-# else
+# ifndef NO_DYLD_BIND_FULLY_IMAGE
     if (GC_no_dls) return; /* skip main data segment registration */
 
     /* When the environment variable is set, the dynamic linker binds   */
     /* all undefined symbols the application needs at launch time.      */
     /* This includes function symbols that are normally bound lazily at */
     /* the time of their first invocation.                              */
-    if (GETENV("DYLD_BIND_AT_LAUNCH") == 0) {
-      /* The environment variable is unset, so we should bind manually. */
-#     ifdef DARWIN_DEBUG
-        GC_log_printf("Forcing full bind of GC code...\n");
-#     endif
-      /* FIXME: '_dyld_bind_fully_image_containing_address' is deprecated. */
+    if (GETENV("DYLD_BIND_AT_LAUNCH") != NULL) return;
+
+    /* The environment variable is unset, so we should bind manually.   */
+#   ifdef DARWIN_DEBUG
+      GC_log_printf("Forcing full bind of GC code...\n");
+#   endif
+#   ifndef USE_DYLD_TO_BIND
+      {
+        void *dl_handle = dlopen(NULL, RTLD_NOW);
+
+        if (!dl_handle)
+          ABORT("dlopen failed (to bind fully image)");
+        /* Note that the handle is never closed.        */
+#       ifdef LINT2
+          GC_noop1((word)dl_handle);
+#       endif
+      }
+#   else
+      /* Note: '_dyld_bind_fully_image_containing_address' is deprecated. */
       if (!_dyld_bind_fully_image_containing_address(
                                                   (unsigned long *)GC_malloc))
         ABORT("_dyld_bind_fully_image_containing_address failed");
-    }
+#   endif
 # endif
 }
 
@@ -1572,6 +1581,10 @@ GC_INNER GC_bool GC_register_main_static_data(void)
     }
   }
 #endif /* PCR && !DYNAMIC_LOADING && !MSWIN32 */
+
+#ifdef GC_MUST_RESTORE_REDEFINED_DLOPEN
+# define dlopen GC_dlopen
+#endif
 
 #if !defined(HAVE_REGISTER_MAIN_STATIC_DATA) && defined(DYNAMIC_LOADING)
   /* Do we need to separately register the main static data segment? */
