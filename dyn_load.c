@@ -1315,13 +1315,23 @@ STATIC const char *GC_dyld_name_for_hdr(const struct GC_MACH_HEADER *hdr)
     return NULL; /* not found */
 }
 
+/* getsectbynamefromheader is deprecated (first time in macOS 13.0),    */
+/* getsectiondata (introduced in macOS 10.7) is used instead if exists. */
+/* Define USE_GETSECTBYNAME to use the deprecated symbol, if needed.    */
+#if !defined(USE_GETSECTBYNAME) \
+    && (MAC_OS_X_VERSION_MIN_REQUIRED < 1070 /*MAC_OS_X_VERSION_10_7*/)
+# define USE_GETSECTBYNAME
+#endif
+
 static void dyld_section_add_del(const struct GC_MACH_HEADER *hdr,
-                                 intptr_t slide, const char *dlpi_name,
+                                 intptr_t slide GC_ATTR_UNUSED,
+                                 const char *dlpi_name,
                                  GC_has_static_roots_func callback,
                                  const char *seg, const char *secnam,
                                  GC_bool is_add)
 {
   unsigned long start, end, sec_size;
+# ifdef USE_GETSECTBYNAME
 #   if CPP_WORDSZ == 64
       const struct section_64 *sec = getsectbynamefromheader_64(hdr, seg,
                                                                 secnam);
@@ -1333,7 +1343,12 @@ static void dyld_section_add_del(const struct GC_MACH_HEADER *hdr,
     if (NULL == sec) return;
     sec_size = sec -> size;
     start = slide + sec -> addr;
+# else
 
+    sec_size = 0;
+    start = (unsigned long)getsectiondata(hdr, seg, secnam, &sec_size);
+    if (0 == start) return;
+# endif
   if (sec_size < sizeof(word)) return;
   end = start + sec_size;
   if (is_add) {
