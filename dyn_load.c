@@ -1284,11 +1284,11 @@ STATIC const struct dyld_sections_s {
 /* containing private vs. public symbols.  It also constructs   */
 /* sections specifically for zero-sized objects, when the       */
 /* target supports section anchors.                             */
-STATIC const char * const GC_dyld_add_sect_fmts[] = {
-  "__bss%u",
-  "__pu_bss%u",
-  "__zo_bss%u",
-  "__zo_pu_bss%u"
+STATIC const char * const GC_dyld_bss_prefixes[] = {
+  "__bss",
+  "__pu_bss",
+  "__zo_bss",
+  "__zo_pu_bss"
 };
 
 /* Currently, mach-o will allow up to the max of 2^15 alignment */
@@ -1297,76 +1297,101 @@ STATIC const char * const GC_dyld_add_sect_fmts[] = {
 # define L2_MAX_OFILE_ALIGNMENT 15
 #endif
 
+#if CPP_WORDSZ == 64
+# define GC_MACH_HEADER mach_header_64
+#else
+# define GC_MACH_HEADER mach_header
+#endif
+
 STATIC const char *GC_dyld_name_for_hdr(const struct GC_MACH_HEADER *hdr)
 {
-    unsigned long i, c;
-    c = _dyld_image_count();
-    for (i = 0; i < c; i++)
+    unsigned long i, count = _dyld_image_count();
+
+    for (i = 0; i < count; i++) {
       if ((const struct GC_MACH_HEADER *)_dyld_get_image_header(i) == hdr)
         return _dyld_get_image_name(i);
-    return NULL;
+    }
+    /* TODO: probably ABORT in this case? */
+    return NULL; /* not found */
 }
 
-/* This should never be called by a thread holding the lock.    */
-STATIC void GC_dyld_image_add(const struct GC_MACH_HEADER *hdr,
-                              intptr_t slide)
+static void dyld_section_add_del(const struct GC_MACH_HEADER *hdr,
+                                 intptr_t slide, const char *dlpi_name,
+                                 GC_has_static_roots_func callback,
+                                 const char *seg, const char *secnam,
+                                 GC_bool is_add)
 {
-  unsigned long start, end;
-  unsigned i, j;
-  const struct GC_MACH_SECTION *sec;
-  const char *name;
-  GC_has_static_roots_func callback = GC_has_static_roots;
+  unsigned long start, end, sec_size;
+#   if CPP_WORDSZ == 64
+      const struct section_64 *sec = getsectbynamefromheader_64(hdr, seg,
+                                                                secnam);
+#   else
+      const struct section *sec = getsectbynamefromheader(hdr, seg, secnam);
+#   endif
   DCL_LOCK_STATE;
 
-  if (GC_no_dls) return;
-# ifdef DARWIN_DEBUG
-    name = GC_dyld_name_for_hdr(hdr);
-# else
-    name = callback != 0 ? GC_dyld_name_for_hdr(hdr) : NULL;
-# endif
-  for (i = 0; i < sizeof(GC_dyld_sections)/sizeof(GC_dyld_sections[0]); i++) {
-    sec = GC_GETSECTBYNAME(hdr, GC_dyld_sections[i].seg,
-                           GC_dyld_sections[i].sect);
-    if (sec == NULL || sec->size < sizeof(word))
-      continue;
-    start = slide + sec->addr;
-    end = start + sec->size;
+    if (NULL == sec) return;
+    sec_size = sec -> size;
+    start = slide + sec -> addr;
+
+  if (sec_size < sizeof(word)) return;
+  end = start + sec_size;
+  if (is_add) {
     LOCK();
     /* The user callback is called holding the lock.    */
-    if (callback == 0 || callback(name, (void*)start, (size_t)sec->size)) {
-#     ifdef DARWIN_DEBUG
-        GC_log_printf(
-              "Adding section __DATA,%s at %p-%p (%lu bytes) from image %s\n",
-               GC_dyld_sections[i].sect, (void*)start, (void*)end,
-               (unsigned long)sec->size, name);
-#     endif
-      GC_add_roots_inner((ptr_t)start, (ptr_t)end, FALSE);
+    if (EXPECT(callback != 0, FALSE)
+        && !callback(dlpi_name, (void *)start, (size_t)sec_size)) {
+      UNLOCK();
+      return; /* skip section */
     }
+    GC_add_roots_inner((ptr_t)start, (ptr_t)end, FALSE);
     UNLOCK();
+  } else {
+    GC_remove_roots((void *)start, (void *)end);
+  }
+# ifdef DARWIN_DEBUG
+    GC_log_printf("%s section __DATA,%s at %p-%p (%lu bytes) from image %s\n",
+                  is_add ? "Added" : "Removed",
+                  secnam, (void *)start, (void *)end, sec_size, dlpi_name);
+# endif
+}
+
+static void dyld_image_add_del(const struct GC_MACH_HEADER *hdr,
+                               intptr_t slide,
+                               GC_has_static_roots_func callback,
+                               GC_bool is_add)
+{
+  unsigned i, j;
+  const char *dlpi_name;
+# if defined(DARWIN_DEBUG) && !defined(NO_DEBUGGING)
+    DCL_LOCK_STATE;
+# endif
+
+# ifndef DARWIN_DEBUG
+    if (0 == callback) {
+      dlpi_name = NULL;
+    } else
+# endif
+  /* else */ {
+    dlpi_name = GC_dyld_name_for_hdr(hdr);
+  }
+  for (i = 0; i < sizeof(GC_dyld_sections)/sizeof(GC_dyld_sections[0]); i++) {
+    dyld_section_add_del(hdr, slide, dlpi_name, callback,
+                         GC_dyld_sections[i].seg, GC_dyld_sections[i].sect,
+                         is_add);
   }
 
   /* Sections constructed on demand.    */
-  for (j = 0; j < sizeof(GC_dyld_add_sect_fmts) / sizeof(char *); j++) {
-    const char *fmt = GC_dyld_add_sect_fmts[j];
-
-    /* Add our manufactured aligned BSS sections.       */
+  for (j = 0; j < sizeof(GC_dyld_bss_prefixes) / sizeof(char *); j++) {
+    /* Our manufactured aligned BSS sections.   */
     for (i = 0; i <= L2_MAX_OFILE_ALIGNMENT; i++) {
       char secnam[16];
 
-      (void)snprintf(secnam, sizeof(secnam), fmt, (unsigned)i);
+      (void)snprintf(secnam, sizeof(secnam), "%s%u",
+                     GC_dyld_bss_prefixes[j], i);
       secnam[sizeof(secnam) - 1] = '\0';
-      sec = GC_GETSECTBYNAME(hdr, SEG_DATA, secnam);
-      if (sec == NULL || sec->size == 0)
-        continue;
-      start = slide + sec->addr;
-      end = start + sec->size;
-#     ifdef DARWIN_DEBUG
-        GC_log_printf("Adding on-demand section __DATA,%s at"
-                      " %p-%p (%lu bytes) from image %s\n",
-                      secnam, (void*)start, (void*)end,
-                      (unsigned long)sec->size, name);
-#     endif
-      GC_add_roots((char*)start, (char*)end);
+      dyld_section_add_del(hdr, slide, dlpi_name, 0 /* callback */, SEG_DATA,
+                           secnam, is_add);
     }
   }
 
@@ -1375,64 +1400,20 @@ STATIC void GC_dyld_image_add(const struct GC_MACH_HEADER *hdr,
     GC_print_static_roots();
     UNLOCK();
 # endif
+}
+
+/* This should never be called by a thread holding the lock.    */
+STATIC void GC_dyld_image_add(const struct GC_MACH_HEADER *hdr, intptr_t slide)
+{
+  if (!GC_no_dls)
+    dyld_image_add_del(hdr, slide, GC_has_static_roots, TRUE);
 }
 
 /* This should never be called by a thread holding the lock.    */
 STATIC void GC_dyld_image_remove(const struct GC_MACH_HEADER *hdr,
                                  intptr_t slide)
 {
-  unsigned long start, end;
-  unsigned i, j;
-  const struct GC_MACH_SECTION *sec;
-# if defined(DARWIN_DEBUG) && !defined(NO_DEBUGGING)
-    DCL_LOCK_STATE;
-# endif
-
-  for (i = 0; i < sizeof(GC_dyld_sections)/sizeof(GC_dyld_sections[0]); i++) {
-    sec = GC_GETSECTBYNAME(hdr, GC_dyld_sections[i].seg,
-                           GC_dyld_sections[i].sect);
-    if (sec == NULL || sec->size == 0)
-      continue;
-    start = slide + sec->addr;
-    end = start + sec->size;
-#   ifdef DARWIN_DEBUG
-      GC_log_printf(
-            "Removing section __DATA,%s at %p-%p (%lu bytes) from image %s\n",
-            GC_dyld_sections[i].sect, (void*)start, (void*)end,
-            (unsigned long)sec->size, GC_dyld_name_for_hdr(hdr));
-#   endif
-    GC_remove_roots((char*)start, (char*)end);
-  }
-
-  /* Remove our on-demand sections.     */
-  for (j = 0; j < sizeof(GC_dyld_add_sect_fmts) / sizeof(char *); j++) {
-    const char *fmt = GC_dyld_add_sect_fmts[j];
-
-    for (i = 0; i <= L2_MAX_OFILE_ALIGNMENT; i++) {
-      char secnam[16];
-
-      (void)snprintf(secnam, sizeof(secnam), fmt, (unsigned)i);
-      secnam[sizeof(secnam) - 1] = '\0';
-      sec = GC_GETSECTBYNAME(hdr, SEG_DATA, secnam);
-      if (sec == NULL || sec->size == 0)
-        continue;
-      start = slide + sec->addr;
-      end = start + sec->size;
-#     ifdef DARWIN_DEBUG
-        GC_log_printf("Removing on-demand section __DATA,%s at"
-                      " %p-%p (%lu bytes) from image %s\n", secnam,
-                      (void*)start, (void*)end, (unsigned long)sec->size,
-                      GC_dyld_name_for_hdr(hdr));
-#     endif
-      GC_remove_roots((char*)start, (char*)end);
-    }
-  }
-
-# if defined(DARWIN_DEBUG) && !defined(NO_DEBUGGING)
-    LOCK();
-    GC_print_static_roots();
-    UNLOCK();
-# endif
+  dyld_image_add_del(hdr, slide, 0 /* callback */, FALSE);
 }
 
 GC_INNER void GC_register_dynamic_libraries(void)
