@@ -813,16 +813,6 @@ EXTERN_C_END
 #   define GC_MACH_THREAD_STATE_COUNT   MACHINE_THREAD_STATE_COUNT
 # endif
 
-# if CPP_WORDSZ == 32
-#   define GC_MACH_HEADER   mach_header
-#   define GC_MACH_SECTION  section
-#   define GC_GETSECTBYNAME getsectbynamefromheader
-# else
-#   define GC_MACH_HEADER   mach_header_64
-#   define GC_MACH_SECTION  section_64
-#   define GC_GETSECTBYNAME getsectbynamefromheader_64
-# endif
-
   /* Try to work out the right way to access thread state structure     */
   /* members.  The structure has changed its definition in different    */
   /* Darwin versions.  This now defaults to the (older) names           */
