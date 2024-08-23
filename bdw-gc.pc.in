@@ -6,5 +6,6 @@ includedir=@includedir@
 Name: Boehm-Demers-Weiser Conservative Garbage Collector
 Description: A garbage collector for C and C++
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} @ATOMIC_OPS_LIBS@ -lgc @THREADDLLIBS@
+Libs: -L${libdir} -lgc @THREADDLLIBS@
+Libs.private: @ATOMIC_OPS_LIBS@
 Cflags: -I${includedir}
