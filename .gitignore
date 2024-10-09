@@ -2,8 +2,10 @@
 
 # Binary files (in root dir, cord, tests):
 *.a
+*.dbg
 *.dll
 *.dylib
+*.elf
 *.exe
 *.gcda
 *.gch
