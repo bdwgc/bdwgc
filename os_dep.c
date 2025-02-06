@@ -3595,6 +3595,7 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
 {
 #   define READ read
     int nmaps;
+    ssize_t pagedata_len;
     char * bufp = GC_proc_buf;
     int i;
 
@@ -3616,7 +3617,8 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
 #   endif
 
     BZERO(GC_grungy_pages, sizeof(GC_grungy_pages));
-    if (READ(GC_proc_fd, bufp, GC_proc_buf_size) <= 0) {
+    pagedata_len = READ(GC_proc_fd, bufp, GC_proc_buf_size);
+    if (pagedata_len <= 0) {
         /* Retry with larger buffer.    */
         size_t new_size = 2 * GC_proc_buf_size;
         char *new_buf;
@@ -3629,7 +3631,8 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
             GC_proc_buf = bufp = new_buf;
             GC_proc_buf_size = new_size;
         }
-        if (READ(GC_proc_fd, bufp, GC_proc_buf_size) <= 0) {
+        pagedata_len = READ(GC_proc_fd, bufp, GC_proc_buf_size);
+        if (pagedata_len <= 0) {
             WARN("Insufficient space for /proc read\n", 0);
             /* Punt:        */
             if (!output_unneeded)
@@ -3638,6 +3641,7 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
             return;
         }
     }
+    GC_ASSERT((size_t)pagedata_len <= GC_proc_buf_size);
 
     /* Copy dirty bits into GC_grungy_pages     */
     nmaps = ((struct prpageheader *)bufp) -> pr_nmap;
@@ -3651,11 +3655,19 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
     bufp += sizeof(struct prpageheader);
     for (i = 0; i < nmaps; i++) {
         struct prasmap * map = (struct prasmap *)bufp;
-        ptr_t vaddr = (ptr_t)(map -> pr_vaddr);
-        unsigned long npages = map -> pr_npage;
-        unsigned pagesize = map -> pr_pagesize;
-        ptr_t limit;
+        ptr_t vaddr, limit;
+        unsigned long npages = 0;
+        unsigned pagesize;
 
+        bufp += sizeof(struct prasmap);
+        /* Ensure no buffer overrun. */
+        if (bufp - GC_proc_buf < pagedata_len)
+          npages = map -> pr_npage;
+        if (bufp - GC_proc_buf > pagedata_len - (ssize_t)npages)
+          ABORT("Wrong pr_nmap or pr_npage read from /proc");
+
+        vaddr = (ptr_t)(map -> pr_vaddr);
+        pagesize = map -> pr_pagesize;
 #       if defined(GC_NO_SYS_FAULT_H) && defined(CPPCHECK)
           GC_noop1(map->dummy1[0] + map->dummy2[0]);
 #       endif
@@ -3665,7 +3677,6 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
                 (void *)vaddr, npages, map->pr_mflags, pagesize);
 #       endif
 
-        bufp += sizeof(struct prasmap);
         limit = vaddr + pagesize * npages;
         for (; (word)vaddr < (word)limit; vaddr += pagesize) {
             if ((*bufp++) & PG_MODIFIED) {
