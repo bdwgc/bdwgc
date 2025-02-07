@@ -1,5 +1,6 @@
 /* Conditionally execute a command based on machine and OS from gcconfig.h */
 
+# define NOT_GCBUILD
 # include "private/gc_priv.h"
 # include <stdio.h>
 # include <string.h>

@@ -1,6 +1,7 @@
 /* Conditionally execute a command based if the file argv[1] doesn't exist */
 /* Except for execvp, we stick to ANSI C.                                  */
 
+# define NOT_GCBUILD
 # include "private/gc_priv.h"
 # include <stdio.h>
 # include <stdlib.h>
