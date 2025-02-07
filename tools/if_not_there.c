@@ -2,6 +2,7 @@
 /* does not exist.  If the command is omitted (and the file does not    */
 /* exist) then just exit with a non-zero code.                          */
 
+# define NOT_GCBUILD
 # include "private/gc_priv.h"
 # include <stdio.h>
 # include <stdlib.h>

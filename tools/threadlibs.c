@@ -15,7 +15,11 @@
  * modified is included with the above copyright notice.
  */
 
-# include "private/gc_priv.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+# include "private/gcconfig.h"
 
 # include <stdio.h>
 
