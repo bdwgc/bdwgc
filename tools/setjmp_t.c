@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <setjmp.h>
 #include <string.h>
+
+#define NOT_GCBUILD
 #include "private/gc_priv.h"
 
 #ifdef OS2
