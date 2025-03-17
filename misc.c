@@ -967,12 +967,29 @@ GC_API void GC_CALL GC_init(void)
 #     ifndef GC_ALWAYS_MULTITHREADED
         GC_ASSERT(!GC_need_to_lock);
 #     endif
-#     ifdef USE_SPIN_LOCK
-        GC_allocate_lock = AO_TS_INITIALIZER;
-#     endif
-#     ifdef NEED_FAULT_HANDLER_LOCK
-        GC_fault_handler_lock = AO_TS_INITIALIZER;
-#     endif
+      {
+#       if !defined(GC_BUILTIN_ATOMIC) && defined(HP_PA) \
+           && (defined(USE_SPIN_LOCK) || defined(NEED_FAULT_HANDLER_LOCK))
+          AO_TS_t ts_init = AO_TS_INITIALIZER;
+
+          /* Arrays can only be initialized when declared. */
+#         ifdef USE_SPIN_LOCK
+            BCOPY(&ts_init, (/* no volatile */ void *)&GC_allocate_lock,
+                  sizeof(GC_allocate_lock));
+#         endif
+#         ifdef NEED_FAULT_HANDLER_LOCK
+            BCOPY(&ts_init, (/* no volatile */ void *)&GC_fault_handler_lock,
+                  sizeof(GC_fault_handler_lock));
+#         endif
+#       else
+#         ifdef USE_SPIN_LOCK
+            GC_allocate_lock = AO_TS_INITIALIZER;
+#         endif
+#         ifdef NEED_FAULT_HANDLER_LOCK
+            GC_fault_handler_lock = AO_TS_INITIALIZER;
+#         endif
+#       endif
+      }
 #     ifdef SN_TARGET_PS3
         {
           pthread_mutexattr_t mattr;
