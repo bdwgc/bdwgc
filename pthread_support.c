@@ -1098,6 +1098,13 @@ IF_CANCEL(static int fork_cancel_state;)
 #endif
 static void fork_prepare_proc(void)
 {
+#   if defined(GC_EXPLICIT_SIGNALS_UNBLOCK) && defined(CAN_CALL_ATFORK)
+      /* The signals might be blocked by fork() implementation when the */
+      /* at-fork prepare handler is invoked.                            */
+      if (GC_handle_fork == 1)
+        GC_unblock_gc_signals();
+#   endif
+
     /* Acquire all relevant locks, so that after releasing the locks    */
     /* the child will see a consistent state in which monitor           */
     /* invariants hold.  Unfortunately, we can't acquire libc locks     */
