@@ -77,7 +77,7 @@ GC_NOT_DLL      User-settable macro that overrides _DLL, e.g. if runtime
                 library.  Tested by gc_config_macros.h.
 
 GC_REQUIRE_WCSDUP       Force GC to export GC_wcsdup() (the Unicode version
-                of GC_strdup); could be useful in the leak-finding mode.
+                of GC_strdup); could be useful in the find-leak mode.
 
 
 These define arguments influence the collector configuration:
@@ -87,10 +87,10 @@ FIND_LEAK       Causes GC_find_leak to be initially set.  This causes the
   explicitly deallocated, and reports exceptions.  Finalization and the test
   program are not usable in this mode.
 
-GC_FINDLEAK_DELAY_FREE  Turns on deferred freeing of objects in the
-  leak-finding mode letting the collector to detect alter-object-after-free
-  errors as well as detect leaked objects sooner (instead of only when program
-  terminates).  Has no effect if SHORT_DBG_HDRS.
+GC_FINDLEAK_DELAY_FREE  Turns on deferred freeing of objects in the find-leak
+  mode letting the collector to detect alter-object-after-free errors as well
+  as detect leaked objects sooner (instead of only when program terminates).
+  Has no effect if SHORT_DBG_HDRS.
 
 GC_ABORT_ON_LEAK        Causes the application to be terminated once leaked or
   smashed (corrupted on use-after-free) objects are found (after printing the
