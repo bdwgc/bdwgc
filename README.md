@@ -334,10 +334,13 @@ in excessive memory consumption.
 Some additional tuning is possible through the parameters defined
 near the top of gc_priv.h.
 
-If only `GC_malloc` is intended to be used, it might be appropriate to define:
+If only `GC_malloc` is intended to be used, it might be appropriate to define
+like:
 
-    #define malloc(n) GC_malloc(n)
-    #define calloc(m,n) GC_malloc((m)*(n))
+```c
+#define malloc(n) GC_malloc(n)
+#define calloc(m, n) GC_malloc((m) * (n))
+```
 
 For small pieces of VERY allocation intensive code, gc_inline.h includes
 some allocation macros that may be used in place of `GC_malloc` and

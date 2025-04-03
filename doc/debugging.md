@@ -58,30 +58,32 @@ to be permanent, the warning indicates a memory leak.
   1. Ignore these warnings while you are using GC_DEBUG. Some of the routines
   mentioned below don't have debugging equivalents. (Alternatively, write the
   missing routines and send them to me.)
+
   2. Replace allocator calls that request large blocks with calls to
   `GC_malloc_ignore_off_page` or `GC_malloc_atomic_ignore_off_page`. You may
   want to set a breakpoint in `GC_default_warn_proc` to help you identify such
   calls. Make sure that a pointer to somewhere near the beginning of the
   resulting block is maintained in a (preferably volatile) variable as long
   as the block is needed.
+
   3. If the large blocks are allocated with realloc, we suggest instead
   allocating them with something like the following. Note that the realloc
   size increment should be fairly large (e.g. a factor of 3/2) for this to
   exhibit reasonable performance. But we all know we should do that anyway.
 
-
-        void * big_realloc(void *p, size_t new_size) {
-            size_t old_size = GC_size(p);
-            void * result;
-            if (new_size <= 10000) return(GC_realloc(p, new_size));
-            if (new_size <= old_size) return(p);
-            result = GC_malloc_ignore_off_page(new_size);
-            if (result == 0) return(0);
-            memcpy(result,p,old_size);
-            GC_free(p);
-            return(result);
-        }
-
+```c
+void *big_realloc(void *p, size_t new_size) {
+  size_t old_size = GC_size(p);
+  void *result;
+  if (new_size <= 10000) return GC_realloc(p, new_size);
+  if (new_size <= old_size) return p;
+  result = GC_malloc_ignore_off_page(new_size);
+  if (result == 0) return 0;
+  memcpy(result, p, old_size);
+  GC_free(p);
+  return result;
+}
+```
 
   4. In the unlikely case that even relatively small object (<20 KB)
   allocations are triggering these warnings, then your address space contains
@@ -92,6 +94,7 @@ to be permanent, the warning indicates a memory leak.
   in certain values. It is possible, to identify the source of the bogus
   pointers by building the collector with `-DPRINT_BLACK_LIST`, which will
   cause it to print the "bogus pointers", along with their location.
+
   5. If you get only a fixed number of these warnings, you are probably only
   introducing a bounded leak by ignoring them. If the data structures being
   allocated are intended to be permanent, then it is also safe to ignore them.
