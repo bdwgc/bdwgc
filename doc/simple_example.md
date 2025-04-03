@@ -10,20 +10,20 @@ or scenarios. It can be skipped, especially on first reading.
 If you have not so yet, unpack the collector and enter the newly created
 directory with:
 
-
-    tar xvfz gc-<version>.tar.gz
-    cd gc-<version>
-
+```sh
+tar xvfz gc-<version>.tar.gz
+cd gc-<version>
+```
 
 You can configure, build, and install the collector in a private directory,
 say /home/xyz/gc, with the following commands:
 
-
-    ./configure --prefix=/home/xyz/gc --disable-threads
-    make
-    make check
-    make install
-
+```sh
+./configure --prefix=/home/xyz/gc --disable-threads
+make
+make check
+make install
+```
 
 Here the `make check` command is optional, but highly recommended. It runs
 a basic correctness test which usually takes well under a minute.
@@ -46,11 +46,8 @@ strong preference of the would-be maintainer of those project files.)
 
 ### Threads
 
-If you do not need thread support, configure the collector with:
-
-
-    --disable-threads
-
+If you do not need thread support, configure the collector with
+`--disable-threads` option.
 
 Alternatively, if your target is a real old-fashioned uniprocessor (no
 "hyperthreading", etc.), you may just want to turn off parallel marking with
@@ -84,26 +81,28 @@ way.
 
 The following program `loop.c` is a trivial example:
 
+```c
+#include "gc.h"
 
-    #include "gc.h"
-    #include <assert.h>
-    #include <stdio.h>
+#include <assert.h>
+#include <stdio.h>
 
-    int main(void) {
-        int i;
+int main(void) {
+  int i;
 
-        GC_INIT();
-        for (i = 0; i < 10000000; ++i) {
-            int **p = (int **) GC_MALLOC(sizeof(int *));
-            int *q = (int *) GC_MALLOC_ATOMIC(sizeof(int));
-            assert(*p == 0);
-            *p = (int *) GC_REALLOC(q, 2 * sizeof(int));
-            if (i % 100000 == 0)
-                printf("Heap size = %lu bytes\n",
-                       (unsigned long)GC_get_heap_size());
-        }
-        return 0;
-    }
+  GC_INIT();
+  for (i = 0; i < 10000000; ++i) {
+    int **p = (int **)GC_MALLOC(sizeof(int *));
+    int *q = (int *)GC_MALLOC_ATOMIC(sizeof(int));
+    assert(*p == 0);
+    *p = (int *)GC_REALLOC(q, 2 * sizeof(int));
+    if (i % 100000 == 0)
+      printf("Heap size = %lu bytes\n",
+             (unsigned long)GC_get_heap_size());
+  }
+  return 0;
+}
+```
 
 
 ### Interaction with the system malloc
@@ -152,9 +151,9 @@ some more details.
 
 The above application `loop.c` test program can be compiled and linked with:
 
-
-    cc -I/home/xyz/gc/include loop.c /home/xyz/gc/lib/libgc.a -o loop
-
+```sh
+cc -I/home/xyz/gc/include loop.c /home/xyz/gc/lib/libgc.a -o loop
+```
 
 The `-I` option directs the compiler to the right include directory. In this
 case, we list the static library directly on the compile line; the dynamic
@@ -173,9 +172,9 @@ at `tools/threadlibs.c` should give you the appropriate list if a plain
 
 The executable can of course be run normally, e.g. by typing:
 
-
-    ./loop
-
+```sh
+./loop
+```
 
 The operation of the collector is affected by a number of environment
 variables. For example, setting `GC_PRINT_STATS` produces some GC statistics
