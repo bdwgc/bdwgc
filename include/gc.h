@@ -129,7 +129,7 @@ GC_API GC_on_heap_resize_proc GC_CALL GC_get_on_heap_resize(void);
                         /* acquire the GC lock (to avoid data races).   */
 
 GC_API GC_ATTR_DEPRECATED int GC_find_leak;
-                        /* Set to true to turn on the leak-finding mode */
+                        /* Set to true to turn on the find-leak mode    */
                         /* (do not actually garbage collect, but simply */
                         /* report inaccessible memory that was not      */
                         /* deallocated with GC_FREE).  Initial value    */
@@ -948,8 +948,7 @@ GC_API void GC_CALL GC_debug_register_finalizer(void * /* obj */,
         /* Thus cycles involving finalizable objects should     */
         /* be avoided, or broken by disappearing links.         */
         /* All but the last finalizer registered for an object  */
-        /* is ignored.                                          */
-        /* No-op in the leak-finding mode.                      */
+        /* is ignored.  No-op in the find-leak mode.            */
         /* Finalization may be removed by passing 0 as fn.      */
         /* Finalizers are implicitly unregistered when they are */
         /* enqueued for finalization (i.e. become ready to be   */
@@ -1084,7 +1083,7 @@ GC_API int GC_CALL GC_general_register_disappearing_link(void ** /* link */,
         /* explicitly deallocate the object containing link.    */
         /* Explicit deallocation of obj may or may not cause    */
         /* link to eventually be cleared.                       */
-        /* No-op in the leak-finding mode.                      */
+        /* No-op in the find-leak mode.                         */
         /* This function can be used to implement certain types */
         /* of weak pointers.  Note, however, this generally     */
         /* requires that the allocation lock is held (see       */
