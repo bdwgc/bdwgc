@@ -95,7 +95,7 @@ GC_MARKERS=<n>  Set the desired number of marker threads.  If not defined or
 These define arguments influence the collector configuration:
 
 GC_REQUIRE_WCSDUP       Force GC to export GC_wcsdup() (the Unicode version
-  of GC_strdup); could be useful in the leak-finding mode.  Clients should
+  of GC_strdup); could be useful in the find-leak mode.  Clients should
   define it before including gc.h if the function is needed.
 
 FIND_LEAK       Causes GC_find_leak to be initially set.  This causes the
@@ -103,10 +103,10 @@ FIND_LEAK       Causes GC_find_leak to be initially set.  This causes the
   explicitly deallocated, and reports exceptions.  Finalization and the test
   program are not usable in this mode.
 
-GC_FINDLEAK_DELAY_FREE  Turns on deferred freeing of objects in the
-  leak-finding mode letting the collector to detect alter-object-after-free
-  errors as well as detect leaked objects sooner (instead of only when program
-  terminates).  Has no effect if SHORT_DBG_HDRS.
+GC_FINDLEAK_DELAY_FREE  Turns on deferred freeing of objects in the find-leak
+  mode letting the collector to detect alter-object-after-free errors as well
+  as detect leaked objects sooner (instead of only when program terminates).
+  Has no effect if SHORT_DBG_HDRS.
 
 GC_ABORT_ON_LEAK        Causes the application to be terminated once leaked or
   smashed (corrupted on use-after-free) objects are found (after printing the
