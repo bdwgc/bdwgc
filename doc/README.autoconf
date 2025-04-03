@@ -4,7 +4,7 @@ with gcj.
 
 To build and install libraries use
 
-configure; make; make install
+./configure; make; make install
 
 The advantages of this process are:
 
