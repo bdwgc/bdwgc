@@ -172,7 +172,7 @@ GC_API GC_on_collection_event_proc GC_CALL GC_get_on_collection_event(void);
 #endif
 
 GC_API GC_ATTR_DEPRECATED int GC_find_leak;
-                        /* Set to true to turn on the leak-finding mode */
+                        /* Set to true to turn on the find-leak mode    */
                         /* (do not actually garbage collect, but simply */
                         /* report inaccessible memory that was not      */
                         /* deallocated with GC_FREE).  Initial value    */
@@ -1058,8 +1058,7 @@ GC_API void GC_CALL GC_debug_register_finalizer(void * /* obj */,
         /* Thus cycles involving finalizable objects should     */
         /* be avoided, or broken by disappearing links.         */
         /* All but the last finalizer registered for an object  */
-        /* is ignored.                                          */
-        /* No-op in the leak-finding mode.                      */
+        /* is ignored.  No-op in the find-leak mode.            */
         /* Finalization may be removed by passing 0 as fn.      */
         /* Finalizers are implicitly unregistered when they are */
         /* enqueued for finalization (i.e. become ready to be   */
@@ -1197,7 +1196,7 @@ GC_API int GC_CALL GC_general_register_disappearing_link(void ** /* link */,
         /* explicitly deallocate the object containing link.    */
         /* Explicit deallocation of obj may or may not cause    */
         /* link to eventually be cleared.                       */
-        /* No-op in the leak-finding mode.                      */
+        /* No-op in the find-leak mode.                         */
         /* This function can be used to implement certain types */
         /* of weak pointers.  Note, however, this generally     */
         /* requires that the allocation lock is held (see       */
@@ -1369,9 +1368,8 @@ GC_API void GC_CALL GC_abort_on_oom(void);
 /* (e.g. Java-like) finalization facility.  It is expected      */
 /* that finalization code will arrange for hidden pointers to   */
 /* disappear.  Otherwise objects can be accessed after they     */
-/* have been collected.                                         */
-/* Should not be used in the leak-finding mode.                 */
-/* Note that putting pointers in atomic objects or in           */
+/* have been collected.  Should not be used in the find-leak    */
+/* mode.  Note that putting pointers in atomic objects or in    */
 /* non-pointer slots of "typed" objects is equivalent to        */
 /* disguising them in this way, and may have other advantages.  */
 typedef GC_word GC_hidden_pointer;
