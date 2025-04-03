@@ -75,7 +75,7 @@ GC on EWS4800
 Hironori SAKAMOTO
 
 
-When using the new "configure; make" build process, please
-run configure with the --disable-shared option.  "Make check" does not
+When using the "./configure; make" build process, please
+run configure with the --disable-shared option.  "make check" does not
 yet pass with dynamic libraries.  The reasons for that are not yet
 understood.  (HB, paraphrasing message from Hironori SAKAMOTO.)

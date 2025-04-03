@@ -141,7 +141,7 @@ detection mode on a program a.out under Linux/X86 as follows:
   be safe to omit the `--disable-threads` option on Linux, but the combination
   of thread support and `malloc` replacement is not yet rock solid):
 
-   - `configure --prefix=_foo_ --enable-gc-debug --enable-redirect-malloc --disable-threads`
+   - `./configure --prefix=_foo_ --enable-gc-debug --enable-redirect-malloc --disable-threads`
    - `make`
    - `make install`
 
