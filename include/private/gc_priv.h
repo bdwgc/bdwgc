@@ -2438,7 +2438,7 @@ GC_EXTERN void (*GC_print_heap_obj)(ptr_t p);
 #ifndef SHORT_DBG_HDRS
   GC_EXTERN GC_bool GC_findleak_delay_free;
                         /* Do not immediately deallocate object on      */
-                        /* free() in the leak-finding mode, just mark   */
+                        /* free() in the find-leak mode, just mark      */
                         /* it as freed (and deallocate it after GC).    */
   GC_INNER GC_bool GC_check_leaked(ptr_t base); /* from dbg_mlc.c */
 #endif

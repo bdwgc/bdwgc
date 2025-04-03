@@ -65,7 +65,7 @@
   /* Note 1: CHECK_LEAKS does not have GC prefix (preserved for */
   /* backward compatibility).                                   */
   /* Note 2: GC_gcollect() is also called automatically in the  */
-  /* leak-finding mode at program exit.                         */
+  /* find-leak mode at program exit.                            */
 #endif
 
 #endif /* GC_LEAK_DETECTOR_H */
