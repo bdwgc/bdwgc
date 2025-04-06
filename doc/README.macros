@@ -555,7 +555,7 @@ GC_ANDROID_LOG (Android only)   Output error/debug information to Android log.
 GC_DONT_EXPAND  Don't expand the heap unless explicitly requested or forced to.
 
 GC_USE_ENTIRE_HEAP      Causes the non-incremental collector to use the
-  entire heap before collecting.  This sometimes results in more large block
+  entire heap before collecting.  This sometimes results in more large-block
   fragmentation, since very large blocks will tend to get broken up during
   each GC cycle.  It is likely to result in a larger working set, but lower
   collection frequencies, and hence fewer instructions executed in the
