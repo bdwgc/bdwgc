@@ -266,7 +266,7 @@ GC_API int GC_CALL GC_get_dont_expand(void);
 GC_API GC_ATTR_DEPRECATED int GC_use_entire_heap;
                 /* Causes the non-incremental collector to use the      */
                 /* entire heap before collecting.  This sometimes       */
-                /* results in more large block fragmentation, since     */
+                /* results in more large-block fragmentation, since     */
                 /* very large blocks will tend to get broken up         */
                 /* during each GC cycle.  It is likely to result in a   */
                 /* larger working set, but lower collection             */
