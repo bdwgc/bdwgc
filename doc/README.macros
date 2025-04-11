@@ -356,9 +356,9 @@ USE_PPC_PREFETCH        Causes the collector to issue PowerPC style
   Performance impact untested.
 
 GC_USE_LD_WRAP  In combination with the old flags listed in README.linux
-  causes the collector some system and pthread calls in a more transparent
-  fashion than the usual macro-based approach.  Requires GNU ld, and
-  currently probably works only with Linux.
+  causes the collector to handle some system and pthread calls in a more
+  transparent fashion than the usual macro-based approach.  Requires GNU
+  ld, and currently probably works only with Linux.
 
 GC_USE_DLOPEN_WRAP      Causes the collector to redefine malloc and
   intercepted pthread routines with their real names, and causes it to use
