@@ -348,22 +348,22 @@ cord/cordprnt.o: $(srcdir)/cord/cordprnt.c $(CORD_INCLUDE_FILES)
 
 cordtest$(EXEEXT): $(srcdir)/cord/tests/cordtest.c cords base_lib $(UTILS)
 	rm -f cordtest$(EXEEXT)
-	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o cordtest $(srcdir)/cord/tests/cordtest.c gc.a cord.a -lucb
-	./if_mach HP_PA HPUX $(CC) $(CFLAGS) -o cordtest $(srcdir)/cord/tests/cordtest.c gc.a cord.a -ldld `./threadlibs`
-	./if_mach M68K AMIGA $(CC) $(CFLAGS) -UGC_AMIGA_MAKINGLIB -o cordtest $(srcdir)/cord/tests/cordtest.c gc.a cord.a `./threadlibs`
-	./if_not_there cordtest$(EXEEXT) || $(CC) $(CFLAGS) -o cordtest$(EXEEXT) $(srcdir)/cord/tests/cordtest.c gc.a cord.a `./threadlibs`
+	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o cordtest $(srcdir)/cord/tests/cordtest.c cord.a gc.a -lucb
+	./if_mach HP_PA HPUX $(CC) $(CFLAGS) -o cordtest $(srcdir)/cord/tests/cordtest.c cord.a gc.a -ldld `./threadlibs`
+	./if_mach M68K AMIGA $(CC) $(CFLAGS) -UGC_AMIGA_MAKINGLIB -o cordtest $(srcdir)/cord/tests/cordtest.c cord.a gc.a `./threadlibs`
+	./if_not_there cordtest$(EXEEXT) || $(CC) $(CFLAGS) -o cordtest$(EXEEXT) $(srcdir)/cord/tests/cordtest.c cord.a gc.a `./threadlibs`
 
 cord/de: de$(EXEEXT)
 
 de$(EXEEXT): $(srcdir)/cord/tests/de.c $(srcdir)/cord/tests/de_win.c \
   $(srcdir)/cord/tests/de_win.h cords base_lib $(UTILS)
 	rm -f de$(EXEEXT)
-	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c gc.a cord.a -lcurses -ltermlib -lucb `./threadlibs`
-	./if_mach HP_PA HPUX $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c gc.a cord.a -lcurses -ltermlib -ldld `./threadlibs`
-	./if_mach POWERPC AIX $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c gc.a cord.a -lcurses
-	./if_mach POWERPC DARWIN $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c gc.a cord.a
-	./if_mach M68K AMIGA $(CC) $(CFLAGS) -UGC_AMIGA_MAKINGLIB -o de $(srcdir)/cord/tests/de.c gc.a cord.a -lcurses
-	./if_not_there de$(EXEEXT) || $(CC) $(CFLAGS) -o de$(EXEEXT) $(srcdir)/cord/tests/de.c $(srcdir)/cord/tests/de_win.c gc.a cord.a $(CURSES) `./threadlibs`
+	./if_mach SPARC DRSNX $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c cord.a gc.a -lcurses -ltermlib -lucb `./threadlibs`
+	./if_mach HP_PA HPUX $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c cord.a gc.a -lcurses -ltermlib -ldld `./threadlibs`
+	./if_mach POWERPC AIX $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c cord.a gc.a -lcurses
+	./if_mach POWERPC DARWIN $(CC) $(CFLAGS) -o de $(srcdir)/cord/tests/de.c cord.a gc.a
+	./if_mach M68K AMIGA $(CC) $(CFLAGS) -UGC_AMIGA_MAKINGLIB -o de $(srcdir)/cord/tests/de.c cord.a gc.a -lcurses
+	./if_not_there de$(EXEEXT) || $(CC) $(CFLAGS) -o de$(EXEEXT) $(srcdir)/cord/tests/de.c $(srcdir)/cord/tests/de_win.c cord.a gc.a $(CURSES) `./threadlibs`
 
 if_mach$(EXEEXT): $(srcdir)/tools/if_mach.c \
   $(srcdir)/include/private/gcconfig.h
