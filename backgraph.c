@@ -276,7 +276,13 @@ static void add_edge(ptr_t p, ptr_t q)
 #   ifdef DEBUG_PRINT_BIG_N_EDGES
       if (GC_print_stats == VERBOSE && be -> n_edges == 100) {
         GC_err_printf("The following object has big in-degree:\n");
-        GC_print_heap_obj(q);
+#       ifdef THREADS
+          /* We cannot call the debug version of GC_print_heap_obj here */
+          /* because the allocator lock is held.                        */
+          GC_default_print_heap_obj_proc(q);
+#       else
+          GC_print_heap_obj(q);
+#       endif
       }
 #   endif
 }
