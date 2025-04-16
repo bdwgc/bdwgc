@@ -25,6 +25,7 @@ lib*.so
 /.libs/
 /Makefile
 /add_gc_prefix
+/atomicops
 /atomicopstest
 /base_lib
 /bdw-gc.pc
@@ -47,6 +48,7 @@ lib*.so
 /disclaim_bench
 /disclaimtest
 /dont_ar_1
+/dont_ar_2
 /dont_ar_3
 /dont_ar_4
 /gc-*
