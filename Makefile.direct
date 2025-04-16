@@ -81,13 +81,13 @@ AR= ar
 RANLIB= ranlib
 # For EMX, replace "ranlib" with "ar s".
 
-# All .o files of libgc.a except for dyn_load.o.
+# All .o files of libgc.a except for dyn_load.o and atomic_ops_sysdeps.o.
 OBJS= alloc.o reclaim.o allchblk.o misc.o mach_dep.o os_dep.o mark_rts.o \
   headers.o mark.o obj_map.o blacklst.o finalize.o new_hblk.o dbg_mlc.o  \
   malloc.o checksums.o pthread_support.o pthread_stop_world.o \
   darwin_stop_world.o typd_mlc.o ptr_chck.o mallocx.o gcj_mlc.o specific.o \
   gc_dlopen.o backgraph.o win32_threads.o pthread_start.o \
-  thread_local_alloc.o fnlz_mlc.o atomic_ops.o atomic_ops_sysdeps.o
+  thread_local_alloc.o fnlz_mlc.o atomic_ops.o
 
 CSRCS= reclaim.c allchblk.c misc.c alloc.c mach_dep.c os_dep.c mark_rts.c \
   headers.c mark.c obj_map.c blacklst.c finalize.c \
@@ -149,6 +149,14 @@ atomic_ops.o: $(AO_SRC_DIR)/src/atomic_ops.c
 	$(CC) $(CFLAGS) -c -o $@ $(AO_SRC_DIR)/src/atomic_ops.c
 # For some reason, Solaris make does not handle "$<" properly.
 
+# The created library gc.a also contains atomic_ops.o and, optionally,
+# atomic_ops_sysdeps.o.  The latter exists only on Solaris/SPARC
+# platform (the .o file should contain no symbols on platforms other
+# than SPARC-based ones or if the GCC-compatible compiler is used).
+# Note: the conditional addition of atomic_ops_sysdeps.o is aimed at
+# preventing .S file to be passed to a compiler which might not support
+# such a file type and preventing the linker (like GNU ld) to imply
+# executable stack because of an empty .o file is encountered.
 atomic_ops_sysdeps.o: $(AO_SRC_DIR)/src/atomic_ops_sysdeps.S
 	$(CC) $(CFLAGS) -c -o $@ $(AO_SRC_DIR)/src/atomic_ops_sysdeps.S
 
@@ -203,10 +211,12 @@ tests/test.o: $(srcdir)/tests/test.c
 	$(CC) $(CFLAGS) -c $(srcdir)/tests/test.c
 	mv test.o tests/test.o
 
-base_lib gc.a: $(OBJS) dyn_load.o $(UTILS)
+base_lib gc.a: $(OBJS) dyn_load.o $(UTILS) \
+  $(AO_SRC_DIR)/src/atomic_ops_sysdeps.S
 	rm -f dont_ar_1
 	./if_mach SPARC SOLARIS touch dont_ar_1
-	./if_mach SPARC SOLARIS $(AR) rus gc.a $(OBJS) dyn_load.o
+	./if_mach SPARC SOLARIS $(CC) $(CFLAGS) -c -o atomic_ops_sysdeps.o $(AO_SRC_DIR)/src/atomic_ops_sysdeps.S
+	./if_mach SPARC SOLARIS $(AR) rus gc.a $(OBJS) atomic_ops_sysdeps.o dyn_load.o
 	./if_mach M68K AMIGA touch dont_ar_1
 	./if_mach M68K AMIGA $(AR) -vrus gc.a $(OBJS) dyn_load.o
 	./if_not_there dont_ar_1 || $(AR) ru gc.a $(OBJS) dyn_load.o
@@ -265,8 +275,8 @@ dyn_load_sunos53.o: dyn_load.c
 	$(CC) $(CFLAGS) -DSUNOS53_SHARED_LIB -c $(srcdir)/dyn_load.c -o $@
 
 # SunOS5 shared library version of the collector
-sunos5gc.so: $(OBJS) dyn_load_sunos53.o
-	$(CC) -G -o sunos5gc.so $(OBJS) dyn_load_sunos53.o -ldl
+sunos5gc.so: $(OBJS) dyn_load_sunos53.o atomic_ops_sysdeps.o
+	$(CC) -G -o sunos5gc.so $(OBJS) atomic_ops_sysdeps.o dyn_load_sunos53.o -ldl
 	ln sunos5gc.so libgc.so
 
 # Alpha/OSF shared library version of the collector
