@@ -50,9 +50,12 @@ int main(void)
 {
   GC_INIT();
 
-  CHECK_ALLOC_FAILED(GC_MALLOC(GC_SWORD_MAX - 1024), "SWORD_MAX-1024");
-  CHECK_ALLOC_FAILED(GC_MALLOC(GC_SWORD_MAX), "SWORD_MAX");
+  CHECK_ALLOC_FAILED(GC_MALLOC(GC_SWORD_MAX - 4096), "SWORD_MAX-4096");
   /* Skip other checks to avoid "exceeds maximum object size" gcc warning. */
+# if !(defined(_FORTIFY_SOURCE) && defined(__x86_64__) && defined(__ILP32__))
+    CHECK_ALLOC_FAILED(GC_MALLOC(GC_SWORD_MAX - 1024), "SWORD_MAX-1024");
+    CHECK_ALLOC_FAILED(GC_MALLOC(GC_SWORD_MAX), "SWORD_MAX");
+# endif
 # if !defined(_FORTIFY_SOURCE)
     CHECK_ALLOC_FAILED(GC_MALLOC((GC_word)GC_SWORD_MAX + 1), "SWORD_MAX+1");
     CHECK_ALLOC_FAILED(GC_MALLOC((GC_word)GC_SWORD_MAX + 1024),
