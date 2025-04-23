@@ -381,7 +381,7 @@ before_install:
 
 install:
 - if [[ "$NO_CLONE_LIBATOMIC_OPS" != true ]]; then
-    git clone --depth=50 https://github.com/ivmai/libatomic_ops.git
+    git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
               -b release-7_6;
   fi
 - "./autogen.sh"
