@@ -179,7 +179,7 @@ libatomic_ops source repository as well) could look like:
 
     git clone https://github.com/ivmai/bdwgc
     cd bdwgc
-    git clone https://github.com/ivmai/libatomic_ops
+    git clone https://github.com/bdwgc/libatomic_ops
     ./autogen.sh
     ./configure
     make -j
