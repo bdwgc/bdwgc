@@ -1798,21 +1798,27 @@ GC_API int GC_CALL
 GC_expand_hp(size_t bytes)
 {
   size_t n_blocks = OBJ_SZ_TO_BLOCKS_CHECKED(bytes);
+#ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
   word old_heapsize;
+#endif
   GC_bool result;
 
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
   LOCK();
+#ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
   old_heapsize = GC_heapsize;
+#endif
   result = GC_expand_hp_inner(n_blocks);
   if (result) {
     GC_requested_heapsize += bytes;
+#ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
     if (GC_dont_gc) {
       /* Do not call `WARN()` if the heap growth is intentional. */
       GC_ASSERT(GC_heapsize >= old_heapsize);
       GC_heapsize_on_gc_disable += GC_heapsize - old_heapsize;
     }
+#endif
   }
   UNLOCK();
   /*

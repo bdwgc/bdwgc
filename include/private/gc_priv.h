@@ -1555,8 +1555,10 @@ struct _GC_arrays {
 #define GC_requested_heapsize GC_arrays._requested_heapsize
   word _requested_heapsize; /*< heap size due to explicit expansion */
 
-#define GC_heapsize_on_gc_disable GC_arrays._heapsize_on_gc_disable
+#ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
+#  define GC_heapsize_on_gc_disable GC_arrays._heapsize_on_gc_disable
   word _heapsize_on_gc_disable;
+#endif
 
 #define GC_heapsize_at_forced_unmap GC_arrays._heapsize_at_forced_unmap
   word _heapsize_at_forced_unmap; /*< accessed with the allocator lock held */
