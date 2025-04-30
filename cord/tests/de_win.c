@@ -317,7 +317,7 @@ LRESULT CALLBACK WndProc (HWND hwnd_arg, UINT message,
                    CORD raw_line = retrieve_screen_line(i);
                    size_t len = CORD_len(raw_line);
                    char * text = CORD_to_char_star(raw_line);
-                                /* May contain embedded NULLs   */
+                                /* May contain embedded NUL characters. */
                    char * plain = plain_chars(text, len);
                    char * blanks = CORD_to_char_star(CORD_chars(' ',
                                                                 COLS - len));
