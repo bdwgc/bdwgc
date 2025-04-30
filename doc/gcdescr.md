@@ -109,7 +109,7 @@ is dedicated to only one object size and kind.
 
 The allocator maintains separate free lists for each size and kind of object.
 Associated with each kind is an array of free list pointers, with entry
-`freelist[i]` pointing to a free list of size 'i' objects. Index `i` is
+`freelist[i]` pointing to a free list of size `i` objects. Index `i` is
 expressed in granules, which are the minimum allocatable unit, typically 8 or
 16 bytes. The free lists themselves are linked through the first word in each
 object (see `obj_link` macro).
