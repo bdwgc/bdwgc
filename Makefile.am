@@ -17,9 +17,6 @@
 LIBGC_VER_INFO = 3:10:2
 LIBGCCPP_VER_INFO = 3:1:2
 
-## FIXME: `make distcheck' in this directory will not currently work.
-##     This is most likely to the explicit flags passed to submakes.
-
 # We currently use the source files directly from libatomic_ops, if we
 # use the internal version.  This is done since libatomic_ops doesn't
 # use libtool, since it has no real use for it.  But that seems to make
