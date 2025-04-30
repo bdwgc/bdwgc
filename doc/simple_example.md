@@ -41,7 +41,7 @@ should first look at the makefile, and adjust any options that are documented
 there.
 
 If your platform provides a `make` utility, that is generally preferred
-to platform- and compiler- dependent "project" files. (At least that is the
+to platform- and compiler-dependent "project" files. (At least that is the
 strong preference of the would-be maintainer of those project files.)
 
 ### Threads
