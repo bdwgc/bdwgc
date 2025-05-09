@@ -162,10 +162,13 @@ to be used.  Requires `GC_WIN32_PTHREADS` macro defined.
 to be used even if `GC_WIN32_PTHREADS` macro is undefined.  (Useful for
 WinCE.)
 
+`NO_ALL_INTERIOR_POINTERS` - Excludes the support of the all-interior-pointers
+mode (for smaller code size).
+
 `ALL_INTERIOR_POINTERS` - Allows all pointers to the interior of objects to be
 recognized.  (See `gc_priv.h` file for the consequences.)  Alternatively,
 `GC_all_interior_pointers` variable can be set at runtime before the collector
-initialization.
+initialization.  Has no effect if `NO_ALL_INTERIOR_POINTERS` macro is defined.
 
 `SMALL_CONFIG` - Tries to tune the collector for small heap sizes,
 usually causing it to use less space in such situations.  Incremental

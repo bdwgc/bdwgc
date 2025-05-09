@@ -53,6 +53,7 @@ GC_header_cache_miss(ptr_t p, hdr_cache_entry *hce)
   HC_MISS();
   GET_HDR(p, hhdr);
   if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
+#ifndef NO_ALL_INTERIOR_POINTERS
     if (GC_all_interior_pointers) {
       if (hhdr != NULL) {
         /* Pointer to near the start of the large object. */
@@ -63,7 +64,7 @@ GC_header_cache_miss(ptr_t p, hdr_cache_entry *hce)
         if (HBLK_IS_FREE(hhdr) || p - current >= (GC_signed_word)hhdr->hb_sz) {
           GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
           /* The pointer is past the end of the block. */
-          return 0;
+          return NULL;
         }
       } else {
         GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
@@ -76,22 +77,21 @@ GC_header_cache_miss(ptr_t p, hdr_cache_entry *hce)
        * we do not.
        */
       return hhdr;
-    } else {
-      if (NULL == hhdr) {
-        GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
-      }
-      return 0;
     }
-  } else {
-    if (HBLK_IS_FREE(hhdr)) {
+#endif
+    if (NULL == hhdr) {
       GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
-      return 0;
-    } else {
-      hce->block_addr = ADDR(p) >> LOG_HBLKSIZE;
-      hce->hce_hdr = hhdr;
-      return hhdr;
     }
+    return NULL;
   }
+
+  if (HBLK_IS_FREE(hhdr)) {
+    GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
+    return NULL;
+  }
+  hce->block_addr = ADDR(p) >> LOG_HBLKSIZE;
+  hce->hce_hdr = hhdr;
+  return hhdr;
 }
 
 /*

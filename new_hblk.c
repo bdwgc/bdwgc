@@ -253,8 +253,9 @@ GC_add_map_entry(size_t lg)
   GC_obj_map[lg] = new_map;
   return TRUE;
 }
-#endif /* !MARK_BIT_PER_OBJ */
+#endif
 
+#ifndef NO_ALL_INTERIOR_POINTERS
 GC_INNER void
 GC_initialize_offsets(void)
 {
@@ -269,3 +270,4 @@ GC_initialize_offsets(void)
       GC_modws_valid_offsets[i] = FALSE;
   }
 }
+#endif
