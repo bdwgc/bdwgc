@@ -117,12 +117,15 @@ GC_is_valid_displacement(void *p)
   if (NULL == hhdr)
     return p;
   h = HBLKPTR(p);
+#ifndef NO_ALL_INTERIOR_POINTERS
   if (GC_all_interior_pointers) {
     h = GC_find_starting_hblk(h, &hhdr);
-  } else if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
-    GC_is_valid_displacement_print_proc((ptr_t)p);
-    return p;
-  }
+  } else
+#endif
+    /* else */ if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
+      GC_is_valid_displacement_print_proc((ptr_t)p);
+      return p;
+    }
   sz = hhdr->hb_sz;
   offset = HBLKDISPL(p) % sz;
   if ((sz > MAXOBJBYTES && ADDR_GE((ptr_t)p, (ptr_t)h + sz))

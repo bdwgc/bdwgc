@@ -193,11 +193,11 @@ GC_get_version(void)
 GC_API int GC_CALL
 GC_get_dont_add_byte_at_end(void)
 {
-#ifdef DONT_ADD_BYTE_AT_END
-  return 1;
-#else
+#if MAX_EXTRA_BYTES > 0
   /* This is meaningful only if `GC_all_interior_pointers`. */
   return 0;
+#else
+  return 1;
 #endif
 }
 

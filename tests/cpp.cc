@@ -342,18 +342,23 @@ main(int argc, const char *argv[])
 {
 #endif
 
+#ifdef NO_ALL_INTERIOR_POINTERS
+  (void)argc;
+  (void)argv;
+  GC_printf("test skipped\n");
+#else
   // This is needed due to C++ multiple inheritance used.
   GC_set_all_interior_pointers(1);
 
-#ifdef TEST_MANUAL_VDB
+#  ifdef TEST_MANUAL_VDB
   GC_set_manual_vdb_allowed(1);
-#endif
-#if !defined(CPPCHECK)
+#  endif
+#  if !defined(CPPCHECK)
   GC_INIT();
-#endif
-#ifndef NO_INCREMENTAL
+#  endif
+#  ifndef NO_INCREMENTAL
   GC_enable_incremental();
-#endif
+#  endif
   if (GC_get_find_leak())
     GC_printf("This test program is not designed for leak detection mode\n");
 
@@ -372,10 +377,10 @@ main(int argc, const char *argv[])
               N_TESTS);
     n = N_TESTS;
   }
-#ifdef LINT2
+#  ifdef LINT2
   if (n > 30 * 1000)
     n = 30 * 1000;
-#endif
+#  endif
 
   for (iters = 1; iters <= n; iters++) {
     GC_printf("Starting iteration %d\n", iters);
@@ -397,12 +402,12 @@ main(int argc, const char *argv[])
       // Stack allocation should work too.
       C c1(2);
       F *f;
-#if !defined(CPPCHECK)
+#  if !defined(CPPCHECK)
       D *d;
       d = ::new (USE_GC, D::CleanUp,
                  reinterpret_cast<void *>(static_cast<GC_uintptr_t>(i))) D(i);
       GC_reachable_here(d);
-#endif
+#  endif
       f = new F;
       F **fa = new F *[1];
       fa[0] = f;
@@ -427,9 +432,9 @@ main(int argc, const char *argv[])
         GC_CHECKED_DELETE(b);
         B::Deleting(0);
       }
-#if defined(FINALIZE_ON_DEMAND) && !defined(GC_NO_FINALIZATION)
+#  if defined(FINALIZE_ON_DEMAND) && !defined(GC_NO_FINALIZATION)
       GC_invoke_finalizers();
-#endif
+#  endif
     }
 
     // Make sure the uncollectible objects are still there.
@@ -437,21 +442,21 @@ main(int argc, const char *argv[])
       A *a = static_cast<A *>(Undisguise(as[i]));
       B *b = static_cast<B *>(Undisguise(bs[i]));
       a->Test(i);
-#if defined(ADDRESS_SANITIZER) || defined(MEMORY_SANITIZER)
+#  if defined(ADDRESS_SANITIZER) || defined(MEMORY_SANITIZER)
       // Workaround for ASan/MSan: the linker uses operator `delete`
       // implementation from `libclang_rt` instead of `gccpp` library (thus
       // causing incompatible `alloc`/`free`).
       GC_FREE(a);
-#else
+#  else
       GC_CHECKED_DELETE(a);
-#endif
+#  endif
       b->Test(i);
       B::Deleting(1);
       GC_CHECKED_DELETE(b);
       B::Deleting(0);
-#if defined(FINALIZE_ON_DEMAND) && !defined(GC_NO_FINALIZATION)
+#  if defined(FINALIZE_ON_DEMAND) && !defined(GC_NO_FINALIZATION)
       GC_invoke_finalizers();
-#endif
+#  endif
     }
 
     // Make sure most of the finalizable objects have gone away.
@@ -463,5 +468,6 @@ main(int argc, const char *argv[])
   x = *xptr;
   my_assert(29 == x[0]);
   GC_printf("The test appears to have succeeded.\n");
+#endif
   return 0;
 }

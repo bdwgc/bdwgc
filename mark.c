@@ -1838,7 +1838,7 @@ GC_push_all_eager(void *bottom, void *top)
 #undef GC_least_plausible_heap_addr
 }
 
-#if !defined(NEED_FIXUP_POINTER)
+#if !defined(NEED_FIXUP_POINTER) && !defined(NO_ALL_INTERIOR_POINTERS)
 GC_INNER void
 GC_push_all_stack(ptr_t bottom, ptr_t top)
 {

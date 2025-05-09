@@ -132,10 +132,12 @@ GC_INNER GC_bool GC_findleak_delay_free = FALSE;
 #  endif
 #endif /* !NO_FIND_LEAK && !SHORT_DBG_HDRS */
 
-#ifdef ALL_INTERIOR_POINTERS
+#ifndef NO_ALL_INTERIOR_POINTERS
+#  ifdef ALL_INTERIOR_POINTERS
 int GC_all_interior_pointers = 1;
-#else
+#  else
 int GC_all_interior_pointers = 0;
+#  endif
 #endif
 
 #ifdef FINALIZE_ON_DEMAND
@@ -1239,9 +1241,11 @@ GC_init(void)
   }
 #  endif
 #endif
+#ifndef NO_ALL_INTERIOR_POINTERS
   if (GETENV("GC_ALL_INTERIOR_POINTERS") != NULL) {
     GC_all_interior_pointers = 1;
   }
+#endif
   if (GETENV("GC_DONT_GC") != NULL) {
 #if defined(LINT2) \
     && !(defined(GC_ASSERTIONS) && defined(GC_ALWAYS_MULTITHREADED))
@@ -1508,8 +1512,10 @@ GC_init(void)
       GC_requested_heapsize += initial_heap_sz;
     }
   }
+#ifndef NO_ALL_INTERIOR_POINTERS
   if (GC_all_interior_pointers)
     GC_initialize_offsets();
+#endif
   GC_register_displacement_inner(0);
 #ifdef REDIR_MALLOC_AND_LINUX_THREADS
   if (!GC_all_interior_pointers) {
@@ -2864,6 +2870,10 @@ GC_get_find_leak(void)
 GC_API void GC_CALL
 GC_set_all_interior_pointers(int value)
 {
+#ifdef NO_ALL_INTERIOR_POINTERS
+  if (value)
+    ABORT("All-interior-pointers mode is unsupported");
+#else
   GC_all_interior_pointers = value ? 1 : 0;
   if (GC_is_initialized) {
     /*
@@ -2874,12 +2884,13 @@ GC_set_all_interior_pointers(int value)
     LOCK();
     /* Note: this resets manual offsets as well. */
     GC_initialize_offsets();
-#ifndef NO_BLACK_LISTING
+#  ifndef NO_BLACK_LISTING
     if (!GC_all_interior_pointers)
       GC_bl_init_no_interiors();
-#endif
+#  endif
     UNLOCK();
   }
+#endif
 }
 
 GC_API int GC_CALL

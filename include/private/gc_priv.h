@@ -476,7 +476,15 @@ GC_INNER void GC_print_finalization_stats(void);
 #  define GC_notify_or_invoke_finalizers() (void)0
 #endif /* GC_NO_FINALIZATION */
 
-#if !defined(DONT_ADD_BYTE_AT_END)
+#ifdef NO_ALL_INTERIOR_POINTERS
+#  define GC_all_interior_pointers 0 /*< false */
+#endif
+
+#if defined(DONT_ADD_BYTE_AT_END) || defined(NO_ALL_INTERIOR_POINTERS)
+#  define MAX_EXTRA_BYTES 0
+#  define EXTRA_BYTES MAX_EXTRA_BYTES
+#else
+#  define MAX_EXTRA_BYTES 1
 #  ifdef LINT2
 /*
  * Explicitly instruct the code analysis tool that `GC_all_interior_pointers`
@@ -486,10 +494,6 @@ GC_INNER void GC_print_finalization_stats(void);
 #  else
 #    define EXTRA_BYTES ((size_t)GC_all_interior_pointers)
 #  endif
-#  define MAX_EXTRA_BYTES 1
-#else
-#  define EXTRA_BYTES 0
-#  define MAX_EXTRA_BYTES 0
 #endif
 
 #ifdef LARGE_CONFIG
@@ -2682,7 +2686,7 @@ GC_INNER GC_bool GC_collection_in_progress(void);
  */
 #define GC_PUSH_ALL_SYM(sym) GC_push_all_eager(&(sym), &(sym) + 1)
 
-#if defined(NEED_FIXUP_POINTER)
+#if defined(NEED_FIXUP_POINTER) || defined(NO_ALL_INTERIOR_POINTERS)
 #  define GC_push_all_stack(b, t) GC_push_all_eager(b, t)
 #else
 /* Same as `GC_push_all` but consider interior pointers as valid. */
@@ -3905,7 +3909,9 @@ void GC_check_dirty(void);
 
 GC_INNER void GC_setpagesize(void);
 
+#ifndef NO_ALL_INTERIOR_POINTERS
 GC_INNER void GC_initialize_offsets(void);
+#endif
 
 #if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
     && !defined(REDIRECT_MALLOC_IN_HEADER)

@@ -705,14 +705,14 @@ GC_push_all_stack_sections(ptr_t lo /* top */, ptr_t hi /* bottom */,
 STATIC void
 GC_push_all_stack_partially_eager(ptr_t bottom, ptr_t top, ptr_t cold_gc_frame)
 {
-#  ifndef NEED_FIXUP_POINTER
+#  if !defined(NEED_FIXUP_POINTER) && !defined(NO_ALL_INTERIOR_POINTERS)
   if (GC_all_interior_pointers) {
     /*
      * Push the hot end of the stack eagerly, so that register values saved
      * inside GC frames are marked before they disappear.  The rest of the
      * marking can be deferred until later.
      */
-    if (0 == cold_gc_frame) {
+    if (NULL == cold_gc_frame) {
       GC_push_all_stack(bottom, top);
       return;
     }
@@ -809,7 +809,9 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
    */
   {
     ptr_t bsp = GC_save_regs_ret_val;
+#    ifndef NO_ALL_INTERIOR_POINTERS
     ptr_t cold_gc_bs_pointer = bsp - 2048;
+
     if (GC_all_interior_pointers
         && ADDR_LT(GC_register_stackbottom, cold_gc_bs_pointer)) {
       /*
@@ -825,7 +827,9 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
                                     cold_gc_bs_pointer, FALSE,
                                     GC_traced_stack_sect);
       GC_push_all_eager(cold_gc_bs_pointer, bsp);
-    } else {
+    } else
+#    endif
+    /* else */ {
       GC_push_all_register_sections(GC_register_stackbottom, bsp,
                                     TRUE /* `eager` */, GC_traced_stack_sect);
     }
