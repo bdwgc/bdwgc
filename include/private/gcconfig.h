@@ -3195,6 +3195,14 @@ EXTERN_C_BEGIN
 # define IF_CANCEL(x) /* empty */
 #endif
 
+#if defined(DARWIN) && defined(MPROTECT_VDB) \
+    && !defined(NO_DESC_CATCH_EXCEPTION_RAISE) \
+    && !defined(FORCE_DESC_CATCH_EXCEPTION_RAISE) && GC_CLANG_PREREQ(17, 0)
+  /* Workaround "REFERENCED_DYNAMICALLY flag on _catch_exception_raise" */
+  /* linker deprecation warnings on macOS 15.4.                         */
+# define NO_DESC_CATCH_EXCEPTION_RAISE
+#endif
+
 #if !defined(CAN_HANDLE_FORK) && !defined(NO_HANDLE_FORK) \
     && !defined(HAVE_NO_FORK) \
     && ((defined(GC_PTHREADS) && !defined(NACL) \
