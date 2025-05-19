@@ -975,7 +975,7 @@ GC_API void GC_CALL GC_debug_register_finalizer(void * /* obj */,
         /* by cd will be considered accessible until the        */
         /* finalizer is invoked.                                */
 
-/* Another versions of the above follow.  It ignores            */
+/* Another version of the above follow.  It ignores             */
 /* self-cycles, i.e. pointers from a finalizable object to      */
 /* itself.  There is a stylistic argument that this is wrong,   */
 /* but it's unavoidable for C++, since the compiler may         */
