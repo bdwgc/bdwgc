@@ -418,7 +418,7 @@ GC_API void * GC_CALL GC_clear_stack(void *arg)
 }
 
 
-/* Return a pointer to the base address of p, given a pointer to a      */
+/* Return a pointer to the base address of p, given a pointer to        */
 /* an address within an object.  Return 0 o.w.                          */
 GC_API void * GC_CALL GC_base(void * p)
 {
