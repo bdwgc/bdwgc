@@ -56,7 +56,7 @@
 /*
  * The allocator uses GC_allochblk to allocate large chunks of objects.
  * These chunks all start on addresses which are multiples of
- * HBLKSZ.   Each allocated chunk has an associated header,
+ * HBLKSIZE.   Each allocated chunk has an associated header,
  * which can be located quickly based on the address of the chunk.
  * (See headers.c for details.)
  * This makes it possible to check quickly whether an
