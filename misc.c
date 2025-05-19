@@ -408,7 +408,7 @@ STATIC void GC_init_size_map(void)
 
 #endif /* !ALWAYS_SMALL_CLEAR_STACK && !STACK_NOT_SCANNED */
 
-/* Return a pointer to the base address of p, given a pointer to a      */
+/* Return a pointer to the base address of p, given a pointer to        */
 /* an address within an object.  Return 0 o.w.                          */
 GC_API void * GC_CALL GC_base(void * p)
 {
