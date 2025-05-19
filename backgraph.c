@@ -221,7 +221,7 @@ static void ensure_struct(ptr_t p)
 }
 
 /* Add the (forward) edge from p to q to the backward graph.  Both p    */
-/* q are pointers to the object base, i.e. pointers to an oh.           */
+/* and q are pointers to the object base, i.e. pointers to an oh.       */
 static void add_edge(ptr_t p, ptr_t q)
 {
     ptr_t old_back_ptr = GET_OH_BG_PTR(q);
