@@ -571,7 +571,7 @@ GC_API void GC_CALL GC_gcollect_and_unmap(void);
 /* called with the allocation lock held and the world might be stopped; */
 /* it's not allowed for stop_func to manipulate pointers to the garbage */
 /* collected heap or call most of GC functions.)  This works even       */
-/* if virtual dirty bits, and hence incremental collection is not       */
+/* if no virtual dirty bits, and hence incremental collection is not    */
 /* available for this architecture.  Collections can be aborted faster  */
 /* than normal pause times for incremental collection.  However,        */
 /* aborted collections do no useful work; the next collection needs     */
