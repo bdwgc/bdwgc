@@ -2264,7 +2264,7 @@ GC_EXTERN GC_bool GC_print_back_height;
 # define REACHABLE_AFTER_DIRTY(p) GC_reachable_here(p)
 #endif /* !GC_DISABLE_INCREMENTAL */
 
-/* Same as GC_base but excepts and returns a pointer to const object.   */
+/* Same as GC_base but accepts and returns a pointer to const object.   */
 #define GC_base_C(p) ((const void *)GC_base((/* no const */ void *)(p)))
 
 /* Debugging print routines: */
