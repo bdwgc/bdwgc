@@ -4957,7 +4957,7 @@ STATIC kern_return_t GC_forward_exception(mach_port_t thread, mach_port_t task,
 /* This violates the namespace rules but there isn't anything that can  */
 /* be done about it.  The exception handling stuff is hard coded to     */
 /* call this.  catch_exception_raise, catch_exception_raise_state and   */
-/* and catch_exception_raise_state_identity are called from OS.         */
+/* catch_exception_raise_state_identity are called from OS.             */
 GC_API_OSCALL kern_return_t
 catch_exception_raise(mach_port_t exception_port GC_ATTR_UNUSED,
                       mach_port_t thread, mach_port_t task GC_ATTR_UNUSED,
