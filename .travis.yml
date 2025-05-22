@@ -10,9 +10,6 @@ jobs:
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-cplusplus"
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-cplusplus"
   - env:
     - MAKEFILE_TARGETS="dist"
   - addons:
@@ -47,20 +44,12 @@ jobs:
     env:
     - CFLAGS_EXTRA="-m32"
     - CONF_OPTIONS="--enable-gc-assertions"
-  - os: osx
-    env:
-    - CFLAGS_EXTRA="-m32"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-handle-fork --enable-cplusplus"
   - compiler: gcc
     env:
     - CFLAGS_EXTRA="-D CHECKSUMS"
     - CONF_OPTIONS="--disable-threads --disable-munmap --enable-cplusplus"
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: clang
-    env:
-    - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus"
-  - os: osx
     env:
     - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS -D LINT2"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus"
@@ -72,7 +61,7 @@ jobs:
     env:
     - CFLAGS_EXTRA="-D BSD_TIME -D DEFAULT_STACK_MAYBE_SMALL -D ENABLE_TRACE -D EMPTY_GETENV_RESULTS"
     - CONF_OPTIONS="--enable-cplusplus"
-  - os: osx
+  - compiler: clang
     env:
     - CFLAGS_EXTRA="-march=native -D _FORTIFY_SOURCE=2 -D NO_INCREMENTAL"
     - CONF_OPTIONS="--enable-munmap --enable-cplusplus"
@@ -113,9 +102,6 @@ jobs:
   - compiler: clang
     env:
     - CONF_OPTIONS="--enable-large-config --enable-cplusplus"
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-large-config --enable-cplusplus"
   - addons:
       apt:
         packages:
@@ -137,11 +123,6 @@ jobs:
     - CONF_OPTIONS="--enable-redirect-malloc --disable-threads"
     - CFLAGS_EXTRA="-m32"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-redirect-malloc --enable-cplusplus --disable-threads"
-    - CFLAGS_EXTRA="-m32"
-    - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
@@ -151,11 +132,6 @@ jobs:
     - CFLAGS_EXTRA="-O3 -march=native"
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
-    env:
-    - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
-    - CFLAGS_EXTRA="-O3 -march=native"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
     env:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
     - CFLAGS_EXTRA="-O3 -march=native"
