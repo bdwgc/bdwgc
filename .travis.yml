@@ -12,9 +12,6 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-cplusplus"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-cplusplus"
   - env:
     - MAKEFILE_TARGETS="dist"
     - WORKAROUND_ACLOCAL_MISSING=true
@@ -42,14 +39,11 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-gc-assertions"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-gc-assertions --enable-handle-fork --enable-cplusplus"
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-gc-debug --enable-cplusplus"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - os: osx
+  - compiler: clang
     env:
     - CONF_OPTIONS="--enable-munmap --enable-cplusplus"
   - compiler: gcc
@@ -64,9 +58,6 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-large-config --enable-cplusplus"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-large-config --enable-cplusplus"
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-large-config --disable-munmap"
@@ -79,9 +70,6 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-redirect-malloc --disable-threads"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-redirect-malloc --enable-cplusplus --disable-threads"
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
@@ -94,9 +82,6 @@ jobs:
     env:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
   - addons:
       apt:
         packages:
