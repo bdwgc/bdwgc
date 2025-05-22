@@ -11,10 +11,6 @@ jobs:
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-cplusplus"
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-cplusplus"
-    - NO_CLONE_LIBATOMIC_OPS=true
   - env:
     - MAKEFILE_TARGETS="dist"
   - compiler: gcc
@@ -38,11 +34,6 @@ jobs:
     env:
     - CFLAGS_EXTRA="-m32"
     - CONF_OPTIONS="--enable-gc-assertions --enable-mmap"
-  - os: osx
-    env:
-    - CFLAGS_EXTRA="-m32"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus"
-    - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
     env:
     - CONF_OPTIONS="--disable-threads --enable-checksums --disable-munmap --enable-cplusplus"
@@ -52,7 +43,7 @@ jobs:
     - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
+  - compiler: clang
     env:
     - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS -D LINT2"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-handle-fork=manual"
@@ -77,7 +68,7 @@ jobs:
     env:
     - CONF_OPTIONS="--with-libatomic-ops=yes --enable-gc-assertions --enable-cplusplus"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
+  - compiler: clang
     env:
     - CFLAGS_EXTRA="-march=native -D _FORTIFY_SOURCE=2 -D AO_DISABLE_GCC_ATOMICS"
     - CONF_OPTIONS="--with-libatomic-ops=no --enable-munmap --enable-cplusplus --enable-static"
@@ -165,7 +156,7 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-large-config --enable-cplusplus --disable-shared --enable-static"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
+  - compiler: clang
     env:
     - CONF_OPTIONS="--enable-large-config --enable-cplusplus --disable-handle-fork"
     - NO_CLONE_LIBATOMIC_OPS=true
@@ -190,11 +181,6 @@ jobs:
     - CONF_OPTIONS="--enable-redirect-malloc --enable-static --disable-threads"
     - CFLAGS_EXTRA="-m32"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--enable-redirect-malloc --enable-cplusplus --enable-static --disable-threads"
-    - CFLAGS_EXTRA="-m32"
-    - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
     env:
     - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
@@ -208,15 +194,6 @@ jobs:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
     - CFLAGS_EXTRA="-O3 -march=native"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
-    env:
-    - CONF_OPTIONS="--disable-threads --enable-cplusplus"
-    - CFLAGS_EXTRA="-O3 -march=native"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - os: osx
-    env:
-    - CSA_CHECK=true
-    - CFLAGS_EXTRA="-m32"
   - compiler: clang
     language: c
     env:
@@ -227,10 +204,6 @@ jobs:
     - MAKEFILE_NAME=Makefile.direct
     - MAKEFILE_TARGETS="check check-cpp cord/de"
   - compiler: gcc
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check check-cpp cord/de"
-  - os: osx
     env:
     - MAKEFILE_NAME=Makefile.direct
     - MAKEFILE_TARGETS="check check-cpp cord/de"
@@ -260,9 +233,13 @@ jobs:
     - CFLAGS_EXTRA="-fsanitize=address -O0"
     - CONF_OPTIONS="--enable-gc-assertions"
     - LDFLAGS="-fuse-ld=gold"
-  - os: osx
+  - addons:
+      apt:
+        packages:
+        - g++-multilib
+        - gcc-multilib
     env:
-    - CFLAGS_EXTRA="-fsanitize=address -m32 -fno-omit-frame-pointer"
+    - CFLAGS_EXTRA="-fsanitize=address -m32 -O0"
     - CONF_OPTIONS="--disable-shared --enable-cplusplus"
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: clang
