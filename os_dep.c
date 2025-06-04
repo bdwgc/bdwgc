@@ -2025,10 +2025,16 @@ GC_get_allocation_base(void *p)
 GC_INNER void
 GC_add_current_malloc_heap(void)
 {
-  struct GC_malloc_heap_list *new_l = (struct GC_malloc_heap_list *)malloc(
-      sizeof(struct GC_malloc_heap_list));
+  struct GC_malloc_heap_list *new_l;
   void *candidate;
 
+#    if defined(MSWIN32) && !defined(GC_WINNT)
+  if (GC_no_win32_dlls)
+    return; /*< `GC_register_dynamic_libraries()` is a no-op one. */
+#    endif
+
+  new_l = (struct GC_malloc_heap_list *)malloc(
+      sizeof(struct GC_malloc_heap_list));
   if (NULL == new_l)
     return;
   /* Explicitly set to suppress "maybe-uninitialized" gcc warning. */
