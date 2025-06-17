@@ -67,7 +67,7 @@ GC_API GC_descr GC_CALL GC_make_descriptor(const GC_word * /* GC_bitmap bm */,
                 /* is intended to be called once per type, not once     */
                 /* per allocation.                                      */
 
-/* It is possible to generate a descriptor for a C type T with  */
+/* It is possible to generate a descriptor for a client type T with     */
 /* word aligned pointer fields f1, f2, ... as follows:                  */
 /*                                                                      */
 /* GC_descr T_descr;                                                    */
