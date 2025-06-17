@@ -649,7 +649,7 @@ void CORD_add_forest(ForestElement * forest, CORD x, size_t len)
         }
         i++;
     }
-    /* Sum has depth at most 1 greter than what would be required       */
+    /* Sum has depth at most 1 greater than what would be required      */
     /* for balance.                                                     */
     sum = CORD_cat(sum, x);
     sum_len += len;
