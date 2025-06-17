@@ -268,7 +268,7 @@ typedef volatile struct GC_Thread_Rep * GC_vthread;
 #endif
 
 #if !defined(__GNUC__)
-  /* Return TRUE if an thread was attached since we last asked or */
+  /* Return TRUE if a thread was attached since we last asked or  */
   /* since GC_attached_thread was explicitly reset.               */
   GC_bool GC_started_thread_while_stopped(void)
   {
