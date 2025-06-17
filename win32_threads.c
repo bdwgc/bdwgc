@@ -323,7 +323,7 @@ STATIC DWORD GC_main_thread;
 #endif /* GC_NO_THREADS_DISCOVERY && GC_ASSERTIONS */
 
 #if defined(WRAP_MARK_SOME) && !defined(GC_PTHREADS)
-  /* Return TRUE if an thread was attached since we last asked or */
+  /* Return TRUE if a thread was attached since we last asked or  */
   /* since GC_attached_thread was explicitly reset.               */
   GC_INNER GC_bool GC_started_thread_while_stopped(void)
   {
