@@ -966,9 +966,9 @@ EXTERN_C_BEGIN
 
 #define GC_SQRT_SIZE_MAX ((((size_t)1) << (WORDSZ / 2)) - 1)
 
-/*  Max size objects supported by freelist (larger objects are  */
-/*  allocated directly with allchblk(), by rounding to the next */
-/*  multiple of HBLKSIZE).                                      */
+/* Max size objects supported by freelist (larger objects are       */
+/* allocated directly with GC_alloc_large, by rounding to the next  */
+/* multiple of HBLKSIZE).                                           */
 #define CPP_MAXOBJBYTES (CPP_HBLKSIZE/2)
 #define MAXOBJBYTES ((size_t)CPP_MAXOBJBYTES)
 #define CPP_MAXOBJWORDS BYTES_TO_WORDS(CPP_MAXOBJBYTES)
