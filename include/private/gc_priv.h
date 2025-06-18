@@ -2543,7 +2543,7 @@ GC_INNER void *GC_store_debug_info_inner(void *p, word sz, const char *str,
 #include <setjmp.h>
 
 /* Some macros for setjmp that works across signal handlers     */
-/* were possible, and a couple of routines to facilitate        */
+/* where possible, and a couple of routines to facilitate       */
 /* catching accesses to bad addresses when that's               */
 /* possible/needed.                                             */
 #if (defined(UNIX_LIKE) || (defined(NEED_FIND_LIMIT) && defined(CYGWIN32))) \
