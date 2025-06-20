@@ -1628,7 +1628,7 @@ EXTERN_C_BEGIN
 #       define DATASTART ((ptr_t)GC_DATASTART)  /* From gc.h */
 #       define DATAEND   ((ptr_t)GC_DATAEND)
 #       ifndef USE_WINALLOC
-#         /* MPROTECT_VDB does not work, it leads to a spurious exit.   */
+          /* MPROTECT_VDB does not work, it leads to a spurious exit.   */
 #         ifdef USE_MMAP
 #           define NEED_FIND_LIMIT
 #         endif
