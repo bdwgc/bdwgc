@@ -296,7 +296,7 @@ size_t CORD_rchr(CORD x, size_t i, int c);
 /* 2. The format string is represented as a CORD.                       */
 /* 3. CORD_sprintf and CORD_vsprintf assign the result through the 1st  */      /*    argument. Unlike their ANSI C versions, there is no need to guess */
 /*    the correct buffer size.                                          */
-/* 4. Most of the conversions are implement through the native          */
+/* 4. Most of the conversions are implemented through the native        */
 /*    vsprintf.  Hence they are usually no faster, and                  */
 /*    idiosyncrasies of the native printf are preserved.  However,      */
 /*    CORD arguments to CORD_sprintf and CORD_vsprintf are NOT copied;  */
