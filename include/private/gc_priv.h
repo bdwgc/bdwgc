@@ -1961,7 +1961,7 @@ GC_INNER GC_bool GC_collection_in_progress(void);
                         /* Collection is in progress, or was abandoned. */
 
 /* Push contents of the symbol residing in the static roots area        */
-/* excluded from scanning by the the collector for a reason.            */
+/* excluded from scanning by the collector for a reason.                */
 /* Note: it should be used only for symbols of relatively small size    */
 /* (one or several words).                                              */
 #define GC_PUSH_ALL_SYM(sym) GC_push_all_eager(&(sym), &(sym) + 1)
