@@ -278,7 +278,7 @@ STATIC void GC_reclaim_small_nonempty_block(struct hblk *hbp,
 }
 
 /*
- * Restore an unmarked large object or an entirely empty blocks of small objects
+ * Restore an unmarked large object or an entirely empty block of small objects
  * to the heap block free list.
  * Otherwise enqueue the block for later processing
  * by GC_reclaim_small_nonempty_block.
