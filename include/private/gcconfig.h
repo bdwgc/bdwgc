@@ -1865,7 +1865,7 @@
         /* this.)                                                       */
         /* This technique also doesn't work with HP/UX 11.xx.  The      */
         /* stack size is settable using the kernel maxssiz variable,    */
-        /* and in 11.23 and latter, the size can be set dynamically.    */
+        /* and in 11.23 and later, the size can be set dynamically.     */
         /* It also doesn't handle SHMEM_MAGIC binaries which have       */
         /* stack and data in the first quadrant.                        */
 #       define STACKBOTTOM ((ptr_t)0x7b033000) /* from /etc/conf/h/param.h */
