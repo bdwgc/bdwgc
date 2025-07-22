@@ -858,7 +858,7 @@ GC_INNER size_t GC_page_size = 0;
           /* act.sa_restorer is deprecated and should not be initialized. */
 #         ifdef GC_IRIX_THREADS
             /* Older versions have a bug related to retrieving and      */
-            /* and setting a handler at the same time.                  */
+            /* setting a handler at the same time.                      */
             (void) sigaction(SIGSEGV, 0, &old_segv_act);
             (void) sigaction(SIGSEGV, &act, 0);
 #         else
