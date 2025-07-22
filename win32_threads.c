@@ -1614,7 +1614,7 @@ static GC_bool may_be_in_stack(ptr_t s)
 /* compiled with the 'omit frame pointer' optimization.         */
 /* The context register values are stored to regs argument      */
 /* which is expected to be of PUSHED_REGS_COUNT length exactly. */
-/* The functions returns the context stack pointer value.       */
+/* The function returns the context stack pointer value.        */
 static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext) {
     ptr_t sp;
     int cnt = 0;
