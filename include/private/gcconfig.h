@@ -1723,7 +1723,7 @@ EXTERN_C_BEGIN
       extern char _end;
       extern char *_STACKTOP;
       /* Depending on calling conventions Watcom C either precedes      */
-      /* or does not precedes with underscore names of C-variables.     */
+      /* or does not precede with underscore names of C-variables.      */
       /* Make sure startup code variables always have the same names.   */
       #pragma aux __nullarea "*";
       #pragma aux _end "*";
