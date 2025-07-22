@@ -14,7 +14,7 @@
  */
 /*
  * These are functions on cords that do not need to understand their
- * implementation.  They serve also serve as example client code for
+ * implementation.  They also serve as example client code for
  * cord_basics.
  */
 /* Boehm, December 8, 1995 1:53 pm PST */
