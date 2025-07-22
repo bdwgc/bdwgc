@@ -63,7 +63,7 @@
 /* free list link field in the first word.  Thus mark procedures may    */
 /* not count on the presence of a type descriptor, and must handle this */
 /* case correctly somehow.  Also, a mark procedure should be prepared   */
-/* to be executed concurrently from the marker threads (the later ones  */
+/* to be executed concurrently from the marker threads (the latter ones */
 /* are created only if the client has called GC_start_mark_threads()    */
 /* or started a user thread previously).                                */
 typedef struct GC_ms_entry * (*GC_mark_proc)(GC_word * /* addr */,
