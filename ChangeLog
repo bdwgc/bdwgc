@@ -889,7 +889,7 @@ Also, includes 7.2h changes
 * Fix data race in GC_init_explicit_typing
 * Fix gc.mak regarding msvc_dbg and test (MSVC)
 * Fix missing error handling of pthread_attr_init/getstacksize
-* Fix missing error handling of pthreads_mutex_init and cond_wait
+* Fix missing error handling of pthread_mutex_init and cond_wait
 * Fix missing numeric casts in cord
 * Fix potential left shift overflows in finalize.c (64-bit targets)
 * Fix pthreads-win32 name in comments and documentation
