@@ -142,7 +142,7 @@ The README and gc.h files in the distribution.  More detailed definitions of
 the functions exported by the collector are given there.  (The above list is
 not complete.)
 .LP
-The web site at http://www.hboehm.info/gc/ (or https://github.com/ivmai/bdwgc/).
+The web site at http://www.hboehm.info/gc/ (or https://github.com/bdwgc/bdwgc/).
 .LP
 Boehm, H., and M. Weiser, "Garbage Collection in an Uncooperative Environment",
 "Software Practice & Experience", September 1988, pp. 807-820.
