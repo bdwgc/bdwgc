@@ -768,5 +768,5 @@ deploy:
   file_glob: true
   on:
     condition: $MAKEFILE_TARGETS = distcheck
-    repo: ivmai/bdwgc
+    repo: bdwgc/bdwgc
     tags: true
