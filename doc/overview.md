@@ -1,4 +1,4 @@
-[Interface Overview](gcinterface.md) | [Tutorial Slides](http://www.hboehm.info/gc/04tutorial.pdf) | [FAQ](http://www.hboehm.info/gc/faq.html) | [Example](simple_example.md) | [Download](https://github.com/ivmai/bdwgc/wiki/Download) | [License](http://www.hboehm.info/gc/license.txt)
+[Interface Overview](gcinterface.md) | [Tutorial Slides](http://www.hboehm.info/gc/04tutorial.pdf) | [FAQ](http://www.hboehm.info/gc/faq.html) | [Example](simple_example.md) | [Download](https://github.com/bdwgc/bdwgc/wiki/Download) | [License](http://www.hboehm.info/gc/license.txt)
 ---|---|---|---|---|---
 
 # A garbage collector for C and C++
@@ -36,11 +36,11 @@ Alternatively, the garbage collector may be used as a [leak detector](leak.md)
 for C or C++ programs, though that is not its primary goal.
 
 Typically several versions are offered for
-[downloading](https://github.com/ivmai/bdwgc/wiki/Download): preview, stable,
+[downloading](https://github.com/bdwgc/bdwgc/wiki/Download): preview, stable,
 legacy. Usually you should use the one marked as the _latest stable_ release.
 Preview versions may contain additional features, platform support, but are
 likely to be less well tested. The list of changes for each version
-is specified on the [releases](https://github.com/ivmai/bdwgc/releases) page.
+is specified on the [releases](https://github.com/bdwgc/bdwgc/releases) page.
 
 The arguments for and against conservative garbage collection in C and C++ are
 briefly discussed [here](http://www.hboehm.info/gc/issues.html). The
@@ -322,7 +322,7 @@ The [Vesta](http://www.vestasys.org/) configuration management system.
 
 [Directory](http://www.hboehm.info/gc/gc_source/) containing the distribution
 files of all garbage collector releases. It duplicates
-[Download](https://github.com/ivmai/bdwgc/wiki/Download) page on GitHub.
+[Download](https://github.com/bdwgc/bdwgc/wiki/Download) page on GitHub.
 
 ## More background information
 
@@ -361,25 +361,25 @@ to [Stack Overflow](https://stackoverflow.com/questions/tagged/boehm-gc) with
 _boehm-gc_ tag.
 
 To contribute, please rebase your code to the latest
-[master](https://github.com/ivmai/bdwgc/tree/master/) and submit
-a [pull request](https://github.com/ivmai/bdwgc/pulls) to GitHub.
+[master](https://github.com/bdwgc/bdwgc/tree/master/) and submit
+a [pull request](https://github.com/bdwgc/bdwgc/pulls) to GitHub.
 
 To report a bug, or propose (request) a new feature, create
-a [GitHub issue](https://github.com/ivmai/bdwgc/issues). Please make sure
+a [GitHub issue](https://github.com/bdwgc/bdwgc/issues). Please make sure
 it has not been reported yet by someone else.
 
 To receive notifications on every release, please subscribe to
-[Releases RSS feed](https://github.com/ivmai/bdwgc/releases.atom).
+[Releases RSS feed](https://github.com/bdwgc/bdwgc/releases.atom).
 Notifications on all issues and pull requests are available
-by [watching](https://github.com/ivmai/bdwgc/watchers) the project.
+by [watching](https://github.com/bdwgc/bdwgc/watchers) the project.
 
 Mailing lists (bdwgc-announce@lists.opendylan.org, bdwgc@lists.opendylan.org,
 and the former gc-announce@linux.hpl.hp.com and gc@linux.hpl.hp.com) are not
 used at this moment. Their content is available
 in
-[bdwgc-announce](https://github.com/ivmai/bdwgc/files/1037650/bdwgc-announce-mailing-list-archive-2014_02.tar.gz)
+[bdwgc-announce](https://github.com/bdwgc/bdwgc/files/1037650/bdwgc-announce-mailing-list-archive-2014_02.tar.gz)
 and
-[bdwgc](https://github.com/ivmai/bdwgc/files/1038163/bdwgc-mailing-list-archive-2017_04.tar.gz)
+[bdwgc](https://github.com/bdwgc/bdwgc/files/1038163/bdwgc-mailing-list-archive-2017_04.tar.gz)
 archive files, respectively. The gc list archive may also be read
 at [Narkive](http://bdwgc.opendylan.narkive.com).
 
