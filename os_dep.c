@@ -121,7 +121,7 @@ GC_repeat_read(int f, char *buf, size_t count)
  * base (the IA-64 case).  Do it once here.
  */
 
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
 /*
  * Determine the length of a file by incrementally reading it into a buffer.
  * This would be silly to use it on a file supporting `lseek`, but Linux
@@ -168,7 +168,7 @@ GC_get_maps_len(void)
   close(f);
   return result;
 }
-#  endif /* THREADS */
+#  endif /* !SINGLE_THREADED_PROCESS */
 
 GC_INNER const char *
 GC_get_maps(void)
@@ -177,7 +177,7 @@ GC_get_maps(void)
   static char *maps_buf = NULL;
   static size_t maps_buf_sz = 1;
   size_t maps_size;
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
   size_t old_maps_size = 0;
 #  endif
 
@@ -185,11 +185,12 @@ GC_get_maps(void)
   GC_ASSERT(I_HOLD_LOCK());
 
   /*
-   * Note that in the presence of threads, the `maps` file can
-   * essentially shrink asynchronously and unexpectedly as threads that
-   * we already think of as dead release their stacks.  And there is no
-   * easy way to read the entire file atomically.  This is arguably
-   * a misfeature of the `/proc/self/maps` interface.
+   * Note that in the presence of threads in the process (even if the
+   * collector itself is built single-threaded), the `maps` file can
+   * essentially shrink asynchronously and unexpectedly as threads
+   * that we already think of as dead release their stacks.
+   * And there is no easy way to read the entire file atomically.
+   * This is arguably a misfeature of the `/proc/self/maps` interface.
    * Since we expect the file can grow asynchronously in rare cases,
    * it should suffice to first determine the size (using `read()`),
    * and then to reread the file.  If the size is inconsistent, then
@@ -197,7 +198,7 @@ GC_get_maps(void)
    * if we use this to locate the data roots (not the default).
    */
 
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
   /* Determine the initial size of `/proc/self/maps` file. */
   maps_size = GC_get_maps_len();
   if (0 == maps_size)
@@ -228,7 +229,7 @@ GC_get_maps(void)
       if (NULL == maps_buf)
         ABORT_ARG1("Insufficient space for /proc/self/maps buffer",
                    ", %lu bytes requested", (unsigned long)maps_buf_sz);
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
       /*
        * Recompute initial length, since we allocated.
        * This can only happen a few times per program execution.
@@ -242,7 +243,7 @@ GC_get_maps(void)
     f = open("/proc/self/maps", O_RDONLY);
     if (-1 == f)
       ABORT_ARG1("Cannot open /proc/self/maps", ": errno= %d", errno);
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
     old_maps_size = maps_size;
 #  endif
     maps_size = 0;
@@ -256,7 +257,7 @@ GC_get_maps(void)
     close(f);
     if (0 == maps_size)
       ABORT("Empty /proc/self/maps");
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
     if (maps_size > old_maps_size) {
       /* This might be caused by e.g. thread creation. */
       WARN("Unexpected asynchronous /proc/self/maps growth"
@@ -265,7 +266,7 @@ GC_get_maps(void)
     }
 #  endif
   } while (maps_size >= maps_buf_sz
-#  ifdef THREADS
+#  ifndef SINGLE_THREADED_PROCESS
            || maps_size < old_maps_size
 #  endif
   );

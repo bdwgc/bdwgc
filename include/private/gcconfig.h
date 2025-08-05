@@ -2566,6 +2566,16 @@ extern char __global_base, __heap_base;
 #  define THREADS
 #endif
 
+/*
+ * If the client app is known not to create threads (even indirectly in
+ * the used libraries) and the collector is not multi-threaded, then the
+ * collector could be built with `SINGLE_THREADED_PROCESS` macro defined.
+ * But in practice the macro should never be defined.
+ */
+#if defined(THREADS) && defined(SINGLE_THREADED_PROCESS)
+#  undef SINGLE_THREADED_PROCESS
+#endif
+
 #if defined(__CHERI_PURE_CAPABILITY__)
 #  define CHERI_PURECAP
 #endif
