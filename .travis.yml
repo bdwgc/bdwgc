@@ -20,7 +20,7 @@ jobs:
     compiler: gcc
     env:
     - CONF_OPTIONS="--enable-gcov --enable-single-obj-compilation --enable-cplusplus --disable-shared --enable-gc-assertions --enable-valgrind-tracking"
-    - CFLAGS_EXTRA="-D USE_CUSTOM_SPECIFIC"
+    - CFLAGS_EXTRA="-fprofile-update=atomic -D USE_CUSTOM_SPECIFIC"
     - CC_FOR_CHECK=g++
     - MAKEFILE_TARGETS="all"
     - MAKEFILE_TARGETS_CHECK="check"
