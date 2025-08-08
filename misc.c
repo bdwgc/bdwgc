@@ -2706,6 +2706,33 @@ GC_dump(void)
   READER_UNLOCK();
 }
 
+extern int GC_force_full_gc;
+__declspec(dllexport) void GC_set_force_full_gc(int forceFullGC)
+{
+    GC_force_full_gc = forceFullGC;
+}
+
+__declspec(dllexport) void GC_CALL GC_set_incremental(int incremental)
+{
+  if (GC_incremental == incremental) 
+    {
+    return;
+  }
+
+    LOCK();
+    GC_gcollect_inner();
+#ifndef GC_DISABLE_INCREMENTAL
+    GC_incremental = incremental;
+#endif
+    UNLOCK();
+}
+
+extern GC_bool GC_force_full_gc;
+void GC_set_force_full_gc_internal(int forceFullGC)
+{
+    GC_force_full_gc = forceFullGC;
+}
+
 GC_API void GC_CALL
 GC_dump_named(const char *name)
 {
