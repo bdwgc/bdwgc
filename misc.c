@@ -2706,13 +2706,7 @@ GC_dump(void)
   READER_UNLOCK();
 }
 
-extern int GC_force_full_gc;
-__declspec(dllexport) void GC_set_force_full_gc(int forceFullGC)
-{
-    GC_force_full_gc = forceFullGC;
-}
-
-__declspec(dllexport) void GC_CALL GC_set_incremental(int incremental)
+void GC_CALL GC_set_incremental(int incremental)
 {
   if (GC_incremental == incremental) 
     {
