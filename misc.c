@@ -2706,7 +2706,7 @@ GC_dump(void)
   READER_UNLOCK();
 }
 
-void GC_CALL GC_set_incremental(int incremental)
+void GC_CALL GC_set_incremental(GC_bool incremental)
 {
   if (GC_incremental == incremental) 
     {
@@ -2722,7 +2722,7 @@ void GC_CALL GC_set_incremental(int incremental)
 }
 
 extern GC_bool GC_force_full_gc;
-void GC_set_force_full_gc_internal(int forceFullGC)
+void GC_set_force_full_gc_internal(GC_bool forceFullGC)
 {
     GC_force_full_gc = forceFullGC;
 }
