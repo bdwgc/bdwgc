@@ -1349,7 +1349,7 @@ test_tinyfl(void)
 #endif
 
 extern void GC_CALL GC_set_incremental(GC_bool);
-extern GC_set_force_full_gc_internal(GC_bool);
+extern void GC_set_force_full_gc_internal(GC_bool);
 
 static void
 gc_set_incremental_test(void)
