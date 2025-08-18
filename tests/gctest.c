@@ -1347,6 +1347,10 @@ test_tinyfl(void)
 #    define TREE_HEIGHT 16
 #  endif
 #endif
+
+extern void GC_CALL GC_set_incremental(GC_bool);
+extern GC_set_force_full_gc_internal(GC_bool);
+
 static void
 gc_set_incremental_test(void)
 {
