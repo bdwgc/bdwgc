@@ -2092,6 +2092,29 @@ GC_write(int fd, const char *buf, size_t len)
 #  define DECL_BUF_AND_PRINTF_TO(buf, format) const char *buf = (format)
 #endif /* GC_DISABLE_SNPRINTF */
 
+void 
+GC_CALL GC_set_incremental(GC_bool incremental)
+{
+  if (GC_incremental == incremental) 
+  {
+    return;
+  }
+
+  LOCK();
+  GC_gcollect_inner();
+#ifndef GC_DISABLE_INCREMENTAL
+  GC_incremental = incremental;
+#endif
+  UNLOCK();
+}
+
+extern GC_bool GC_force_full_gc;
+void 
+GC_set_force_full_gc_internal(GC_bool forceFullGC)
+{
+    GC_force_full_gc = forceFullGC;
+}
+
 void
 GC_printf(const char *format, ...)
 {
@@ -2704,27 +2727,6 @@ GC_dump(void)
   READER_LOCK();
   GC_dump_named(NULL);
   READER_UNLOCK();
-}
-
-void GC_CALL GC_set_incremental(GC_bool incremental)
-{
-  if (GC_incremental == incremental) 
-    {
-    return;
-  }
-
-    LOCK();
-    GC_gcollect_inner();
-#ifndef GC_DISABLE_INCREMENTAL
-    GC_incremental = incremental;
-#endif
-    UNLOCK();
-}
-
-extern GC_bool GC_force_full_gc;
-void GC_set_force_full_gc_internal(GC_bool forceFullGC)
-{
-    GC_force_full_gc = forceFullGC;
 }
 
 GC_API void GC_CALL
