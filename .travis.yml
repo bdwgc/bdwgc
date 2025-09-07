@@ -1,10 +1,14 @@
 language: cpp
 os: linux
-dist: jammy
+dist: noble
 
 jobs:
   include:
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CONF_OPTIONS="--enable-cplusplus"
     - GCTEST_WITH_MPROTECT_VDB=true
@@ -38,50 +42,44 @@ jobs:
     env:
     - CSA_CHECK=true
     - CFLAGS_EXTRA="-m32"
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     language: c
     env:
     - CSA_CHECK=true
     - CFLAGS_EXTRA="-D ALL_INTERIOR_POINTERS -D CHECKSUMS -D DBG_HDRS_ALL -D DEBUG_THREADS -D ENABLE_TRACE -D GC_ALWAYS_MULTITHREADED -D GC_ASSERTIONS -D GC_ATOMIC_UNCOLLECTABLE -D GC_ENABLE_SUSPEND_THREAD -D GC_GCJ_SUPPORT -D GC_PRINT_BACK_HEIGHT -D GC_THREADS -D HANDLE_FORK -D JAVA_FINALIZATION -D KEEP_BACK_PTRS -D MAKE_BACK_GRAPH -D PARALLEL_MARK -D PRINT_BLACK_LIST -D THREAD_LOCAL_ALLOC -D USE_MMAP -D USE_MUNMAP"
-  - compiler: clang
-    env:
+  - env:
     - CPPCHECK_ENABLE="--enable=unusedFunction -I libatomic_ops/src extra/gc.c tests/*.c"
-  - compiler: clang
-    env:
+  - env:
     - CPPCHECK_ENABLE="--enable=unusedFunction --force -D GC_BUILTIN_ATOMIC *.cc cord/*.c cord/tests/*.c tests/*.c"
     - CPPCHECK_OUT_FILTER="Z"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
-    env:
+  - env:
     - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H -I libatomic_ops/src a*.c b*.c c*.c d*.c f*.c"
     - CPPCHECK_OUT_FILTER="Z"
-  - compiler: clang
-    env:
+  - env:
     - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H -I libatomic_ops/src g*.c h*.c m*.c"
     - CPPCHECK_OUT_FILTER="Z"
-  - compiler: clang
-    env:
+  - env:
     - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H -I libatomic_ops/src n*.c p*.c r*.c s*.c t*.c w*.c cord/*.c"
-  - compiler: clang
-    env:
+  - env:
     - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -I libatomic_ops/src *.cc cord/tests/*.c extra/m*.c extra/*.cpp tests/*.c tests/*.cc tools/*.c"
     - CPPCHECK_OUT_FILTER="Z"
   - arch: arm64
     compiler: clang
-    dist: focal
   - arch: arm64
     compiler: gcc
-    dist: focal
   - arch: arm64
     compiler: clang
-    dist: focal
     env:
     - CFLAGS_EXTRA="-O3"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --disable-shared"
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: arm64
     compiler: gcc
-    dist: focal
     env:
     - CFLAGS_EXTRA="-O3 -D SIMULATE_LOST_SIGNALS -D TRACE_BUF"
     - CONF_OPTIONS="--enable-cplusplus --disable-gcj-support"
@@ -100,7 +98,6 @@ jobs:
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: arm64
     compiler: gcc
-    dist: focal
     env:
     - CONF_OPTIONS="--disable-threads"
     - NO_CLONE_LIBATOMIC_OPS=true
@@ -110,7 +107,6 @@ jobs:
         - libatomic-ops-dev
     arch: arm64
     compiler: gcc
-    dist: focal
     env:
     - CONF_OPTIONS="--with-libatomic-ops=yes --enable-gc-assertions --enable-cplusplus --disable-munmap"
     - NO_CLONE_LIBATOMIC_OPS=true
@@ -125,31 +121,26 @@ jobs:
     - TESTS_CUSTOM_RUN=true
   - arch: arm64
     compiler: clang
-    dist: focal
     env:
     - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON"
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: arm64
     compiler: gcc
-    dist: focal
     env:
     - MAKEFILE_NAME=Makefile.direct
     - MAKEFILE_TARGETS="check cord/de"
   - arch: ppc64le
     compiler: clang
-    dist: focal
     env:
     - GCTEST_WITH_MPROTECT_VDB=true
   - arch: ppc64le
     compiler: gcc
-    dist: focal
     env:
     - CONF_OPTIONS="--disable-shared --disable-threads"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: ppc64le
     compiler: clang
-    dist: focal
     env:
     - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2 -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-static"
@@ -157,14 +148,12 @@ jobs:
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: ppc64le
     compiler: gcc
-    dist: focal
     env:
     - CFLAGS_EXTRA="-O3 -D NO_MPROTECT_VDB"
     - CONF_OPTIONS="--enable-cplusplus"
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: ppc64le
     compiler: clang
-    dist: focal
     env:
     - CFLAGS_EXTRA="-D CHECK_SOFT_VDB"
     - CONF_OPTIONS="--enable-gc-assertions --enable-static --disable-thread-local-alloc"
@@ -181,59 +170,40 @@ jobs:
     - TESTS_CUSTOM_RUN=true
   - arch: ppc64le
     compiler: clang
-    dist: focal
     env:
     - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON -Denable_gc_assertions=ON"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: ppc64le
     compiler: clang
-    dist: focal
     env:
     - MAKEFILE_NAME=Makefile.direct
     - MAKEFILE_TARGETS="check cord/de"
     - GCTEST_WITH_MPROTECT_VDB=true
   - arch: s390x
     compiler: clang
-    dist: focal
     env:
     - GCTEST_WITH_MPROTECT_VDB=true
   - arch: s390x
     compiler: gcc
-    dist: focal
     env:
     - CONF_OPTIONS="--disable-disclaim"
     - GCTEST_WITH_MPROTECT_VDB=true
-  - addons:
-      apt:
-        packages:
-        - clang-12
-    arch: s390x
-    compiler: clang-12
-    dist: focal
+  - arch: s390x
+    compiler: clang
     env:
-    - CC=clang-12
-    - CXX=clang++-12
     - CFLAGS_EXTRA="-O3 -flto -D _FORTIFY_SOURCE=2 -D NO_RETRY_SIGNALS"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-dynamic-pointer-mask"
     - GCTEST_WITH_MPROTECT_VDB=true
-  - addons:
-      apt:
-        packages:
-        - g++-10
-    arch: s390x
-    compiler: g++-10
-    dist: focal
+  - arch: s390x
+    compiler: gcc
     env:
-    - CC=gcc-10
-    - CXX=g++-10
     - CFLAGS_EXTRA="-O3 -flto=auto -D _FORTIFY_SOURCE=2 -D PREFER_MMAP_PROT_NONE"
     - CONF_OPTIONS="--enable-cplusplus --disable-shared"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - arch: s390x
     compiler: gcc
-    dist: focal
     env:
     - MAKEFILE_NAME=Makefile.direct
     - MAKEFILE_TARGETS="check cord/de"
@@ -265,6 +235,7 @@ jobs:
     - MAKEFILE_TARGETS="check cord/de"
     - MAKE_NPROC=8
   - compiler: gcc
+    dist: jammy
     env:
     - CFLAGS_EXTRA="-O3 -march=native -fanalyzer"
     - CONF_OPTIONS="--enable-cplusplus"
@@ -304,12 +275,20 @@ jobs:
     env:
     - CONF_OPTIONS="--disable-threads --enable-checksums --disable-handle-fork --disable-munmap --enable-gc-assertions --enable-large-config --enable-static"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-D _FORTIFY_SOURCE=2 -D DBG_HDRS_ALL -D SHORT_DBG_HDRS"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --disable-dynamic-loading"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS -D LINT2 -D PRINT_AND_CHECK_INT_LIST"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-handle-fork=manual --disable-throw-bad-alloc-library"
@@ -323,7 +302,11 @@ jobs:
     - CFLAGS_EXTRA="-D BSD_TIME -D DEFAULT_STACK_MAYBE_SMALL -D ENABLE_TRACE -D EMPTY_GETENV_RESULTS -D GC_ALWAYS_MULTITHREADED -D GC_NETBSD_THREADS_WORKAROUND -D CPPCHECK"
     - CONF_OPTIONS="--enable-cplusplus --enable-gc-assertions"
     - GCTEST_WITH_MPROTECT_VDB=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-march=native -D _FORTIFY_SOURCE=2 -D DEFAULT_VDB -D TEST_WITH_SYSTEM_MALLOC"
     - CONF_OPTIONS="--without-libatomic-ops --enable-cplusplus --disable-handle-fork"
@@ -337,7 +320,11 @@ jobs:
     - CONF_OPTIONS="--with-libatomic-ops=yes --enable-gc-assertions --enable-cplusplus --disable-throw-bad-alloc-library"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-march=native -D _FORTIFY_SOURCE=2 -D AO_DISABLE_GCC_ATOMICS"
     - CONF_OPTIONS="--without-libatomic-ops --enable-munmap --enable-cplusplus --enable-static"
@@ -363,6 +350,7 @@ jobs:
       apt:
         packages:
         - libatomic-ops-dev
+        - libstdc++-14-dev
     compiler: clang
     env:
     - CONF_CFLAGS="-O3 -D AO_USE_PTHREAD_DEFS -D RANDOM_ONE_CPU_CORE"
@@ -382,7 +370,11 @@ jobs:
     - CFLAGS_EXTRA="-m32 -D _FORTIFY_SOURCE=2 -D MARK_BIT_PER_OBJ -D USE_CUSTOM_SPECIFIC"
     - CONF_OPTIONS="--enable-gc-assertions"
     - GCTEST_WITH_MPROTECT_VDB=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-D MARK_BIT_PER_OBJ"
     - CONF_OPTIONS="--enable-cplusplus --enable-rwlock --disable-shared"
@@ -417,7 +409,11 @@ jobs:
     - CFLAGS_EXTRA="-std=c11 -D _FORTIFY_SOURCE=2 -D GC_NO_SIGSETJMP"
     - CONF_OPTIONS="--disable-threads --enable-gc-assertions"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CONF_OPTIONS="--disable-thread-local-alloc --enable-cplusplus --enable-static"
     - GCTEST_WITH_MPROTECT_VDB=true
@@ -434,12 +430,20 @@ jobs:
     env:
     - CONF_OPTIONS="--disable-gc-debug --enable-cplusplus"
     - GCTEST_WITH_MPROTECT_VDB=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CONF_OPTIONS="--enable-large-config --enable-cplusplus --disable-shared --enable-static"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CONF_OPTIONS="--disable-atomic-uncollectible --enable-cplusplus --enable-rwlock --disable-shared --enable-static"
   - addons:
@@ -457,6 +461,7 @@ jobs:
     - CFLAGS_EXTRA="-D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_REUSE_SIG_SUSPEND"
     - GCTEST_WITH_MPROTECT_VDB=true
   - compiler: gcc
+    dist: jammy
     env:
     - CONF_OPTIONS="--enable-large-config --enable-redirect-malloc --disable-threads"
     - CFLAGS_EXTRA="-O3 -fanalyzer"
@@ -474,18 +479,27 @@ jobs:
     env:
     - CFLAGS_EXTRA="-D _FORTIFY_SOURCE=2"
     - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CONF_OPTIONS="--disable-threads --enable-cplusplus"
     - CFLAGS_EXTRA="-O3 -march=native"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
+    dist: jammy
     env:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
     - CFLAGS_EXTRA="-O3 -march=native -fanalyzer -D DONT_PROTECT_PTRFREE -D GC_PREFER_MPROTECT_VDB"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CMAKE_OPTIONS="-Denable_cplusplus=ON -Denable_gc_assertions=ON"
     - GCTEST_WITH_MPROTECT_VDB=true
@@ -494,6 +508,7 @@ jobs:
       apt:
         packages:
         - libatomic-ops-dev
+        - libstdc++-14-dev
     compiler: clang
     env:
     - CMAKE_OPTIONS="-Denable_atomic_uncollectable=OFF -Denable_cplusplus=ON -Denable_munmap=OFF -Dwith_libatomic_ops=ON"
@@ -511,17 +526,29 @@ jobs:
     - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Denable_threads=OFF"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CMAKE_BUILD_OPTIONS="--verbose"
     - CMAKE_OPTIONS="-Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_large_config=ON -Denable_redirect_malloc=ON -Denable_rwlock=ON -DCFLAGS_EXTRA=-DIGNORE_FREE"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CMAKE_BUILD_OPTIONS="--verbose"
     - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_large_config=ON"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - MAKEFILE_NAME=Makefile.direct
     - MAKEFILE_TARGETS="check cord/de"
@@ -584,6 +611,7 @@ jobs:
     - TESTS_CUSTOM_RUN=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: clang
+    dist: jammy
     env:
     - CFLAGS_EXTRA="-fsanitize=undefined -fno-common -fno-omit-frame-pointer"
     - CONF_OPTIONS="--enable-cplusplus --enable-static"
@@ -602,15 +630,20 @@ jobs:
     - CONF_OPTIONS="--enable-static"
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: clang
-    dist: focal
+    dist: jammy
     env:
     - CFLAGS_EXTRA="-fsanitize=thread -D NO_INCREMENTAL -fno-omit-frame-pointer -D TEST_FORK_WITHOUT_ATFORK"
     - CONF_OPTIONS="--enable-gc-assertions --enable-gc-debug --enable-handle-fork=manual --enable-large-config --without-libatomic-ops"
   - compiler: clang
+    dist: jammy
     env:
     - CFLAGS_EXTRA="-fsanitize=thread -D NO_INCREMENTAL -fno-omit-frame-pointer -D NTHREADS=0"
     - CONF_OPTIONS="--disable-parallel-mark --disable-thread-local-alloc --disable-shared --enable-gc-assertions --without-libatomic-ops"
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-O3 -march=native -D NTHREADS=10"
     - CONF_OPTIONS="--enable-cplusplus --enable-static --enable-single-obj-compilation"
@@ -654,7 +687,11 @@ jobs:
     - CONF_OPTIONS="--enable-large-config --enable-gc-assertions"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
+  - addons:
+      apt:
+        packages:
+        - libstdc++-14-dev
+    compiler: clang
     env:
     - CFLAGS_EXTRA="-x c++"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-gc-debug --disable-shared"
@@ -718,8 +755,7 @@ jobs:
     - CONF_OPTIONS="--host=i686-w64-mingw32"
     - MAKEFILE_TARGETS="all"
     - CFLAGS_EXTRA="-fno-omit-frame-pointer"
-  - dist: focal
-    env:
+  - env:
     - MAKEFILE_TARGETS="distcheck"
     - AUTOCONF_VER=2.72
     - AUTOMAKE_VER=1.17
