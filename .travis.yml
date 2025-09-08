@@ -235,7 +235,6 @@ jobs:
     - MAKEFILE_TARGETS="check cord/de"
     - MAKE_NPROC=8
   - compiler: gcc
-    dist: jammy
     env:
     - CFLAGS_EXTRA="-O3 -march=native -fanalyzer"
     - CONF_OPTIONS="--enable-cplusplus"
@@ -461,7 +460,6 @@ jobs:
     - CFLAGS_EXTRA="-D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_REUSE_SIG_SUSPEND"
     - GCTEST_WITH_MPROTECT_VDB=true
   - compiler: gcc
-    dist: jammy
     env:
     - CONF_OPTIONS="--enable-large-config --enable-redirect-malloc --disable-threads"
     - CFLAGS_EXTRA="-O3 -fanalyzer"
@@ -490,7 +488,6 @@ jobs:
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
-    dist: jammy
     env:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
     - CFLAGS_EXTRA="-O3 -march=native -fanalyzer -D DONT_PROTECT_PTRFREE -D GC_PREFER_MPROTECT_VDB"
