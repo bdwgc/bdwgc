@@ -46,8 +46,10 @@ main(void)
   }
   _aligned_free(p[0]);
 
-  for (i = 0; i < N_TESTS; ++i) {
-    p[i] = i > 0 ? (char *)malloc(sizeof(int) + i) : strdup("abc");
+  p[0] = strdup("abc");
+  CHECK_OUT_OF_MEMORY(p[0]);
+  for (i = 1; i < N_TESTS; ++i) {
+    p[i] = (char *)malloc(sizeof(int) + i);
     CHECK_OUT_OF_MEMORY(p[i]);
     (void)malloc_usable_size(p[i]);
   }
