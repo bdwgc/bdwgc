@@ -758,9 +758,9 @@ jobs:
   - env:
     - MAKEFILE_TARGETS="distcheck"
     - AUTOCONF_VER=2.72
-    - AUTOMAKE_VER=1.17
+    - AUTOMAKE_VER=1.18.1
     - LIBTOOL_VER=2.5.4
-    - M4_VER=1.4.19
+    - M4_VER=1.4.20
     - NO_CLONE_LIBATOMIC_OPS=true
   - if: type != pull_request
     addons:
