@@ -232,7 +232,7 @@ Cautions:
 #else
 // The platform `new` header file is not included, so `bad_alloc` cannot
 // be thrown directly.
-GC_API void GC_CALL GC_throw_bad_alloc();
+GC_API GC_OOM_ABORT_THROW_ATTRIBUTE void GC_CALL GC_throw_bad_alloc();
 #  define GC_OP_NEW_OOM_CHECK(obj) \
     if (obj) {                     \
     } else                         \

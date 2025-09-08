@@ -3051,7 +3051,7 @@ GC_get_force_unmap_on_gcollect(void)
   return (int)GC_force_unmap_on_gcollect;
 }
 
-GC_API void GC_CALL
+GC_API GC_OOM_ABORT_THROW_ATTRIBUTE void GC_CALL
 GC_abort_on_oom(void)
 {
   GC_err_printf("Insufficient memory for the allocation\n");

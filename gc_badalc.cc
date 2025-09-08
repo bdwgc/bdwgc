@@ -35,7 +35,7 @@
 #  define GC_ALLOCATOR_THROW_OR_ABORT() throw std::bad_alloc()
 #endif
 
-GC_API void GC_CALL
+GC_API GC_OOM_ABORT_THROW_ATTRIBUTE void GC_CALL
 GC_throw_bad_alloc()
 {
   GC_ALLOCATOR_THROW_OR_ABORT();

@@ -373,6 +373,18 @@ typedef long ptrdiff_t;
 #    endif
 #  endif
 
+#  ifndef GC_ATTR_NORETURN
+#    if GC_GNUC_PREREQ(2, 7)
+#      define GC_ATTR_NORETURN __attribute__((__noreturn__))
+#    elif defined(_MSC_VER) && _MSC_VER >= 1310 /*< VS 2003+ */
+#      define GC_ATTR_NORETURN __declspec(noreturn)
+#    elif defined(__NORETURN) /*< used in Solaris */
+#      define GC_ATTR_NORETURN __NORETURN
+#    else
+#      define GC_ATTR_NORETURN /*< empty */
+#    endif
+#  endif
+
 #  if defined(__sgi) && !defined(__GNUC__) && _COMPILER_VERSION >= 720
 #    define GC_ADD_CALLER
 #    define GC_RETURN_ADDR ((GC_return_addr_t)__return_address)
@@ -482,13 +494,7 @@ typedef long ptrdiff_t;
             || defined(GC_SOLARIS_THREADS) || defined(__COSMOPOLITAN__))
 /* Intercept `pthread_exit()` where available and needed. */
 #      define GC_HAVE_PTHREAD_EXIT
-#      if GC_GNUC_PREREQ(2, 7)
-#        define GC_PTHREAD_EXIT_ATTRIBUTE __attribute__((__noreturn__))
-#      elif defined(__NORETURN) /*< used in Solaris */
-#        define GC_PTHREAD_EXIT_ATTRIBUTE __NORETURN
-#      else
-#        define GC_PTHREAD_EXIT_ATTRIBUTE /*< empty */
-#      endif
+#      define GC_PTHREAD_EXIT_ATTRIBUTE GC_ATTR_NORETURN
 #    endif
 
 #    if (!defined(GC_HAVE_PTHREAD_EXIT) || defined(__native_client__)) \
