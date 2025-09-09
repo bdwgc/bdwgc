@@ -88,7 +88,7 @@ EXTERN_C_BEGIN
 #      endif
 
 #    elif defined(IRIX5) || defined(OPENBSD) || defined(SOLARIS) \
-        || defined(NN_PLATFORM_CTR) || defined(NN_BUILD_TARGET_PLATFORM_NX)
+        || defined(NINTENDO_SWITCH) || defined(NN_PLATFORM_CTR)
 /* Use our own. */
 #      define USE_CUSTOM_SPECIFIC
 
