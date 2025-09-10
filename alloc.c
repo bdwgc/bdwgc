@@ -169,6 +169,8 @@ int GC_full_freq = 19;
 /* Indicate whether a full collection due to heap growth is needed. */
 STATIC GC_bool GC_need_full_gc = FALSE;
 
+GC_bool GC_force_full_gc = FALSE;
+
 #ifdef THREAD_LOCAL_ALLOC
 GC_INNER GC_bool GC_world_stopped = FALSE;
 #endif
@@ -598,7 +600,7 @@ GC_maybe_gc(void)
   if (GC_parallel)
     GC_wait_for_reclaim();
 #endif
-  if (GC_need_full_gc || n_partial_gcs >= GC_full_freq) {
+  if (GC_need_full_gc || n_partial_gcs >= GC_full_freq || GC_force_full_gc) {
     GC_COND_LOG_PRINTF(
         "***>Full mark for collection #%lu after %lu allocd bytes\n",
         (unsigned long)GC_gc_no + 1, (unsigned long)GC_bytes_allocd);
