@@ -193,7 +193,7 @@ typedef void(GC_CALLBACK *GC_on_collection_event_proc)(GC_EventType);
 GC_API void GC_CALL GC_set_on_collection_event(GC_on_collection_event_proc);
 GC_API GC_on_collection_event_proc GC_CALL GC_get_on_collection_event(void);
 
-#if defined(GC_THREADS) || (defined(GC_BUILD) && defined(NN_PLATFORM_CTR))
+#ifdef GC_THREADS
 /**
  * Invoked when a thread is suspended or resumed during collection.
  * Called with the allocator lock held (and the world stopped partially).
