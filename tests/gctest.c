@@ -2089,6 +2089,11 @@ check_heap_stats(void)
     FAIL;
   }
 
+#if !defined(NO_DEBUGGING) && defined(TEST_DUMP_REGIONS_AND_FREELIST)
+  GC_print_free_list(NORMAL, 1);
+  GC_dump_regions();
+#endif
+
   /*
    * The upper bounds are a guess, which has been empirically adjusted.
    * On low-end uniprocessors with the incremental collection these may be
@@ -2453,8 +2458,6 @@ main(void)
   UNTESTED(GC_deinit);
 #    ifndef NO_DEBUGGING
   UNTESTED(GC_dump);
-  UNTESTED(GC_dump_regions);
-  UNTESTED(GC_print_free_list);
 #    endif
 #  endif
 #  if !defined(GC_ANDROID_LOG) && !defined(KOS) && !defined(OS2) \
