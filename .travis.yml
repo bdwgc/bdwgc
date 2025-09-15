@@ -81,7 +81,7 @@ jobs:
   - arch: arm64
     compiler: gcc
     env:
-    - CFLAGS_EXTRA="-O3 -D SIMULATE_LOST_SIGNALS -D TRACE_BUF"
+    - CFLAGS_EXTRA="-O3 -D SIMULATE_LOST_SIGNALS -D TEST_DUMP_REGIONS_AND_FREELIST -D TRACE_BUF"
     - CONF_OPTIONS="--enable-cplusplus --disable-gcj-support"
     - NO_CLONE_LIBATOMIC_OPS=true
   - addons:
