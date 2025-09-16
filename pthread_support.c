@@ -268,9 +268,9 @@ GC_init_real_syms(void)
   GC_syms_initialized = TRUE;
 }
 
-#      define INIT_REAL_SYMS()                   \
-        if (EXPECT(GC_syms_initialized, TRUE)) { \
-        } else                                   \
+#      define INIT_REAL_SYMS()             \
+        if (LIKELY(GC_syms_initialized)) { \
+        } else                             \
           GC_init_real_syms()
 #    else
 #      define INIT_REAL_SYMS() (void)0
@@ -384,7 +384,7 @@ set_marker_thread_name(unsigned id)
 {
   int err = pthread_setname_np(pthread_self(), "GC-marker-%zu",
                                NUMERIC_TO_VPTR(id));
-  if (EXPECT(err != 0, FALSE))
+  if (UNLIKELY(err != 0))
     WARN("pthread_setname_np failed, errno= %" WARN_PRIdPTR "\n",
          (GC_signed_word)err);
 }
@@ -415,7 +415,7 @@ set_marker_thread_name(unsigned id)
   /* The case of Linux, Solaris, etc. */
   GC_ASSERT(strlen(name_buf) < 16);
   /* `pthread_setname_np()` may fail for longer names. */
-  if (EXPECT(pthread_setname_np(pthread_self(), name_buf) != 0, FALSE))
+  if (UNLIKELY(pthread_setname_np(pthread_self(), name_buf) != 0))
     WARN("pthread_setname_np failed\n", 0);
 #      endif
 }
@@ -640,8 +640,7 @@ GC_start_mark_threads_inner(void)
     ABORT("sigdelset failed");
 #      endif
 
-  if (EXPECT(REAL_FUNC(pthread_sigmask)(SIG_BLOCK, &set, &oldset) != 0,
-             FALSE)) {
+  if (UNLIKELY(REAL_FUNC(pthread_sigmask)(SIG_BLOCK, &set, &oldset) != 0)) {
     WARN("pthread_sigmask set failed, no markers started\n", 0);
     GC_markers_m1 = 0;
     (void)pthread_attr_destroy(&attr);
@@ -658,10 +657,9 @@ GC_start_mark_threads_inner(void)
 #    ifdef GC_WIN32_THREADS
     GC_marker_last_stack_min[i] = ADDR_LIMIT;
 #    endif
-    if (EXPECT(REAL_FUNC(pthread_create)(&new_thread, &attr, GC_mark_thread,
-                                         NUMERIC_TO_VPTR(i))
-                   != 0,
-               FALSE)) {
+    if (UNLIKELY(REAL_FUNC(pthread_create)(&new_thread, &attr, GC_mark_thread,
+                                           NUMERIC_TO_VPTR(i))
+                 != 0)) {
       WARN("Marker thread %" WARN_PRIdPTR " creation failed\n",
            (GC_signed_word)i);
       /* Do not try to create other marker threads. */
@@ -672,8 +670,7 @@ GC_start_mark_threads_inner(void)
 
 #    ifndef NO_MARKER_SPECIAL_SIGMASK
   /* Restore previous signal mask. */
-  if (EXPECT(REAL_FUNC(pthread_sigmask)(SIG_SETMASK, &oldset, NULL) != 0,
-             FALSE)) {
+  if (UNLIKELY(REAL_FUNC(pthread_sigmask)(SIG_SETMASK, &oldset, NULL) != 0)) {
     WARN("pthread_sigmask restore failed\n", 0);
   }
 #    endif
@@ -793,7 +790,7 @@ GC_new_thread(thread_id_t self_id)
       break;
     }
 #  endif
-  if (EXPECT(NULL == first_thread.crtn, FALSE)) {
+  if (UNLIKELY(NULL == first_thread.crtn)) {
     result = &first_thread;
     first_thread.crtn = &first_crtn;
     GC_ASSERT(NULL == GC_threads[hv]);
@@ -836,7 +833,7 @@ GC_new_thread(thread_id_t self_id)
   GC_nacl_initialize_gc_thread(result);
 #  endif
   GC_ASSERT(0 == result->flags);
-  if (EXPECT(result != &first_thread, TRUE))
+  if (LIKELY(result != &first_thread))
     GC_dirty(result);
   return result;
 }
@@ -892,7 +889,7 @@ GC_delete_thread(GC_thread t)
       prev->tm.next = p->tm.next;
       GC_dirty(prev);
     }
-    if (EXPECT(p != &first_thread, TRUE)) {
+    if (LIKELY(p != &first_thread)) {
 #  ifdef DARWIN
       mach_port_deallocate(mach_task_self(), p->mach_thread);
 #  endif
@@ -913,7 +910,7 @@ GC_lookup_thread(thread_id_t id)
     return GC_win32_dll_lookup_thread(id);
 #  endif
   for (p = GC_threads[THREAD_TABLE_INDEX(id)]; p != NULL; p = p->tm.next) {
-    if (EXPECT(THREAD_ID_EQUAL(p->id, id), TRUE))
+    if (LIKELY(THREAD_ID_EQUAL(p->id, id)))
       break;
   }
   return p;
@@ -957,7 +954,7 @@ GC_check_finalizer_nested(void)
    * `GC_get_stack_base`, causing `GC_notify_or_invoke_finalizers`
    * to be called before the thread gets registered.
    */
-  if (EXPECT(NULL == me, FALSE))
+  if (UNLIKELY(NULL == me))
     return NULL;
 #    endif
   crtn = me->crtn;
@@ -1016,7 +1013,7 @@ GC_register_altstack(void *normstack, size_t normstack_size, void *altstack,
 
   READER_LOCK();
   me = GC_self_thread_inner();
-  if (EXPECT(NULL == me, FALSE)) {
+  if (UNLIKELY(NULL == me)) {
     /* We are called before `GC_thr_init()`. */
     me = &first_thread;
   }
@@ -1690,7 +1687,7 @@ fork_child_proc(void)
 GC_API void GC_CALL
 GC_atfork_prepare(void)
 {
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   if (GC_handle_fork <= 0)
     fork_prepare_proc();
@@ -2019,7 +2016,7 @@ GC_wrap_pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
   sigset_t fudged_set;
 
   INIT_REAL_SYMS();
-  if (EXPECT(set != NULL, TRUE) && (how == SIG_BLOCK || how == SIG_SETMASK)) {
+  if (LIKELY(set != NULL) && (how == SIG_BLOCK || how == SIG_SETMASK)) {
     int sig_suspend = GC_get_suspend_signal();
 
     fudged_set = *set;
@@ -2161,7 +2158,7 @@ GC_do_blocking_inner(ptr_t data, void *context)
    * there could be a static analysis tool warning (false positive) about
    * unlock without a matching lock.
    */
-  while (EXPECT((me->ext_suspend_cnt & 1) != 0, FALSE)) {
+  while (UNLIKELY((me->ext_suspend_cnt & 1) != 0)) {
     /* Read suspend counter (number) before unlocking. */
     size_t suspend_cnt = me->ext_suspend_cnt;
 
@@ -2209,7 +2206,7 @@ GC_set_stackbottom(void *gc_thread_handle, const struct GC_stack_base *sb)
   GC_stack_context_t crtn;
 
   GC_ASSERT(sb->mem_base != NULL);
-  if (!EXPECT(GC_is_initialized, TRUE)) {
+  if (UNLIKELY(!GC_is_initialized)) {
     GC_ASSERT(NULL == t);
     /* Alter the stack bottom of the primordial thread. */
     GC_stackbottom = (char *)sb->mem_base;
@@ -2306,7 +2303,7 @@ GC_call_with_gc_active(GC_fn_type fn, void *client_data)
   }
 
 #  if defined(GC_ENABLE_SUSPEND_THREAD) && defined(SIGNAL_BASED_STOP_WORLD)
-  while (EXPECT((me->ext_suspend_cnt & 1) != 0, FALSE)) {
+  while (UNLIKELY((me->ext_suspend_cnt & 1) != 0)) {
     size_t suspend_cnt = me->ext_suspend_cnt;
 
     READER_UNLOCK_RELEASE();
@@ -2553,7 +2550,7 @@ GC_register_my_thread(const struct GC_stack_base *sb)
   /* We lock here, since we want to wait for an ongoing GC. */
   LOCK();
   me = GC_self_thread_inner();
-  if (EXPECT(NULL == me, TRUE)) {
+  if (LIKELY(NULL == me)) {
     me = GC_register_my_thread_inner(sb, thread_id_self());
 #  ifdef GC_PTHREADS
 #    ifdef CPPCHECK
@@ -2605,7 +2602,7 @@ GC_register_my_thread(const struct GC_stack_base *sb)
   GC_unblock_gc_signals();
 #  endif
 #  if defined(GC_ENABLE_SUSPEND_THREAD) && defined(SIGNAL_BASED_STOP_WORLD)
-  if (EXPECT((me->ext_suspend_cnt & 1) != 0, FALSE)) {
+  if (UNLIKELY((me->ext_suspend_cnt & 1) != 0)) {
     GC_with_callee_saves_pushed(GC_suspend_self_blocked, (ptr_t)me);
   }
 #  endif
@@ -2668,11 +2665,11 @@ GC_wrap_pthread_join(pthread_t thread, void **retval)
    * specification or the local man pages.  Thus, I have taken the liberty
    * to catch this one spurious return value.
    */
-  if (EXPECT(result == EINTR, FALSE))
+  if (UNLIKELY(result == EINTR))
     result = 0;
 #    endif
 
-  if (EXPECT(0 == result, TRUE)) {
+  if (LIKELY(0 == result)) {
     LOCK();
     /*
      * Here the `pthread_id` may have been recycled.  Delete the thread from
@@ -2706,7 +2703,7 @@ GC_wrap_pthread_detach(pthread_t thread)
   t = (GC_thread)COVERT_DATAFLOW_P(GC_lookup_by_pthread(thread));
   READER_UNLOCK();
   result = REAL_FUNC(pthread_detach)(thread);
-  if (EXPECT(0 == result, TRUE)) {
+  if (LIKELY(0 == result)) {
     LOCK();
     /* Here the `pthread_id` may have been recycled. */
     if (KNOWN_FINISHED(t)) {
@@ -2812,7 +2809,7 @@ GC_wrap_pthread_create(pthread_t *new_thread,
 
   GC_ASSERT(I_DONT_HOLD_LOCK());
   INIT_REAL_SYMS();
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   GC_ASSERT(GC_thr_initialized);
 
@@ -2847,7 +2844,7 @@ GC_wrap_pthread_create(pthread_t *new_thread,
      * On Solaris 10 and on Win32 with `winpthreads` library, with the
      * default `attr` initialization, `stack_size` remains 0; fudge it.
      */
-    if (EXPECT(0 == stack_size, FALSE)) {
+    if (UNLIKELY(0 == stack_size)) {
 #      if !defined(SOLARIS) && !defined(GC_WIN32_PTHREADS)
       WARN("Failed to get stack size for assertion checking\n", 0);
 #      endif
@@ -2872,7 +2869,7 @@ GC_wrap_pthread_create(pthread_t *new_thread,
   }
 
 #    ifdef PARALLEL_MARK
-  if (EXPECT(!GC_parallel && GC_available_markers_m1 > 0, FALSE))
+  if (!GC_parallel && UNLIKELY(GC_available_markers_m1 > 0))
     GC_start_mark_threads();
 #    endif
 #    ifdef DEBUG_THREADS
@@ -2887,7 +2884,7 @@ GC_wrap_pthread_create(pthread_t *new_thread,
    * This also ensures that we hold onto the stack-allocated `si`
    * until the child is done with it.
    */
-  if (EXPECT(0 == result, TRUE)) {
+  if (LIKELY(0 == result)) {
     IF_CANCEL(int cancel_state;)
 
     /* `pthread_create()` is not a cancellation point. */
@@ -2974,7 +2971,7 @@ GC_generic_lock(pthread_mutex_t *lock)
   unsigned pause_length = 1;
   unsigned i;
 
-  if (EXPECT(0 == pthread_mutex_trylock(lock), TRUE)) {
+  if (LIKELY(0 == pthread_mutex_trylock(lock))) {
 #      ifdef LOCK_STATS
     (void)AO_fetch_and_add1(&GC_unlocked_count);
 #      endif
@@ -3050,10 +3047,9 @@ GC_lock(void)
   AO_t my_spin_max, my_last_spins_half;
   size_t i;
 
-  if (EXPECT(AO_test_and_set_acquire(&GC_allocate_lock) == AO_TS_CLEAR,
-             TRUE)) {
+  if (LIKELY(AO_test_and_set_acquire(&GC_allocate_lock) == AO_TS_CLEAR))
     return;
-  }
+
   my_spin_max = AO_load(&spin_max);
   my_last_spins_half = AO_load(&last_spins) / 2;
   for (i = 0; i < my_spin_max; i++) {

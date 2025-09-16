@@ -394,7 +394,7 @@ setup_header(hdr *hhdr, struct hblk *block, size_t lb_adjusted, int kind,
   {
     size_t lg = BYTES_TO_GRANULES(lb_adjusted);
 
-    if (EXPECT(!GC_add_map_entry(lg), FALSE)) {
+    if (UNLIKELY(!GC_add_map_entry(lg))) {
       /* Make it look like a valid block. */
       hhdr->hb_sz = HBLKSIZE;
       hhdr->hb_descr = 0;
@@ -762,7 +762,7 @@ GC_get_first_part(struct hblk *h, hdr *hhdr, size_t size_needed, size_t index)
 
   rest = (struct hblk *)((ptr_t)h + size_needed);
   rest_hdr = GC_install_header(rest);
-  if (EXPECT(NULL == rest_hdr, FALSE)) {
+  if (UNLIKELY(NULL == rest_hdr)) {
     /* FIXME: This is likely to be very bad news... */
     WARN("Header allocation failed: dropping block\n", 0);
     return NULL;
@@ -842,8 +842,8 @@ GC_allochblk(size_t lb_adjusted, int kind,
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT((lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
   blocks = OBJ_SZ_TO_BLOCKS_CHECKED(lb_adjusted);
-  if (EXPECT(SIZET_SAT_ADD(blocks * HBLKSIZE, align_m1) >= (GC_SIZE_MAX >> 1),
-             FALSE))
+  if (UNLIKELY(SIZET_SAT_ADD(blocks * HBLKSIZE, align_m1)
+               >= (GC_SIZE_MAX >> 1)))
     return NULL; /* overflow */
 
   start_list = GC_hblk_fl_from_blocks(blocks);
@@ -980,7 +980,7 @@ drop_hblk_in_chunks(size_t n, struct hblk *hbp, hdr *hhdr)
       break;
 
     hhdr = GC_install_header(hbp);
-  } while (EXPECT(hhdr != NULL, TRUE)); /*< no header allocation failure? */
+  } while (LIKELY(hhdr != NULL)); /*< no header allocation failure? */
 }
 #endif /* !NO_BLACK_LISTING */
 
@@ -1138,9 +1138,8 @@ retry:
   if (last_hbp != hbp) {
     hdr *last_hdr = GC_install_header(last_hbp);
 
-    if (EXPECT(NULL == last_hdr, FALSE)) {
+    if (UNLIKELY(NULL == last_hdr))
       return NULL;
-    }
 #ifdef USE_MUNMAP
     /* Make sure it is mapped before we mangle it. */
     if (!IS_MAPPED(hhdr)) {
@@ -1173,11 +1172,11 @@ retry:
    * important.
    */
   hbp = GC_get_first_part(hbp, hhdr, size_needed, index);
-  if (EXPECT(NULL == hbp, FALSE))
+  if (UNLIKELY(NULL == hbp))
     return NULL;
 
   /* Add it to map of valid blocks. */
-  if (EXPECT(!GC_install_counts(hbp, size_needed), FALSE))
+  if (UNLIKELY(!GC_install_counts(hbp, size_needed)))
     return NULL; /*< note: this leaks memory under very rare conditions */
 
   /* Set up the header. */
@@ -1186,7 +1185,7 @@ retry:
   (void)setup_header(hhdr, hbp, lb_adjusted, kind, flags);
   /* Result is always `TRUE`, not checked to avoid a cppcheck warning. */
 #else
-  if (EXPECT(!setup_header(hhdr, hbp, lb_adjusted, kind, flags), FALSE)) {
+  if (UNLIKELY(!setup_header(hhdr, hbp, lb_adjusted, kind, flags))) {
     GC_remove_counts(hbp, size_needed);
     return NULL; /*< ditto */
   }

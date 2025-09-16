@@ -107,7 +107,7 @@ GC_init_thread_local(GC_tlfs p)
   int kind, j, res;
 
   GC_ASSERT(I_HOLD_LOCK());
-  if (!EXPECT(keys_initialized, TRUE)) {
+  if (UNLIKELY(!keys_initialized)) {
 #  ifdef USE_CUSTOM_SPECIFIC
     /* Ensure proper alignment of a "pushed" GC symbol. */
     GC_ASSERT(ADDR(&GC_thread_key) % ALIGNMENT == 0);
@@ -167,7 +167,7 @@ GC_get_tlfs(void)
 #  if !defined(USE_PTHREAD_SPECIFIC) && !defined(USE_WIN32_SPECIFIC)
   GC_key_t k = GC_thread_key;
 
-  if (EXPECT(0 == k, FALSE)) {
+  if (UNLIKELY(0 == k)) {
     /*
      * We have not yet run `GC_init_parallel()`.  That means we also
      * are not locking, so `GC_malloc_kind_global()` is fairly cheap.
@@ -176,7 +176,7 @@ GC_get_tlfs(void)
   }
   return GC_getspecific(k);
 #  else
-  if (EXPECT(!keys_initialized, FALSE))
+  if (UNLIKELY(!keys_initialized))
     return NULL;
 
   return GC_getspecific(GC_thread_key);
@@ -191,14 +191,13 @@ GC_malloc_kind(size_t lb, int kind)
   void *result;
 
 #  if MAXOBJKINDS > THREAD_FREELISTS_KINDS
-  if (EXPECT(kind >= THREAD_FREELISTS_KINDS, FALSE)) {
+  if (UNLIKELY(kind >= THREAD_FREELISTS_KINDS))
     return GC_malloc_kind_global(lb, kind);
-  }
 #  endif
   tsd = GC_get_tlfs();
-  if (EXPECT(NULL == tsd, FALSE)) {
+  if (UNLIKELY(NULL == tsd))
     return GC_malloc_kind_global(lb, kind);
-  }
+
   GC_ASSERT(GC_is_initialized);
   GC_ASSERT(GC_is_thread_tsd_valid(tsd));
   lg = ALLOC_REQUEST_GRANS(lb);
@@ -225,6 +224,10 @@ GC_malloc_kind(size_t lb, int kind)
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_gcj_malloc(size_t lb, const void *vtable_ptr)
 {
+  void *result;
+  void **tiny_fl;
+  size_t lg;
+
   /*
    * `gcj`-style allocation without locks is extremely tricky.
    * The fundamental issue is that we may end up marking a free list,
@@ -244,43 +247,42 @@ GC_gcj_malloc(size_t lb, const void *vtable_ptr)
    * necessarily free.  And there may be cache fill order issues.
    * For now, we punt with the incremental collection.  This probably means
    * that the incremental collection should be enabled before we create
-   * a second thread.  Unlike the other thread-local allocation calls,
-   * we assume that the collector has been explicitly initialized.
+   * a second thread.
    */
-  if (EXPECT(GC_incremental, FALSE)) {
+  if (UNLIKELY(GC_incremental))
     return GC_core_gcj_malloc(lb, vtable_ptr, 0 /* `flags` */);
-  } else {
-    size_t lg = ALLOC_REQUEST_GRANS(lb);
-    void *result;
-    void **tiny_fl;
 
-    GC_ASSERT(GC_gcjobjfreelist != NULL);
-    tiny_fl = ((GC_tlfs)GC_getspecific(GC_thread_key))->gcj_freelists;
+  /*
+   * Unlike the other thread-local allocation calls, we assume that the
+   * collector has been explicitly initialized.
+   */
+  GC_ASSERT(GC_gcjobjfreelist != NULL);
 
-    /*
-     * This forces the initialization of the "vtable" pointer.
-     * This is necessary to ensure some very subtle properties required
-     * if a garbage collection is run in the middle of such an allocation.
-     * Here we implicitly also assume atomicity for the free list and
-     * method pointer assignments.  We must update the free list before
-     * we store the pointer.  Otherwise a collection at this point
-     * would see a corrupted free list.  A real memory barrier is not
-     * needed, since the action of stopping this thread will cause
-     * prior writes to complete.  We assert that any concurrent marker
-     * will stop us.  Thus it is impossible for a mark procedure to see
-     * the allocation of the next object, but to see this object still
-     * containing a free-list pointer.  Otherwise the marker, by
-     * misinterpreting the free-list link as a "vtable" pointer, might
-     * find a random "mark descriptor" in the next object.
-     */
-    GC_FAST_MALLOC_GRANS(
-        result, lg, tiny_fl, DIRECT_GRANULES, GC_gcj_kind,
-        GC_core_gcj_malloc(lb, vtable_ptr, 0 /* `flags` */), do {
-          AO_compiler_barrier();
-          *(const void **)result = vtable_ptr;
-        } while (0));
-    return result;
-  }
+  tiny_fl = ((GC_tlfs)GC_getspecific(GC_thread_key))->gcj_freelists;
+  lg = ALLOC_REQUEST_GRANS(lb);
+
+  /*
+   * The provided `default_expr` below forces the initialization of the
+   * "vtable" pointer.  This is necessary to ensure some very subtle
+   * properties required if a garbage collection is run in the middle of
+   * such an allocation.  Here we implicitly also assume atomicity for the
+   * free list and method pointer assignments.  We must update the free list
+   * before we store the pointer.  Otherwise a collection at this point
+   * would see a corrupted free list.  A real memory barrier is not needed,
+   * since the action of stopping this thread will cause prior writes
+   * to complete.  We assert that any concurrent marker will stop us.
+   * Thus it is impossible for a mark procedure to see the allocation of the
+   * next object, but to see this object still containing a free-list pointer.
+   * Otherwise the marker, by misinterpreting the free-list link as a "vtable"
+   * pointer, might find a random "mark descriptor" in the next object.
+   */
+  GC_FAST_MALLOC_GRANS(
+      result, lg, tiny_fl, DIRECT_GRANULES, GC_gcj_kind,
+      GC_core_gcj_malloc(lb, vtable_ptr, 0 /* `flags` */), do {
+        AO_compiler_barrier();
+        *(const void **)result = vtable_ptr;
+      } while (0));
+  return result;
 }
 
 #  endif /* GC_GCJ_SUPPORT */
@@ -302,7 +304,7 @@ GC_mark_thread_local_fls_for(GC_tlfs p)
         GC_set_fl_marks(q);
     }
 #  ifdef GC_GCJ_SUPPORT
-    if (EXPECT(j > 0, TRUE)) {
+    if (LIKELY(j > 0)) {
       q = GC_cptr_load((volatile ptr_t *)&p->gcj_freelists[j]);
       if (ADDR(q) > HBLKSIZE)
         GC_set_fl_marks(q);

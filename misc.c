@@ -413,7 +413,7 @@ GC_clear_stack(void *arg)
 #  else
   if (GC_gc_no != GC_stack_last_cleared) {
     /* Start things over, so we clear the entire stack again. */
-    if (EXPECT(NULL == GC_high_water, FALSE))
+    if (UNLIKELY(NULL == GC_high_water))
       GC_high_water = (ptr_t)GC_stackbottom;
     GC_min_sp = GC_high_water;
     GC_stack_last_cleared = GC_gc_no;
@@ -459,7 +459,7 @@ GC_base(void *p)
   ptr_t limit;
   size_t sz;
 
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     return NULL;
   h = HBLKPTR(r);
   GET_BI(r, bi);
@@ -507,7 +507,7 @@ GC_size(const void *p)
   const hdr *hhdr;
 
   /* Accept `NULL` for compatibility with `malloc_usable_size()`. */
-  if (EXPECT(NULL == p, FALSE))
+  if (UNLIKELY(NULL == p))
     return 0;
 
   hhdr = HDR(p);
@@ -633,7 +633,7 @@ GC_get_prof_stats(struct GC_prof_stats_s *pstats, size_t stats_sz)
     memset((char *)pstats + sizeof(stats), 0xff, stats_sz - sizeof(stats));
     return sizeof(stats);
   } else {
-    if (EXPECT(stats_sz > 0, TRUE))
+    if (LIKELY(stats_sz > 0))
       BCOPY(&stats, pstats, stats_sz);
     return stats_sz;
   }
@@ -651,7 +651,7 @@ GC_get_prof_stats_unsafe(struct GC_prof_stats_s *pstats, size_t stats_sz)
       memset((char *)pstats + sizeof(stats), 0xff, stats_sz - sizeof(stats));
     return sizeof(stats);
   } else {
-    if (EXPECT(stats_sz > 0, TRUE)) {
+    if (LIKELY(stats_sz > 0)) {
       fill_prof_stats(&stats);
       BCOPY(&stats, pstats, stats_sz);
     }
@@ -1075,7 +1075,7 @@ GC_init(void)
   word initial_heap_sz;
   IF_CANCEL(int cancel_state;)
 
-  if (EXPECT(GC_is_initialized, TRUE))
+  if (LIKELY(GC_is_initialized))
     return;
 #ifdef REDIRECT_MALLOC
   {
@@ -2316,7 +2316,7 @@ GC_snprintf_s_ld_s(char *buf, size_t buf_sz, const char *prefix, long lv,
 
   GC_ASSERT(buf_sz > 0);
   /* Copy the prefix. */
-  if (EXPECT(len >= buf_sz, FALSE))
+  if (UNLIKELY(len >= buf_sz))
     len = buf_sz - 1;
   BCOPY(prefix, buf, len);
   buf += len;
@@ -2325,7 +2325,7 @@ GC_snprintf_s_ld_s(char *buf, size_t buf_sz, const char *prefix, long lv,
   /* Handle sign of the number. */
   if (lv >= 0) {
     lv = -lv;
-  } else if (EXPECT(buf_sz > 1, TRUE)) {
+  } else if (LIKELY(buf_sz > 1)) {
     *(buf++) = '-';
     buf_sz--;
   }
@@ -2338,13 +2338,13 @@ GC_snprintf_s_ld_s(char *buf, size_t buf_sz, const char *prefix, long lv,
     do {
       long r = lv / 10;
 
-      if (EXPECT(0 == pos, FALSE))
+      if (UNLIKELY(0 == pos))
         break; /*< overflow */
       num_buf[--pos] = (char)(r * 10 - lv + '0');
       lv = r;
     } while (lv < 0);
     len = sizeof(num_buf) - pos;
-    if (EXPECT(len >= buf_sz, FALSE))
+    if (UNLIKELY(len >= buf_sz))
       len = buf_sz - 1;
     BCOPY(&num_buf[pos], buf, len);
   }
@@ -2354,7 +2354,7 @@ GC_snprintf_s_ld_s(char *buf, size_t buf_sz, const char *prefix, long lv,
   /* Copy the suffix (if any). */
   len = strlen(suffix);
   if (len > 0) {
-    if (EXPECT(len >= buf_sz, FALSE))
+    if (UNLIKELY(len >= buf_sz))
       len = buf_sz - 1;
     BCOPY(suffix, buf, len);
     buf += len;

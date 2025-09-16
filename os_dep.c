@@ -1931,10 +1931,8 @@ GC_least_described_address(ptr_t start)
     size_t result;
     ptr_t q;
 
-    if (EXPECT(ADDR(p) <= (word)GC_page_size, FALSE)) {
-      /* Avoid underflow. */
-      break;
-    }
+    if (UNLIKELY(ADDR(p) <= (word)GC_page_size))
+      break; /*< avoid underflow */
     q = p - GC_page_size;
     if (ADDR_LT(q, limit))
       break;
@@ -2462,7 +2460,7 @@ GC_unix_mmap_get_mem(size_t bytes)
 #      ifndef USE_MMAP_ANON
   static GC_bool initialized = FALSE;
 
-  if (!EXPECT(initialized, TRUE)) {
+  if (UNLIKELY(!initialized)) {
 #        ifdef SYMBIAN
     char *path = GC_get_private_path_and_zero_file();
     if (path != NULL) {
@@ -2495,7 +2493,7 @@ GC_unix_mmap_get_mem(size_t bytes)
              GC_MMAP_FLAGS | OPT_MAP_ANON, zero_fd, 0 /* `offset` */);
 #      undef IGNORE_PAGES_EXECUTABLE
 
-  if (EXPECT(MAP_FAILED == result, FALSE)) {
+  if (UNLIKELY(MAP_FAILED == result)) {
     if (HEAP_START == last_addr && GC_pages_executable
         && (EACCES == errno || EPERM == errno))
       ABORT("Cannot allocate executable pages");
@@ -2505,7 +2503,7 @@ GC_unix_mmap_get_mem(size_t bytes)
   GC_ASSERT(ADDR(result) <= ~(word)(GC_page_size - 1) - bytes);
   /* The following `PTR_ALIGN_UP()` cannot overflow. */
 #      else
-  if (EXPECT(ADDR(result) > ~(word)(GC_page_size - 1) - bytes, FALSE)) {
+  if (UNLIKELY(ADDR(result) > ~(word)(GC_page_size - 1) - bytes)) {
     /*
      * Oops.  We got the end of the address space.  This is not usable
      * by arbitrary C code, since one-past-end pointers do not work,
@@ -2553,7 +2551,7 @@ GC_unix_sbrk_get_mem(size_t bytes)
     SBRK_ARG_T lsbs = ADDR(cur_brk) & (GC_page_size - 1);
 
     GC_ASSERT(GC_page_size != 0);
-    if (EXPECT((SBRK_ARG_T)bytes < 0, FALSE)) {
+    if (UNLIKELY((SBRK_ARG_T)bytes < 0)) {
       /* Value of `bytes` is too big. */
       result = NULL;
       goto out;
@@ -2576,7 +2574,7 @@ GC_unix_sbrk_get_mem(size_t bytes)
     }
 #    endif
     result = sbrk((SBRK_ARG_T)bytes);
-    if (EXPECT(ADDR(result) == GC_WORD_MAX, FALSE))
+    if (UNLIKELY(ADDR(result) == GC_WORD_MAX))
       result = NULL;
   }
 out:
@@ -2635,7 +2633,7 @@ GC_get_mem(size_t bytes)
                     (PAG_READ | PAG_WRITE | PAG_COMMIT)
                         | (GC_pages_executable ? PAG_EXECUTE : 0))
             == NO_ERROR
-        && EXPECT(result != NULL, TRUE))
+        && LIKELY(result != NULL))
       break;
     /*
      * TODO: Unclear the purpose of the retry.  (Probably, if `DosAllocMem`
@@ -2651,7 +2649,7 @@ GC_get_mem(size_t bytes)
 GC_INNER void *
 GC_get_mem(size_t bytes)
 {
-  if (EXPECT(0 == bytes, FALSE))
+  if (UNLIKELY(0 == bytes))
     return NULL;
   return VirtualAlloc(NULL, bytes, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
 }
@@ -2700,7 +2698,7 @@ GC_get_mem(size_t bytes)
     }
     if (GC_n_heap_bases >= MAX_HEAP_SECTS)
       ABORT("Too many heap sections");
-    if (EXPECT(NULL == result, FALSE))
+    if (UNLIKELY(NULL == result))
       return NULL;
     GC_heap_bases[GC_n_heap_bases] = (ptr_t)result;
     GC_heap_lengths[GC_n_heap_bases] = 0;
@@ -2715,7 +2713,7 @@ GC_get_mem(size_t bytes)
 
   if (HBLKDISPL(result) != 0)
     ABORT("Bad VirtualAlloc result");
-  if (EXPECT(result != NULL, TRUE))
+  if (LIKELY(result != NULL))
     GC_heap_lengths[i] += bytes;
   return result;
 }
@@ -2798,7 +2796,7 @@ GC_get_mem(size_t bytes)
     ABORT("Bad VirtualAlloc result");
   if (GC_n_heap_bases >= MAX_HEAP_SECTS)
     ABORT("Too many heap sections");
-  if (EXPECT(result != NULL, TRUE))
+  if (LIKELY(result != NULL))
     GC_heap_bases[GC_n_heap_bases++] = (ptr_t)result;
   return result;
 }
@@ -2952,7 +2950,7 @@ block_unmap_inner(ptr_t start_addr, size_t len)
                         MAP_PRIVATE | MAP_FIXED | OPT_MAP_ANON, zero_fd,
                         0 /* `offset` */);
 
-    if (EXPECT(MAP_FAILED == result, FALSE))
+    if (UNLIKELY(MAP_FAILED == result))
       ABORT_ON_REMAP_FAIL("unmap: mmap", start_addr, len);
     if (result != start_addr)
       ABORT("unmap: mmap() result differs from start_addr");
@@ -3040,7 +3038,7 @@ GC_remap(ptr_t start, size_t bytes)
         start_addr, len,
         (PROT_READ | PROT_WRITE) | (GC_pages_executable ? PROT_EXEC : 0),
         MAP_PRIVATE | MAP_FIXED | OPT_MAP_ANON, zero_fd, 0 /* `offset` */);
-    if (EXPECT(MAP_FAILED == result, FALSE))
+    if (UNLIKELY(MAP_FAILED == result))
       ABORT_ON_REMAP_FAIL("remap: mmap", start_addr, len);
     if (result != start_addr)
       ABORT("remap: mmap() result differs from start_addr");
@@ -4070,7 +4068,7 @@ GC_proc_read_dirty(GC_bool output_unneeded)
     size_t new_size;
 
     pagedata_len = PROC_READ(GC_proc_fd, bufp, GC_proc_buf_size);
-    if (EXPECT(pagedata_len != -1, TRUE))
+    if (LIKELY(pagedata_len != -1))
       break;
     if (errno != E2BIG) {
       WARN("read /proc failed, errno= %" WARN_PRIdPTR "\n",
@@ -4467,7 +4465,7 @@ soft_set_grungy_pages(ptr_t start, ptr_t limit, ptr_t next_start_hint,
         struct hblk *h;
         ptr_t next_vaddr = vaddr + GC_page_size;
 
-        if (EXPECT(ADDR_LT(limit, next_vaddr), FALSE)) {
+        if (UNLIKELY(ADDR_LT(limit, next_vaddr))) {
           next_vaddr = limit;
         }
 
@@ -4480,8 +4478,9 @@ soft_set_grungy_pages(ptr_t start, ptr_t limit, ptr_t next_start_hint,
           GC_log_printf("static root dirty page at: %p\n", (void *)vaddr);
 #  endif
         h = (struct hblk *)vaddr;
-        if (EXPECT(ADDR_LT(vaddr, start), FALSE))
+        if (UNLIKELY(ADDR_LT(vaddr, start))) {
           h = (struct hblk *)start;
+        }
         for (; ADDR_LT((ptr_t)h, next_vaddr); h++) {
           size_t index = PHT_HASH(h);
 

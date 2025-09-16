@@ -139,7 +139,7 @@ GC_scratch_alloc(size_t bytes)
     bytes_to_get = ROUNDUP_PAGESIZE_IF_MMAP(MINHINCR * HBLKSIZE);
 
     result = GC_os_get_mem(bytes_to_get);
-    if (EXPECT(NULL == result, FALSE)) {
+    if (UNLIKELY(NULL == result)) {
       WARN("Out of memory - trying to allocate requested amount"
            " (%" WARN_PRIuPTR " bytes)...\n",
            bytes);
@@ -238,7 +238,7 @@ get_index(word addr)
   i = hi;
 #endif
   r = (bottom_index *)GC_scratch_alloc(sizeof(bottom_index));
-  if (EXPECT(NULL == r, FALSE))
+  if (UNLIKELY(NULL == r))
     return FALSE;
   BZERO(r, sizeof(bottom_index));
   r->key = hi;
@@ -273,11 +273,11 @@ GC_install_header(struct hblk *h)
   hdr *result;
 
   GC_ASSERT(I_HOLD_LOCK());
-  if (EXPECT(!get_index(ADDR(h)), FALSE))
+  if (UNLIKELY(!get_index(ADDR(h))))
     return NULL;
 
   result = alloc_hdr();
-  if (EXPECT(result != NULL, TRUE)) {
+  if (LIKELY(result != NULL)) {
     GC_ASSERT(!IS_FORWARDING_ADDR_OR_NIL(result));
     SET_HDR(h, result);
 #ifdef USE_MUNMAP

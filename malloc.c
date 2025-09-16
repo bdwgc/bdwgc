@@ -27,7 +27,7 @@ GC_alloc_reclaim_list(struct obj_kind *ok)
   GC_ASSERT(I_HOLD_LOCK());
   result = (struct hblk **)GC_scratch_alloc((MAXOBJGRANULES + 1)
                                             * sizeof(struct hblk *));
-  if (EXPECT(NULL == result, FALSE))
+  if (UNLIKELY(NULL == result))
     return FALSE;
 
   BZERO(result, (MAXOBJGRANULES + 1) * sizeof(struct hblk *));
@@ -62,7 +62,7 @@ GC_alloc_large(size_t lb_adjusted, int kind, unsigned flags, size_t align_m1)
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(lb_adjusted != 0 && (lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
   n_blocks = OBJ_SZ_TO_BLOCKS_CHECKED(SIZET_SAT_ADD(lb_adjusted, align_m1));
-  if (!EXPECT(GC_is_initialized, TRUE)) {
+  if (UNLIKELY(!GC_is_initialized)) {
     UNLOCK(); /*< just to unset `GC_lock_holder` */
     GC_init();
     LOCK();
@@ -85,7 +85,7 @@ GC_alloc_large(size_t lb_adjusted, int kind, unsigned flags, size_t align_m1)
      */
     if (retry_cnt > MAX_ALLOCLARGE_RETRIES)
       ABORT("Too many retries in GC_alloc_large");
-    if (EXPECT(!GC_collect_or_expand(n_blocks, flags, retry_cnt > 0), FALSE))
+    if (UNLIKELY(!GC_collect_or_expand(n_blocks, flags, retry_cnt > 0)))
       return NULL;
     h = GC_allochblk(lb_adjusted, kind, flags, align_m1);
   }
@@ -115,7 +115,7 @@ GC_alloc_large_and_clear(size_t lb_adjusted, int kind, unsigned flags)
 
   GC_ASSERT(I_HOLD_LOCK());
   result = GC_alloc_large(lb_adjusted, kind, flags, 0 /* `align_m1` */);
-  if (EXPECT(result != NULL, TRUE)
+  if (LIKELY(result != NULL)
       && (GC_debugging_started || GC_obj_kinds[kind].ok_init)) {
     /* Clear the whole block, in case of `GC_realloc` call. */
     BZERO(result, HBLKSIZE * OBJ_SZ_TO_BLOCKS(lb_adjusted));
@@ -195,9 +195,9 @@ GC_generic_malloc_inner_small(size_t lb, int kind)
   void *op = *opp;
 
   GC_ASSERT(I_HOLD_LOCK());
-  if (EXPECT(NULL == op, FALSE)) {
+  if (UNLIKELY(NULL == op)) {
     if (0 == lg) {
-      if (!EXPECT(GC_is_initialized, TRUE)) {
+      if (UNLIKELY(!GC_is_initialized)) {
         UNLOCK(); /*< just to unset `GC_lock_holder` */
         GC_init();
         LOCK();
@@ -264,11 +264,11 @@ GC_generic_malloc_aligned(size_t lb, int kind, unsigned flags, size_t align_m1)
   void *result;
 
   GC_ASSERT(kind < MAXOBJKINDS);
-  if (EXPECT(get_have_errors(), FALSE))
+  if (UNLIKELY(get_have_errors()))
     GC_print_all_errors();
   GC_notify_or_invoke_finalizers();
   GC_DBG_COLLECT_AT_MALLOC(lb);
-  if (SMALL_OBJ(lb) && EXPECT(align_m1 < GC_GRANULE_BYTES, TRUE)) {
+  if (SMALL_OBJ(lb) && LIKELY(align_m1 < GC_GRANULE_BYTES)) {
     LOCK();
     result = GC_generic_malloc_inner_small(lb, kind);
     UNLOCK();
@@ -293,21 +293,21 @@ GC_generic_malloc_aligned(size_t lb, int kind, unsigned flags, size_t align_m1)
       size_t lg; /*< CPPCHECK */
 #endif
 
-      if (EXPECT(0 == lb, FALSE))
+      if (UNLIKELY(0 == lb))
         lb = 1;
       lg = ALLOC_REQUEST_GRANS(lb);
       lb_adjusted = GRANULES_TO_BYTES(lg);
     }
 
     init = GC_obj_kinds[kind].ok_init;
-    if (EXPECT(align_m1 < GC_GRANULE_BYTES, TRUE)) {
+    if (LIKELY(align_m1 < GC_GRANULE_BYTES)) {
       align_m1 = 0;
     } else if (align_m1 < HBLKSIZE) {
       align_m1 = HBLKSIZE - 1;
     }
     LOCK();
     result = GC_alloc_large(lb_adjusted, kind, flags, align_m1);
-    if (EXPECT(result != NULL, TRUE)) {
+    if (LIKELY(result != NULL)) {
       if (GC_debugging_started
 #ifndef THREADS
           || init
@@ -337,7 +337,7 @@ GC_generic_malloc_aligned(size_t lb, int kind, unsigned flags, size_t align_m1)
     }
 #endif
   }
-  if (EXPECT(NULL == result, FALSE)) {
+  if (UNLIKELY(NULL == result)) {
     result = (*GC_get_oom_fn())(lb);
     /* Note: result might be misaligned. */
   }
@@ -361,7 +361,7 @@ GC_INNER void *
 GC_malloc_kind_aligned_global(size_t lb, int kind, size_t align_m1)
 {
   GC_ASSERT(kind < MAXOBJKINDS);
-  if (SMALL_OBJ(lb) && EXPECT(align_m1 < HBLKSIZE / 2, TRUE)) {
+  if (SMALL_OBJ(lb) && LIKELY(align_m1 < HBLKSIZE / 2)) {
     void *op;
     void **opp;
     size_t lg;
@@ -371,13 +371,13 @@ GC_malloc_kind_aligned_global(size_t lb, int kind, size_t align_m1)
     lg = GC_size_map[lb];
     opp = &GC_obj_kinds[kind].ok_freelist[lg];
     op = *opp;
-    if (EXPECT(align_m1 >= GC_GRANULE_BYTES, FALSE)) {
+    if (UNLIKELY(align_m1 >= GC_GRANULE_BYTES)) {
       /* TODO: Avoid linear search. */
       for (; (ADDR(op) & align_m1) != 0; op = *opp) {
         opp = &obj_link(op);
       }
     }
-    if (EXPECT(op != NULL, TRUE)) {
+    if (LIKELY(op != NULL)) {
       GC_ASSERT(PTRFREE == kind || NULL == obj_link(op)
                 || (ADDR(obj_link(op)) < GC_greatest_real_heap_addr
                     && GC_least_real_heap_addr < ADDR(obj_link(op))));
@@ -429,7 +429,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
   size_t lb_orig = lb;
 
   GC_ASSERT(kind < MAXOBJKINDS);
-  if (EXTRA_BYTES != 0 && EXPECT(lb != 0, TRUE)) {
+  if (EXTRA_BYTES != 0 && LIKELY(lb != 0)) {
     /*
      * We do not need the extra byte, since this will not be collected
      * anyway.
@@ -441,7 +441,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
     void **opp;
     size_t lg;
 
-    if (EXPECT(get_have_errors(), FALSE))
+    if (UNLIKELY(get_have_errors()))
       GC_print_all_errors();
     GC_notify_or_invoke_finalizers();
     GC_DBG_COLLECT_AT_MALLOC(lb_orig);
@@ -449,7 +449,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
     lg = GC_size_map[lb];
     opp = &GC_obj_kinds[kind].ok_freelist[lg];
     op = *opp;
-    if (EXPECT(op != NULL, TRUE)) {
+    if (LIKELY(op != NULL)) {
       *opp = obj_link(op);
       obj_link(op) = 0;
       GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
@@ -547,7 +547,7 @@ malloc(size_t lb)
    * It is not clear that this is enough to help matters.  The thread
    * implementation may well call `malloc` at other inopportune times.
    */
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     return sbrk(lb);
 #  endif
   return (void *)REDIRECT_MALLOC_F(lb);
@@ -571,7 +571,7 @@ GC_init_lib_bounds(void)
    * This test does not need to ensure memory visibility, since the bounds
    * will be set when/if we create another thread.
    */
-  if (EXPECT(lib_bounds_set, TRUE))
+  if (LIKELY(lib_bounds_set))
     return;
 
   DISABLE_CANCEL(cancel_state);
@@ -604,7 +604,7 @@ GC_init_lib_bounds(void)
 void *
 calloc(size_t n, size_t lb)
 {
-  if (EXPECT((lb | n) > GC_SQRT_SIZE_MAX, FALSE) /*< fast initial test */
+  if (UNLIKELY((lb | n) > GC_SQRT_SIZE_MAX) /*< fast initial test */
       && lb && n > GC_SIZE_MAX / lb)
     return (*GC_get_oom_fn())(GC_SIZE_MAX); /*< `n * lb` overflow */
 #  ifdef REDIR_MALLOC_AND_LINUXTHREADS
@@ -639,7 +639,7 @@ strdup(const char *s)
   size_t lb = strlen(s) + 1;
   char *result = (char *)REDIRECT_MALLOC_F(lb);
 
-  if (EXPECT(NULL == result, FALSE)) {
+  if (UNLIKELY(NULL == result)) {
     errno = ENOMEM;
     return NULL;
   }
@@ -661,14 +661,14 @@ strndup(const char *str, size_t size)
 {
   char *copy;
   size_t len = strlen(str);
-  if (EXPECT(len > size, FALSE))
+  if (UNLIKELY(len > size))
     len = size;
   copy = (char *)REDIRECT_MALLOC_F(len + 1);
-  if (EXPECT(NULL == copy, FALSE)) {
+  if (UNLIKELY(NULL == copy)) {
     errno = ENOMEM;
     return NULL;
   }
-  if (EXPECT(len > 0, TRUE))
+  if (LIKELY(len > 0))
     BCOPY(str, copy, len);
   copy[len] = '\0';
   return copy;
@@ -690,7 +690,7 @@ free_internal(void *p, const hdr *hhdr)
   GC_bytes_freed += lb;
   if (IS_UNCOLLECTABLE(kind))
     GC_non_gc_bytes -= lb;
-  if (EXPECT(lg <= MAXOBJGRANULES, TRUE)) {
+  if (LIKELY(lg <= MAXOBJGRANULES)) {
     struct obj_kind *ok = &GC_obj_kinds[kind];
     void **flh;
 
@@ -699,7 +699,7 @@ free_internal(void *p, const hdr *hhdr)
      * reallocated, it does not matter.  Otherwise, the collector will
      * do it, since it is on a free list.
      */
-    if (ok->ok_init && EXPECT(lb > sizeof(ptr_t), TRUE)) {
+    if (ok->ok_init && LIKELY(lb > sizeof(ptr_t))) {
       BZERO((ptr_t *)p + 1, lb - sizeof(ptr_t));
     }
 
@@ -741,7 +741,7 @@ GC_free(void *p)
    * `malloc` calls during initialization.  For the others, this seems
    * to happen implicitly.  Do not try to deallocate that memory.
    */
-  if (EXPECT(NULL == hhdr, FALSE))
+  if (UNLIKELY(NULL == hhdr))
     return;
 #endif
   GC_ASSERT(GC_base(p) == p);

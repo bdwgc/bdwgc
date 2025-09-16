@@ -73,7 +73,7 @@ GC_add_ext_descriptor(const word *bm, size_t nbits)
   size_t nwords = divWORDSZ(nbits + CPP_WORDSZ - 1);
 
   LOCK();
-  while (EXPECT(GC_avail_descr + nwords >= GC_ed_size, FALSE)) {
+  while (UNLIKELY(GC_avail_descr + nwords >= GC_ed_size)) {
     typed_ext_descr_t *newExtD;
     size_t new_size;
     size_t ed_size = GC_ed_size;
@@ -218,7 +218,7 @@ GC_make_descriptor(const GC_word *bm, size_t len)
   GC_descr d;
 
 #if defined(AO_HAVE_load_acquire) && defined(AO_HAVE_store_release)
-  if (!EXPECT(AO_load_acquire(&GC_explicit_typing_initialized), TRUE)) {
+  if (UNLIKELY(!AO_load_acquire(&GC_explicit_typing_initialized))) {
     LOCK();
     if (!GC_explicit_typing_initialized) {
       GC_init_explicit_typing();
@@ -228,7 +228,7 @@ GC_make_descriptor(const GC_word *bm, size_t len)
   }
 #else
   LOCK();
-  if (!EXPECT(GC_explicit_typing_initialized, TRUE)) {
+  if (UNLIKELY(!GC_explicit_typing_initialized)) {
     GC_init_explicit_typing();
     GC_explicit_typing_initialized = TRUE;
   }
@@ -276,7 +276,7 @@ GC_make_descriptor(const GC_word *bm, size_t len)
   } else {
     GC_signed_word index = GC_add_ext_descriptor(bm, (size_t)last_set_bit + 1);
 
-    if (EXPECT(index < 0, FALSE)) {
+    if (UNLIKELY(index < 0)) {
       /* Out of memory: use a conservative approximation. */
       return PTRS_TO_BYTES((word)last_set_bit + 1) | GC_DS_LENGTH;
     }
@@ -294,9 +294,8 @@ set_obj_descr(ptr_t op, GC_descr d)
 {
   size_t sz;
 
-  if (EXPECT(NULL == op, FALSE))
+  if (UNLIKELY(NULL == op))
     return;
-
   /*
    * It is not safe to use `GC_size_map[]` here as the table might be
    * updated asynchronously.
@@ -317,7 +316,7 @@ GC_malloc_explicitly_typed(size_t lb, GC_descr d)
   ptr_t op;
 
   GC_ASSERT(GC_explicit_typing_initialized);
-  if (EXPECT(lb < sizeof(ptr_t) - sizeof(GC_descr) + 1, FALSE)) {
+  if (UNLIKELY(lb < sizeof(ptr_t) - sizeof(GC_descr) + 1)) {
     /* Ensure the descriptor does not occupy the first pointer place. */
     lb = sizeof(ptr_t) - sizeof(GC_descr) + 1;
   }
@@ -394,7 +393,7 @@ GC_make_leaf_descriptor(size_t size, size_t nelements, GC_descr d)
       = (complex_descriptor *)GC_malloc_atomic(sizeof(struct LeafDescriptor));
 
   GC_ASSERT(size != 0);
-  if (EXPECT(NULL == result, FALSE))
+  if (UNLIKELY(NULL == result))
     return NULL;
 
   result->ld.ld_tag = LEAF_TAG;
@@ -416,7 +415,7 @@ GC_make_sequence_descriptor(complex_descriptor *first,
   struct SequenceDescriptor *result = (struct SequenceDescriptor *)GC_malloc(
       sizeof(struct SequenceDescriptor));
 
-  if (EXPECT(NULL == result, FALSE))
+  if (UNLIKELY(NULL == result))
     return NULL;
 
   /*
@@ -486,11 +485,11 @@ GC_make_array_descriptor(size_t nelements, size_t size, GC_descr d,
         nelements / 2, 2 * size, GC_double_descr(d, BYTES_TO_PTRS(size)),
         psimple_d, pcomplex_d, pleaf);
 
-    if ((nelements & 1) == 0 || EXPECT(NO_MEM == result, FALSE))
+    if ((nelements & 1) == 0 || UNLIKELY(NO_MEM == result))
       return result;
 
     one_element = GC_make_leaf_descriptor(size, 1, d);
-    if (EXPECT(NULL == one_element, FALSE))
+    if (UNLIKELY(NULL == one_element))
       return NO_MEM;
 
     if (COMPLEX == result) {
@@ -501,11 +500,11 @@ GC_make_array_descriptor(size_t nelements, size_t size, GC_descr d,
                 ? GC_make_leaf_descriptor(size, 1, *psimple_d)
                 : GC_make_leaf_descriptor(pleaf->ld_size, pleaf->ld_nelements,
                                           pleaf->ld_descriptor);
-      if (EXPECT(NULL == beginning, FALSE))
+      if (UNLIKELY(NULL == beginning))
         return NO_MEM;
     }
     *pcomplex_d = GC_make_sequence_descriptor(beginning, one_element);
-    if (EXPECT(NULL == *pcomplex_d, FALSE))
+    if (UNLIKELY(NULL == *pcomplex_d))
       return NO_MEM;
 
     return COMPLEX;
@@ -535,9 +534,9 @@ GC_calloc_prepare_explicitly_typed(struct GC_calloc_typed_descr_s *pctd,
   GC_ASSERT(GC_explicit_typing_initialized);
   GC_ASSERT(sizeof(struct GC_calloc_typed_descr_s) == ctd_sz);
   (void)ctd_sz; /*< unused currently */
-  if (EXPECT(0 == lb || 0 == n, FALSE))
+  if (UNLIKELY(0 == lb || 0 == n))
     lb = n = 1;
-  if (EXPECT((lb | n) > GC_SQRT_SIZE_MAX, FALSE) /*< fast initial check */
+  if (UNLIKELY((lb | n) > GC_SQRT_SIZE_MAX) /*< fast initial check */
       && n > GC_SIZE_MAX / lb) {
     /* `n * lb` overflows. */
     pctd->alloc_lb = GC_SIZE_MAX;
@@ -588,7 +587,7 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
     return NULL;
   }
   op = GC_malloc_kind((size_t)pctd->alloc_lb, GC_array_kind);
-  if (EXPECT(NULL == op, FALSE))
+  if (UNLIKELY(NULL == op))
     return NULL;
 
   lpw_m1 = BYTES_TO_PTRS(GC_size(op)) - 1;
@@ -631,9 +630,9 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
      * Make sure the descriptor is cleared once there is any danger
      * it may have been collected.
      */
-    if (EXPECT(GC_general_register_disappearing_link((void **)op + lpw_m1, op)
-                   == GC_NO_MEMORY,
-               FALSE))
+    if (UNLIKELY(
+            GC_general_register_disappearing_link((void **)op + lpw_m1, op)
+            == GC_NO_MEMORY))
 #endif
     {
       /* Could not register it due to lack of memory.  Punt. */
@@ -694,7 +693,7 @@ GC_push_complex_descriptor(ptr_t current, complex_descriptor *complex_d,
     nelements = complex_d->ld.ld_nelements;
     sz = complex_d->ld.ld_size;
 
-    if (EXPECT(msl - msp <= (GC_signed_word)nelements, FALSE))
+    if (UNLIKELY(msl - msp <= (GC_signed_word)nelements))
       return NULL;
     GC_ASSERT(sz != 0);
     for (i = 0; i < nelements; i++) {
@@ -711,7 +710,7 @@ GC_push_complex_descriptor(ptr_t current, complex_descriptor *complex_d,
     GC_ASSERT(sz != 0 || 0 == nelements);
     for (i = 0; i < nelements; i++) {
       msp = GC_push_complex_descriptor(current, element_descr, msp, msl);
-      if (EXPECT(NULL == msp, FALSE))
+      if (UNLIKELY(NULL == msp))
         return NULL;
       current += sz;
     }
@@ -720,7 +719,7 @@ GC_push_complex_descriptor(ptr_t current, complex_descriptor *complex_d,
     sz = GC_descr_obj_size(complex_d->sd.sd_first);
     msp = GC_push_complex_descriptor(current, complex_d->sd.sd_first, msp,
                                      msl);
-    if (EXPECT(NULL == msp, FALSE))
+    if (UNLIKELY(NULL == msp))
       return NULL;
     GC_ASSERT(sz != 0);
     current += sz;

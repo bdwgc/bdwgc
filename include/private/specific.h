@@ -151,7 +151,7 @@ GC_getspecific(tsd *key)
   const tse *entry = *entry_ptr; /*< must be loaded only once */
 
   GC_ASSERT(qtid != INVALID_QTID);
-  if (EXPECT(entry->qtid == qtid, TRUE)) {
+  if (LIKELY(entry->qtid == qtid)) {
     GC_ASSERT(entry->thread == pthread_self());
     return TS_REVEAL_PTR(entry->value);
   }

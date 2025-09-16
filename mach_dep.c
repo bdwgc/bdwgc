@@ -99,7 +99,7 @@ GC_with_callee_saves_pushed(GC_with_callee_saves_func fn, ptr_t arg)
     } else {
       context = (ptr_t)&ctxt;
     }
-    if (EXPECT(0 == getcontext_works, FALSE))
+    if (UNLIKELY(0 == getcontext_works))
       getcontext_works = context != NULL ? 1 : -1;
   }
 #      ifdef GETCONTEXT_FPU_EXCMASK_BUG

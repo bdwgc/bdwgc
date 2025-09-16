@@ -733,7 +733,7 @@ GC_register_dynamic_libraries_dl_iterate_phdr(void)
     static GC_bool excluded_segs = FALSE;
     n_load_segs = 0;
     load_segs_overflow = FALSE;
-    if (!EXPECT(excluded_segs, TRUE)) {
+    if (UNLIKELY(!excluded_segs)) {
       GC_exclude_static_roots_inner((ptr_t)load_segs,
                                     (ptr_t)load_segs + sizeof(load_segs));
       excluded_segs = TRUE;
@@ -1282,7 +1282,7 @@ dyld_section_add_del(const struct GC_MACH_HEADER *phdr, intptr_t slide,
   if (is_add) {
     LOCK();
     /* The user callback is invoked holding the allocator lock. */
-    if (EXPECT(callback != 0, FALSE)
+    if (UNLIKELY(callback != 0)
         && !callback(dlpi_name, start, (size_t)sec_size)) {
       UNLOCK();
       return; /*< skip section */

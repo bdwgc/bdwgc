@@ -833,7 +833,7 @@ GC_mark_from(mse *mark_stack_top, mse *mark_stack, mse *mark_stack_limit)
            * is ideal.  Unfortunately, we need to check for the last
            * object case explicitly.
            */
-          if (EXPECT(NULL == type_descr, FALSE)) {
+          if (UNLIKELY(NULL == type_descr)) {
             mark_stack_top--;
             continue;
           }
@@ -1665,10 +1665,10 @@ GC_mark_and_push(void *obj, mse *mark_stack_top, mse *mark_stack_limit,
 
   PREFETCH(obj);
   GET_HDR(obj, hhdr);
-  if ((EXPECT(IS_FORWARDING_ADDR_OR_NIL(hhdr), FALSE)
+  if ((UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr))
        && (!GC_all_interior_pointers
            || NULL == (hhdr = GC_find_header(GC_base(obj)))))
-      || EXPECT(HBLK_IS_FREE(hhdr), FALSE)) {
+      || UNLIKELY(HBLK_IS_FREE(hhdr))) {
     GC_ADD_TO_BLACK_LIST_NORMAL((ptr_t)obj, (ptr_t)src);
     return mark_stack_top;
   }
@@ -1690,14 +1690,14 @@ GC_mark_and_push_stack(ptr_t p)
 
   PREFETCH(p);
   GET_HDR(p, hhdr);
-  if (EXPECT(IS_FORWARDING_ADDR_OR_NIL(hhdr), FALSE)) {
+  if (UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr))) {
     if (NULL == hhdr || (r = (ptr_t)GC_base(p)) == NULL
         || (hhdr = HDR(r)) == NULL) {
       GC_ADD_TO_BLACK_LIST_STACK(p, source);
       return;
     }
   }
-  if (EXPECT(HBLK_IS_FREE(hhdr), FALSE)) {
+  if (UNLIKELY(HBLK_IS_FREE(hhdr))) {
     GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
     return;
   }
@@ -2191,7 +2191,7 @@ GC_push_next_marked(struct hblk *h)
 {
   hdr *hhdr = HDR(h);
 
-  if (EXPECT(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr), FALSE)) {
+  if (UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr))) {
     h = GC_next_block(h, FALSE);
     if (NULL == h)
       return NULL;
@@ -2218,7 +2218,7 @@ GC_push_next_marked_dirty(struct hblk *h)
     ABORT("Dirty bits not set up");
   for (;; h += OBJ_SZ_TO_BLOCKS(hhdr->hb_sz)) {
     hhdr = HDR(h);
-    if (EXPECT(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr), FALSE)) {
+    if (UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr))) {
       h = GC_next_block(h, FALSE);
       if (NULL == h)
         return NULL;
@@ -2264,7 +2264,7 @@ GC_push_next_marked_uncollectable(struct hblk *h)
   hdr *hhdr = HDR(h);
 
   for (;;) {
-    if (EXPECT(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr), FALSE)) {
+    if (UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr))) {
       h = GC_next_block(h, FALSE);
       if (NULL == h)
         return NULL;

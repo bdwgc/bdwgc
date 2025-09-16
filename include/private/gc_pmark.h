@@ -244,11 +244,11 @@ GC_push_contents_hdr(ptr_t current, mse *mark_stack_top, mse *mark_stack_limit,
     size_t byte_offset = displ & (GC_GRANULE_BYTES - 1);
 
     /* The following always fails for large block references. */
-    if (EXPECT((gran_offset | byte_offset) != 0, FALSE))
+    if (UNLIKELY((gran_offset | byte_offset) != 0))
 #endif
     {
 #ifdef MARK_BIT_PER_OBJ
-      if (EXPECT(inv_sz == LARGE_INV_SZ, FALSE))
+      if (UNLIKELY(inv_sz == LARGE_INV_SZ))
 #else
       if ((hhdr->hb_flags & LARGE_BLOCK) != 0)
 #endif

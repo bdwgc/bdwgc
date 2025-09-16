@@ -130,7 +130,7 @@ GC_get_avg_stopped_mark_time_ns(void)
   /* Halve values to prevent overflow during the multiplication. */
   for (; total_time > ~0UL / (1000UL * 1000); total_time >>= 1) {
     divisor >>= 1;
-    if (EXPECT(0 == divisor, FALSE)) {
+    if (UNLIKELY(0 == divisor)) {
       /* The actual result is larger than representable value. */
       return ~0UL;
     }
@@ -881,7 +881,7 @@ GC_collect_a_little(void)
 {
   int result;
 
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   LOCK();
   /*
@@ -1157,7 +1157,7 @@ GC_set_fl_marks(ptr_t q)
 #endif
 
     h = HBLKPTR(q);
-    if (EXPECT(h != last_h, FALSE)) {
+    if (UNLIKELY(h != last_h)) {
       last_h = h;
       /* Update `hhdr` and `sz`. */
       hhdr = HDR(h);
@@ -1259,7 +1259,7 @@ GC_clear_fl_marks(ptr_t q)
       break;
 
     h = HBLKPTR(q);
-    if (EXPECT(h != last_h, FALSE)) {
+    if (UNLIKELY(h != last_h)) {
       last_h = h;
       /* Update `hhdr` and `sz`. */
       hhdr = HDR(h);
@@ -1410,8 +1410,8 @@ GC_finish_collection(void)
   GC_start_reclaim(FALSE);
 
 #ifdef USE_MUNMAP
-  if (GC_unmap_threshold > 0          /*< memory unmapping enabled? */
-      && EXPECT(GC_gc_no != 1, TRUE)) /*< do not unmap during `GC_init` */
+  if (GC_unmap_threshold > 0    /*< memory unmapping enabled? */
+      && LIKELY(GC_gc_no != 1)) /*< do not unmap during `GC_init` */
     GC_unmap_old(GC_unmap_threshold);
 
   GC_ASSERT(GC_heapsize >= GC_unmapped_bytes);
@@ -1480,7 +1480,7 @@ GC_try_to_collect_general(GC_stop_func stop_func, GC_bool force_unmap)
 #endif
   IF_CANCEL(int cancel_state;)
 
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   if (GC_debugging_started)
     GC_print_all_smashed();
@@ -1552,7 +1552,7 @@ GC_os_get_mem(size_t bytes)
 
   GC_ASSERT(I_HOLD_LOCK());
   space = (ptr_t)GET_MEM(bytes); /*< `HBLKSIZE`-aligned */
-  if (EXPECT(NULL == space, FALSE))
+  if (UNLIKELY(NULL == space))
     return NULL;
 #ifdef USE_PROC_FOR_LIBRARIES
   /* Add `HBLKSIZE`-aligned `GET_MEM`-generated block to `GC_our_memory`. */
@@ -1588,7 +1588,7 @@ GC_add_to_heap(struct hblk *h, size_t sz)
   GC_ASSERT(sz > 0);
   GC_ASSERT(GC_all_nils != NULL);
 
-  if (EXPECT(GC_n_heap_sects == GC_capacity_heap_sects, FALSE)) {
+  if (UNLIKELY(GC_n_heap_sects == GC_capacity_heap_sects)) {
     /* Allocate new `GC_heap_sects` with sufficient capacity. */
 #ifndef INITIAL_HEAP_SECTS
 #  define INITIAL_HEAP_SECTS 32
@@ -1618,14 +1618,14 @@ GC_add_to_heap(struct hblk *h, size_t sz)
                        (unsigned long)new_capacity);
   }
 
-  while (EXPECT(ADDR(h) <= HBLKSIZE, FALSE)) {
+  while (UNLIKELY(ADDR(h) <= HBLKSIZE)) {
     /* Cannot handle memory near address zero. */
     ++h;
     sz -= HBLKSIZE;
     if (0 == sz)
       return;
   }
-  while (EXPECT(ADDR(h) >= GC_WORD_MAX - sz, FALSE)) {
+  while (UNLIKELY(ADDR(h) >= GC_WORD_MAX - sz)) {
     /* Prevent overflow when calculating `endp`. */
     sz -= HBLKSIZE;
     if (0 == sz)
@@ -1634,7 +1634,7 @@ GC_add_to_heap(struct hblk *h, size_t sz)
   endp = (ptr_t)h + sz;
 
   hhdr = GC_install_header(h);
-  if (EXPECT(NULL == hhdr, FALSE)) {
+  if (UNLIKELY(NULL == hhdr)) {
     /*
      * This is extremely unlikely. Cannot add it.  This will almost
      * certainly result in a `NULL` returned from the allocator, which
@@ -1663,7 +1663,7 @@ GC_add_to_heap(struct hblk *h, size_t sz)
   GC_heapsize += sz;
 
   if (ADDR_GE((ptr_t)GC_least_plausible_heap_addr, (ptr_t)h)
-      || EXPECT(NULL == GC_least_plausible_heap_addr, FALSE)) {
+      || UNLIKELY(NULL == GC_least_plausible_heap_addr)) {
     /*
      * Making it a little smaller than necessary prevents us from
      * getting a false hit from the variable itself.  There is some
@@ -1676,7 +1676,7 @@ GC_add_to_heap(struct hblk *h, size_t sz)
   }
 #ifdef SET_REAL_HEAP_BOUNDS
   if (ADDR(h) < GC_least_real_heap_addr
-      || EXPECT(0 == GC_least_real_heap_addr, FALSE))
+      || UNLIKELY(0 == GC_least_real_heap_addr))
     GC_least_real_heap_addr = ADDR(h) - sizeof(ptr_t);
   if (GC_greatest_real_heap_addr < ADDR(endp)) {
 #  ifdef INCLUDE_LINUX_THREAD_DESCR
@@ -1687,7 +1687,7 @@ GC_add_to_heap(struct hblk *h, size_t sz)
   }
 #endif
   GC_handle_protected_regions_limit();
-  if (EXPECT(old_capacity > 0, FALSE)) {
+  if (UNLIKELY(old_capacity > 0)) {
 #ifndef GWW_VDB
     /*
      * Recycling may call `GC_add_to_heap()` again but should not cause
@@ -1789,7 +1789,7 @@ GC_expand_hp_inner(word n)
     return FALSE;
   }
   space = (struct hblk *)GC_os_get_mem(sz);
-  if (EXPECT(NULL == space, FALSE)) {
+  if (UNLIKELY(NULL == space)) {
     WARN("Failed to expand heap by %" WARN_PRIuPTR " KiB\n", sz >> 10);
     return FALSE;
   }
@@ -1806,7 +1806,7 @@ GC_expand_hp_inner(word n)
   if ((0 == GC_last_heap_addr && (ADDR(space) & SIGNB) == 0)
       || (GC_last_heap_addr != 0 && GC_last_heap_addr < ADDR(space))) {
     /* Assume the heap is growing up. */
-    if (EXPECT(ADDR(space) < GC_WORD_MAX - (sz + expansion_slop), TRUE)) {
+    if (LIKELY(ADDR(space) < GC_WORD_MAX - (sz + expansion_slop))) {
       ptr_t new_limit = (ptr_t)space + sz + expansion_slop;
 
       if (ADDR_LT((ptr_t)GC_greatest_plausible_heap_addr, new_limit))
@@ -1814,7 +1814,7 @@ GC_expand_hp_inner(word n)
     }
   } else {
     /* Heap is growing down. */
-    if (EXPECT(ADDR(space) > expansion_slop + sizeof(ptr_t), TRUE)) {
+    if (LIKELY(ADDR(space) > expansion_slop + sizeof(ptr_t))) {
       ptr_t new_limit = (ptr_t)space - expansion_slop - sizeof(ptr_t);
 
       if (ADDR_LT(new_limit, (ptr_t)GC_least_plausible_heap_addr))
@@ -1837,7 +1837,7 @@ GC_expand_hp(size_t bytes)
   word old_heapsize;
   GC_bool result;
 
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   LOCK();
   old_heapsize = GC_heapsize;
@@ -2026,7 +2026,7 @@ GC_allocobj(size_t lg, int kind)
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_is_initialized);
-  if (EXPECT(0 == lg, FALSE))
+  if (UNLIKELY(0 == lg))
     return NULL;
 
   while (NULL == *flh) {
@@ -2070,7 +2070,7 @@ GC_allocobj(size_t lg, int kind)
       continue;
     }
 #endif
-    if (EXPECT(!GC_collect_or_expand(1, 0 /* flags */, retry_cnt > 0), FALSE))
+    if (UNLIKELY(!GC_collect_or_expand(1, 0 /* flags */, retry_cnt > 0)))
       return NULL;
     retry_cnt++;
   }

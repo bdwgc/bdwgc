@@ -177,7 +177,7 @@ GC_realloc(void *p, size_t lb)
     sz = lb;
   }
   result = GC_generic_or_special_malloc((word)lb, obj_kind);
-  if (EXPECT(result != NULL, TRUE)) {
+  if (LIKELY(result != NULL)) {
     /*
      * In case of shrink, it could also return original object.
      * But this gives the client warning of imminent disaster.
@@ -283,10 +283,10 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
    * TODO: `GC_dirty` should be called for each linked object (but the
    * last one) to support multiple objects allocation.
    */
-  if (!EXPECT(lb_adjusted <= MAXOBJBYTES, TRUE) || GC_manual_vdb) {
+  if (UNLIKELY(lb_adjusted > MAXOBJBYTES) || GC_manual_vdb) {
     op = GC_generic_malloc_aligned(lb_adjusted - EXTRA_BYTES, kind,
                                    0 /* `flags` */, 0 /* `align_m1` */);
-    if (EXPECT(op != NULL, TRUE))
+    if (LIKELY(op != NULL))
       obj_link(op) = NULL;
     *result = op;
 #ifndef NO_MANUAL_VDB
@@ -299,11 +299,11 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
   }
   GC_ASSERT(kind < MAXOBJKINDS);
   lg = BYTES_TO_GRANULES(lb_adjusted);
-  if (EXPECT(get_have_errors(), FALSE))
+  if (UNLIKELY(get_have_errors()))
     GC_print_all_errors();
   GC_notify_or_invoke_finalizers();
   GC_DBG_COLLECT_AT_MALLOC(lb_adjusted - EXTRA_BYTES);
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   LOCK();
   /* Do our share of marking work. */
@@ -470,7 +470,7 @@ GC_malloc_many(size_t lb)
   void *result;
   size_t lg, lb_adjusted;
 
-  if (EXPECT(0 == lb, FALSE))
+  if (UNLIKELY(0 == lb))
     lb = 1;
   lg = ALLOC_REQUEST_GRANS(lb);
   lb_adjusted = GRANULES_TO_BYTES(lg);
@@ -491,7 +491,7 @@ GC_memalign(size_t align, size_t lb)
   size_t align_m1 = align - 1;
 
   /* Check the alignment argument. */
-  if (EXPECT(0 == align || (align & align_m1) != 0, FALSE))
+  if (UNLIKELY(0 == align || (align & align_m1) != 0))
     return NULL;
 
   /* TODO: Use thread-local allocation. */
@@ -507,8 +507,7 @@ GC_posix_memalign(void **memptr, size_t align, size_t lb)
   size_t align_minus_one = align - 1; /*< to workaround a cppcheck warning */
 
   /* Check alignment properly. */
-  if (EXPECT(align < sizeof(void *) || (align_minus_one & align) != 0,
-             FALSE)) {
+  if (UNLIKELY(align < sizeof(void *) || (align_minus_one & align) != 0)) {
 #ifdef MSWINCE
     return ERROR_INVALID_PARAMETER;
 #else
@@ -517,7 +516,7 @@ GC_posix_memalign(void **memptr, size_t align, size_t lb)
   }
 
   p = GC_memalign(align, lb);
-  if (EXPECT(NULL == p, FALSE)) {
+  if (UNLIKELY(NULL == p)) {
 #ifdef MSWINCE
     return ERROR_NOT_ENOUGH_MEMORY;
 #else
@@ -532,7 +531,7 @@ GC_posix_memalign(void **memptr, size_t align, size_t lb)
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_valloc(size_t lb)
 {
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   GC_ASSERT(GC_real_page_size != 0);
   return GC_memalign(GC_real_page_size, lb);
@@ -541,7 +540,7 @@ GC_valloc(size_t lb)
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_pvalloc(size_t lb)
 {
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   GC_ASSERT(GC_real_page_size != 0);
   lb = SIZET_SAT_ADD(lb, GC_real_page_size - 1) & ~(GC_real_page_size - 1);
@@ -562,7 +561,7 @@ GC_strdup(const char *s)
     return NULL;
   lb = strlen(s) + 1;
   copy = (char *)GC_malloc_atomic(lb);
-  if (EXPECT(NULL == copy, FALSE)) {
+  if (UNLIKELY(NULL == copy)) {
 #ifndef MSWINCE
     errno = ENOMEM;
 #endif
@@ -578,16 +577,16 @@ GC_strndup(const char *str, size_t size)
   char *copy;
   /* Note: `str` is expected to be non-`NULL`. */
   size_t len = strlen(str);
-  if (EXPECT(len > size, FALSE))
+  if (UNLIKELY(len > size))
     len = size;
   copy = (char *)GC_malloc_atomic(len + 1);
-  if (EXPECT(NULL == copy, FALSE)) {
+  if (UNLIKELY(NULL == copy)) {
 #ifndef MSWINCE
     errno = ENOMEM;
 #endif
     return NULL;
   }
-  if (EXPECT(len > 0, TRUE))
+  if (LIKELY(len > 0))
     BCOPY(str, copy, len);
   copy[len] = '\0';
   return copy;
@@ -602,7 +601,7 @@ GC_wcsdup(const wchar_t *str)
   size_t lb = (wcslen(str) + 1) * sizeof(wchar_t);
   wchar_t *copy = (wchar_t *)GC_malloc_atomic(lb);
 
-  if (EXPECT(NULL == copy, FALSE)) {
+  if (UNLIKELY(NULL == copy)) {
 #  ifndef MSWINCE
     errno = ENOMEM;
 #  endif

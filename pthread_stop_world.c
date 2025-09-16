@@ -1307,7 +1307,7 @@ GC_nacl_initialize_gc_thread(GC_thread me)
   GC_ASSERT(NULL == GC_nacl_gc_thread_self);
   GC_nacl_gc_thread_self = me;
   pthread_mutex_lock(&GC_nacl_thread_alloc_lock);
-  if (!EXPECT(GC_nacl_thread_parking_inited, TRUE)) {
+  if (UNLIKELY(!GC_nacl_thread_parking_inited)) {
     BZERO(GC_nacl_thread_parked, sizeof(GC_nacl_thread_parked));
     BZERO(GC_nacl_thread_used, sizeof(GC_nacl_thread_used));
     /*
