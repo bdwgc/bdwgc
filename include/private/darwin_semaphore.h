@@ -47,18 +47,18 @@ sem_init(sem_t *sem, int pshared, int value)
 {
   int err;
 
-  if (EXPECT(pshared != 0, FALSE)) {
+  if (UNLIKELY(pshared != 0)) {
     errno = EPERM; /*< unsupported */
     return -1;
   }
   sem->value = value;
   err = pthread_mutex_init(&sem->mutex, NULL);
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }
   err = pthread_cond_init(&sem->cond, NULL);
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     (void)pthread_mutex_destroy(&sem->mutex);
     errno = err;
     return -1;
@@ -71,19 +71,19 @@ sem_post(sem_t *sem)
 {
   int err = pthread_mutex_lock(&sem->mutex);
 
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }
   sem->value++;
   err = pthread_cond_signal(&sem->cond);
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     (void)pthread_mutex_unlock(&sem->mutex);
     errno = err;
     return -1;
   }
   err = pthread_mutex_unlock(&sem->mutex);
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }
@@ -95,13 +95,13 @@ sem_wait(sem_t *sem)
 {
   int err = pthread_mutex_lock(&sem->mutex);
 
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }
   while (0 == sem->value) {
     err = pthread_cond_wait(&sem->cond, &sem->mutex);
-    if (EXPECT(err != 0, FALSE)) {
+    if (UNLIKELY(err != 0)) {
       (void)pthread_mutex_unlock(&sem->mutex);
       errno = err;
       return -1;
@@ -109,7 +109,7 @@ sem_wait(sem_t *sem)
   }
   sem->value--;
   err = pthread_mutex_unlock(&sem->mutex);
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }
@@ -121,12 +121,12 @@ sem_destroy(sem_t *sem)
 {
   int err = pthread_cond_destroy(&sem->cond);
 
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }
   err = pthread_mutex_destroy(&sem->mutex);
-  if (EXPECT(err != 0, FALSE)) {
+  if (UNLIKELY(err != 0)) {
     errno = err;
     return -1;
   }

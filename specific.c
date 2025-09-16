@@ -67,7 +67,7 @@ GC_setspecific(tsd *key, void *value)
   GC_dont_gc++;
   entry = (volatile tse *)MALLOC_CLEAR(sizeof(tse));
   GC_dont_gc--;
-  if (EXPECT(NULL == entry, FALSE))
+  if (UNLIKELY(NULL == entry))
     return ENOMEM;
 
   pthread_mutex_lock(&key->lock);
@@ -171,7 +171,7 @@ GC_update_specific_after_fork(tsd *key)
   pthread_mutex_lock(&key->lock);
 #    endif
   entry = key->hash[hash_val];
-  if (EXPECT(entry != NULL, TRUE)) {
+  if (LIKELY(entry != NULL)) {
     GC_ASSERT(THREAD_EQUAL(entry->thread, GC_parent_pthread_self));
     GC_ASSERT(NULL == entry->next);
     /* Remove the `entry` from the table. */

@@ -599,7 +599,7 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
 #endif
       } else {
 #ifdef ENABLE_DISCLAIM
-        if (EXPECT(hhdr->hb_flags & HAS_DISCLAIM, 0)) {
+        if (UNLIKELY((hhdr->hb_flags & HAS_DISCLAIM) != 0)) {
           if (ok->ok_disclaim_proc(hbp)) {
             /* Not disclaimed, thus resurrect the object. */
             set_mark_bit_from_hdr(hhdr, 0);

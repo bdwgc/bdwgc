@@ -115,7 +115,7 @@ GC_INNER hdr *GC_header_cache_miss(ptr_t p, hdr_cache_entry *hce);
 #define HC_GET_HDR(p, hhdr, source)                \
   { /*< cannot use `do ... while (0)` here */      \
     hdr_cache_entry *hce = HCE(p);                 \
-    if (EXPECT(HCE_VALID_FOR(hce, p), TRUE)) {     \
+    if (LIKELY(HCE_VALID_FOR(hce, p))) {           \
       HC_HIT();                                    \
       hhdr = hce->hce_hdr;                         \
     } else {                                       \

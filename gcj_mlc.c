@@ -143,8 +143,7 @@ GC_core_gcj_malloc(size_t lb, const void *vtable_ptr, unsigned flags)
   GC_DBG_COLLECT_AT_MALLOC(lb);
   LOCK();
   if (SMALL_OBJ(lb)
-      && (op = GC_gcjobjfreelist[lg = GC_size_map[lb]],
-          EXPECT(op != NULL, TRUE))) {
+      && (op = GC_gcjobjfreelist[lg = GC_size_map[lb]], LIKELY(op != NULL))) {
     GC_gcjobjfreelist[lg] = (ptr_t)obj_link(op);
     GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
     GC_ASSERT(NULL == ((void **)op)[1]);

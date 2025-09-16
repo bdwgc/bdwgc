@@ -518,8 +518,8 @@
 * Use AS_HELP_STRING consistently for AC_ARG_WITH in configure (refactoring)
 * Use BZERO in GC_save_callers (refactoring)
 * Use BZERO() to clear jmp_buf variable in GC_with_callee_saves_pushed
-* Use EXPECT in GC_add_to_heap, GC_lookup_thread and GC_lookup_by_pthread
-* Use EXPECT in checks of MAIN_THREAD bit (refactoring)
+* Use LIKELY in GC_add_to_heap, GC_lookup_thread, GC_lookup_by_pthread
+* Use LIKELY in checks of MAIN_THREAD bit (refactoring)
 * Use GC_HIDE_NZ_POINTER() for hiding ci_arg value in GC_save_callers
 * Use GC_debug_generic_or_special_malloc in GC_debug_realloc (refactoring)
 * Use GC_delete_thread instead of GC_delete_gc_thread_no_free (refactoring)

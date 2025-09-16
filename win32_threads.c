@@ -246,7 +246,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
       InterlockedIncrement((LONG *)&GC_max_thread_index);
       /* Cast away `volatile` for older versions of Win32 headers. */
     }
-    if (EXPECT(GC_max_thread_index >= MAX_THREADS, FALSE)) {
+    if (UNLIKELY(GC_max_thread_index >= MAX_THREADS)) {
       /*
        * We overshot due to simultaneous increments.
        * Setting it to `MAX_THREADS - 1` is always safe.
@@ -320,7 +320,7 @@ GC_INLINE LONG
 GC_get_max_thread_index(void)
 {
   LONG my_max = GC_max_thread_index;
-  if (EXPECT(my_max >= MAX_THREADS, FALSE))
+  if (UNLIKELY(my_max >= MAX_THREADS))
     return MAX_THREADS - 1;
   return my_max;
 }
@@ -386,7 +386,7 @@ GC_lookup_by_pthread(pthread_t thread)
   id = GET_PTHREAD_MAP_CACHE(thread);
   /* We first try the cache. */
   for (p = GC_threads[THREAD_TABLE_INDEX(id)]; p != NULL; p = p->tm.next) {
-    if (EXPECT(THREAD_EQUAL(p->pthread_id, thread), TRUE))
+    if (LIKELY(THREAD_EQUAL(p->pthread_id, thread)))
       return p;
   }
 
@@ -891,7 +891,7 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
   struct GC_traced_stack_sect_s *traced_stack_sect = crtn->traced_stack_sect;
 
   GC_ASSERT(I_HOLD_LOCK());
-  if (EXPECT(NULL == stack_end, FALSE))
+  if (UNLIKELY(NULL == stack_end))
     return 0;
 
   if (thread->id == self_id) {
@@ -1340,7 +1340,7 @@ GC_start_mark_threads_inner(void)
     handle = CreateThread(NULL /* `lpsa` */,
                           MARK_THREAD_STACK_SIZE /* ignored */, GC_mark_thread,
                           NUMERIC_TO_VPTR(i), 0 /* `fdwCreate` */, &thread_id);
-    if (EXPECT(NULL == handle, FALSE)) {
+    if (UNLIKELY(NULL == handle)) {
       WARN("Marker thread %" WARN_PRIdPTR " creation failed\n",
            (GC_signed_word)i);
       /*
@@ -1359,7 +1359,7 @@ GC_start_mark_threads_inner(void)
     handle = _beginthreadex(NULL /* `security_attr` */, MARK_THREAD_STACK_SIZE,
                             GC_mark_thread, NUMERIC_TO_VPTR(i),
                             0 /* `flags` */, &thread_id);
-    if (EXPECT(!handle || handle == ~(GC_uintptr_t)0, FALSE)) {
+    if (UNLIKELY(!handle || handle == ~(GC_uintptr_t)0)) {
       WARN("Marker thread %" WARN_PRIdPTR " creation failed\n",
            (GC_signed_word)i);
       /* Do not try to create other marker threads. */
@@ -1378,7 +1378,7 @@ GC_start_mark_threads_inner(void)
   }
   GC_wait_for_markers_init();
   GC_COND_LOG_PRINTF("Started %d mark helper threads\n", GC_markers_m1);
-  if (EXPECT(0 == i, FALSE)) {
+  if (UNLIKELY(0 == i)) {
     CloseHandle(mark_cv);
     CloseHandle(builder_cv);
     CloseHandle(mark_mutex_event);
@@ -1420,8 +1420,8 @@ GC_INNER void
 GC_acquire_mark_lock(void)
 {
   GC_ASSERT(GC_mark_lock_holder != GetCurrentThreadId());
-  if (EXPECT(InterlockedExchange(&GC_mark_mutex_state, MARK_MUTEX_LOCKED) != 0,
-             FALSE)) {
+  if (UNLIKELY(InterlockedExchange(&GC_mark_mutex_state, MARK_MUTEX_LOCKED)
+               != 0)) {
 #    ifdef LOCK_STATS
     (void)AO_fetch_and_add1(&GC_block_count);
 #    endif
@@ -1446,9 +1446,8 @@ GC_INNER void
 GC_release_mark_lock(void)
 {
   UNSET_MARK_LOCK_HOLDER;
-  if (EXPECT(InterlockedExchange(&GC_mark_mutex_state, MARK_MUTEX_UNLOCKED)
-                 < 0,
-             FALSE)) {
+  if (UNLIKELY(InterlockedExchange(&GC_mark_mutex_state, MARK_MUTEX_UNLOCKED)
+               < 0)) {
     /* Wake a waiter. */
     if (!SetEvent(mark_mutex_event))
       ABORT("SetEvent failed");
@@ -1604,7 +1603,7 @@ GC_CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes,
    * TLS is initialized).  This is redundant when `GC_win32_dll_threads`
    * is set by `GC_use_threads_discovery()`.
    */
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   GC_ASSERT(GC_thr_initialized);
 
@@ -1622,7 +1621,7 @@ GC_CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes,
             sizeof(struct win32_start_info));
     HANDLE thread_h;
 
-    if (EXPECT(NULL == psi, FALSE)) {
+    if (UNLIKELY(NULL == psi)) {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return NULL;
     }
@@ -1634,13 +1633,13 @@ GC_CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes,
     REACHABLE_AFTER_DIRTY(lpParameter);
 
 #  ifdef PARALLEL_MARK
-    if (EXPECT(!GC_parallel && GC_available_markers_m1 > 0, FALSE))
+    if (!GC_parallel && UNLIKELY(GC_available_markers_m1 > 0))
       GC_start_mark_threads();
 #  endif
     set_need_to_lock();
     thread_h = CreateThread(lpThreadAttributes, dwStackSize, GC_win32_start,
                             psi, dwCreationFlags, lpThreadId);
-    if (EXPECT(0 == thread_h, FALSE))
+    if (UNLIKELY(0 == thread_h))
       GC_free(psi);
     return thread_h;
   }
@@ -1660,7 +1659,7 @@ GC_beginthreadex(void *security, unsigned stack_size,
                  unsigned(__stdcall *start_address)(void *), void *arglist,
                  unsigned initflag, unsigned *thrdaddr)
 {
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   GC_ASSERT(GC_thr_initialized);
 #    ifdef DEBUG_THREADS
@@ -1678,7 +1677,7 @@ GC_beginthreadex(void *security, unsigned stack_size,
         = (struct win32_start_info *)GC_malloc_uncollectable(
             sizeof(struct win32_start_info));
 
-    if (EXPECT(NULL == psi, FALSE)) {
+    if (UNLIKELY(NULL == psi)) {
       /*
        * MSDN docs say `_beginthreadex()` returns 0 on error and sets
        * `errno` to either `EAGAIN` (too many threads) or `EINVAL` (the
@@ -1696,14 +1695,14 @@ GC_beginthreadex(void *security, unsigned stack_size,
     REACHABLE_AFTER_DIRTY(arglist);
 
 #    ifdef PARALLEL_MARK
-    if (EXPECT(!GC_parallel && GC_available_markers_m1 > 0, FALSE))
+    if (!GC_parallel && UNLIKELY(GC_available_markers_m1 > 0))
       GC_start_mark_threads();
 #    endif
     set_need_to_lock();
     thread_h = _beginthreadex(security, stack_size,
                               (unsigned(__stdcall *)(void *))GC_win32_start,
                               psi, initflag, thrdaddr);
-    if (EXPECT(0 == thread_h, FALSE))
+    if (UNLIKELY(0 == thread_h))
       GC_free(psi);
     return thread_h;
   }
@@ -2041,7 +2040,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
     if (GC_win32_dll_threads) {
       GC_thread t = GC_win32_dll_lookup_thread(GetCurrentThreadId());
 
-      if (EXPECT(t != NULL, TRUE))
+      if (LIKELY(t != NULL))
         GC_delete_thread(t);
     }
     break;

@@ -62,7 +62,7 @@ GC_register_disclaim_proc_inner(unsigned kind, GC_disclaim_proc proc,
                                 GC_bool mark_unconditionally)
 {
   GC_ASSERT(kind < MAXOBJKINDS);
-  if (EXPECT(GC_find_leak_inner, FALSE))
+  if (UNLIKELY(GC_find_leak_inner))
     return;
 
   GC_obj_kinds[kind].ok_disclaim_proc = proc;
@@ -129,7 +129,7 @@ GC_finalized_malloc(size_t lb, const struct GC_finalizer_closure *fclos)
   GC_ASSERT((ADDR(fclos) & FINALIZER_CLOSURE_FLAG) == 0);
   op = GC_malloc_kind(SIZET_SAT_ADD(lb, sizeof(ptr_t)),
                       (int)GC_finalized_kind);
-  if (EXPECT(NULL == op, FALSE))
+  if (UNLIKELY(NULL == op))
     return NULL;
 
   /*

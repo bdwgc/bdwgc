@@ -35,7 +35,7 @@ GC_same_obj(void *p, void *q)
   ptr_t base, limit;
   size_t sz;
 
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   hhdr = HDR(p);
   if (NULL == hhdr) {
@@ -109,7 +109,7 @@ GC_is_valid_displacement(void *p)
   struct hblk *h;
   size_t sz;
 
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   if (NULL == p)
     return NULL;
@@ -183,7 +183,7 @@ GC_is_visible(void *p)
 
   if ((ADDR(p) & (ALIGNMENT - 1)) != 0)
     goto fail;
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
 #ifdef THREADS
   hhdr = HDR(p);
@@ -247,7 +247,7 @@ GC_is_visible(void *p)
       } else {
         ptr_t type_descr = *(ptr_t *)base;
 
-        if (EXPECT(NULL == type_descr, FALSE)) {
+        if (UNLIKELY(NULL == type_descr)) {
           /* See the comment in `GC_mark_from`. */
           goto fail;
         }

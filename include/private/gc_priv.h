@@ -114,10 +114,12 @@ typedef char *ptr_t;
 #endif
 
 #if (GC_GNUC_PREREQ(3, 0) || defined(__clang__)) && !defined(LINT2)
-/* Equivalent to `expr`, but predict that usually `expr == outcome`. */
-#  define EXPECT(expr, outcome) __builtin_expect(expr, outcome)
+/* Equivalent to `e`, but predict that usually `e` is true (false). */
+#  define LIKELY(e) __builtin_expect(e, 1 /* `TRUE` */)
+#  define UNLIKELY(e) __builtin_expect(e, 0 /* `FALSE` */)
 #else
-#  define EXPECT(expr, outcome) (expr)
+#  define LIKELY(e) (e)
+#  define UNLIKELY(e) (e)
 #endif /* __GNUC__ */
 
 /*
@@ -125,7 +127,7 @@ typedef char *ptr_t;
  * on overflow.  The arguments should have no side effects.
  */
 #define SIZET_SAT_ADD(a, b) \
-  (EXPECT((a) < GC_SIZE_MAX - (b), 1 /* `TRUE` */) ? (a) + (b) : GC_SIZE_MAX)
+  (LIKELY((a) < GC_SIZE_MAX - (b)) ? (a) + (b) : GC_SIZE_MAX)
 
 #include "gcconfig.h"
 
@@ -349,15 +351,15 @@ EXTERN_C_END
 #include "gc_locks.h"
 
 #ifdef GC_ASSERTIONS
-#  define GC_ASSERT(expr)                                                \
+#  define GC_ASSERT(e)                                                   \
     do {                                                                 \
-      if (EXPECT(!(expr), FALSE)) {                                      \
+      if (UNLIKELY(!(e))) {                                              \
         GC_err_printf("Assertion failure: %s:%d\n", __FILE__, __LINE__); \
         ABORT("assertion failure");                                      \
       }                                                                  \
     } while (0)
 #else
-#  define GC_ASSERT(expr)
+#  define GC_ASSERT(e)
 #endif
 
 #include "gc/gc_inline.h"
@@ -1093,7 +1095,7 @@ EXTERN_C_BEGIN
 
 #if MAX_EXTRA_BYTES == 0
 #  define ADD_EXTRA_BYTES(lb) (lb)
-#  define SMALL_OBJ(lb) EXPECT((lb) <= MAXOBJBYTES, TRUE)
+#  define SMALL_OBJ(lb) LIKELY((lb) <= MAXOBJBYTES)
 #else
 #  define ADD_EXTRA_BYTES(lb) /*< `lb` should have no side-effect */ \
     SIZET_SAT_ADD(lb, EXTRA_BYTES)
@@ -1103,7 +1105,7 @@ EXTERN_C_BEGIN
  * `MAXOBJBYTES - EXTRA_BYTES`, but we try to avoid looking up `EXTRA_BYTES`.
  */
 #  define SMALL_OBJ(lb) /*< `lb` should have no side-effect */ \
-    (EXPECT((lb) <= MAXOBJBYTES - MAX_EXTRA_BYTES, TRUE)       \
+    (LIKELY((lb) <= MAXOBJBYTES - MAX_EXTRA_BYTES)             \
      || (lb) <= MAXOBJBYTES - EXTRA_BYTES)
 #endif
 
@@ -2711,8 +2713,7 @@ GC_INNER void GC_thr_init(void);
 
 /*
  * Perform all initializations, including those that may require allocation,
- * e.g. initialize thread-local free lists if used.  Must be called before
- * a thread is created.
+ * e.g. initialize thread-local free lists if used.  Called by `GC_init()`.
  */
 GC_INNER void GC_init_parallel(void);
 
@@ -3500,13 +3501,13 @@ GC_INNER void GC_verbose_log_printf(const char *format, ...)
  * Convenient wrapper macros over `GC_log_printf()` and
  * `GC_verbose_log_printf()`.
  */
-#define GC_COND_LOG_PRINTF             \
-  if (EXPECT(!GC_print_stats, TRUE)) { \
-  } else                               \
+#define GC_COND_LOG_PRINTF       \
+  if (LIKELY(!GC_print_stats)) { \
+  } else                         \
     GC_log_printf
-#define GC_VERBOSE_LOG_PRINTF                    \
-  if (EXPECT(GC_print_stats != VERBOSE, TRUE)) { \
-  } else                                         \
+#define GC_VERBOSE_LOG_PRINTF              \
+  if (LIKELY(GC_print_stats != VERBOSE)) { \
+  } else                                   \
     GC_verbose_log_printf
 #ifndef GC_DBGLOG_PRINTF
 #  define GC_DBGLOG_PRINTF      \
@@ -3856,30 +3857,29 @@ GC_INNER word GC_compute_root_size(void);
 
 /* Check a compile time assertion at compile time. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1700)
-#  define GC_STATIC_ASSERT(expr) \
-    static_assert(expr, "static assertion failed: " #expr)
+#  define GC_STATIC_ASSERT(e) static_assert(e, "static assertion failed: " #e)
 #elif defined(static_assert) && !defined(CPPCHECK) \
     && (__STDC_VERSION__ >= 201112L)
-#  define GC_STATIC_ASSERT(expr)                                            \
+#  define GC_STATIC_ASSERT(e)                                               \
     do { /* placed in `do`-`while` for proper formatting by clang-format */ \
-      static_assert(expr, #expr);                                           \
+      static_assert(e, #e);                                                 \
     } while (0)
 #elif defined(mips) && !defined(__GNUC__) && !defined(CPPCHECK)
 /*
  * DOB: MIPSPro C gets an internal error taking the `sizeof` an array type.
  * This code works correctly (ugliness is to avoid "unused var" warnings).
  */
-#  define GC_STATIC_ASSERT(expr) \
-    do {                         \
-      if (0) {                   \
-        char j[(expr) ? 1 : -1]; \
-        j[0] = '\0';             \
-        j[0] = j[0];             \
-      }                          \
+#  define GC_STATIC_ASSERT(e) \
+    do {                      \
+      if (0) {                \
+        char j[(e) ? 1 : -1]; \
+        j[0] = '\0';          \
+        j[0] = j[0];          \
+      }                       \
     } while (0)
 #else
 /* The error message for failure is a bit baroque, but... */
-#  define GC_STATIC_ASSERT(expr) (void)sizeof(char[(expr) ? 1 : -1])
+#  define GC_STATIC_ASSERT(e) (void)sizeof(char[(e) ? 1 : -1])
 #endif
 
 /*
@@ -3904,10 +3904,10 @@ GC_INNER word GC_compute_root_size(void);
 #ifndef NO_DEBUGGING
 /* A flag to generate regular debugging dumps. */
 GC_EXTERN GC_bool GC_dump_regularly;
-#  define COND_DUMP                         \
-    if (EXPECT(GC_dump_regularly, FALSE)) { \
-      GC_dump_named(NULL);                  \
-    } else                                  \
+#  define COND_DUMP                    \
+    if (UNLIKELY(GC_dump_regularly)) { \
+      GC_dump_named(NULL);             \
+    } else                             \
       COND_DUMP_CHECKS
 #else
 #  define COND_DUMP COND_DUMP_CHECKS

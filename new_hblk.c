@@ -171,10 +171,8 @@ GC_new_hblk(size_t lg, int kind)
   GC_ASSERT(I_HOLD_LOCK());
   /* Allocate a new heap block. */
   h = GC_allochblk(lb_adjusted, kind, 0 /* `flags` */, 0 /* `align_m1` */);
-  if (EXPECT(NULL == h, FALSE)) {
-    /* Out of memory. */
-    return;
-  }
+  if (UNLIKELY(NULL == h))
+    return; /*< out of memory */
 
   /* Mark all objects if appropriate. */
   if (IS_UNCOLLECTABLE(kind))
@@ -232,12 +230,12 @@ GC_add_map_entry(size_t lg)
 
   if (lg > MAXOBJGRANULES)
     lg = 0;
-  if (EXPECT(GC_obj_map[lg] != NULL, TRUE))
+  if (LIKELY(GC_obj_map[lg] != NULL))
     return TRUE;
 
   new_map = (hb_map_entry_t *)GC_scratch_alloc(OBJ_MAP_LEN
                                                * sizeof(hb_map_entry_t));
-  if (EXPECT(NULL == new_map, FALSE))
+  if (UNLIKELY(NULL == new_map))
     return FALSE;
 
   GC_COND_LOG_PRINTF("Adding block map for size of %u granules (%u bytes)\n",

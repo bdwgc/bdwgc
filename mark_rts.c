@@ -111,7 +111,7 @@ GC_INNER word GC_root_size = 0;
 GC_API void GC_CALL
 GC_add_roots(void *b, void *e)
 {
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   LOCK();
   GC_add_roots_inner((ptr_t)b, (ptr_t)e, FALSE);
@@ -228,7 +228,7 @@ GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp)
 GC_API void GC_CALL
 GC_clear_roots(void)
 {
-  if (!EXPECT(GC_is_initialized, TRUE))
+  if (UNLIKELY(!GC_is_initialized))
     GC_init();
   LOCK();
 #ifdef THREADS
@@ -383,54 +383,55 @@ GC_remove_roots_subregion(ptr_t b, ptr_t e)
     }
     r_start = GC_static_roots[i].r_start;
     r_end = GC_static_roots[i].r_end;
-    if (!EXPECT(ADDR_GE(r_start, e) || ADDR_GE(b, r_end), TRUE)) {
+    if (ADDR_GE(r_start, e) || LIKELY(ADDR_GE(b, r_end)))
+      continue;
+
 #  ifdef DEBUG_ADD_DEL_ROOTS
-      GC_log_printf("Removing %p .. %p from root section %u (%p .. %p)\n",
-                    (void *)b, (void *)e, (unsigned)i, (void *)r_start,
-                    (void *)r_end);
+    GC_log_printf("Removing %p .. %p from root section %u (%p .. %p)\n",
+                  (void *)b, (void *)e, (unsigned)i, (void *)r_start,
+                  (void *)r_end);
 #  endif
-      if (ADDR_LT(r_start, b)) {
-        GC_root_size -= (word)(r_end - b);
-        GC_static_roots[i].r_end = b;
-        /* No need to rebuild as hash does not use `r_end` value. */
-        if (ADDR_LT(e, r_end)) {
+    if (ADDR_LT(r_start, b)) {
+      GC_root_size -= (word)(r_end - b);
+      GC_static_roots[i].r_end = b;
+      /* No need to rebuild as hash does not use `r_end` value. */
+      if (ADDR_LT(e, r_end)) {
+        size_t j;
+
+        if (rebuild) {
+          GC_rebuild_root_index();
+          rebuild = FALSE;
+        }
+        /* Note: updates `n_root_sets` as well. */
+        GC_add_roots_inner(e, r_end, FALSE);
+        for (j = i + 1; j < n_root_sets; j++)
+          if (GC_static_roots[j].r_tmp)
+            break;
+        if (j < n_root_sets - 1 && !GC_static_roots[n_root_sets - 1].r_tmp) {
+          /* Exchange the roots to have all temporary ones at the end. */
+          swap_static_roots(j, n_root_sets - 1);
+          rebuild = TRUE;
+        }
+      }
+    } else {
+      if (ADDR_LT(e, r_end)) {
+        GC_root_size -= (word)(e - r_start);
+        GC_static_roots[i].r_start = e;
+      } else {
+        GC_remove_root_at_pos(i);
+        if (i + 1 < n_root_sets && GC_static_roots[i].r_tmp
+            && !GC_static_roots[i + 1].r_tmp) {
           size_t j;
 
-          if (rebuild) {
-            GC_rebuild_root_index();
-            rebuild = FALSE;
-          }
-          /* Note: updates `n_root_sets` as well. */
-          GC_add_roots_inner(e, r_end, FALSE);
-          for (j = i + 1; j < n_root_sets; j++)
+          for (j = i + 2; j < n_root_sets; j++)
             if (GC_static_roots[j].r_tmp)
               break;
-          if (j < n_root_sets - 1 && !GC_static_roots[n_root_sets - 1].r_tmp) {
-            /* Exchange the roots to have all temporary ones at the end. */
-            swap_static_roots(j, n_root_sets - 1);
-            rebuild = TRUE;
-          }
+          /* Exchange the roots to have all temporary ones at the end. */
+          swap_static_roots(i, j - 1);
         }
-      } else {
-        if (ADDR_LT(e, r_end)) {
-          GC_root_size -= (word)(e - r_start);
-          GC_static_roots[i].r_start = e;
-        } else {
-          GC_remove_root_at_pos(i);
-          if (i + 1 < n_root_sets && GC_static_roots[i].r_tmp
-              && !GC_static_roots[i + 1].r_tmp) {
-            size_t j;
-
-            for (j = i + 2; j < n_root_sets; j++)
-              if (GC_static_roots[j].r_tmp)
-                break;
-            /* Exchange the roots to have all temporary ones at the end. */
-            swap_static_roots(i, j - 1);
-          }
-          i--;
-        }
-        rebuild = TRUE;
+        i--;
       }
+      rebuild = TRUE;
     }
   }
   if (rebuild)
@@ -517,7 +518,7 @@ GC_next_exclusion(ptr_t start_addr)
   size_t low = 0;
   size_t high;
 
-  if (EXPECT(0 == GC_excl_table_entries, FALSE))
+  if (UNLIKELY(0 == GC_excl_table_entries))
     return NULL;
   high = GC_excl_table_entries - 1;
   while (high > low) {
@@ -594,7 +595,7 @@ GC_exclude_static_roots(void *b, void *e)
   /* Round boundaries in direction reverse to that of `GC_add_roots`. */
 #if ALIGNMENT > 1
   b = PTR_ALIGN_DOWN((ptr_t)b, ALIGNMENT);
-  e = EXPECT(ADDR(e) > ~(word)(ALIGNMENT - 1), FALSE)
+  e = UNLIKELY(ADDR(e) > ~(word)(ALIGNMENT - 1))
           ? PTR_ALIGN_DOWN((ptr_t)e, ALIGNMENT) /*< overflow */
           : PTR_ALIGN_UP((ptr_t)e, ALIGNMENT);
 #endif
