@@ -23,8 +23,8 @@
  * may break in future OS releases.  If this matters to you, do not hesitate
  * to let your vendor know...
  *
- * None of this is safe with dlclose and incremental collection.
- * But then not much of anything is safe in the presence of dlclose.
+ * None of this is safe with `dlclose` and incremental collection.
+ * But, then not much of anything is safe in the presence of `dlclose`.
  */
 
 /*
