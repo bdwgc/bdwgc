@@ -229,6 +229,17 @@ GC_gcj_malloc(size_t lb, const void *vtable_ptr)
   size_t lg;
 
   /*
+   * Unlike the other thread-local allocation calls, we assume that the
+   * collector has been explicitly initialized.
+   */
+  GC_ASSERT(GC_gcjobjfreelist != NULL);
+#    if defined(USE_PTHREAD_SPECIFIC) || defined(USE_WIN32_SPECIFIC)
+  GC_ASSERT(keys_initialized);
+#    else
+  GC_ASSERT(GC_thread_key != 0);
+#    endif
+
+  /*
    * `gcj`-style allocation without locks is extremely tricky.
    * The fundamental issue is that we may end up marking a free list,
    * which has free-list links instead of "vtable" pointers.
@@ -251,12 +262,6 @@ GC_gcj_malloc(size_t lb, const void *vtable_ptr)
    */
   if (UNLIKELY(GC_incremental))
     return GC_core_gcj_malloc(lb, vtable_ptr, 0 /* `flags` */);
-
-  /*
-   * Unlike the other thread-local allocation calls, we assume that the
-   * collector has been explicitly initialized.
-   */
-  GC_ASSERT(GC_gcjobjfreelist != NULL);
 
   tiny_fl = ((GC_tlfs)GC_getspecific(GC_thread_key))->gcj_freelists;
   lg = ALLOC_REQUEST_GRANS(lb);
