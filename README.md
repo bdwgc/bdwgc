@@ -11,7 +11,7 @@
 [![Coverage status](https://coveralls.io/repos/github/bdwgc/bdwgc/badge.svg?branch=master)](https://coveralls.io/github/bdwgc/bdwgc)
 [![Coverity Scan build status](https://scan.coverity.com/projects/32099/badge.svg)](https://scan.coverity.com/projects/bdwgc-bdwgc)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbdwgc%2Fbdwgc.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbdwgc%2Fbdwgc?ref=badge_shield)
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6332/badge)](https://bestpractices.coreinfrastructure.org/projects/6332)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/6332/badge)](https://www.bestpractices.dev/projects/6332)
 [![Hits-of-Code](https://hitsofcode.com/github/bdwgc/bdwgc?branch=master)](https://hitsofcode.com/github/bdwgc/bdwgc/view)
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/bdwgc/bdwgc)](https://shields.io/badges/git-hub-code-size-in-bytes)
 [![Github All Releases](https://img.shields.io/github/downloads/bdwgc/bdwgc/total.svg)](https://shields.io/badges/git-hub-downloads-all-assets-all-releases)
