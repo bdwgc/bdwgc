@@ -1,7 +1,8 @@
+// Zig package definition for bdwgc
 .{
     .name = .bdwgc,
     .version = "8.3.0",
-    .minimum_zig_version = "0.14.0",
     .paths = .{""},
+    // unique package id, do not edit
     .fingerprint = 0x3e2d0033f8c486f2,
 }

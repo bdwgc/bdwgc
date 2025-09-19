@@ -31,8 +31,8 @@
  */
 
 /*
- * The version here should match that in `configure.ac` file and
- * `CMakeLists.txt` file.  Eventually this one may become unnecessary.
+ * The version here should match that in files `configure.ac`, `CMakeLists.txt`,
+ * `build.zig.zon`. Eventually this one may become unnecessary.
  * For now we need it to keep the old-style build process working.
  */
 #  define GC_TMP_VERSION_MAJOR 8
