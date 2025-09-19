@@ -13,12 +13,13 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
+// The Zig version here should match that in file `build.zig.zon`.
 const zig_min_required_version = "0.14.0";
 
 // TODO: specify `PACKAGE_VERSION` and `LIB*_VER_INFO`.
 
-// Compared to the `cmake` script, some definitions and compiler options
-// are hard-coded here, which is natural because build.zig is only built with
+// Compared to the `cmake` script, some definitions and compiler options are
+// hard-coded here, which is natural because `build.zig` is only built with
 // the Zig build system and Zig ships with an embedded clang (as of zig 0.14).
 // As a consequence, we do not have to support lots of different compilers
 // (a notable exception is msvc target which implies use of the corresponding
