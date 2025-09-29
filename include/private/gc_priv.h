@@ -1514,13 +1514,16 @@ struct HeapSect {
  * possible.
  */
 struct _GC_arrays {
+#define GC_heapsize GC_arrays._heapsize
   word _heapsize; /*< heap size in bytes (value never goes down) */
 
+#define GC_requested_heapsize GC_arrays._requested_heapsize
   word _requested_heapsize; /*< heap size due to explicit expansion */
 
 #define GC_heapsize_on_gc_disable GC_arrays._heapsize_on_gc_disable
   word _heapsize_on_gc_disable;
 
+#define GC_last_heap_addr GC_arrays._last_heap_addr
   word _last_heap_addr;
 
   /*
@@ -1528,18 +1531,22 @@ struct _GC_arrays {
    * (A large object is the one that occupies a block of at least
    * two `HBLKSIZE`.)
    */
+#define GC_large_free_bytes GC_arrays._large_free_bytes
   word _large_free_bytes;
 
   /* Total number of bytes in allocated large objects blocks. */
+#define GC_large_allocd_bytes GC_arrays._large_allocd_bytes
   word _large_allocd_bytes;
 
   /*
    * Maximum number of bytes that were ever allocated in large object blocks.
    * This is used to help decide when it is safe to split up a large block.
    */
+#define GC_max_large_allocd_bytes GC_arrays._max_large_allocd_bytes
   word _max_large_allocd_bytes;
 
   /* Number of bytes allocated before this collection cycle. */
+#define GC_bytes_allocd_before_gc GC_arrays._bytes_allocd_before_gc
   word _bytes_allocd_before_gc;
 
 #define GC_our_mem_bytes GC_arrays._our_mem_bytes
@@ -1556,40 +1563,48 @@ struct _GC_arrays {
    * of repeated scanning during allocation attempts.  These are treated
    * largely as allocated, even though they are not useful to the client.
    */
+#define GC_bytes_dropped GC_arrays._bytes_dropped
   word _bytes_dropped;
 
   /*
    * Approximate number of bytes in objects (and headers) that became
    * ready for finalization in the last collection.
    */
+#define GC_bytes_finalized GC_arrays._bytes_finalized
   word _bytes_finalized;
 
   /*
    * Number of explicitly deallocated bytes of memory since last
    * collection.
    */
+#define GC_bytes_freed GC_arrays._bytes_freed
   word _bytes_freed;
 
   /*
    * Bytes of memory explicitly deallocated while finalizers were running.
    * Used to approximate size of memory explicitly deallocated by finalizers.
    */
+#define GC_finalizer_bytes_freed GC_arrays._finalizer_bytes_freed
   word _finalizer_bytes_freed;
 
   /*
    * Pointer to the first (lowest address) `bottom_index` entity;
    * assumes the allocator lock is held.
    */
+#define GC_all_bottom_indices GC_arrays._all_bottom_indices
   bottom_index *_all_bottom_indices;
 
   /*
    * Pointer to the last (highest address) `bottom_index` entity;
    * assumes the allocator lock is held.
    */
+#define GC_all_bottom_indices_end GC_arrays._all_bottom_indices_end
   bottom_index *_all_bottom_indices_end;
 
+#define GC_scratch_free_ptr GC_arrays._scratch_free_ptr
   ptr_t _scratch_free_ptr;
 
+#define GC_hdr_free_list GC_arrays._hdr_free_list
   hdr *_hdr_free_list;
 
 #define GC_scratch_end_addr GC_arrays._scratch_end_addr
@@ -1622,6 +1637,8 @@ struct _GC_arrays {
 #endif
 
   /* The limits of stack for `GC_mark_some()` and friends. */
+#define GC_mark_stack GC_arrays._mark_stack
+#define GC_mark_stack_limit GC_arrays._mark_stack_limit
   mse *_mark_stack;
   mse *_mark_stack_limit;
 
@@ -1629,6 +1646,7 @@ struct _GC_arrays {
    * All ranges between `GC_mark_stack` (incl.) and `GC_mark_stack_top`
    * (incl.) still need to be marked from.
    */
+#define GC_mark_stack_top GC_arrays._mark_stack_top
 #ifdef PARALLEL_MARK
   /* Updated only with the mark lock held, but read asynchronously. */
   mse *volatile _mark_stack_top;
@@ -1693,9 +1711,11 @@ struct _GC_arrays {
 #endif
 
   /* Number of bytes in the accessible composite objects. */
+#define GC_composite_in_use GC_arrays._composite_in_use
   word _composite_in_use;
 
   /* Number of bytes in the accessible atomic objects. */
+#define GC_atomic_in_use GC_arrays._atomic_in_use
   word _atomic_in_use;
 
   /* GC number of latest successful `GC_expand_hp_inner()` call. */
@@ -1716,6 +1736,7 @@ struct _GC_arrays {
 #  define GC_num_unmapped_regions 0
 #endif
 
+#define GC_all_nils GC_arrays._all_nils
   bottom_index *_all_nils;
 
 #define GC_scan_ptr GC_arrays._scan_ptr
@@ -1775,8 +1796,8 @@ struct _GC_arrays {
 
 #ifdef GC_GCJ_SUPPORT
 #  define GC_last_finalized_no GC_arrays._last_finalized_no
-  word _last_finalized_no;
 #  define GC_gcjobjfreelist GC_arrays._gcjobjfreelist
+  word _last_finalized_no;
   ptr_t *_gcjobjfreelist;
 #endif
 
@@ -1843,12 +1864,14 @@ struct _GC_arrays {
    * of these, which can be referenced by `DS_PROC` mark descriptors.
    * See `gc_mark.h` file.
    */
+#define GC_mark_procs GC_arrays._mark_procs
   GC_mark_proc _mark_procs[GC_MAX_MARK_PROCS];
 
   /*
    * `GC_valid_offsets[i]` implies
    * `GC_modws_valid_offsets[i % sizeof(ptr_t)]`.
    */
+#define GC_modws_valid_offsets GC_arrays._modws_valid_offsets
   char _modws_valid_offsets[sizeof(ptr_t)];
 
 #ifndef ANY_MSWIN
@@ -1875,7 +1898,7 @@ struct _GC_arrays {
 #endif
 
 #ifndef SEPARATE_GLOBALS
-  /* Free list for objects. */
+  /* Free list for `NORMAL` objects. */
 #  define GC_objfreelist GC_arrays._objfreelist
   void *_objfreelist[MAXOBJGRANULES + 1];
 
@@ -1888,6 +1911,7 @@ struct _GC_arrays {
    * Uncollectible but traced objects.  Objects on this and `_auobjfreelist`
    * are always marked, except during garbage collections.
    */
+#define GC_uobjfreelist GC_arrays._uobjfreelist
   void *_uobjfreelist[MAXOBJGRANULES + 1];
 
 #ifdef GC_ATOMIC_UNCOLLECTABLE
@@ -1900,6 +1924,7 @@ struct _GC_arrays {
    * Number of granules to allocate when asked for a certain number of bytes
    * (plus `EXTRA_BYTES`).  Should be accessed with the allocator lock held.
    */
+#define GC_size_map GC_arrays._size_map
   size_t _size_map[MAXOBJBYTES + 1];
 
 #ifndef MARK_BIT_PER_OBJ
@@ -1921,6 +1946,7 @@ struct _GC_arrays {
    * A nonzero `GC_valid_offsets[i]` means `i` is registered as
    * a displacement.
    */
+#define GC_valid_offsets GC_arrays._valid_offsets
   char _valid_offsets[VALID_OFFSET_SZ];
 
 #ifndef GC_DISABLE_INCREMENTAL
@@ -1965,9 +1991,11 @@ struct _GC_arrays {
   word _heap_lengths[MAX_HEAP_SECTS];
 #endif
 
+#define GC_static_roots GC_arrays._static_roots
   struct roots _static_roots[MAX_ROOT_SETS];
 
   /* Array of exclusions, ascending address order. */
+#define GC_excl_table GC_arrays._excl_table
   struct exclusion _excl_table[MAX_EXCLUSIONS];
 
   /*
@@ -1977,41 +2005,11 @@ struct _GC_arrays {
    * bits to compute the index in `GC_top_index`, and each entry points to
    * a hash chain.  The last entry in each chain is `GC_all_nils`.
    */
+#define GC_top_index GC_arrays._top_index
   bottom_index *_top_index[TOP_SZ];
 };
 
 GC_API_PRIV struct _GC_arrays GC_arrays;
-
-#define GC_all_nils GC_arrays._all_nils
-#define GC_atomic_in_use GC_arrays._atomic_in_use
-#define GC_bytes_allocd_before_gc GC_arrays._bytes_allocd_before_gc
-#define GC_bytes_dropped GC_arrays._bytes_dropped
-#define GC_bytes_finalized GC_arrays._bytes_finalized
-#define GC_bytes_freed GC_arrays._bytes_freed
-#define GC_composite_in_use GC_arrays._composite_in_use
-#define GC_excl_table GC_arrays._excl_table
-#define GC_finalizer_bytes_freed GC_arrays._finalizer_bytes_freed
-#define GC_heapsize GC_arrays._heapsize
-#define GC_large_allocd_bytes GC_arrays._large_allocd_bytes
-#define GC_large_free_bytes GC_arrays._large_free_bytes
-#define GC_last_heap_addr GC_arrays._last_heap_addr
-#define GC_mark_stack GC_arrays._mark_stack
-#define GC_mark_stack_limit GC_arrays._mark_stack_limit
-#define GC_mark_stack_top GC_arrays._mark_stack_top
-#define GC_mark_procs GC_arrays._mark_procs
-#define GC_max_large_allocd_bytes GC_arrays._max_large_allocd_bytes
-#define GC_modws_valid_offsets GC_arrays._modws_valid_offsets
-#define GC_requested_heapsize GC_arrays._requested_heapsize
-#define GC_all_bottom_indices GC_arrays._all_bottom_indices
-#define GC_all_bottom_indices_end GC_arrays._all_bottom_indices_end
-#define GC_scratch_free_ptr GC_arrays._scratch_free_ptr
-#define GC_hdr_free_list GC_arrays._hdr_free_list
-#define GC_size_map GC_arrays._size_map
-#define GC_static_roots GC_arrays._static_roots
-#define GC_top_index GC_arrays._top_index
-#define GC_uobjfreelist GC_arrays._uobjfreelist
-#define GC_valid_offsets GC_arrays._valid_offsets
-
 #define beginGC_arrays ((ptr_t)(&GC_arrays))
 #define endGC_arrays (beginGC_arrays + sizeof(GC_arrays))
 
