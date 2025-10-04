@@ -51,8 +51,8 @@ pub fn build(b: *std.Build) void {
     // Customize build by passing "-D<option_name>[=false]" in command line.
     const enable_cplusplus = b.option(bool, "enable_cplusplus",
                                       "C++ support") orelse false;
-    const build_shared_libs = b.option(bool, "BUILD_SHARED_LIBS",
-                "Build shared libraries (otherwise static ones)") orelse true;
+    const linkage = b.option(std.builtin.LinkMode, "linkage",
+        "Build shared libraries (otherwise static ones)") orelse .dynamic;
     const build_cord = b.option(bool, "build_cord",
                                 "Build cord library") orelse true;
     const cflags_extra = b.option([]const u8, "CFLAGS_EXTRA",
@@ -221,7 +221,7 @@ pub fn build(b: *std.Build) void {
             flags.append(b.allocator,
                          "-D GC_BUILTIN_ATOMIC") catch unreachable;
             if (enable_thread_local_alloc
-                    and (enable_parallel_mark or !build_shared_libs)) {
+                    and (enable_parallel_mark or linkage != .dynamic)) {
                 // Imply `THREAD_LOCAL_ALLOC` unless `GC_DLL`.
                 flags.append(b.allocator,
                              "-D THREAD_LOCAL_ALLOC") catch unreachable;
@@ -367,7 +367,7 @@ pub fn build(b: *std.Build) void {
     }
 
     if (enable_single_obj_compilation
-            or (build_shared_libs and !disable_single_obj_compilation)) {
+            or (linkage == .dynamic and !disable_single_obj_compilation)) {
         source_files.clearAndFree(b.allocator);
         source_files.append(b.allocator, "extra/gc.c") catch unreachable;
         if (enable_threads and !t.os.tag.isDarwin() and t.os.tag != .windows) {
@@ -384,7 +384,7 @@ pub fn build(b: *std.Build) void {
     }
 
     // TODO: declare that the libraries do not refer to external symbols
-    // of `build_shared_libs`.
+    // if dynamic linkage.
 
     // `zig cc` supports this flag.
     flags.appendSlice(b.allocator, &.{
@@ -393,7 +393,7 @@ pub fn build(b: *std.Build) void {
         "-Wno-frame-address",
     }) catch unreachable;
 
-    if (build_shared_libs) {
+    if (linkage == .dynamic) {
         flags.append(b.allocator, "-D GC_DLL") catch unreachable;
         if (t.abi == .msvc) {
             // TODO: depend on `user32.lib` file instead
@@ -475,7 +475,7 @@ pub fn build(b: *std.Build) void {
     }
 
     if (enable_cplusplus and enable_werror) {
-        if (build_shared_libs and t.os.tag == .windows or t.abi == .msvc) {
+        if (linkage == .dynamic and t.os.tag == .windows or t.abi == .msvc) {
             // Avoid "replacement operator new[] cannot be declared inline"
             // warnings.
             flags.append(b.allocator,
@@ -501,7 +501,7 @@ pub fn build(b: *std.Build) void {
 
     // TODO: convert `VER_INFO` values to `VERSION`, `SOVERSION` ones
     const gc = b.addLibrary(.{
-        .linkage = if (build_shared_libs) .dynamic else .static,
+        .linkage = linkage,
         .name = "gc",
         .root_module = b.createModule(.{
             .target = target,
@@ -519,7 +519,7 @@ pub fn build(b: *std.Build) void {
     var gctba: *std.Build.Step.Compile = undefined;
     if (enable_cplusplus) {
         gccpp = b.addLibrary(.{
-            .linkage = if (build_shared_libs) .dynamic else .static,
+            .linkage = linkage,
             .name = "gccpp",
             .root_module = b.createModule(.{
                 .target = target,
@@ -539,7 +539,7 @@ pub fn build(b: *std.Build) void {
         if (enable_throw_bad_alloc_library) {
             // The same as `gccpp` but contains only `gc_badalc`.
             gctba = b.addLibrary(.{
-                .linkage = if (build_shared_libs) .dynamic else .static,
+                .linkage = linkage,
                 .name = "gctba",
                 .root_module = b.createModule(.{
                     .target = target,
@@ -561,7 +561,7 @@ pub fn build(b: *std.Build) void {
     var cord: *std.Build.Step.Compile = undefined;
     if (build_cord) {
         cord = b.addLibrary(.{
-            .linkage = if (build_shared_libs) .dynamic else .static,
+            .linkage = linkage,
             .name = "cord",
             .root_module = b.createModule(.{
                 .target = target,
