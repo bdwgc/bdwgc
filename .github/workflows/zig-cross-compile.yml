@@ -7,7 +7,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    name: ${{ matrix.ttriple }} cpp:${{ matrix.enable_cplusplus }} thr:${{ matrix.enable_threads }} dll:${{ matrix.shared_libs }}
+    name: ${{ matrix.ttriple }} ${{ matrix.linkage }} cpp:${{ matrix.enable_cplusplus }} thr:${{ matrix.enable_threads }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -86,21 +86,21 @@ jobs:
         ]
         enable_cplusplus: [ false, true ]
         enable_threads: [ false, true ]
-        shared_libs: [ false, true ]
+        linkage: [ static, dynamic ]
         exclude:
         - enable_threads: true
           ttriple: wasm32-wasi-musl
         - enable_cplusplus: false # excluded to speedup this workflow
-          shared_libs: false
-        - shared_libs: true # FIXME: SPARCv8 does not handle f128 in calls
+          linkage: static
+        - linkage: dynamic # FIXME: SPARCv8 does not handle f128 in calls
           ttriple: sparc-linux-gnu
-        - shared_libs: true # FIXME: recompile with -fPIC
+        - linkage: dynamic # FIXME: recompile with -fPIC
           ttriple: sparc64-linux-gnu
-        - shared_libs: true # FIXME: recompile with -fPIC
+        - linkage: dynamic # FIXME: recompile with -fPIC
           ttriple: x86_64-linux-gnux32
-        - shared_libs: true # FIXME: recompile with -fPIC
+        - linkage: dynamic # FIXME: recompile with -fPIC
           ttriple: x86_64-linux-muslx32
-        - shared_libs: true # FIXME: creating shared libs is not yet stable
+        - linkage: dynamic # FIXME: not stable yet
           ttriple: wasm32-wasi-musl
         - enable_cplusplus: true # FIXME: ignoring -fno-PIC option
           ttriple: mips64-linux-muslabi64
@@ -110,7 +110,7 @@ jobs:
         - enable_cplusplus: false
           ttriple: x86-linux-musl
         - enable_cplusplus: true
-          shared_libs: true
+          linkage: dynamic
           ttriple: x86-linux-musl
 
     steps:
@@ -121,7 +121,7 @@ jobs:
     - name: Build
       run: >
         zig build -Dtarget=${{ matrix.ttriple }}
-        -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+        -Dlinkage=${{ matrix.linkage }}
         -DCFLAGS_EXTRA="${{ matrix.cflags_extra }}"
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_threads=${{ matrix.enable_threads }}

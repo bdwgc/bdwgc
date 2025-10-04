@@ -5,7 +5,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    name: ${{ matrix.os }} ${{ matrix.ttriple }} thr:${{ matrix.enable_threads }} rwlock:${{ matrix.enable_rwlock }} redir:${{ matrix.redirect_malloc }} gcdeb:${{ matrix.enable_gc_debug }} munmap:${{ matrix.enable_munmap }} paramark:${{ matrix.parallel_mark }} thrlocal:${{ matrix.thread_local_alloc }} dll:${{ matrix.shared_libs }}
+    name: ${{ matrix.os }} ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }} rwlock:${{ matrix.enable_rwlock }} redir:${{ matrix.redirect_malloc }} gcdeb:${{ matrix.enable_gc_debug }} munmap:${{ matrix.enable_munmap }} paramark:${{ matrix.parallel_mark }} thrlocal:${{ matrix.thread_local_alloc }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 7
 
@@ -27,11 +27,11 @@ jobs:
         enable_munmap: [ false, true ]
         parallel_mark: [ false, true ]
         thread_local_alloc: [ false, true ]
-        shared_libs: [ false, true ]
+        linkage: [ static, dynamic ]
         build_cord: [ false, true ]
         exclude:
-        - build_cord: true # FIXME: cordtest hangs if shared lib build by MSVC
-          shared_libs: true
+        - build_cord: true # FIXME: cordtest hangs if dynamic build by MSVC
+          linkage: dynamic
           ttriple: native-native-msvc
         - os: macos-latest
           ttriple: native-native-msvc
@@ -53,14 +53,14 @@ jobs:
           enable_rwlock: true
         # The following ones just to reduce amount of jobs.
         - build_cord: false
-          shared_libs: false
+          linkage: static
         - build_cord: false
           ttriple: native
         - enable_munmap: false
-          shared_libs: true
+          linkage: dynamic
         - enable_munmap: true
           enable_threads: false
-          shared_libs: false
+          linkage: static
         - enable_gc_debug: true
           enable_rwlock: true
           thread_local_alloc: false
@@ -100,7 +100,7 @@ jobs:
     - name: Build
       run: >
         zig build -Dtarget=${{ matrix.ttriple }}
-        -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+        -Dlinkage=${{ matrix.linkage }}
         -Dbuild_cord=${{ matrix.build_cord }}
         -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
