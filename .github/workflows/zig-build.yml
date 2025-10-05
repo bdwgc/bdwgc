@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        zig_version: [ "0.14.1" ]
+        zig_version: [ "0.15.1" ]
         os: [ macos-latest, ubuntu-latest, windows-latest ]
         ttriple: [ native, native-native-msvc ]
         enable_cplusplus: [ true ]
@@ -30,7 +30,7 @@ jobs:
         linkage: [ static, dynamic ]
         build_cord: [ false, true ]
         exclude:
-        - build_cord: true # FIXME: cordtest hangs if dynamic build by MSVC
+        - build_cord: true # FIXME: cordtest exited with error code 9
           linkage: dynamic
           ttriple: native-native-msvc
         - os: macos-latest

@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: [ "0.14.1" ]
+        zig_version: [ "0.15.1" ]
         # Some of the triples are commented out just to speedup this workflow.
         ttriple: [
           aarch64-linux-gnu,
@@ -31,8 +31,8 @@ jobs:
           #armeb-linux-gnueabihf,
           #armeb-linux-musleabi,
           armeb-linux-musleabihf,
-          loongarch64-linux-gnu,
-          #loongarch64-linux-gnusf, # FIXME: gnu/stubs-lp64s.h not found
+          #loongarch64-linux-gnu,
+          loongarch64-linux-gnusf,
           loongarch64-linux-musl,
           #m68k-linux-gnu, # FIXME: No available targets compatible with triple
           #m68k-linux-musl, # FIXME: No available targets compatible with triple
@@ -47,7 +47,7 @@ jobs:
           #mips64el-linux-gnuabi64,
           mips64el-linux-gnuabin32,
           mips64el-linux-muslabi64,
-          mips64el-linux-muslabin32,
+          #mips64el-linux-muslabin32,
           mipsel-linux-gnueabi,
           #mipsel-linux-gnueabihf,
           mipsel-linux-musleabi,
@@ -56,7 +56,7 @@ jobs:
           powerpc-linux-gnueabihf,
           #powerpc-linux-musleabi,
           powerpc-linux-musleabihf,
-          #powerpc64-linux-gnu, # FIXME: not implemented correctly in zig
+          powerpc64-linux-gnu,
           #powerpc64-linux-musl,
           #powerpc64le-linux-gnu,
           powerpc64le-linux-musl,
