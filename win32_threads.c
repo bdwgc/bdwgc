@@ -179,9 +179,6 @@ static volatile struct GC_Thread_Rep dll_thread_table[MAX_THREADS];
 static struct GC_StackContext_Rep dll_crtn_table[MAX_THREADS];
 #  endif
 
-/* Largest index in `dll_thread_table` that was ever used. */
-STATIC volatile LONG GC_max_thread_index = 0;
-
 GC_INNER GC_thread
 GC_register_my_thread_inner(const struct GC_stack_base *sb,
                             thread_id_t self_id)

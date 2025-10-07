@@ -27,9 +27,6 @@
 
 #ifdef MAKE_BACK_GRAPH
 
-/* The maximum in-degree we handle directly. */
-#  define MAX_IN 10
-
 #  if (!defined(DBG_HDRS_ALL)                                          \
        || (ALIGNMENT != CPP_PTRSZ / 8) /* `|| !defined(UNIX_LIKE)` */) \
       && !defined(CPPCHECK)
@@ -47,49 +44,16 @@
  */
 #  define FLAG_MANY 2
 
-typedef struct back_edges_struct {
-  /* Number of edges, including those in continuation structures. */
-  word n_edges;
-
-  unsigned short flags;
-
-  /* Directly points to a reachable object; retain for the next collection. */
+/* Directly points to a reachable object; retain for the next collection. */
 #  define RETAIN 1
 
-  /*
-   * If `height` is greater than zero, then keeps the `GC_gc_no` value
-   * when it was computed.  If it was computed this cycle, then it is
-   * current.  If it was computed during the last cycle, then it belongs
-   * to the old height, which is only saved for live objects referenced by
-   * dead ones.  This may grow due to references from newly dead objects.
-   */
-  unsigned short height_gc_no;
-
-  /*
-   * Longest path through unreachable nodes to this node that we found
-   * using depth first search.
-   */
-  GC_signed_word height;
+/* Special values of `height` field of `back_edges`. */
 #  define HEIGHT_UNKNOWN (-2)
 #  define HEIGHT_IN_PROGRESS (-1)
 
-  ptr_t edges[MAX_IN];
-
-  /*
-   * Pointer to continuation structure; we use only the edges field in
-   * the continuation.  Also used as a free-list link.
-   */
-  struct back_edges_struct *cont;
-} back_edges;
+typedef struct back_edges_s back_edges;
 
 #  define MAX_BACK_EDGE_STRUCTS 100000
-static back_edges *back_edge_space = NULL;
-
-/* Points to never-used `back_edges` space. */
-STATIC int GC_n_back_edge_structs = 0;
-
-/* Pointer to free list of deallocated `back_edges` structures. */
-static back_edges *avail_back_edges = NULL;
 
 /*
  * Allocate a new back edge structure.  Should be more sophisticated
@@ -99,26 +63,30 @@ static back_edges *
 new_back_edges(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
-  if (0 == back_edge_space) {
-    size_t bytes_to_get
+  if (NULL == GC_back_edge_space) {
+    size_t bytes_to_get;
+
+    GC_ASSERT(0 == GC_n_back_edge_structs);
+    GC_ASSERT(NULL == GC_avail_back_edges);
+    GC_ASSERT(GC_page_size != 0);
+    bytes_to_get
         = ROUNDUP_PAGESIZE_IF_MMAP(MAX_BACK_EDGE_STRUCTS * sizeof(back_edges));
 
-    GC_ASSERT(GC_page_size != 0);
-    back_edge_space = (back_edges *)GC_os_get_mem(bytes_to_get);
-    if (NULL == back_edge_space)
+    GC_back_edge_space = (back_edges *)GC_os_get_mem(bytes_to_get);
+    if (NULL == GC_back_edge_space)
       ABORT("Insufficient memory for back edges");
   }
-  if (avail_back_edges != 0) {
-    back_edges *result = avail_back_edges;
-    avail_back_edges = result->cont;
-    result->cont = 0;
+  if (GC_avail_back_edges != NULL) {
+    back_edges *result = GC_avail_back_edges;
+    GC_avail_back_edges = result->cont;
+    result->cont = NULL;
     return result;
   }
   if (GC_n_back_edge_structs >= MAX_BACK_EDGE_STRUCTS - 1) {
     ABORT("Needed too much space for back edges: adjust "
           "MAX_BACK_EDGE_STRUCTS");
   }
-  return back_edge_space + (GC_n_back_edge_structs++);
+  return &GC_back_edge_space[GC_n_back_edge_structs++];
 }
 
 /* Deallocate `p` and its associated continuation structures. */
@@ -130,64 +98,57 @@ deallocate_back_edges(back_edges *p)
   for (last = p; last->cont != NULL;)
     last = last->cont;
 
-  last->cont = avail_back_edges;
-  avail_back_edges = p;
+  last->cont = GC_avail_back_edges;
+  GC_avail_back_edges = p;
 }
 
-/*
- * Table of objects that are currently on the depth-first search stack.
- * Only objects with in-degree one are in this table.  Other objects are
- * identified using `HEIGHT_IN_PROGRESS`.
- */
-/* FIXME: This data structure needs improvement. */
-static ptr_t *in_progress_space = 0;
 #  define INITIAL_IN_PROGRESS 10000
-static size_t in_progress_size = 0;
-static size_t n_in_progress = 0;
 
 static void
 push_in_progress(ptr_t p)
 {
   GC_ASSERT(I_HOLD_LOCK());
-  if (n_in_progress >= in_progress_size) {
+  if (GC_backgraph_n_in_progress >= GC_backgraph_in_progress_size) {
     ptr_t *new_in_progress_space;
 
     GC_ASSERT(GC_page_size != 0);
-    if (NULL == in_progress_space) {
-      in_progress_size
+    if (NULL == GC_backgraph_in_progress_space) {
+      GC_ASSERT(0 == GC_backgraph_n_in_progress);
+      GC_ASSERT(0 == GC_backgraph_in_progress_size);
+      GC_backgraph_in_progress_size
           = ROUNDUP_PAGESIZE_IF_MMAP(INITIAL_IN_PROGRESS * sizeof(ptr_t))
             / sizeof(ptr_t);
-      new_in_progress_space
-          = (ptr_t *)GC_os_get_mem(in_progress_size * sizeof(ptr_t));
+      new_in_progress_space = (ptr_t *)GC_os_get_mem(
+          GC_backgraph_in_progress_size * sizeof(ptr_t));
     } else {
-      in_progress_size *= 2;
-      new_in_progress_space
-          = (ptr_t *)GC_os_get_mem(in_progress_size * sizeof(ptr_t));
+      GC_backgraph_in_progress_size *= 2;
+      new_in_progress_space = (ptr_t *)GC_os_get_mem(
+          GC_backgraph_in_progress_size * sizeof(ptr_t));
       if (new_in_progress_space != NULL)
-        BCOPY(in_progress_space, new_in_progress_space,
-              n_in_progress * sizeof(ptr_t));
+        BCOPY(GC_backgraph_in_progress_space, new_in_progress_space,
+              GC_backgraph_n_in_progress * sizeof(ptr_t));
     }
 #  ifndef GWW_VDB
-    GC_scratch_recycle_no_gww(in_progress_space,
-                              n_in_progress * sizeof(ptr_t));
+    GC_scratch_recycle_no_gww(GC_backgraph_in_progress_space,
+                              GC_backgraph_n_in_progress * sizeof(ptr_t));
 #  elif defined(LINT2)
     /* TODO: Implement GWW-aware recycling as in `alloc_mark_stack`. */
-    GC_noop1_ptr(in_progress_space);
+    GC_noop1_ptr(GC_backgraph_in_progress_space);
 #  endif
-    in_progress_space = new_in_progress_space;
+    GC_backgraph_in_progress_space = new_in_progress_space;
   }
-  if (in_progress_space == 0)
+  if (NULL == GC_backgraph_in_progress_space)
     ABORT("MAKE_BACK_GRAPH: Out of in-progress space: "
           "Huge linear data structure?");
-  in_progress_space[n_in_progress++] = p;
+  GC_backgraph_in_progress_space[GC_backgraph_n_in_progress++] = p;
 }
 
 static GC_bool
 is_in_progress(const char *p)
 {
   size_t i;
-  for (i = 0; i < n_in_progress; ++i) {
-    if (in_progress_space[i] == p)
+  for (i = 0; i < GC_backgraph_n_in_progress; ++i) {
+    if (GC_backgraph_in_progress_space[i] == p)
       return TRUE;
   }
   return FALSE;
@@ -199,8 +160,8 @@ pop_in_progress(ptr_t p)
 #  ifndef GC_ASSERTIONS
   UNUSED_ARG(p);
 #  endif
-  --n_in_progress;
-  GC_ASSERT(in_progress_space[n_in_progress] == p);
+  --GC_backgraph_n_in_progress;
+  GC_ASSERT(GC_backgraph_in_progress_space[GC_backgraph_n_in_progress] == p);
 }
 
 #  define GET_OH_BG_PTR(p) (ptr_t) GC_REVEAL_POINTER(((oh *)(p))->oh_bg_ptr)
@@ -229,7 +190,7 @@ ensure_struct(ptr_t p)
     }
     be->height = HEIGHT_UNKNOWN;
     be->height_gc_no = (unsigned short)(GC_gc_no - 1);
-    GC_ASSERT(ADDR_GE((ptr_t)be, (ptr_t)back_edge_space));
+    GC_ASSERT(ADDR_GE((ptr_t)be, (ptr_t)GC_back_edge_space));
     SET_OH_BG_PTR(p, CPTR_SET_FLAGS(be, FLAG_MANY));
   }
 }
@@ -291,7 +252,7 @@ add_edge(ptr_t p, ptr_t q)
       n_edges = 0;
     }
     for (total = 0; total < n_edges; ++total) {
-      if (local == MAX_IN) {
+      if (local == BACKGRAPH_MAX_IN) {
         e = e->cont;
         local = 0;
       }
@@ -304,9 +265,10 @@ add_edge(ptr_t p, ptr_t q)
 
   ensure_struct(q);
   be = (back_edges *)CPTR_CLEAR_FLAGS(GET_OH_BG_PTR(q), FLAG_MANY);
-  for (i = be->n_edges, be_cont = be; i > MAX_IN; i -= MAX_IN)
+  for (i = be->n_edges, be_cont = be; i > BACKGRAPH_MAX_IN;
+       i -= BACKGRAPH_MAX_IN)
     be_cont = be_cont->cont;
-  if (i == MAX_IN) {
+  if (i == BACKGRAPH_MAX_IN) {
     be_cont->cont = new_back_edges();
     be_cont = be_cont->cont;
     i = 0;
@@ -482,7 +444,7 @@ backwards_height(ptr_t p)
     }
     for (total = 0; total < n_edges; ++total) {
       word this_height;
-      if (local == MAX_IN) {
+      if (local == BACKGRAPH_MAX_IN) {
         e = e->cont;
         local = 0;
       }
@@ -514,27 +476,24 @@ backwards_height(ptr_t p)
   return result;
 }
 
-STATIC word GC_max_height = 0;
-STATIC ptr_t GC_deepest_obj = NULL;
-
 /*
  * Compute the maximum height of every unreachable predecessor `p` of
- * a reachable object.  Arrange to save the heights of all such objects
- * `p` so that they can be used in calculating the height of objects in
- * the next collection.  Set `GC_max_height` to be the maximum height
- * we encounter, and `GC_deepest_obj` to be the corresponding object.
+ * a reachable object.  Arrange to save the heights of all such objects `p`
+ * so that they can be used in calculating the height of objects in the next
+ * collection.  Set `GC_backgraph_deepest_height` to be the maximum height we
+ * encounter, and `GC_backgraph_deepest_obj` to be the corresponding object.
  */
 static void
-update_max_height(ptr_t p, size_t sz, word descr)
+update_deepest_height(ptr_t p, size_t sz, word descr)
 {
   UNUSED_ARG(sz);
   UNUSED_ARG(descr);
   GC_ASSERT(I_HOLD_LOCK());
   if (GC_is_marked(p) && GC_HAS_DEBUG_INFO(p)) {
     word p_height = 0;
-    ptr_t p_deepest_obj = 0;
+    ptr_t p_deepest_obj = NULL;
     ptr_t back_ptr;
-    back_edges *be = 0;
+    back_edges *be = NULL;
 
     /*
      * If we remembered a height last time, use it as a minimum.
@@ -568,7 +527,7 @@ update_max_height(ptr_t p, size_t sz, word descr)
         n_edges = 0;
       }
       for (total = 0; total < n_edges; ++total) {
-        if (local == MAX_IN) {
+        if (local == BACKGRAPH_MAX_IN) {
           e = e->cont;
           local = 0;
         }
@@ -601,24 +560,22 @@ update_max_height(ptr_t p, size_t sz, word descr)
       be->height = (GC_signed_word)p_height;
       be->height_gc_no = (unsigned short)GC_gc_no;
     }
-    if (p_height > GC_max_height) {
-      GC_max_height = p_height;
-      GC_deepest_obj = p_deepest_obj;
+    if (p_height > GC_backgraph_deepest_height) {
+      GC_backgraph_deepest_height = p_height;
+      GC_backgraph_deepest_obj = p_deepest_obj;
     }
   }
 }
-
-STATIC word GC_max_max_height = 0;
 
 GC_INNER void
 GC_traverse_back_graph(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
-  GC_max_height = 0;
-  GC_apply_to_each_object(update_max_height);
-  if (GC_deepest_obj != NULL) {
+  GC_backgraph_deepest_height = 0;
+  GC_apply_to_each_object(update_deepest_height);
+  if (GC_backgraph_deepest_obj != NULL) {
     /* Keep the pointer until we can print it. */
-    GC_set_mark_bit(GC_deepest_obj);
+    GC_set_mark_bit(GC_backgraph_deepest_obj);
   }
 }
 
@@ -628,11 +585,12 @@ GC_print_back_graph_stats(void)
   GC_ASSERT(I_HOLD_LOCK());
   GC_printf("Maximum backwards height of reachable objects"
             " at GC #%lu is %lu\n",
-            (unsigned long)GC_gc_no, (unsigned long)GC_max_height);
-  if (GC_max_height > GC_max_max_height) {
-    ptr_t obj = GC_deepest_obj;
+            (unsigned long)GC_gc_no,
+            (unsigned long)GC_backgraph_deepest_height);
+  if (GC_backgraph_deepest_height > GC_backgraph_max_deepest_h) {
+    ptr_t obj = GC_backgraph_deepest_obj;
 
-    GC_max_max_height = GC_max_height;
+    GC_backgraph_max_deepest_h = GC_backgraph_deepest_height;
     UNLOCK();
     GC_err_printf(
         "The following unreachable object is last in a longest chain "
@@ -643,7 +601,7 @@ GC_print_back_graph_stats(void)
   GC_COND_LOG_PRINTF("Needed max total of %d back-edge structs\n",
                      GC_n_back_edge_structs);
   GC_apply_to_each_object(reset_back_edge);
-  GC_deepest_obj = NULL;
+  GC_backgraph_deepest_obj = NULL;
 }
 
 #endif /* MAKE_BACK_GRAPH */

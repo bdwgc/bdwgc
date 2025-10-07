@@ -217,8 +217,6 @@ GC_pthread_exit(void *retval)
 #    endif /* GC_USE_LD_WRAP || GC_USE_DLOPEN_WRAP */
 
 #    ifdef GC_USE_DLOPEN_WRAP
-STATIC GC_bool GC_syms_initialized = FALSE;
-
 /*
  * Resolve a symbol with name `n` from the dynamic library (given by
  * handle `h`) and cast it to the given functional type `fn`.
@@ -230,7 +228,7 @@ GC_init_real_syms(void)
 {
   void *dl_handle;
 
-  GC_ASSERT(!GC_syms_initialized);
+  GC_ASSERT(!GC_syms_wrap_initialized);
 #      ifdef RTLD_NEXT
   dl_handle = RTLD_NEXT;
 #      else
@@ -265,12 +263,12 @@ GC_init_real_syms(void)
   REAL_FUNC(pthread_exit)
       = TYPED_DLSYM(GC_pthread_exit_t, dl_handle, "pthread_exit");
 #      endif
-  GC_syms_initialized = TRUE;
+  GC_syms_wrap_initialized = TRUE;
 }
 
-#      define INIT_REAL_SYMS()             \
-        if (LIKELY(GC_syms_initialized)) { \
-        } else                             \
+#      define INIT_REAL_SYMS()                  \
+        if (LIKELY(GC_syms_wrap_initialized)) { \
+        } else                                  \
           GC_init_real_syms()
 #    else
 #      define INIT_REAL_SYMS() (void)0
@@ -291,10 +289,6 @@ GC_inner_pthread_create(pthread_t *t,
   INIT_REAL_SYMS();
   return REAL_FUNC(pthread_create)(t, a, fn, arg);
 }
-#  endif
-
-#  ifndef GC_ALWAYS_MULTITHREADED
-GC_INNER GC_bool GC_need_to_lock = FALSE;
 #  endif
 
 #  ifdef THREAD_LOCAL_ALLOC
@@ -697,10 +691,6 @@ static struct GC_Thread_Rep first_thread;
  * registration is ongoing.  Protected by the allocator lock.
  */
 static GC_stack_context_t saved_crtn = NULL;
-
-#  ifdef GC_ASSERTIONS
-GC_INNER GC_bool GC_thr_initialized = FALSE;
-#  endif
 
 GC_INNER void
 GC_push_thread_structures(void)

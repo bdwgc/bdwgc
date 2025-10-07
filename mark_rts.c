@@ -106,8 +106,6 @@ add_roots_to_index(struct roots *p)
 }
 #endif /* !ANY_MSWIN */
 
-GC_INNER word GC_root_size = 0;
-
 GC_API void GC_CALL
 GC_add_roots(void *b, void *e)
 {

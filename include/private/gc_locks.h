@@ -346,7 +346,6 @@ GC_EXTERN volatile unsigned char GC_collecting;
 #      error Runtime initialization of the allocator lock is needed!
 #    endif
 #    undef GC_ALWAYS_MULTITHREADED
-GC_EXTERN GC_bool GC_need_to_lock;
 #    ifdef THREAD_SANITIZER
 /*
  * To workaround TSan false positive (e.g., when `GC_pthread_create()` is

@@ -735,10 +735,6 @@ GC_unreachable_finalize_mark_proc(ptr_t p)
   GC_normal_finalize_mark_proc(p);
 }
 
-/* Avoid the work if unreachable finalizable objects are not used. */
-/* TODO: Turn `need_unreachable_finalization` into a counter. */
-static GC_bool need_unreachable_finalization = FALSE;
-
 /*
  * Register a finalization function.  See `gc.h` file for details.
  * The last parameter is a procedure that determines marking for
@@ -763,7 +759,7 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
   LOCK();
   GC_ASSERT(obj != NULL && GC_base_C(obj) == obj);
   if (mp == GC_unreachable_finalize_mark_proc)
-    need_unreachable_finalization = TRUE;
+    GC_need_unreachable_finalization = TRUE;
   if (UNLIKELY(NULL == GC_fnlz_roots.fo_head)
       || UNLIKELY(GC_fo_entries > ((size_t)1 << GC_log_fo_table_size))) {
     GC_grow_table((struct hash_chain_entry ***)&GC_fnlz_roots.fo_head,
@@ -982,13 +978,6 @@ GC_dump_finalization(void)
 }
 #  endif /* !NO_DEBUGGING */
 
-#  ifndef SMALL_CONFIG
-STATIC size_t GC_old_dl_entries = 0; /*< for stats printing */
-#    ifndef GC_LONG_REFS_NOT_NEEDED
-STATIC size_t GC_old_ll_entries = 0;
-#    endif
-#  endif /* !SMALL_CONFIG */
-
 #  ifndef THREADS
 /*
  * Checks and updates the level of finalizers recursion.
@@ -1185,7 +1174,7 @@ GC_finalize(void)
      * Now revive finalize-when-unreachable objects reachable from other
      * finalizable objects.
      */
-    if (need_unreachable_finalization) {
+    if (GC_need_unreachable_finalization) {
       curr_fo = GC_fnlz_roots.finalize_now;
 #  if defined(GC_ASSERTIONS) || defined(LINT2)
       if (curr_fo != NULL && NULL == GC_fnlz_roots.fo_head)
@@ -1236,7 +1225,7 @@ GC_finalize(void)
   GC_make_disappearing_links_disappear(&GC_ll_hashtbl, TRUE);
 #  endif
 
-  if (GC_fail_count) {
+  if (GC_alloc_fail_count > 0) {
     /*
      * Do not prevent running finalizers if there has been an allocation
      * failure recently.

@@ -21,8 +21,6 @@
 #  include "gc/gc_disclaim.h"
 #endif
 
-GC_INNER GC_signed_word GC_bytes_found = 0;
-
 #ifdef PARALLEL_MARK
 GC_INNER GC_signed_word GC_fl_builder_count = 0;
 #endif
@@ -38,7 +36,6 @@ GC_INNER GC_signed_word GC_fl_builder_count = 0;
 #    define MAX_LEAKED 40
 #  endif
 STATIC ptr_t GC_leaked[MAX_LEAKED] = { NULL };
-STATIC unsigned GC_n_leaked = 0;
 #endif
 
 #if !defined(EAGER_SWEEP) && defined(ENABLE_DISCLAIM)
@@ -59,8 +56,7 @@ STATIC void GC_reclaim_unconditionally_marked(void);
  * We put them here instead of in `GC_arrays`, since it may be useful to
  * be able to look at them with the debugger.
  */
-STATIC ptr_t GC_smashed[MAX_SMASHED] = { 0 };
-STATIC unsigned GC_n_smashed = 0;
+STATIC ptr_t GC_smashed[MAX_SMASHED] = { NULL };
 
 GC_INNER void
 GC_add_smashed(ptr_t smashed)
@@ -164,14 +160,6 @@ GC_default_print_heap_obj_proc(ptr_t p)
 GC_INNER void (*GC_print_heap_obj)(ptr_t p) = GC_default_print_heap_obj_proc;
 
 #if !defined(NO_FIND_LEAK) || !defined(SHORT_DBG_HDRS)
-#  ifdef AO_HAVE_store
-GC_INNER volatile AO_t GC_have_errors = 0;
-#  else
-GC_INNER GC_bool GC_have_errors = FALSE;
-#  endif
-
-GC_INNER GC_bool GC_debugging_started = FALSE;
-
 GC_INNER void
 GC_print_all_errors(void)
 {

@@ -411,15 +411,9 @@ do_nothing(void)
 }
 #endif /* SHORT_DBG_HDRS */
 
-#if defined(NO_FIND_LEAK) && defined(SHORT_DBG_HDRS)
-static GC_bool debugging_initialized = FALSE;
-#else
-#  define debugging_initialized GC_debugging_started
-#endif
-
 /*
  * Turn on the debugging mode.  Should not be called if
- * `debugging_initialized` is already set.
+ * `GC_debugging_initialized` is already set.
  */
 STATIC void
 GC_start_debugging_inner(void)
@@ -433,7 +427,7 @@ GC_start_debugging_inner(void)
   GC_print_all_smashed = do_nothing;
 #endif
   GC_print_heap_obj = GC_debug_print_heap_obj_proc;
-  debugging_initialized = TRUE;
+  GC_debugging_initialized = TRUE;
   GC_register_displacement_inner(sizeof(oh));
 #if defined(CPPCHECK)
   GC_noop1(GC_debug_header_size);
@@ -455,7 +449,7 @@ store_debug_info(void *base, size_t lb, const char *fn, GC_EXTRA_PARAMS)
     return NULL;
   }
   LOCK();
-  if (!debugging_initialized)
+  if (!GC_debugging_initialized)
     GC_start_debugging_inner();
   result = GC_store_debug_info_inner(base, lb, s, i);
   ADD_CALL_CHAIN(base, ra);
@@ -571,7 +565,7 @@ GC_debug_generic_malloc_inner(size_t lb, int kind, unsigned flags)
                   (unsigned long)lb);
     return NULL;
   }
-  if (!debugging_initialized)
+  if (!GC_debugging_initialized)
     GC_start_debugging_inner();
   result = GC_store_debug_info_inner(base, lb, "INTERNAL", 0);
   ADD_CALL_CHAIN_INNER(base);
@@ -1199,7 +1193,7 @@ GC_debug_gcj_malloc(size_t lb, const void *vtable_ptr, GC_EXTRA_PARAMS)
     return (*oom_fn)(lb);
   }
   *((const void **)((ptr_t)base + sizeof(oh))) = vtable_ptr;
-  if (!debugging_initialized)
+  if (!GC_debugging_initialized)
     GC_start_debugging_inner();
   result = GC_store_debug_info_inner(base, lb, s, i);
   ADD_CALL_CHAIN(base, ra);

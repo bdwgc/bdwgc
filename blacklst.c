@@ -33,26 +33,19 @@
  *   - `GC_promote_black_lists`.
  */
 
-/*
- * Pointers to individual tables.  We replace one table by another by
- * switching these pointers.
- */
+GC_INNER word GC_black_list_spacing = 0;
 
-/* Non-stack false references seen at last full collection. */
-STATIC word *GC_old_normal_bl = NULL;
+STATIC void
+GC_clear_bl(word *bl)
+{
+  BZERO(bl, sizeof(page_hash_table));
+}
 
-/* Non-stack false references seen since last full collection. */
-STATIC word *GC_incomplete_normal_bl = NULL;
-
-STATIC word *GC_old_stack_bl = NULL;
-STATIC word *GC_incomplete_stack_bl = NULL;
-
-/* Number of bytes on stack blacklist. */
-STATIC word GC_total_stack_black_listed = 0;
-
-GC_INNER word GC_black_list_spacing = MINHINCR * HBLKSIZE; /*< initial guess */
-
-STATIC void GC_clear_bl(word *);
+STATIC void
+GC_copy_bl(const word *old, word *dest)
+{
+  BCOPY(old, dest, sizeof(page_hash_table));
+}
 
 #  ifdef PRINT_BLACK_LIST
 STATIC void
@@ -99,6 +92,7 @@ GC_INNER void
 GC_bl_init(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
+  GC_black_list_spacing = MINHINCR * HBLKSIZE; /*< initial guess */
   if (!GC_all_interior_pointers) {
     GC_bl_init_no_interiors();
   }
@@ -113,25 +107,14 @@ GC_bl_init(void)
   GC_clear_bl(GC_incomplete_stack_bl);
 }
 
-STATIC void
-GC_clear_bl(word *bl)
-{
-  BZERO(bl, sizeof(page_hash_table));
-}
-
-STATIC void
-GC_copy_bl(const word *old, word *dest)
-{
-  BCOPY(old, dest, sizeof(page_hash_table));
-}
-
-static word total_stack_black_listed(void);
+static word compute_total_stack_black_listed(void);
 
 GC_INNER void
 GC_promote_black_lists(void)
 {
   word *very_old_normal_bl = GC_old_normal_bl;
   word *very_old_stack_bl = GC_old_stack_bl;
+  word total_stack_black_listed; /*< number of bytes on stack blacklist */
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_old_normal_bl = GC_incomplete_normal_bl;
@@ -142,17 +125,15 @@ GC_promote_black_lists(void)
   GC_clear_bl(very_old_stack_bl);
   GC_incomplete_normal_bl = very_old_normal_bl;
   GC_incomplete_stack_bl = very_old_stack_bl;
-  GC_total_stack_black_listed = total_stack_black_listed();
+  total_stack_black_listed = compute_total_stack_black_listed();
   GC_VERBOSE_LOG_PRINTF(
       "%lu bytes in heap blacklisted for interior pointers\n",
-      (unsigned long)GC_total_stack_black_listed);
-  if (GC_total_stack_black_listed != 0) {
+      (unsigned long)total_stack_black_listed);
+  if (total_stack_black_listed != 0)
     GC_black_list_spacing
-        = HBLKSIZE * (GC_heapsize / GC_total_stack_black_listed);
-  }
-  if (GC_black_list_spacing < 3 * HBLKSIZE) {
+        = HBLKSIZE * (GC_heapsize / total_stack_black_listed);
+  if (GC_black_list_spacing < 3 * HBLKSIZE)
     GC_black_list_spacing = 3 * HBLKSIZE;
-  }
   if (GC_black_list_spacing > MAXHINCR * HBLKSIZE) {
     /*
      * Make it easier to allocate really huge blocks, which otherwise may
@@ -298,7 +279,7 @@ GC_number_stack_black_listed(struct hblk *start, struct hblk *endp1)
 
 /* Return the total number of (stack) black-listed bytes. */
 static word
-total_stack_black_listed(void)
+compute_total_stack_black_listed(void)
 {
   size_t i;
   word total = 0;
