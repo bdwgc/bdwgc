@@ -68,10 +68,10 @@
 typedef long unsigned int caddr_t;
 #endif
 
-#if !defined(NO_EXECUTE_PERMISSION)
-STATIC GC_bool GC_pages_executable = TRUE;
-#else
+#ifdef NO_EXECUTE_PERMISSION
 STATIC GC_bool GC_pages_executable = FALSE;
+#else
+STATIC GC_bool GC_pages_executable = TRUE;
 #endif
 
 /* Note: it is undefined later on `GC_pages_executable` real use. */
@@ -519,29 +519,21 @@ GC_init_linux_data_start(void)
 #endif /* SEARCH_FOR_DATA_START */
 
 #ifdef ECOS
-
-#  ifndef ECOS_GC_MEMORY_SIZE
-#    define ECOS_GC_MEMORY_SIZE (448 * 1024)
-#  endif /* ECOS_GC_MEMORY_SIZE */
-
-/*
- * TODO: This is a simple way of allocating memory which is
- * compatible with ECOS early releases.  Later releases use a more
- * sophisticated means of allocating memory than this simple static
- * allocator, but this method is at least bound to work.
- */
-static char ecos_gc_memory[ECOS_GC_MEMORY_SIZE];
-static ptr_t ecos_gc_brk = ecos_gc_memory;
-
 static void *
 tiny_sbrk(ptrdiff_t increment)
 {
-  void *p = ecos_gc_brk;
+  /*
+   * TODO: This is a simple way of allocating memory which is compatible with
+   * ECOS early releases.  Later releases use a more sophisticated means of
+   * allocating memory than this simple static allocator, but this method is
+   * at least bound to work.
+   */
+  void *p = &GC_ecos_memory[GC_ecos_brk_idx];
 
-  if (ADDR_LT((ptr_t)ecos_gc_memory + sizeof(ecos_gc_memory),
-              (ptr_t)p + increment))
+  GC_ASSERT(GC_ecos_brk_idx <= sizeof(GC_ecos_memory));
+  if ((size_t)increment > sizeof(GC_ecos_memory) - GC_ecos_brk_idx)
     return NULL;
-  ecos_gc_brk += increment;
+  GC_ecos_brk_idx += (size_t)increment;
   return p;
 }
 #  define sbrk tiny_sbrk
@@ -847,6 +839,7 @@ GC_setpagesize(void)
 #  if defined(MSWINCE) && !defined(_WIN32_WCE_EMULATION)
   {
     OSVERSIONINFO verInfo;
+
     /* Check the current WinCE version. */
     verInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     if (!GetVersionEx(&verInfo))
@@ -3291,8 +3284,8 @@ GC_gww_read_dirty(GC_bool output_unneeded)
               GC_heap_sects[i].hs_bytes, pages, &count, &page_size)
           != 0) {
         static int warn_count = 0;
-        struct hblk *start = (struct hblk *)GC_heap_sects[i].hs_start;
         static const struct hblk *last_warned = NULL;
+        struct hblk *start = (struct hblk *)GC_heap_sects[i].hs_start;
         size_t nblocks = divHBLKSZ(GC_heap_sects[i].hs_bytes);
 
         if (i != 0 && last_warned != start && warn_count++ < 5) {

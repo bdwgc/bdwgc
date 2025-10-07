@@ -367,10 +367,6 @@ GC_EXTERN GC_thread GC_threads[THREAD_TABLE_SZ];
 #    define MAX_MARKERS 16
 #  endif
 
-#  ifdef GC_ASSERTIONS
-GC_EXTERN GC_bool GC_thr_initialized;
-#  endif
-
 #  ifdef STACKPTR_CORRECTOR_AVAILABLE
 GC_EXTERN GC_sp_corrector_proc GC_sp_corrector;
 #  endif

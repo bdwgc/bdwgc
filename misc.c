@@ -288,24 +288,12 @@ GC_clear_stack(void *arg)
 /* Clear this much sometimes. */
 #    define BIG_CLEAR_SIZE 2048
 #  else
-/* `GC_gc_no` value when we last did this. */
-STATIC word GC_stack_last_cleared = 0;
+#    define DEGRADE_RATE 50
 
 STATIC word GC_bytes_allocd_at_reset = 0;
 
-/*
- * Coolest stack pointer value from which we have already cleared
- * the stack.
- */
-STATIC ptr_t GC_min_sp = NULL;
-
-/*
- * The "hottest" stack pointer value we have seen recently.
- * Degrades over time.
- */
-STATIC ptr_t GC_high_water = NULL;
-
-#    define DEGRADE_RATE 50
+/* `GC_gc_no` value when we last did this. */
+STATIC word GC_stack_last_cleared = 0;
 #  endif
 
 #  if defined(__APPLE_CC__) && !GC_CLANG_PREREQ(6, 0)
@@ -589,8 +577,6 @@ GC_get_heap_usage_safe(GC_word *pheap_size, GC_word *pfree_bytes,
   READER_UNLOCK();
 }
 
-GC_INNER word GC_reclaimed_bytes_before_gc = 0;
-
 /* Fill in GC statistics provided the destination is of enough size. */
 static void
 fill_prof_stats(struct GC_prof_stats_s *pstats)
@@ -697,16 +683,6 @@ GC_get_thr_restart_signal(void)
 #ifdef GC_READ_ENV_FILE
 /* This works for Win32/WinCE for now.  Really useful only for WinCE. */
 
-/*
- * The content of the `.gc.env` file with CR and LF replaced to '\0'.
- * `NULL` if the file is missing or empty.  Otherwise, always ends with '\0'
- * (designating the end of the file).
- */
-STATIC char *GC_envfile_content = NULL;
-
-/* Length of `GC_envfile_content` (if non-`NULL`). */
-STATIC unsigned GC_envfile_length = 0;
-
 #  ifndef GC_ENVFILE_MAXLEN
 #    define GC_ENVFILE_MAXLEN 0x4000
 #  endif
@@ -720,14 +696,13 @@ GC_envfile_init(void)
 #  ifdef ANY_MSWIN
   HANDLE hFile;
   char *content;
-  unsigned ofs;
-  unsigned len;
+  size_t ofs, len;
   DWORD nBytesRead;
   TCHAR path[_MAX_PATH + 0x10]; /*< buffer for file path with extension */
   size_t bytes_to_get;
 
   GC_ASSERT(I_HOLD_LOCK());
-  len = (unsigned)GetModuleFileName(NULL /* `hModule` */, path, _MAX_PATH + 1);
+  len = (size_t)GetModuleFileName(NULL /* `hModule` */, path, _MAX_PATH + 1);
   /* If `GetModuleFileName()` failed, then len is 0. */
   if (len > 4 && path[len - 4] == (TCHAR)'.') {
     /* Strip the executable file extension. */
@@ -741,7 +716,7 @@ GC_envfile_init(void)
     /* The file is absent or the operation failed. */
     return;
   }
-  len = (unsigned)GetFileSize(hFile, NULL);
+  len = (size_t)GetFileSize(hFile, NULL);
   if (len <= 1 || len >= GC_ENVFILE_MAXLEN) {
     CloseHandle(hFile);
     /* Invalid file length - ignoring the file content. */
@@ -752,7 +727,7 @@ GC_envfile_init(void)
    * must already be called (for `GET_MEM()` to work correctly).
    */
   GC_ASSERT(GC_page_size != 0);
-  bytes_to_get = ROUNDUP_PAGESIZE_IF_MMAP((size_t)len + 1);
+  bytes_to_get = ROUNDUP_PAGESIZE_IF_MMAP(len + 1);
   content = GC_os_get_mem(bytes_to_get);
   if (content == NULL) {
     CloseHandle(hFile);
@@ -762,10 +737,10 @@ GC_envfile_init(void)
   ofs = 0;
   nBytesRead = (DWORD)-1L;
   /* Last `ReadFile()` call should clear `nBytesRead` on success. */
-  while (ReadFile(hFile, content + ofs, len - ofs + 1, &nBytesRead,
+  while (ReadFile(hFile, content + ofs, (DWORD)(len - ofs + 1), &nBytesRead,
                   NULL /* `lpOverlapped` */)
          && nBytesRead != 0) {
-    if ((ofs += nBytesRead) > len)
+    if ((ofs += (size_t)nBytesRead) > len)
       break;
   }
   CloseHandle(hFile);
@@ -823,8 +798,6 @@ GC_envfile_getenv(const char *name)
 }
 #endif /* GC_READ_ENV_FILE */
 
-GC_INNER GC_bool GC_is_initialized = FALSE;
-
 GC_API int GC_CALL
 GC_is_init_called(void)
 {
@@ -837,22 +810,10 @@ GC_INNER CRITICAL_SECTION GC_write_cs;
 #endif
 
 #ifndef DONT_USE_ATEXIT
-#  if !defined(SMALL_CONFIG)
-/*
- * A dedicated variable to avoid a garbage collection on abort.
- * `GC_find_leak` cannot be used for this purpose as otherwise
- * TSan finds a data race (between `GC_default_on_abort` and, e.g.,
- * `GC_finish_collection`).
- */
-static GC_bool skip_gc_atexit = FALSE;
-#  else
-#    define skip_gc_atexit FALSE
-#  endif
-
 STATIC void
 GC_exit_check(void)
 {
-  if (GC_find_leak && !skip_gc_atexit) {
+  if (GC_find_leak && !GC_skip_collect_atexit) {
 #  ifdef THREADS
     /*
      * Check that the thread executing at-exit functions is the same as
@@ -1080,6 +1041,7 @@ GC_init(void)
 #ifdef REDIRECT_MALLOC
   {
     static GC_bool init_started = FALSE;
+
     if (init_started)
       ABORT("Redirected malloc() called during GC init");
     init_started = TRUE;
@@ -1881,6 +1843,7 @@ GC_write(const char *buf, size_t len)
 #  if defined(THREADS) && defined(GC_ASSERTIONS)
   /* This is to prevent infinite recursion at abort. */
   static GC_bool inside_write = FALSE;
+
   if (inside_write)
     return -1;
 #  endif
@@ -2222,7 +2185,7 @@ GC_default_on_abort(const char *msg)
 #if !defined(SMALL_CONFIG)
 #  ifndef DONT_USE_ATEXIT
   /* Disable at-exit garbage collection. */
-  skip_gc_atexit = TRUE;
+  GC_skip_collect_atexit = TRUE;
 #  endif
 
   if (msg != NULL) {

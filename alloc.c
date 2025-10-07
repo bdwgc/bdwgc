@@ -61,44 +61,23 @@ word GC_gc_no = 0;
 
 #ifndef NO_CLOCK
 
-static unsigned long full_gc_total_time = 0; /*< in ms, may wrap */
-static unsigned long stopped_mark_total_time = 0;
-static unsigned32 full_gc_total_ns_frac = 0; /*< fraction of 1 ms */
-static unsigned32 stopped_mark_total_ns_frac = 0;
-
-/*
- * Do performance measurements if set to `TRUE` (e.g., accumulation of
- * the total time of full collections).
- */
-static GC_bool measure_performance = FALSE;
-
 GC_API void GC_CALL
 GC_start_performance_measurement(void)
 {
-  measure_performance = TRUE;
+  GC_measure_performance = TRUE;
 }
 
 GC_API unsigned long GC_CALL
 GC_get_full_gc_total_time(void)
 {
-  return full_gc_total_time;
+  return GC_full_gc_total_time;
 }
 
 GC_API unsigned long GC_CALL
 GC_get_stopped_mark_total_time(void)
 {
-  return stopped_mark_total_time;
+  return GC_stopped_mark_total_time;
 }
-
-/*
- * Variables for world-stop average delay time statistic computation.
- * `world_stopped_total_divisor` is incremented every world stop and
- * halved when reached its maximum (or upon `world_stopped_total_time`
- * overflow).  In milliseconds.
- */
-/* TODO: Store the nanosecond part. */
-static unsigned world_stopped_total_time = 0;
-static unsigned world_stopped_total_divisor = 0;
 
 #  ifndef MAX_TOTAL_TIME_DIVISOR
 /*
@@ -115,8 +94,8 @@ GC_get_avg_stopped_mark_time_ns(void)
   unsigned divisor;
 
   READER_LOCK();
-  total_time = (unsigned long)world_stopped_total_time;
-  divisor = world_stopped_total_divisor;
+  total_time = (unsigned long)GC_world_stopped_total_time;
+  divisor = GC_world_stopped_total_divisor;
   READER_UNLOCK();
   if (0 == divisor) {
     GC_ASSERT(0 == total_time);
@@ -143,7 +122,6 @@ GC_get_avg_stopped_mark_time_ns(void)
 
 #ifndef GC_DISABLE_INCREMENTAL
 GC_INNER GC_bool GC_incremental = FALSE; /*< by default, stop the world */
-STATIC GC_bool GC_should_start_incremental_collection = FALSE;
 #endif
 
 GC_API int GC_CALL
@@ -165,9 +143,6 @@ int GC_full_freq = GC_FULL_FREQ;
  */
 int GC_full_freq = 19;
 #endif
-
-/* Indicate whether a full collection due to heap growth is needed. */
-STATIC GC_bool GC_need_full_gc = FALSE;
 
 #ifdef THREAD_LOCAL_ALLOC
 GC_INNER GC_bool GC_world_stopped = FALSE;
@@ -193,8 +168,6 @@ GC_get_disable_automatic_collection(void)
   READER_UNLOCK();
   return value;
 }
-
-STATIC word GC_used_heap_size_after_full = 0;
 
 /*
  * The version macros are now defined in `gc_version.h` file, which is
@@ -266,9 +239,9 @@ unsigned long GC_time_limit = 15;
 
 #ifndef NO_CLOCK
 /*
- * The nanoseconds add-on to `GC_time_limit` value.  Not updated by
- * `GC_set_time_limit()`.  Ignored if the value of `GC_time_limit` is
- * `GC_TIME_UNLIMITED`.
+ * The nanoseconds add-on to `GC_time_limit` value.
+ * Not updated by `GC_set_time_limit()`.
+ * Ignored if the value of `GC_time_limit` is `GC_TIME_UNLIMITED`.
  */
 STATIC unsigned long GC_time_lim_nsec = 0;
 
@@ -428,9 +401,6 @@ min_bytes_allocd(void)
   return result > min_bytes_allocd_minimum ? result : min_bytes_allocd_minimum;
 }
 
-/* Number of explicitly managed bytes of storage at last collection. */
-STATIC word GC_non_gc_bytes_at_gc = 0;
-
 /*
  * Return the number of bytes allocated, adjusted for explicit storage
  * management, etc.  This number is used in deciding when to trigger
@@ -511,8 +481,7 @@ GC_start_incremental_collection(void)
 GC_INNER GC_bool
 GC_should_collect(void)
 {
-  static word last_min_bytes_allocd;
-  static word last_gc_no;
+  static word last_min_bytes_allocd, last_gc_no;
 
   GC_ASSERT(I_HOLD_LOCK());
   if (last_gc_no != GC_gc_no) {
@@ -537,8 +506,8 @@ GC_should_collect(void)
 }
 
 /*
- * Called at start of full collections.  Not called if 0.  Called with
- * the allocator lock held.  Not used by the collector itself.
+ * Called at start of full collections.  Not called if zero.
+ * Called with the allocator lock held.  Not used by the collector itself.
  */
 /* `STATIC` */ GC_start_callback_proc GC_start_call_back = 0;
 
@@ -683,7 +652,7 @@ GC_try_to_collect_inner(GC_stop_func stop_func)
   GC_notify_full_gc();
 #ifndef NO_CLOCK
   start_time_valid = FALSE;
-  if ((GC_print_stats | (int)measure_performance) != 0) {
+  if ((GC_print_stats | (int)GC_measure_performance) != 0) {
     if (GC_print_stats)
       GC_log_printf("Initiating full world-stop collection!\n");
     start_time_valid = TRUE;
@@ -740,13 +709,13 @@ GC_try_to_collect_inner(GC_stop_func stop_func)
     GET_TIME(current_time);
     time_diff = MS_TIME_DIFF(current_time, start_time);
     ns_frac_diff = NS_FRAC_TIME_DIFF(current_time, start_time);
-    if (measure_performance) {
-      full_gc_total_time += time_diff; /*< may wrap */
-      full_gc_total_ns_frac += (unsigned32)ns_frac_diff;
-      if (full_gc_total_ns_frac >= (unsigned32)1000000UL) {
+    if (GC_measure_performance) {
+      GC_full_gc_total_time += time_diff; /*< may wrap */
+      GC_full_gc_total_ns_frac += (unsigned32)ns_frac_diff;
+      if (GC_full_gc_total_ns_frac >= (unsigned32)1000000UL) {
         /* Overflow of the nanoseconds part. */
-        full_gc_total_ns_frac -= (unsigned32)1000000UL;
-        full_gc_total_time++;
+        GC_full_gc_total_ns_frac -= (unsigned32)1000000UL;
+        GC_full_gc_total_time++;
       }
     }
     if (GC_print_stats)
@@ -759,21 +728,18 @@ GC_try_to_collect_inner(GC_stop_func stop_func)
   return TRUE;
 }
 
-/* The number of extra calls to `GC_mark_some` that we have made. */
-STATIC size_t GC_deficit = 0;
-
 /* The default value of `GC_rate`. */
 #ifndef GC_RATE
 #  define GC_RATE 10
 #endif
 
 /*
- * When `GC_collect_a_little_inner()` performs `n_blocks` units of
- * garbage collection work, a unit is intended to touch roughly
- * `GC_rate` pages.  (But, every once in a while, we do more than that.)
- * This needs to be a fairly large number with our current incremental
- * collection strategy, since otherwise we allocate too much during
- * garbage collection, and the cleanup gets expensive.
+ * When `GC_collect_a_little_inner()` performs `n_blocks` units of garbage
+ * collection work, a unit is intended to touch roughly `GC_rate` pages.
+ * (But, every once in a while, we do more than that.)  This needs to be
+ * a fairly large number with our current incremental collection strategy,
+ * since otherwise we allocate too much during garbage collection, and
+ * the cleanup gets expensive.
  */
 STATIC unsigned GC_rate = GC_RATE;
 
@@ -832,7 +798,7 @@ GC_collect_a_little_inner(size_t n_blocks)
     if (GC_time_limit != GC_TIME_UNLIMITED)
       GC_parallel_mark_disabled = TRUE;
 #endif
-    for (i = GC_deficit; i < max_deficit; i++) {
+    for (i = GC_mark_deficit; i < max_deficit; i++) {
       if (GC_mark_some(NULL))
         break;
     }
@@ -862,8 +828,9 @@ GC_collect_a_little_inner(size_t n_blocks)
         GC_n_attempts++;
       }
     }
-    if (GC_deficit > 0) {
-      GC_deficit = GC_deficit > max_deficit ? GC_deficit - max_deficit : 0;
+    if (GC_mark_deficit > 0) {
+      GC_mark_deficit
+          = GC_mark_deficit > max_deficit ? GC_mark_deficit - max_deficit : 0;
     }
   } else if (!GC_dont_gc) {
     GC_maybe_gc();
@@ -974,7 +941,7 @@ GC_stopped_mark(GC_stop_func stop_func)
       "\n--> Marking for collection #%lu after %lu allocated bytes\n",
       (unsigned long)GC_gc_no + 1, (unsigned long)GC_bytes_allocd);
 #ifndef NO_CLOCK
-  if (GC_PRINT_STATS_FLAG || measure_performance) {
+  if (GC_PRINT_STATS_FLAG || GC_measure_performance) {
     GET_TIME(start_time);
     start_time_valid = TRUE;
   }
@@ -1033,7 +1000,7 @@ GC_stopped_mark(GC_stop_func stop_func)
 
   if (abandoned_at > 0) {
     /* Give the mutator a chance. */
-    GC_deficit = abandoned_at - 1;
+    GC_mark_deficit = abandoned_at - 1;
     /* TODO: Notify `GC_EVENT_MARK_ABANDON`. */
   } else {
     GC_gc_no++;
@@ -1066,18 +1033,18 @@ GC_stopped_mark(GC_stop_func stop_func)
     GET_TIME(current_time);
     time_diff = MS_TIME_DIFF(current_time, start_time);
     ns_frac_diff = NS_FRAC_TIME_DIFF(current_time, start_time);
-    if (measure_performance) {
-      stopped_mark_total_time += time_diff; /*< may wrap */
-      stopped_mark_total_ns_frac += (unsigned32)ns_frac_diff;
-      if (stopped_mark_total_ns_frac >= (unsigned32)1000000UL) {
-        stopped_mark_total_ns_frac -= (unsigned32)1000000UL;
-        stopped_mark_total_time++;
+    if (GC_measure_performance) {
+      GC_stopped_mark_total_time += time_diff; /*< may wrap */
+      GC_stopped_mark_total_ns_frac += (unsigned32)ns_frac_diff;
+      if (GC_stopped_mark_total_ns_frac >= (unsigned32)1000000UL) {
+        GC_stopped_mark_total_ns_frac -= (unsigned32)1000000UL;
+        GC_stopped_mark_total_time++;
       }
     }
 
-    if (GC_PRINT_STATS_FLAG || measure_performance) {
-      unsigned total_time = world_stopped_total_time;
-      unsigned divisor = world_stopped_total_divisor;
+    if (GC_PRINT_STATS_FLAG || GC_measure_performance) {
+      unsigned total_time = GC_world_stopped_total_time;
+      unsigned divisor = GC_world_stopped_total_divisor;
 
       /* Compute new world-stop delay total time. */
       if (total_time > (((unsigned)-1) >> 1)
@@ -1088,9 +1055,9 @@ GC_stopped_mark(GC_stop_func stop_func)
       }
       total_time += time_diff < (((unsigned)-1) >> 1) ? (unsigned)time_diff
                                                       : ((unsigned)-1) >> 1;
-      /* Update old `world_stopped_total_time` and its divisor. */
-      world_stopped_total_time = total_time;
-      world_stopped_total_divisor = ++divisor;
+      /* Update old `GC_world_stopped_total_time` and its divisor. */
+      GC_world_stopped_total_time = total_time;
+      GC_world_stopped_total_divisor = ++divisor;
       if (GC_PRINT_STATS_FLAG && 0 == abandoned_at) {
         GC_ASSERT(divisor != 0);
         GC_log_printf("World-stopped marking took %lu ms %lu ns"
@@ -1466,9 +1433,6 @@ GC_finish_collection(void)
     GC_print_finalization_stats();
 #endif
 }
-
-/* Note: accessed with the allocator lock held. */
-STATIC word GC_heapsize_at_forced_unmap = 0;
 
 /* Note: if `stop_func` is 0, then `GC_default_stop_func` is used instead. */
 STATIC GC_bool
@@ -1858,8 +1822,6 @@ GC_expand_hp(size_t bytes)
   return (int)result;
 }
 
-GC_INNER unsigned GC_fail_count = 0;
-
 /*
  * The minimum value of the ratio of allocated bytes since the latest
  * collection to the amount of finalizers created since that collection
@@ -1884,12 +1846,11 @@ GC_get_allocd_bytes_per_finalizer(void)
   return GC_allocd_bytes_per_finalizer;
 }
 
-static word last_fo_entries = 0;
-static word last_bytes_finalized = 0;
-
 GC_INNER GC_bool
 GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
 {
+  static word last_fo_entries, last_bytes_finalized;
+
   GC_bool gc_not_stopped = TRUE;
   word blocks_to_get;
   IF_CANCEL(int cancel_state;)
@@ -1980,10 +1941,10 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
       && (blocks_to_get == needed_blocks
           || !GC_expand_hp_inner(needed_blocks))) {
     if (!gc_not_stopped) {
-      /* Do not increment `GC_fail_count` here (and no warning). */
+      /* Do not increment `GC_alloc_fail_count` here (and no warning). */
       GC_gcollect_inner();
       GC_ASSERT(0 == GC_bytes_allocd);
-    } else if (GC_fail_count++ < GC_max_retries) {
+    } else if (GC_alloc_fail_count++ < GC_max_retries) {
       WARN("Out of Memory!  Trying to continue...\n", 0);
       GC_gcollect_inner();
     } else {
@@ -2007,7 +1968,7 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
       RESTORE_CANCEL(cancel_state);
       return FALSE;
     }
-  } else if (GC_fail_count) {
+  } else if (GC_alloc_fail_count > 0) {
     GC_COND_LOG_PRINTF("Memory available again...\n");
   }
   RESTORE_CANCEL(cancel_state);
@@ -2075,6 +2036,6 @@ GC_allocobj(size_t lg, int kind)
     retry_cnt++;
   }
   /* Successful allocation; reset failure count. */
-  GC_fail_count = 0;
+  GC_alloc_fail_count = 0;
   return (ptr_t)(*flh);
 }

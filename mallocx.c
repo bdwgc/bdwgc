@@ -254,17 +254,6 @@ GC_get_expl_freed_bytes_since_gc(void)
   return (size_t)GC_bytes_freed;
 }
 
-#ifdef PARALLEL_MARK
-/*
- * Number of bytes of memory allocated since we released the allocator lock.
- * Instead of reacquiring the allocator lock just to add this in, we add it
- * in the next time we reacquire the allocator lock.  (Atomically adding it
- * does not work, since we would have to atomically update it in `GC_malloc`,
- * which is too expensive.)
- */
-STATIC volatile AO_t GC_bytes_allocd_tmp = 0;
-#endif /* PARALLEL_MARK */
-
 GC_API void GC_CALL
 GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
 {

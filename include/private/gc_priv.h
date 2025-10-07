@@ -1502,6 +1502,41 @@ struct HeapSect {
   size_t hs_bytes;
 };
 
+#ifdef MAKE_BACK_GRAPH
+/* The maximum in-degree we handle directly. */
+#  define BACKGRAPH_MAX_IN 10
+
+struct back_edges_s {
+  /* Number of edges, including those in continuation structures. */
+  word n_edges;
+
+  unsigned short flags;
+
+  /*
+   * If `height` is greater than zero, then keeps the `GC_gc_no` value
+   * when it was computed.  If it was computed this cycle, then it is
+   * current.  If it was computed during the last cycle, then it belongs
+   * to the old height, which is only saved for live objects referenced by
+   * dead ones.  This may grow due to references from newly dead objects.
+   */
+  unsigned short height_gc_no;
+
+  /*
+   * Longest path through unreachable nodes to this node that we found
+   * using depth first search.
+   */
+  GC_signed_word height;
+
+  ptr_t edges[BACKGRAPH_MAX_IN];
+
+  /*
+   * Pointer to continuation structure; we use only the edges field in
+   * the continuation.  Also used as a free-list link.
+   */
+  struct back_edges_s *cont;
+};
+#endif
+
 /*
  * Lists of all heap blocks and free lists as well as other random data
  * structures that should not be scanned by the collector.  These are
@@ -1522,6 +1557,9 @@ struct _GC_arrays {
 
 #define GC_heapsize_on_gc_disable GC_arrays._heapsize_on_gc_disable
   word _heapsize_on_gc_disable;
+
+#define GC_heapsize_at_forced_unmap GC_arrays._heapsize_at_forced_unmap
+  word _heapsize_at_forced_unmap; /*< accessed with the allocator lock held */
 
 #define GC_last_heap_addr GC_arrays._last_heap_addr
   word _last_heap_addr;
@@ -1636,6 +1674,42 @@ struct _GC_arrays {
   word _greatest_real_heap_addr;
 #endif
 
+#define GC_used_heap_size_after_full GC_arrays._used_heap_size_after_full
+  word _used_heap_size_after_full;
+
+  /* Number of explicitly managed bytes of storage at last collection. */
+#define GC_non_gc_bytes_at_gc GC_arrays._non_gc_bytes_at_gc
+  word _non_gc_bytes_at_gc;
+
+  /* The number of extra calls to `GC_mark_some` that we have made. */
+#define GC_mark_deficit GC_arrays._mark_deficit
+  size_t _mark_deficit;
+
+#ifndef NO_BLACK_LISTING
+  /*
+   * Counter of the cases when found block by `GC_allochblk_nth` is
+   * black-listed completely.
+   */
+#  define GC_drop_blacklisted_count GC_arrays._drop_blacklisted_count
+  unsigned _drop_blacklisted_count;
+
+  /* Number of warnings suppressed so far. */
+#  define GC_large_alloc_warn_suppressed GC_arrays._large_alloc_warn_suppressed
+  long _large_alloc_warn_suppressed;
+
+  /* Non-stack false references seen at last full collection. */
+#  define GC_old_normal_bl GC_arrays._old_normal_bl
+  word *_old_normal_bl;
+  /* Non-stack false references seen since last full collection. */
+#  define GC_incomplete_normal_bl GC_arrays._incomplete_normal_bl
+  word *_incomplete_normal_bl;
+
+#  define GC_old_stack_bl GC_arrays._old_stack_bl
+#  define GC_incomplete_stack_bl GC_arrays._incomplete_stack_bl
+  word *_old_stack_bl;
+  word *_incomplete_stack_bl;
+#endif
+
   /* The limits of stack for `GC_mark_some()` and friends. */
 #define GC_mark_stack GC_arrays._mark_stack
 #define GC_mark_stack_limit GC_arrays._mark_stack_limit
@@ -1650,6 +1724,19 @@ struct _GC_arrays {
 #ifdef PARALLEL_MARK
   /* Updated only with the mark lock held, but read asynchronously. */
   mse *volatile _mark_stack_top;
+
+#  define GC_mark_no GC_arrays._mark_no
+  word _mark_no; /*< protected by the mark lock */
+
+  /*
+   * Number of bytes of memory allocated since we released the allocator lock.
+   * Instead of reacquiring the allocator lock just to add this in, we add it
+   * in the next time we reacquire the allocator lock.  (Atomically adding it
+   * does not work, since we would have to atomically update it in
+   * `GC_malloc`, which is too expensive.)
+   */
+#  define GC_bytes_allocd_tmp GC_arrays._bytes_allocd_tmp
+  volatile AO_t _bytes_allocd_tmp;
 #else
   mse *_mark_stack_top;
 #endif
@@ -1676,6 +1763,21 @@ struct _GC_arrays {
 #    define GC_fault_handler_lock GC_arrays._fault_handler_lock
   volatile AO_TS_t _fault_handler_lock;
 #  endif
+#  if !(defined(GC_ALWAYS_MULTITHREADED) \
+        && (defined(USE_PTHREAD_LOCKS) || defined(USE_SPIN_LOCK)))
+#    define GC_need_to_lock GC_arrays._need_to_lock
+  GC_bool _need_to_lock;
+#  endif
+
+#  ifdef GC_ASSERTIONS
+#    define GC_thr_initialized GC_arrays._thr_initialized
+  GC_bool _thr_initialized;
+#  endif
+#  if defined(GC_USE_DLOPEN_WRAP) && !defined(GC_WIN32_THREADS) \
+      && !defined(PLATFORM_THREADS) && !defined(SN_TARGET_PSP2)
+#    define GC_syms_wrap_initialized GC_arrays._syms_wrap_initialized
+  GC_bool _syms_wrap_initialized;
+#  endif
 
 #  define GC_roots_were_cleared GC_arrays._roots_were_cleared
   GC_bool _roots_were_cleared;
@@ -1692,6 +1794,10 @@ struct _GC_arrays {
 #  endif
 #endif
 
+  /* Has `GC_init()` been run? */
+#define GC_is_initialized GC_arrays._is_initialized
+  GC_bool _is_initialized;
+
   /*
    * Do we need a larger mark stack?  May be set by client-supplied
    * mark routines.
@@ -1703,11 +1809,92 @@ struct _GC_arrays {
 #define GC_objects_are_marked GC_arrays._objects_are_marked
   GC_bool _objects_are_marked;
 
+#ifndef GC_DISABLE_INCREMENTAL
+#  define GC_should_start_incremental_collection \
+    GC_arrays._should_start_incremental_collection
+  GC_bool _should_start_incremental_collection;
+#endif
+
+#ifndef GC_NO_FINALIZATION
+  /* Avoid the work if unreachable finalizable objects are not used. */
+  /* TODO: Turn this variable into a counter. */
+#  define GC_need_unreachable_finalization \
+    GC_arrays._need_unreachable_finalization
+  GC_bool _need_unreachable_finalization;
+#endif
+
+#ifndef DONT_USE_ATEXIT
+#  ifdef SMALL_CONFIG
+#    define GC_skip_collect_atexit FALSE
+#  else
+  /*
+   * A dedicated variable to avoid a garbage collection on abort.
+   * `GC_find_leak` cannot be used for this purpose as otherwise
+   * TSan finds a data race (between `GC_default_on_abort` and, e.g.,
+   * `GC_finish_collection`).
+   */
+#    define GC_skip_collect_atexit GC_arrays._skip_collect_atexit
+  GC_bool _skip_collect_atexit;
+#  endif
+#endif
+
+#if defined(NO_FIND_LEAK) && defined(SHORT_DBG_HDRS)
+#  define GC_debugging_initialized GC_arrays._debugging_initialized
+  GC_bool _debugging_initialized;
+#  define GC_debugging_started FALSE
+#else
+#  define GC_debugging_initialized GC_debugging_started
+  /* `GC_debug_malloc()` has been called, once at least. */
+#  define GC_debugging_started GC_arrays._debugging_started
+  GC_bool _debugging_started;
+
+#  define GC_have_errors GC_arrays._have_errors
+#  ifdef AO_HAVE_store
+  volatile AO_t _have_errors;
+#  else
+  GC_bool _have_errors;
+#  endif
+#endif
+
 #define GC_explicit_typing_initialized GC_arrays._explicit_typing_initialized
 #ifdef AO_HAVE_load_acquire
   volatile AO_t _explicit_typing_initialized;
 #else
   GC_bool _explicit_typing_initialized;
+#endif
+
+  /* Indicate whether a full collection due to heap growth is needed. */
+#define GC_need_full_gc GC_arrays._need_full_gc
+  GC_bool _need_full_gc;
+
+#ifndef NO_CLOCK
+  /*
+   * Do performance measurements if set to true (e.g., accumulation of the
+   * total time of full collections).
+   */
+#  define GC_measure_performance GC_arrays._measure_performance
+  GC_bool _measure_performance;
+
+  /*
+   * Variables for world-stop average delay time statistic computation.
+   * `GC_world_stopped_total_divisor` is incremented every world stop and
+   * halved when reached its maximum (or upon `GC_world_stopped_total_time`
+   * overflow).  In milliseconds.
+   */
+  /* TODO: Store the nanosecond part. */
+#  define GC_world_stopped_total_time GC_arrays._world_stopped_total_time
+#  define GC_world_stopped_total_divisor GC_arrays._world_stopped_total_divisor
+  unsigned _world_stopped_total_time;
+  unsigned _world_stopped_total_divisor;
+#endif
+
+#ifndef NO_FIND_LEAK
+#  define GC_n_leaked GC_arrays._n_leaked
+  unsigned _n_leaked;
+#endif
+#ifndef SHORT_DBG_HDRS
+#  define GC_n_smashed GC_arrays._n_smashed
+  unsigned _n_smashed;
 #endif
 
   /* Number of bytes in the accessible composite objects. */
@@ -1721,6 +1908,22 @@ struct _GC_arrays {
   /* GC number of latest successful `GC_expand_hp_inner()` call. */
 #define GC_last_heap_growth_gc_no GC_arrays._last_heap_growth_gc_no
   word _last_heap_growth_gc_no;
+
+  /*
+   * Number of bytes of memory reclaimed minus the number of bytes originally
+   * on free lists that we had to drop.  Protected by the allocator lock.
+   */
+#define GC_bytes_found GC_arrays._bytes_found
+  GC_signed_word _bytes_found;
+
+#ifndef GC_GET_HEAP_USAGE_NOT_NEEDED
+  /*
+   * Number of bytes reclaimed before this collection cycle; used for
+   * statistics only.
+   */
+#  define GC_reclaimed_bytes_before_gc GC_arrays._reclaimed_bytes_before_gc
+  word _reclaimed_bytes_before_gc;
+#endif
 
 #ifdef USE_MUNMAP
 #  define GC_unmapped_bytes GC_arrays._unmapped_bytes
@@ -1759,6 +1962,23 @@ struct _GC_arrays {
   ptr_t _trace_ptr;
 #endif
 
+#if !defined(ALWAYS_SMALL_CLEAR_STACK) && !defined(STACK_NOT_SCANNED) \
+    && !defined(THREADS)
+  /*
+   * Coolest stack pointer value from which we have already cleared
+   * the stack.
+   */
+#  define GC_min_sp GC_arrays._min_sp
+  ptr_t _min_sp;
+
+  /*
+   * The "hottest" stack pointer value we have seen recently.
+   * Degrades over time.
+   */
+#  define GC_high_water GC_arrays._high_water
+  ptr_t _high_water;
+#endif
+
 #if CPP_PTRSZ > CPP_WORDSZ
 #  define GC_noop_sink_ptr GC_arrays._noop_sink_ptr
   volatile ptr_t _noop_sink_ptr;
@@ -1769,6 +1989,16 @@ struct _GC_arrays {
   volatile AO_t _noop_sink;
 #else
   volatile word _noop_sink;
+#endif
+
+#if !defined(SMALL_CONFIG) && !defined(GC_NO_FINALIZATION)
+  /* Saved number of disappearing links for stats printing. */
+#  define GC_old_dl_entries GC_arrays._old_dl_entries
+  size_t _old_dl_entries;
+#  ifndef GC_LONG_REFS_NOT_NEEDED
+#    define GC_old_ll_entries GC_arrays._old_ll_entries
+  size_t _old_ll_entries;
+#  endif
 #endif
 
 #define GC_mark_stack_size GC_arrays._mark_stack_size
@@ -1831,10 +2061,38 @@ struct _GC_arrays {
   size_t _trace_buf_pos; /*< an index in the circular buffer */
 #endif
 
+  /*
+   * How many consecutive collection/expansion failures?
+   * Reset by `GC_allochblk()`.
+   */
+#define GC_alloc_fail_count GC_arrays._alloc_fail_count
+  unsigned _alloc_fail_count;
+
 #ifdef ENABLE_DISCLAIM
 #  define GC_finalized_kind GC_arrays._finalized_kind
   unsigned _finalized_kind;
 #endif
+
+#ifndef NO_CLOCK
+#  define GC_full_gc_total_time GC_arrays._full_gc_total_time
+#  define GC_stopped_mark_total_time GC_arrays._stopped_mark_total_time
+#  define GC_full_gc_total_ns_frac GC_arrays._full_gc_total_ns_frac
+#  define GC_stopped_mark_total_ns_frac GC_arrays._stopped_mark_total_ns_frac
+  unsigned long _full_gc_total_time; /*< in ms, may wrap */
+  unsigned long _stopped_mark_total_time;
+  unsigned32 _full_gc_total_ns_frac; /*< fraction of 1 ms */
+  unsigned32 _stopped_mark_total_ns_frac;
+#endif
+
+#ifdef GC_WIN32_THREADS
+  /* Largest index in `dll_thread_table` that was ever used. */
+#  define GC_max_thread_index GC_arrays._max_thread_index
+  volatile LONG _max_thread_index;
+#endif
+
+  /* Total size of registered root sections. */
+#define GC_root_size GC_arrays._root_size
+  word _root_size;
 
   /* `GC_static_roots[0..n_root_sets-1]` contains the valid root sets. */
 #define n_root_sets GC_arrays._n_root_sets
@@ -1873,6 +2131,53 @@ struct _GC_arrays {
    */
 #define GC_modws_valid_offsets GC_arrays._modws_valid_offsets
   char _modws_valid_offsets[sizeof(ptr_t)];
+
+#ifdef MAKE_BACK_GRAPH
+  /* Points to never-used `back_edges` space. */
+#  define GC_n_back_edge_structs GC_arrays._n_back_edge_structs
+  int _n_back_edge_structs;
+
+#  define GC_back_edge_space GC_arrays._back_edge_space
+  struct back_edges_s *_back_edge_space;
+
+  /* Pointer to free list of deallocated `back_edges` structures. */
+#  define GC_avail_back_edges GC_arrays._avail_back_edges
+  struct back_edges_s *_avail_back_edges;
+
+  /*
+   * Table of objects that are currently on the depth-first search stack.
+   * Only objects with in-degree one are in this table.  Other objects are
+   * identified using `HEIGHT_IN_PROGRESS`.
+   */
+  /* FIXME: This data structure needs improvement. */
+#  define GC_backgraph_in_progress_space GC_arrays._backgraph_in_progress_space
+#  define GC_backgraph_in_progress_size GC_arrays._backgraph_in_progress_size
+#  define GC_backgraph_n_in_progress GC_arrays._backgraph_n_in_progress
+  ptr_t *_backgraph_in_progress_space;
+  size_t _backgraph_in_progress_size;
+  size_t _backgraph_n_in_progress;
+
+#  define GC_backgraph_max_deepest_h GC_arrays._backgraph_max_deepest_h
+#  define GC_backgraph_deepest_height GC_arrays._backgraph_deepest_height
+#  define GC_backgraph_deepest_obj GC_arrays._backgraph_deepest_obj
+  word _backgraph_max_deepest_h;
+  word _backgraph_deepest_height;
+  ptr_t _backgraph_deepest_obj;
+#endif
+
+#ifdef GC_READ_ENV_FILE
+  /*
+   * The content of the `.gc.env` file with CR and LF replaced to '\0'.
+   * `NULL` if the file is missing or empty.  Otherwise, always ends
+   * with '\0' (designating the end of the file).
+   */
+#  define GC_envfile_content GC_arrays._envfile_content
+  char *_envfile_content;
+
+  /* Length of `GC_envfile_content` (if non-`NULL`). */
+#  define GC_envfile_length GC_arrays._envfile_length
+  size_t _envfile_length;
+#endif
 
 #ifndef ANY_MSWIN
   /*
@@ -2007,6 +2312,16 @@ struct _GC_arrays {
    */
 #define GC_top_index GC_arrays._top_index
   bottom_index *_top_index[TOP_SZ];
+
+#ifdef ECOS
+#  ifndef ECOS_GC_MEMORY_SIZE
+#    define ECOS_GC_MEMORY_SIZE (448 * 1024)
+#  endif
+#  define GC_ecos_brk_idx GC_arrays._ecos_brk_idx
+#  define GC_ecos_memory GC_arrays._ecos_memory
+  size_t _ecos_brk_idx;
+  char _ecos_memory[ECOS_GC_MEMORY_SIZE];
+#endif
 };
 
 GC_API_PRIV struct _GC_arrays GC_arrays;
@@ -2179,9 +2494,6 @@ GC_INNER GC_bool GC_is_heap_base(const void *p);
 extern struct hblk *GC_hblkfreelist[];
 extern word GC_free_bytes[];
 #endif
-
-/* Total size of registered root sections. */
-GC_EXTERN word GC_root_size;
 
 /* This is used by `GC_do_blocking()`. */
 struct blocking_data {
@@ -2937,9 +3249,6 @@ GC_INNER GC_bool GC_try_to_collect_inner(GC_stop_func stop_func);
 GC_EXTERN GC_bool GC_in_thread_creation;
 #endif
 
-/* Has `GC_init()` been run? */
-GC_EXTERN GC_bool GC_is_initialized;
-
 /*
  * Do `n_blocks` units of a garbage collection work, if appropriate.
  * A unit is an amount appropriate for `HBLKSIZE` bytes of allocation.
@@ -3051,19 +3360,14 @@ GC_INNER ptr_t GC_os_get_mem(size_t bytes);
 
 #if defined(NO_FIND_LEAK) && defined(SHORT_DBG_HDRS)
 #  define GC_print_all_errors() (void)0
-#  define GC_debugging_started FALSE
 #  define GC_check_heap() (void)0
 #  define GC_print_all_smashed() (void)0
 #else
-
 /*
  * Print smashed and leaked objects, if any.  Clear the lists of such
  * objects.  Called without the allocator lock held.
  */
 GC_INNER void GC_print_all_errors(void);
-
-/* `GC_debug_malloc()` has been called, once at least. */
-GC_EXTERN GC_bool GC_debugging_started;
 
 /*
  * Check that all objects in the heap with debugging info are intact.
@@ -3106,17 +3410,12 @@ GC_EXTERN GC_bool GC_findleak_delay_free;
 
 #if defined(NO_FIND_LEAK) && defined(SHORT_DBG_HDRS)
 #  define get_have_errors() FALSE
-
 #elif defined(AO_HAVE_store)
-GC_EXTERN volatile AO_t GC_have_errors;
 #  define GC_SET_HAVE_ERRORS() AO_store(&GC_have_errors, (AO_t)TRUE)
 #  define get_have_errors() \
     ((GC_bool)AO_load(&GC_have_errors)) /*< no barrier */
-
 #else
-GC_EXTERN GC_bool GC_have_errors;
 #  define GC_SET_HAVE_ERRORS() (void)(GC_have_errors = TRUE)
-
 /*
  * We saw a smashed or leaked object.  Call error printing routine
  * occasionally.  It is OK to read it not acquiring the allocator lock.
@@ -3522,26 +3821,6 @@ void GC_err_puts(const char *s);
  * to nearest value.
  */
 #define TO_KiB_UL(v) ((unsigned long)(((v) + ((1 << 9) - 1)) >> 10))
-
-/*
- * How many consecutive collection/expansion failures?
- * Reset by `GC_allochblk()`.
- */
-GC_EXTERN unsigned GC_fail_count;
-
-/*
- * Number of bytes of memory reclaimed minus the number of bytes originally
- * on free lists that we had to drop.  Protected by the allocator lock.
- */
-GC_EXTERN GC_signed_word GC_bytes_found;
-
-#ifndef GC_GET_HEAP_USAGE_NOT_NEEDED
-/*
- * Number of bytes reclaimed before this collection cycle; used for
- * statistics only.
- */
-GC_EXTERN word GC_reclaimed_bytes_before_gc;
-#endif
 
 #ifdef USE_MUNMAP
 GC_EXTERN unsigned GC_unmap_threshold; /*< defined in `alloc.c` file */
@@ -3960,8 +4239,6 @@ GC_EXTERN GC_signed_word GC_fl_builder_count;
 
 GC_INNER void GC_notify_all_marker(void);
 GC_INNER void GC_wait_marker(void);
-
-GC_EXTERN word GC_mark_no; /*< protected by the mark lock */
 
 /*
  * Try to help out parallel marker, if it is running, for mark cycle

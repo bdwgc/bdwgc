@@ -947,15 +947,6 @@ find_nonbl_hblk(struct hblk *last_hbp, size_t size_remain,
 }
 
 #ifndef NO_BLACK_LISTING
-/* Number of warnings suppressed so far. */
-STATIC long GC_large_alloc_warn_suppressed = 0;
-
-/*
- * Counter of the cases when found block by `GC_allochblk_nth` is
- * black-listed completely.
- */
-STATIC unsigned GC_drop_blacklisted_count = 0;
-
 /*
  * Allocate and drop the block in small chunks, to maximize the chance
  * that we will recover some later.  `hhdr` should correspond to `hbp`.
@@ -1205,7 +1196,7 @@ retry:
    * We just successfully allocated a block.  Restart count of consecutive
    * failures.
    */
-  GC_fail_count = 0;
+  GC_alloc_fail_count = 0;
 
   GC_large_free_bytes -= size_needed;
   GC_ASSERT(IS_MAPPED(hhdr));
