@@ -1347,6 +1347,25 @@ test_tinyfl(void)
 #    define TREE_HEIGHT 16
 #  endif
 #endif
+
+extern void GC_CALL GC_set_incremental(GC_bool);
+extern void GC_set_force_full_gc_internal(GC_bool);
+
+static void
+gc_set_incremental_test(void)
+{
+  if (GC_incremental == FALSE)
+  {
+    GC_set_incremental(TRUE);
+  }
+  else
+  {
+    GC_set_incremental(FALSE);
+  }
+
+  GC_set_force_full_gc_internal(TRUE);
+}
+
 static void
 tree_test(void)
 {
@@ -1914,6 +1933,7 @@ run_one_test(void)
     dropped_something = 1;
 #  endif
     tree_test();
+    gc_set_incremental_test();
 #  ifndef NO_TYPED_TEST
     typed_test();
 #  endif
@@ -1958,6 +1978,7 @@ run_one_test(void)
 #  endif
 #endif /* !NO_TYPED_TEST */
   tree_test();
+  gc_set_incremental_test();
 #ifdef TEST_WITH_SYSTEM_MALLOC
   free(checkOOM(calloc(1, 1)));
   free(checkOOM(realloc(NULL, 64)));
