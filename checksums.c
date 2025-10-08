@@ -35,7 +35,7 @@ typedef struct {
   struct hblk *block;
 } page_entry;
 
-page_entry GC_sums[NSUMS];
+page_entry GC_sums[NSUMS] = { { FALSE, 0, 0, NULL } };
 
 /* Record of pages on which we saw a write fault. */
 STATIC word GC_faulted[NSUMS] = { 0 };

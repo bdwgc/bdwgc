@@ -121,7 +121,7 @@ GC_add_ext_descriptor(const word *bm, size_t nbits)
 }
 
 /* Table of bitmap descriptors for `n` pointer-long all-pointer objects. */
-STATIC GC_descr GC_bm_table[CPP_WORDSZ / 2];
+STATIC GC_descr GC_bm_table[CPP_WORDSZ / 2] = { 0 };
 
 /*
  * Return a descriptor for the concatenation of 2 objects, each one is

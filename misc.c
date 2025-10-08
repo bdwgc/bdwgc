@@ -110,7 +110,7 @@ GC_INNER GC_bool GC_dump_regularly = FALSE;
 #  endif
 #  ifndef NO_CLOCK
 /* The time that the collector was initialized at. */
-STATIC CLOCK_TYPE GC_init_time;
+STATIC CLOCK_TYPE GC_init_time = CLOCK_TYPE_INITIALIZER;
 #  endif
 #endif /* !NO_DEBUGGING */
 
