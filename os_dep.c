@@ -1988,13 +1988,14 @@ GC_register_root_section(ptr_t static_root)
  */
 
 /* Note: initialized to approximate largest root size. */
-STATIC size_t GC_max_root_size = 100000;
+#    define GC_INITIAL_MAX_ROOT_SIZE 100000
+STATIC size_t GC_max_root_size = GC_INITIAL_MAX_ROOT_SIZE;
 
 /* In the long run, a better data structure would also be nice... */
 STATIC struct GC_malloc_heap_list {
   void *allocation_base;
   struct GC_malloc_heap_list *next;
-} *GC_malloc_heap_l = 0;
+} *GC_malloc_heap_l = NULL;
 
 /*
  * Is `p` the base of one of the `malloc` heap sections we already
@@ -2075,6 +2076,7 @@ GC_free_malloc_heap_list(void)
   struct GC_malloc_heap_list *q = GC_malloc_heap_l;
 
   GC_malloc_heap_l = NULL;
+  GC_max_root_size = GC_INITIAL_MAX_ROOT_SIZE;
   while (q != NULL) {
     struct GC_malloc_heap_list *next = q->next;
 
