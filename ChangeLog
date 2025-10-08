@@ -233,7 +233,6 @@
 * Eliminate 'struct treenode member is never used' cppcheck warning
 * Eliminate 'volatile-qualified arg parameter' g++ warning in mach_dep.c
 * Eliminate code duplication in GC_PREFETCH_FOR_WRITE generic definition
-* Eliminate data race FP reported in need_unreachable_finalization by TSan
 * Eliminate duplicate use of GC_obj_kinds[k] in GC_generic_malloc_many
 * Enable HBLKSIZE values up to 64K
 * Enable prefetch for MSVC (Windows/x86 and Windows/x64)
