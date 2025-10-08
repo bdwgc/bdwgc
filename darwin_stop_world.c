@@ -488,7 +488,7 @@ struct GC_mach_thread {
   GC_bool suspended;
 };
 
-struct GC_mach_thread GC_mach_threads[GC_MAX_MACH_THREADS];
+STATIC struct GC_mach_thread GC_mach_threads[GC_MAX_MACH_THREADS];
 STATIC int GC_mach_threads_count = 0;
 /* FIXME: It is better to implement `GC_mach_threads` as a hash set. */
 
