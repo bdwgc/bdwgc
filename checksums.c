@@ -87,7 +87,7 @@ unsigned long GC_n_dirty = 0;
 STATIC void
 GC_update_check_page(struct hblk *h, int index)
 {
-  page_entry *pe = GC_sums + index;
+  page_entry *pe = &GC_sums[index];
   hdr *hhdr = HDR(h);
 
   if (pe->block != 0 && pe->block != h + OFFSET)
@@ -158,11 +158,11 @@ GC_check_dirty(void)
     GC_err_printf("Found %d dirty bit errors (%d were faulted)\n",
                   GC_n_dirty_errors, GC_n_faulted_dirty_errors);
   }
-  for (i = 0; i < GC_n_faulted; ++i) {
+  if (GC_n_faulted > 0) {
     /* Do not expose block addresses to the garbage collector. */
-    GC_faulted[i] = 0;
+    BZERO(GC_faulted, GC_n_faulted * sizeof(word));
+    GC_n_faulted = 0;
   }
-  GC_n_faulted = 0;
 }
 
 #endif /* CHECKSUMS */
