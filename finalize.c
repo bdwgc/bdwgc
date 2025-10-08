@@ -1408,10 +1408,10 @@ static word last_finalizer_notification = 0;
 GC_INNER void
 GC_notify_or_invoke_finalizers(void)
 {
-  GC_finalizer_notifier_proc notifier_fn = 0;
 #  if defined(KEEP_BACK_PTRS) || defined(MAKE_BACK_GRAPH)
-  static word last_back_trace_gc_no = 1; /*< skip first one */
+  static word last_back_trace_gc_no = 0;
 #  endif
+  GC_finalizer_notifier_proc notifier_fn = 0;
 
 #  if defined(THREADS) && !defined(KEEP_BACK_PTRS) && !defined(MAKE_BACK_GRAPH)
   /* Quick check (while unlocked) for an empty finalization queue. */
@@ -1420,12 +1420,13 @@ GC_notify_or_invoke_finalizers(void)
 #  endif
   LOCK();
 
+#  if defined(KEEP_BACK_PTRS) || defined(MAKE_BACK_GRAPH)
   /*
    * This is a convenient place to generate backtraces if appropriate,
    * since that code is not callable with the allocator lock.
    */
-#  if defined(KEEP_BACK_PTRS) || defined(MAKE_BACK_GRAPH)
-  if (GC_gc_no != last_back_trace_gc_no) {
+  if (GC_gc_no != last_back_trace_gc_no
+      && LIKELY(GC_gc_no > 1) /*< skip initial collection */) {
 #    ifdef KEEP_BACK_PTRS
     static GC_bool bt_in_progress = FALSE;
 
