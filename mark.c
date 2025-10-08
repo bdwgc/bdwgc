@@ -374,7 +374,7 @@ push_roots_and_advance(GC_bool push_all, ptr_t cold_gc_frame)
     GC_mark_state = MS_ROOTS_PUSHED;
 }
 
-STATIC GC_on_mark_stack_empty_proc GC_on_mark_stack_empty;
+STATIC GC_on_mark_stack_empty_proc GC_on_mark_stack_empty = 0;
 
 GC_API void GC_CALL
 GC_set_on_mark_stack_empty(GC_on_mark_stack_empty_proc fn)

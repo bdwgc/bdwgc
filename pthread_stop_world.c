@@ -152,7 +152,7 @@ static sigset_t suspend_handler_mask;
  * they will see another suspend signal before they are expected to
  * stop (unless they have stopped voluntarily).
  */
-STATIC volatile AO_t GC_stop_count;
+STATIC volatile AO_t GC_stop_count = 0;
 
 STATIC GC_bool GC_retry_signals = FALSE;
 
