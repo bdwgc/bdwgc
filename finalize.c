@@ -1295,8 +1295,11 @@ GC_finalize_all(void)
 {
   LOCK();
   while (GC_fo_entries > 0) {
+    unsigned saved_interrupt_finalizers;
+
     GC_enqueue_all_finalizers();
-    /* Reset. */
+    /* Reset temporarily. */
+    saved_interrupt_finalizers = GC_interrupt_finalizers;
     GC_interrupt_finalizers = 0;
     UNLOCK();
     GC_invoke_finalizers();
@@ -1306,6 +1309,7 @@ GC_finalize_all(void)
      * But otherwise we do not have a great way to wait for them to run.
      */
     LOCK();
+    GC_interrupt_finalizers = saved_interrupt_finalizers;
   }
   UNLOCK();
 }
