@@ -74,13 +74,6 @@ __thread unsigned char GC_cancel_disable_count = 0;
 
 struct _GC_arrays GC_arrays /* `= { 0 }` */;
 
-#ifdef SEPARATE_GLOBALS
-void *GC_objfreelist[MAXOBJGRANULES + 1] = { NULL };
-void *GC_aobjfreelist[MAXOBJGRANULES + 1] = { NULL };
-
-word GC_bytes_allocd = 0;
-#endif
-
 GC_INNER unsigned GC_n_mark_procs = GC_RESERVED_MARK_PROCS;
 
 GC_INNER unsigned GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
@@ -1390,10 +1383,6 @@ GC_init(void)
 #endif
   GC_exclude_static_roots_inner(beginGC_arrays, endGC_arrays);
   GC_exclude_static_roots_inner(beginGC_obj_kinds, endGC_obj_kinds);
-#ifdef SEPARATE_GLOBALS
-  GC_exclude_static_roots_inner(beginGC_objfreelist, endGC_objfreelist);
-  GC_exclude_static_roots_inner(beginGC_aobjfreelist, endGC_aobjfreelist);
-#endif
 #if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX) && defined(THREADS)
   /*
    * TODO: `USE_PROC_FOR_LIBRARIES` with LinuxThreads performs poorly!
@@ -1666,11 +1655,6 @@ GC_deinit(void)
     return;
 
   BZERO(&GC_arrays, sizeof(GC_arrays)); /*< clears GC_is_initialized */
-#  ifdef SEPARATE_GLOBALS
-  GC_bytes_allocd = 0;
-  BZERO(GC_objfreelist, sizeof(GC_objfreelist));
-  BZERO(GC_aobjfreelist, sizeof(GC_aobjfreelist));
-#  endif
   GC_gc_no = 0;
   GC_dont_gc = FALSE;
   GC_non_gc_bytes = 0;

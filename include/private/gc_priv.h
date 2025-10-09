@@ -1590,11 +1590,9 @@ struct _GC_arrays {
 #define GC_our_mem_bytes GC_arrays._our_mem_bytes
   word _our_mem_bytes;
 
-#ifndef SEPARATE_GLOBALS
   /* Number of bytes allocated during this collection cycle. */
-#  define GC_bytes_allocd GC_arrays._bytes_allocd
+#define GC_bytes_allocd GC_arrays._bytes_allocd
   word _bytes_allocd;
-#endif
 
   /*
    * Number of black-listed bytes dropped during GC cycle as a result
@@ -2202,15 +2200,13 @@ struct _GC_arrays {
 #  define SAVE_CALLERS_TO_LAST_STACK() (void)0
 #endif
 
-#ifndef SEPARATE_GLOBALS
   /* Free list for `NORMAL` objects. */
-#  define GC_objfreelist GC_arrays._objfreelist
+#define GC_objfreelist GC_arrays._objfreelist
   void *_objfreelist[MAXOBJGRANULES + 1];
 
   /* Free list for atomic objects. */
-#  define GC_aobjfreelist GC_arrays._aobjfreelist
+#define GC_aobjfreelist GC_arrays._aobjfreelist
   void *_aobjfreelist[MAXOBJGRANULES + 1];
-#endif
 
   /*
    * Uncollectible but traced objects.  Objects on this and `_auobjfreelist`
@@ -2383,26 +2379,6 @@ GC_EXTERN struct obj_kind {
 
 #define beginGC_obj_kinds ((ptr_t)(&GC_obj_kinds[0]))
 #define endGC_obj_kinds (beginGC_obj_kinds + sizeof(GC_obj_kinds))
-
-/*
- * Variables `GC_bytes_allocd`, `GC_objfreelist` and `GC_aobjfreelist`
- * are located inside `GC_arrays` by default.
- */
-#ifdef SEPARATE_GLOBALS
-
-/* Number of bytes allocated during this collection cycle. */
-extern word GC_bytes_allocd;
-
-/* The free list for `NORMAL` objects. */
-extern void *GC_objfreelist[MAXOBJGRANULES + 1];
-#  define beginGC_objfreelist ((ptr_t)(&GC_objfreelist[0]))
-#  define endGC_objfreelist (beginGC_objfreelist + sizeof(GC_objfreelist))
-
-/* The free list for atomic (`PTRFREE`) objects. */
-extern void *GC_aobjfreelist[MAXOBJGRANULES + 1];
-#  define beginGC_aobjfreelist ((ptr_t)(&GC_aobjfreelist[0]))
-#  define endGC_aobjfreelist (beginGC_aobjfreelist + sizeof(GC_aobjfreelist))
-#endif /* SEPARATE_GLOBALS */
 
 /* The predefined kinds. */
 #define PTRFREE GC_I_PTRFREE
