@@ -2394,12 +2394,12 @@ GC_EXTERN struct obj_kind {
 extern word GC_bytes_allocd;
 
 /* The free list for `NORMAL` objects. */
-extern ptr_t GC_objfreelist[MAXOBJGRANULES + 1];
+extern void *GC_objfreelist[MAXOBJGRANULES + 1];
 #  define beginGC_objfreelist ((ptr_t)(&GC_objfreelist[0]))
 #  define endGC_objfreelist (beginGC_objfreelist + sizeof(GC_objfreelist))
 
 /* The free list for atomic (`PTRFREE`) objects. */
-extern ptr_t GC_aobjfreelist[MAXOBJGRANULES + 1];
+extern void *GC_aobjfreelist[MAXOBJGRANULES + 1];
 #  define beginGC_aobjfreelist ((ptr_t)(&GC_aobjfreelist[0]))
 #  define endGC_aobjfreelist (beginGC_aobjfreelist + sizeof(GC_aobjfreelist))
 #endif /* SEPARATE_GLOBALS */
