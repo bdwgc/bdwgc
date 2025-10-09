@@ -78,6 +78,13 @@
 
 GC_FAR struct _GC_arrays GC_arrays /* = { 0 } */;
 
+#ifdef SEPARATE_GLOBALS
+void *GC_objfreelist[MAXOBJGRANULES + 1] = { NULL };
+void *GC_aobjfreelist[MAXOBJGRANULES + 1] = { NULL };
+
+word GC_bytes_allocd = 0;
+#endif
+
 GC_INNER GC_bool GC_debugging_started = FALSE;
                 /* defined here so we don't have to load dbg_mlc.o */
 
