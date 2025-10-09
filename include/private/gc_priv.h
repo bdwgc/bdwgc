@@ -1513,12 +1513,12 @@ GC_EXTERN struct obj_kind {
 #ifdef SEPARATE_GLOBALS
   extern word GC_bytes_allocd;
         /* Number of bytes allocated during this collection cycle.      */
-  extern ptr_t GC_objfreelist[MAXOBJGRANULES+1];
+  extern void *GC_objfreelist[MAXOBJGRANULES+1];
                           /* free list for NORMAL objects */
 # define beginGC_objfreelist ((ptr_t)(&GC_objfreelist[0]))
 # define endGC_objfreelist (beginGC_objfreelist + sizeof(GC_objfreelist))
 
-  extern ptr_t GC_aobjfreelist[MAXOBJGRANULES+1];
+  extern void *GC_aobjfreelist[MAXOBJGRANULES+1];
                           /* free list for atomic (PTRFREE) objects     */
 # define beginGC_aobjfreelist ((ptr_t)(&GC_aobjfreelist[0]))
 # define endGC_aobjfreelist (beginGC_aobjfreelist + sizeof(GC_aobjfreelist))
