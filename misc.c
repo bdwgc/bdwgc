@@ -75,6 +75,13 @@
 
 GC_FAR struct _GC_arrays GC_arrays /* = { 0 } */;
 
+#ifdef SEPARATE_GLOBALS
+void *GC_objfreelist[MAXOBJGRANULES + 1] = { NULL };
+void *GC_aobjfreelist[MAXOBJGRANULES + 1] = { NULL };
+
+word GC_bytes_allocd = 0;
+#endif
+
 GC_INNER unsigned GC_n_mark_procs = GC_RESERVED_MARK_PROCS;
 
 GC_INNER unsigned GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
