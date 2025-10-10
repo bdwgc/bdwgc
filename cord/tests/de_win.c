@@ -300,7 +300,9 @@ WndProc(HWND hwnd_arg, UINT message, WPARAM wParam, LPARAM lParam)
 
   case WM_DESTROY:
     PostQuitMessage(0);
+#  ifndef GC_NO_DEINIT
     GC_win32_free_heap();
+#  endif
     return 0;
 
   case WM_PAINT:

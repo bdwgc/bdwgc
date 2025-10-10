@@ -2066,6 +2066,7 @@ GC_add_current_malloc_heap(void)
   GC_malloc_heap_l = new_l;
 }
 
+#    ifndef GC_NO_DEINIT
 /*
  * Free all the linked list nodes.  Could be invoked at process exit
  * to avoid memory leak complains of a dynamic code analysis tool.
@@ -2084,6 +2085,7 @@ GC_free_malloc_heap_list(void)
     q = next;
   }
 }
+#    endif
 #  endif /* USE_WINALLOC && !REDIRECT_MALLOC */
 
 GC_INNER GC_bool
@@ -2797,7 +2799,7 @@ GC_get_mem(size_t bytes)
 }
 #endif /* CYGWIN32 || MSWIN32 */
 
-#if defined(ANY_MSWIN) || defined(MSWIN_XBOX1)
+#if (defined(ANY_MSWIN) || defined(MSWIN_XBOX1)) && !defined(GC_NO_DEINIT)
 GC_API void GC_CALL
 GC_win32_free_heap(void)
 {
@@ -2831,7 +2833,7 @@ GC_win32_free_heap(void)
 #    endif
 #  endif
 }
-#endif /* ANY_MSWIN || MSWIN_XBOX1 */
+#endif
 
 #if (defined(USE_MUNMAP) || defined(MPROTECT_VDB)) && !defined(USE_WINALLOC)
 #  define ABORT_ON_REMAP_FAIL(C_msg_prefix, start_addr, len)             \

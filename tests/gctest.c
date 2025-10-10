@@ -2466,7 +2466,7 @@ main(void)
       && !defined(MSWIN32) && !defined(MSWINCE)
   GC_set_log_fd(2);
 #  endif
-#  ifdef ANY_MSWIN
+#  if defined(ANY_MSWIN) && !defined(GC_NO_DEINIT)
   GC_win32_free_heap();
 #  endif
   CRTMEM_DUMP_LEAKS();
