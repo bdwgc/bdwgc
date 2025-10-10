@@ -262,7 +262,7 @@ jobs:
         - gcc-multilib
     compiler: gcc
     env:
-    - CFLAGS_EXTRA="-m32 -D _FORTIFY_SOURCE=2"
+    - CFLAGS_EXTRA="-m32 -D _FORTIFY_SOURCE=2 -D GC_NO_DEINIT"
     - CONF_OPTIONS="--enable-gc-assertions --enable-mmap --enable-rwlock"
     - GCTEST_WITH_MPROTECT_VDB=true
   - compiler: gcc
