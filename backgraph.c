@@ -19,10 +19,9 @@
  * data structures; the code is not used during normal garbage collection.
  *
  * One restriction is that we drop all back-edges from nodes with very
- * high in-degree, and simply add them add them to a list of such
- * nodes.  They are then treated as permanent roots.  If this by itself
- * does not introduce a space leak, then such nodes cannot contribute to
- * a growing space leak.
+ * high in-degree, and simply add them to a list of such nodes.  They are
+ * then treated as permanent roots.  If this by itself does not introduce
+ * a space leak, then such nodes cannot contribute to a growing space leak.
  */
 
 #ifdef MAKE_BACK_GRAPH
