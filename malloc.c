@@ -36,11 +36,10 @@ STATIC GC_bool GC_alloc_reclaim_list(struct obj_kind *kind)
 /* was already added to lb.                                             */
 GC_INNER ptr_t GC_alloc_large(size_t lb, int k, unsigned flags)
 {
-#   define MAX_ALLOCLARGE_RETRIES 3
-    int retry_cnt = 0;
     struct hblk * h;
     word n_blocks;
     ptr_t result;
+    GC_bool retry = FALSE;
 
     GC_ASSERT(I_HOLD_LOCK());
     lb = ROUNDUP_GRANULE_SIZE(lb);
@@ -64,15 +63,9 @@ GC_INNER ptr_t GC_alloc_large(size_t lb, int k, unsigned flags)
             h = GC_allochblk(lb, k, flags);
         }
 #   endif
-    while (0 == h) {
-        /* Only a few iterations are expected at most, otherwise    */
-        /* something is wrong in one of the functions called below. */
-        if (retry_cnt > MAX_ALLOCLARGE_RETRIES)
-            ABORT("Too many retries in GC_alloc_large");
-        if (!GC_collect_or_expand(n_blocks, flags != 0, retry_cnt > 0))
-            break;
+    while (0 == h && GC_collect_or_expand(n_blocks, flags != 0, retry)) {
         h = GC_allochblk(lb, k, flags);
-        retry_cnt++;
+        retry = TRUE;
     }
     if (h == 0) {
         result = 0;

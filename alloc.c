@@ -1757,19 +1757,14 @@ GC_INNER GC_bool GC_collect_or_expand(word needed_blocks,
  */
 GC_INNER ptr_t GC_allocobj(size_t gran, int kind)
 {
-#   define MAX_ALLOCOBJ_RETRIES 3
-    int retry_cnt = 0;
     void ** flh = &(GC_obj_kinds[kind].ok_freelist[gran]);
     GC_bool tried_minor = FALSE;
+    GC_bool retry = FALSE;
 
     GC_ASSERT(I_HOLD_LOCK());
     if (gran == 0) return(0);
 
     while (*flh == 0) {
-      /* Only a few iterations are expected at most, otherwise      */
-      /* something is wrong in one of the functions called below.   */
-      if (retry_cnt > MAX_ALLOCOBJ_RETRIES)
-        ABORT("Too many retries in GC_allocobj");
       ENTER_GC();
 #     ifndef GC_DISABLE_INCREMENTAL
         if (GC_incremental && GC_time_limit != GC_TIME_UNLIMITED
@@ -1800,11 +1795,11 @@ GC_INNER ptr_t GC_allocobj(size_t gran, int kind)
             GC_collect_a_little_inner(1);
             tried_minor = TRUE;
           } else {
-            if (!GC_collect_or_expand(1, FALSE, retry_cnt > 0)) {
+            if (!GC_collect_or_expand(1, FALSE, retry)) {
               EXIT_GC();
               return(0);
             }
-            retry_cnt++;
+            retry = TRUE;
           }
           EXIT_GC();
         }
