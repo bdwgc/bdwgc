@@ -218,6 +218,7 @@ jobs:
         packages:
         - g++-multilib
         - gcc-multilib
+    dist: focal
     env:
     - CFLAGS_EXTRA="-fsanitize=address -m32 -fno-omit-frame-pointer"
     - CONF_OPTIONS="--disable-shared --enable-cplusplus --enable-munmap"
