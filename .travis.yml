@@ -57,10 +57,6 @@ jobs:
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: clang
     env:
-    - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus"
-  - compiler: clang
-    env:
     - CFLAGS_EXTRA="-D DBG_HDRS_ALL -D SHORT_DBG_HDRS -D LINT2"
     - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus"
   - compiler: gcc
@@ -135,9 +131,6 @@ jobs:
   - compiler: gcc
     env:
     - CONF_OPTIONS="--disable-gc-debug --enable-cplusplus"
-  - compiler: clang
-    env:
-    - CONF_OPTIONS="--enable-large-config --enable-cplusplus"
   - compiler: clang
     env:
     - CONF_OPTIONS="--enable-large-config --enable-cplusplus"
