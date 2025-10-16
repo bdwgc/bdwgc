@@ -16,7 +16,6 @@ jobs:
         os: [ macos-latest, ubuntu-latest, windows-latest ]
         c_compiler: [ cl, clang, gcc ]
         build_type: [ Debug, Release ]
-        gc_assertions: [ off, on ]
         exclude:
         - os: macos-latest
           c_compiler: cl
@@ -24,10 +23,6 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-latest
           c_compiler: cl
-        - build_type: Debug
-          gc_assertions: off
-        - build_type: Release
-          gc_assertions: on
         include:
         - os: windows-latest
           c_compiler: gcc
@@ -53,7 +48,6 @@ jobs:
         ${{ matrix.cmake_generator_opt }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -Denable_gc_assertions=${{ matrix.gc_assertions }}
         -S ${{ github.workspace }}
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
