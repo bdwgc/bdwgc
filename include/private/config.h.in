@@ -187,7 +187,7 @@
 /* If defined, redirect malloc to this function. */
 #undef REDIRECT_MALLOC
 
-/* If defined, redirect GC_realloc to this function. */
+/* If defined, redirect realloc to this function. */
 #undef REDIRECT_REALLOC
 
 /* The number of caller frames saved when allocating with the debugging API.
