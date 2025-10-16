@@ -1,3 +1,11 @@
+[7.2t]
+
+2025-10-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README: Bump version to 7.2t (rev. T).
+	* Makefile.am (libgc_la_LDFLAGS): Bump version-info to 2:9:1.
+	* Makefile.in: Regenerate.
+
 2025-10-16  Ivan Maidanski <ivmai@mail.ru>
 
 	* configure: Regenerate.
