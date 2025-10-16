@@ -36,7 +36,7 @@ Public License, but is not needed by, nor linked into the collector library.
 It is included here only because the atomic_ops distribution is, for
 simplicity, included in its entirety.
 
-This is version 7.2s of a conservative garbage collector for C and C++.
+This is version 7.2t of a conservative garbage collector for C and C++.
 
 You might find a more recent version of this at
 
