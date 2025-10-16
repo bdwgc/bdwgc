@@ -1,3 +1,231 @@
+2025-10-16  Ivan Maidanski <ivmai@mail.ru>
+
+	* configure: Regenerate.
+	* include/private/config.h.in: Likewise.
+
+2025-10-15  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc.h (GC_register_finalizer_ignore_self): Fix typo
+	("version of the above follows") in comment.
+
+2025-10-10  Ivan Maidanski <ivmai@mail.ru>
+
+	* backgraph.c: Fix typo ("simply add them to") in comment.
+
+2025-10-09  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_priv.h [SEPARATE_GLOBALS] (GC_objfreelist,
+	GC_aobjfreelist): Change type of element from `ptr_t` to `void *`.
+	* misc.c [SEPARATE_GLOBALS] (GC_objfreelist, GC_aobjfreelist,
+	GC_bytes_allocd): Define variable.
+
+2025-07-26  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README: Change `https://github.com/ivmai/bdwgc` to
+	`https://github.com/bdwgc/bdwgc`.
+	* configure.ac (AC_INIT): Likewise.
+	* doc/overview.html: Likewise.
+	* doc/gc.man (SEE ALSO): Likewise.
+
+2025-07-22  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gcconfig.h [I386 && DOS4GW] (pragma aux __nullarea):
+	Fix typo ("does not precede") in comment.
+
+2025-07-22  Ivan Maidanski <ivmai@mail.ru>
+
+	* reclaim.c (GC_reclaim_block): Fix typo ("an entirely empty block")
+	in comment.
+
+2025-07-22  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/cord.h (CORD_sprintf): Fix typo ("are implemented") in
+	comment.
+
+2025-07-22  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordxtra.c: Fix typo ("they also serve") in comment.
+
+2025-07-22  Ivan Maidanski <ivmai@mail.ru>
+
+	* os_dep.c [(NEED_FIND_LIMIT || UNIX_LIKE && !NO_DEBUGGING
+	|| USE_PROC_FOR_LIBRARIES && THREADS) && (SUNOS5SIGS || IRIX5 || OSF1
+	|| HURD || FREEBSD || NETBSD) && GC_IRIX_THREADS]
+	(GC_set_and_save_fault_handler): Fix typo (remove duplicate "and") in
+	comment.
+
+2025-06-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/cord.h (CORD_batched_iter_fn): Fix typo
+	("substring is a C character string") in comment.
+
+2025-06-18  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_priv.h [UNIX_LIKE || NEED_FIND_LIMIT && CYGWIN32]
+	(SETJMP): Fix typo ("where possible") in comment.
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordbscs.c (CORD_extend_path): Remove comment about returned
+	value (as the function has `void` return type).
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordbscs.c (CORD_add_forest): Fix typo ("greater") in comment.
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordbscs.c (SUBSTR_LIMIT): Fix typo ("Otherwise") in comment.
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_priv.h (MAXOBJBYTES): Fix a typo
+	("GC_alloc_large") in comment.
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc_typed.h (GC_make_descriptor): Fix a typo
+	("client type T") in comment.
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_hdrs.h: Fix a typo ("saves") in comment.
+
+2025-06-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* win32_threads.c [!__GNUC__] (GC_started_thread_while_stopped):
+	Fix typo ("a thread") in comment.
+
+2025-05-20  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc.h (GC_stop_func): Fix typo
+	("if no virtual dirty bits") in comment.
+
+2025-05-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc.h (GC_register_finalizer_ignore_self): Fix typo
+	("another version") in comment.
+
+2025-05-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/cord.h (CORD_put): Fix typo in comment
+	("NULs and newlines").
+
+2025-05-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* misc.c (GC_base): Fix typo in comment (remove "a" before "an").
+
+2025-05-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* os_dep.c [MPROTECT_VDB && DARWIN] (catch_exception_raise): Fix typo
+	in comment (remove duplicate "and" after
+	"catch_exception_raise_state and").
+
+2025-05-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* backgraph.c (add_edge): Fix typo in comment ("p and q").
+
+2025-05-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* alloc.c: Fix typo in comment ("HBLKSIZE").
+
+2025-04-30  Ivan Maidanski <ivmai@mail.ru>
+
+	* configure.ac [$enable_redirect_malloc==yes && $enable_gc_debug==yes]
+	(REDIRECT_REALLOC): Fix a typo ("realloc") in `AC_DEFINE` description.
+
+2025-04-30  Ivan Maidanski <ivmai@mail.ru>
+
+	* Makefile.am: Remove outdated FIXME item about non-working
+	`make distcheck`.
+
+2025-04-30  Ivan Maidanski <ivmai@mail.ru>
+
+	* tests/test.c [GC_GCJ_SUPPORT] (gcj_reverse1): Fix a typo
+	("gcj_reverse") in comment.
+
+2025-04-30  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/tests/de_win.c (WndProc): Fix a typo ("NUL characters") in
+	comment.
+
+2025-04-15  Ivan Maidanski <ivmai@mail.ru>
+
+	* backgraph.c [MAKE_BACK_GRAPH && DEBUG_PRINT_BIG_N_EDGES && THREADS]
+	(add_edge): Call `GC_default_print_heap_obj_proc()` instead of
+	`GC_print_heap_obj()`; add comment.
+
+2025-04-11  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.macros (GC_USE_LD_WRAP): Fix a typo
+	("causes the collector to handle").
+
+2025-04-06  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.macros (GC_USE_ENTIRE_HEAP): Fix typo
+	("more large-block").
+	* include/gc.h (GC_use_entire_heap): Fix typo ("more large-block")
+	in comment.
+
+2025-04-03  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.autoconf: Add "./" prefix to `configure` command.
+	* doc/leak.html (Simplified leak detection under Linux): Likewise.
+	* doc/README.ews4800: Likewise.
+	* doc/README.ews4800: Change `Make` to lower case.
+
+2025-04-03  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.environment (GC_FINDLEAK_DELAY_FREE,
+	GC_FINDLEAK_DELAY_FREE): Replace "leak-finding" to "find-leak";
+	reformat text.
+	* doc/README.macros (GC_REQUIRE_WCSDUP, GC_FINDLEAK_DELAY_FREE):
+	Likewise.
+	* include/gc.h (GC_find_leak, GC_register_finalizer,
+	GC_general_register_disappearing_link): Replace "leak-finding"
+	to "find-leak" in comment.
+	* include/leak_detector.h [!CHECK_LEAKS] (CHECK_LEAKS): Likewise.
+	* include/private/gc_priv.h [!NO_FIND_LEAK && !SHORT_DBG_HDRS]
+	(GC_findleak_delay_free): Likewise.
+
+2025-03-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* pthread_support.c [CAN_HANDLE_FORK && GC_EXPLICIT_SIGNALS_UNBLOCK]
+	(GC_fork_prepare_proc): Call `GC_unblock_gc_signals()` (before
+	`LOCK()` call) if `GC_handle_fork`; add comment.
+
+2020-07-10  Ivan Maidanski <ivmai@mail.ru>
+
+	* CMakeLists.txt [APPLE] (CMAKE_OSX_ARCHITECTURES): Do not set.
+
+2019-04-02  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gcconfig.h [IA64 && CYGWIN32] (OS_TYPE, DATASTART,
+	DATAEND, STACK_GRAN, NEED_FIND_LIMIT, USE_MMAP_ANON): Do not define.
+	* include/private/gcconfig.h [X86_64 && CYGWIN32] (OS_TYPE): Define.
+	* include/private/gcconfig.h [X86_64 && CYGWIN32 && USE_MMAP]
+	(USE_MMAP_ANON): Define.
+
+2018-04-13  Ivan Maidanski <ivmai@mail.ru>
+
+	* CMakeLists.txt (NO_EXECUTE_PERMISSION): Define macro.
+
+2016-02-02  Yuki Okumura <mjt@cltn.org>
+
+	* include/gc.h (GC_DATASTART, GC_DATAEND): Prefix _data_start__,
+	_bss_start__, _data_end__ and _bss_end__ with an extra underscore if
+	__x86_64__ (only if __CYGWIN__); reformat code.
+
+2014-05-23  Bernd Edlinger <bernd.edlinger@hotmail.de>
+
+	* include/gc.h (GC_DATASTART, GC_DATAEND): Define for Cygwin-64.
+	* include/private/gcconfig.h (X86_64): Likewise.
+	* include/private/gcconfig.h (OS_TYPE, DATASTART, DATAEND, STACK_GRAN,
+	NEED_FIND_LIMIT, USE_MMAP_ANON): Define for Cygwin-64 (code copied
+	from Cygwin-32 block).
+	* os_dep.c (GC_get_stack_base): Get the stack base for Cygwin-64
+	(implementation based on NtCurrentTeb call).
+
 2024-12-08  Ivan Maidanski <ivmai@mail.ru>
 
 	* include/private/gcconfig.h [I386 && MSWIN32] (MPROTECT_VDB): Do not
