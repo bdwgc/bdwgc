@@ -1,4 +1,31 @@
 
+== [7.4.30] (not released yet) ==
+
+* Add missing test_cpp dependency on gc_allocator.h in build scripts
+* Allocate non-executable memory by default (CMake)
+* Avoid abort on ResumeThread failure if Win32 DllMain closes thread handle
+* Do not produce '-lpthread' by threadlibs on Tru64/OSF1
+* Eliminate 'allocating insufficient size 0 for char` gcc warning in gctest
+* Eliminate 'compare signed/unsigned in check_finalizer_nested' bcc warning
+* Eliminate 'unused parameter fd' gcc warning in NOSYS GC_write
+* Fix 'symbol undefined _snprintf' dmc linker error in cordtest
+* Fix 'undefined STACKBOTTOM' preprocessor error for no-OS PowerPC target
+* Fix 'undefined symbol sbrk' linker error on FreeBSD
+* Fix blocked signals in fork_prepare_proc on HP/UX
+* Fix CMake build on macOS Catalina
+* Fix GC_suspend abort when the thread is deleted by DllMain
+* Fix missing parentheses in SIG_THR_RESTART macro definition
+* Fix print_heap_obj call with the lock held in backgraph add_edge
+* Fix rounding up in STACKBOTTOM for OSF1
+* Fix symbols alignment checking for CRIS and M68K
+* Fix undefined reference to GC_objfreelist and GC_bytes_allocd
+* Fix various typos in comments and documentation
+* Remove improper comment about returned value of CORD_extend_path
+* Remove outdated comment about 'make distcheck' from Makefile.am
+* Update URLs in documentation after repo transfer to bdwgc organization
+* Workaround tests crash if mprotect-based VDB is manually selected (bcc)
+
+
 == [7.4.28] 2024-09-07 ==
 
 * Avoid gcc stringop-overflow warning for intended overflow in smashtest
@@ -592,6 +619,28 @@ Also, includes 7.2e, 7.2d, 7.2c, 7.2b changes
 * Use pthread_key for thread-local storage on FreeBSD
 * Use union of AO_t and word to favor strict-aliasing compiler optimization
 Also, includes 7.2 changes
+
+
+== [7.2t] (not released yet) ==
+
+* Add missing test_cpp dependency on gc_allocator.h in build scripts
+* Allocate non-executable memory by default (CMake)
+* Do not produce '-lpthread' by threadlibs on Tru64/OSF1
+* Fix 'symbol undefined _snprintf' dmc linker error in cordtest
+* Fix 'undefined STACKBOTTOM' preprocessor error for no-OS PowerPC target
+* Fix (enable) Cygwin-64 build
+* Fix blocked signals in fork_prepare_proc on HP/UX
+* Fix CMake build on macOS Catalina
+* Fix missing parentheses in SIG_THR_RESTART macro definition
+* Fix print_heap_obj call with the lock held in backgraph add_edge
+* Fix rounding up in STACKBOTTOM for OSF1
+* Fix symbols alignment checking for CRIS and M68K
+* Fix undefined reference to GC_objfreelist and GC_bytes_allocd
+* Fix various typos in comments and documentation
+* Remove improper comment about returned value of CORD_extend_path
+* Remove outdated comment about 'make distcheck' from Makefile.am
+* Update URLs in documentation after repo transfer to bdwgc organization
+* Workaround tests crash if mprotect-based VDB is manually selected (bcc)
 
 
 == [7.2s] 2024-09-06 ==
