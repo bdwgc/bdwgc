@@ -1130,6 +1130,49 @@
 * Workaround various cppcheck false positives
 
 
+== [8.0.16] (not released yet) ==
+
+* Add missing test_cpp dependency on gc_allocator.h in build scripts
+* Avoid abort on ResumeThread failure if Win32 DllMain closes thread handle
+* Do not define GC_SysVGetDataStart on AIX
+* Do not produce '-lpthread' by threadlibs on Tru64/OSF1
+* Eliminate 'allocating insufficient size 0 for char` gcc warning in gctest
+* Eliminate 'compare signed/unsigned in check_finalizer_nested' bcc warning
+* Eliminate 'int-to-ptr cast' gcc warning in GC_restart_all on OpenBSD
+* Eliminate 'int-to-ptr cast' gcc warnings in DEBUG_THREADS code
+* Eliminate 'unused parameter fd' gcc warning in NOSYS GC_write
+* Eliminate 'value exceeds maximum obj size' gcc warning in hugetest on x32
+* Eliminate 'writing into region of size 0' gcc warning in suspend_handler
+* Fix 'cannot implement AO_compare_and_swap_full' error by wcc in tests
+* Fix 'missing GNU-stack section in atomic_ops_sysdeps' ld warning
+* Fix 'symbol undefined _snprintf' dmc linker error in cordtest
+* Fix 'undefined STACKBOTTOM' preprocessor error for no-OS PowerPC target
+* Fix 'undefined symbol sbrk' linker error on FreeBSD
+* Fix blocked signals in fork_prepare_proc on HP/UX
+* Fix code blocks formatting in .md files
+* Fix GC_GRANULE_BYTES for SPARC V9
+* Fix GC_suspend abort when the thread is deleted by DllMain
+* Fix GETPAGESIZE and USE_M[UN]MAP for Nintendo Switch
+* Fix missing parentheses in SIG_THR_RESTART macro definition
+* Fix print_heap_obj call with the lock held in backgraph add_edge
+* Fix pthread id stored in GC_threads of child process
+* Fix pthread_sigmask result checking in GC_start_mark_threads_inner
+* Fix rounding up in STACKBOTTOM for OSF1
+* Fix symbols alignment checking for CRIS and M68K
+* Fix undefined reference to GC_objfreelist and GC_bytes_allocd
+* Fix usage of new structured procfs interface on Solaris
+* Fix various typos in comments and documentation
+* Refine comment in fork_child_proc() about GC_allocate_ml attribute
+* Remove always-false check if C++ allocator.allocate returns null in test
+* Remove comment about limited support of memory unmapping
+* Remove improper comment about returned value of CORD_extend_path
+* Remove outdated comment about 'make distcheck' from Makefile.am
+* Update libatomic_ops repo URL in README after repo transfer
+* Update URLs in documentation after repo transfer to bdwgc organization
+* Workaround '__stdcall__ ignored for this target' clang warning on Cygwin64
+* Workaround tests crash if mprotect-based VDB is manually selected (bcc)
+
+
 == [8.0.14] 2024-09-07 ==
 
 * Disable backtrace saving at garbage collections if DONT_SAVE_TO_LAST_STACK
