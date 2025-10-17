@@ -1095,7 +1095,7 @@ Also, includes 7.6.18 changes
 * Workaround Thread Sanitizer (TSan) false positive warnings
 
 
-== [7.6.24] (not released yet) ==
+== [7.6.24] 2025-10-17 ==
 
 * Eliminate 'int-to-ptr cast' gcc warning in GC_restart_all on OpenBSD
 * Eliminate 'int-to-ptr cast' gcc warnings in DEBUG_THREADS code
