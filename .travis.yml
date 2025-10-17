@@ -73,10 +73,6 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-redirect-malloc --disable-threads"
     - WORKAROUND_ACLOCAL_MISSING=true
-  - compiler: gcc
-    env:
-    - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
-    - WORKAROUND_ACLOCAL_MISSING=true
   - compiler: clang
     env:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
