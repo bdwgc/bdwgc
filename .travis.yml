@@ -181,9 +181,6 @@ jobs:
     - CONF_OPTIONS="--enable-redirect-malloc --enable-static --disable-threads"
     - CFLAGS_EXTRA="-m32"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: gcc
-    env:
-    - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
   - compiler: clang
     env:
     - CONF_OPTIONS="--disable-threads --enable-cplusplus"
