@@ -2258,7 +2258,7 @@ Also, includes 7.4.6 changes
 Also, includes 7.4.4 changes
 
 
-== [7.4.30] (not released yet) ==
+== [7.4.30] 2025-10-17 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
 * Allocate non-executable memory by default (CMake)
