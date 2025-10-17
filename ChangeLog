@@ -558,7 +558,7 @@
 * Workaround various cppcheck false positives
 
 
-== [8.0.16] (not released yet) ==
+== [8.0.16] 2025-10-17 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
 * Avoid abort on ResumeThread failure if Win32 DllMain closes thread handle
