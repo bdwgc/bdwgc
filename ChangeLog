@@ -2308,7 +2308,7 @@ Also, includes 7.2e, 7.2d, 7.2c, 7.2b changes
 Also, includes 7.2 changes
 
 
-== [7.2t] (not released yet) ==
+== [7.2t] 2025-10-17 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
 * Allocate non-executable memory by default (CMake)
