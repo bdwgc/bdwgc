@@ -1,4 +1,91 @@
 
+== [8.2.10] (not released yet) ==
+
+* Add missing test_cpp dependency on gc_allocator.h in build scripts
+* Add Serenity OS to list of platforms with POSIX threads in configure
+* Avoid abort on ResumeThread failure if Win32 DllMain closes thread handle
+* Avoid code duplication in GC_dyld_image_add/remove on Darwin
+* Do not define GC_SysVGetDataStart on AIX
+* Do not produce '-lpthread' by threadlibs on Tru64/OSF1
+* Do not search for data start using GC_find_limit on Haiku
+* Do not use deprecated _dyld_bind_fully_image_containing_address (Darwin)
+* Do not use deprecated get_etext and get_end on Darwin
+* Do not use deprecated getsectbynamefromheader_64 (Darwin)
+* Duplicate abort message in system app crash dialog on Haiku
+* Eliminate 'allocating insufficient size 0 for char` gcc warning in gctest
+* Eliminate 'compare signed/unsigned in check_finalizer_nested' bcc warning
+* Eliminate 'conversion from void* to ptr_t' g++ warning in PS_ALLOCA_BUF
+* Eliminate 'int-to-ptr cast' gcc warning in GC_push_all_stacks on Solaris
+* Eliminate 'int-to-ptr cast' gcc warning in GC_restart_all on OpenBSD
+* Eliminate 'int-to-ptr cast' gcc warnings in DEBUG_THREADS code
+* Eliminate 'message number 726 is invalid' wcc warning
+* Eliminate 'unused parameter fd' gcc warning in NOSYS GC_write
+* Eliminate 'value exceeds maximum obj size' gcc warning in hugetest on x32
+* Ensure no GC_proc_buf overrun on Solaris
+* Export CMake libraries with aliases
+* Fix 'cannot implement AO_compare_and_swap_full' error by wcc in tests
+* Fix 'cannot locate assembly file' bcc32 error in CMake script
+* Fix 'conflicting types for sbrk' gcc error on Solaris if redirect malloc
+* Fix 'missing GNU-stack section in atomic_ops_sysdeps' ld warning
+* Fix 'symbol undefined _snprintf' dmc linker error in cordtest
+* Fix 'undefined STACKBOTTOM' preprocessor error for no-OS PowerPC target
+* Fix 'undefined symbol GC_arrays` in tools on Solaris
+* Fix 'undefined symbol sbrk' linker error on FreeBSD
+* Fix all broken URLs in documentation (as of Nov 2024)
+* Fix assertion violation about GC_mark_lock_holder in fork_child_proc
+* Fix blocked signals in fork_prepare_proc on HP/UX
+* Fix cast of struct-based pthread_t to void pointer on Win32
+* Fix code blocks formatting in .md files
+* Fix compilation error regarding locks initialization in GC_init on HP_PA
+* Fix CPP_WORDSZ for LoongArch
+* Fix deprecation warning about support of CMake older than v3.10
+* Fix extraneous '#' symbol before comment near USE_WINALLOC for Cygwin
+* Fix GC_GRANULE_BYTES for SPARC V9
+* Fix GC_suspend abort when the thread is deleted by DllMain
+* Fix GC_threads alignment caused by 1-byte global AO_TS_t variables (wcc)
+* Fix GETPAGESIZE and USE_M[UN]MAP for Nintendo Switch
+* Fix getting memory from OS on Haiku
+* Fix I_HOLD_LOCK assertion violation in child process
+* Fix mark lock in child process after fork
+* Fix missing export for Symbian-specific GC_init_global_static_roots
+* Fix missing parentheses in SIG_THR_RESTART macro definition
+* Fix print_heap_obj call with the lock held in backgraph add_edge
+* Fix pthread id stored in GC_threads of child process
+* Fix pthread id stored in key thread_specific_data of child process
+* Fix pthread_sigmask result checking in GC_start_mark_threads_inner
+* Fix reading async proc maps when GC is single-threaded but process is not
+* Fix rounding up in STACKBOTTOM for OSF1
+* Fix stack base detection on Haiku by using pthread_getattr_np()
+* Fix stack direction detection in setjmp_t on E2K
+* Fix symbols alignment checking for CRIS and M68K
+* Fix undefined reference to GC_objfreelist and GC_bytes_allocd
+* Fix usage of new structured procfs interface on Solaris
+* Fix various typos in comments and documentation
+* Force use of spin locks to improve performance on Haiku
+* Grow GC_proc_buf to required size in GC_proc_read_dirty instead of WARN
+* Handle sparc-sun-solaris3 (SunOS6) in configure to use sparc_mach_dep.S
+* Initial support of Serenity OS on x86[_64]
+* Refine comment in fork_child_proc() about GC_allocate_ml attribute
+* Refine description of 'more background' links in Overview document
+* Remove always-false check if C++ allocator.allocate returns null in test
+* Remove comment about limited support of memory unmapping
+* Remove improper comment about returned value of CORD_extend_path
+* Remove outdated comment about 'make distcheck' from Makefile.am
+* Support RISC-V ILP32 ABI (rv64ilp32)
+* Suppress 'missing return value' wcc warning for AO asm primitives
+* Suppress 'unreachable code' wcc warnings in win32 threads ASSERT (CMake)
+* Turn off thread suspend/resume API support explicitly
+* Update libatomic_ops repo URL in README after repo transfer
+* Update URLs in documentation after repo transfer to bdwgc organization
+* Workaround '__stdcall__ ignored for this target' clang warning on Cygwin64
+* Workaround 'array index 4096 is above bounds' gcc warning in malloc_kind
+* Workaround 'REFERENCED_DYNAMICALLY flag' linker error on macOS 15.4
+* Workaround incremental collection fails on Haiku
+* Workaround tests crash if mprotect-based VDB is manually selected (bcc)
+* Workaround undefined GC_ptr_store_and_dirty MinGW error in Makefile.direct
+* Workaround vpush/vpop instructions generation for non-FPU ARMv5 target
+
+
 == [8.2.8] 2024-09-08 ==
 
 * Allow GC_size() argument to be null
