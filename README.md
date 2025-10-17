@@ -1,6 +1,6 @@
 # Boehm-Demers-Weiser Garbage Collector
 
-This is version 8.0.14 of a conservative garbage
+This is version 8.0.16 of a conservative garbage
 collector for C and C++.
 
 
