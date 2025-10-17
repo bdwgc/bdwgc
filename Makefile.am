@@ -14,7 +14,7 @@
 # Info (current:revision:age) for the Libtool versioning system.
 # These numbers should be updated at most once just before the release,
 # and, optionally, at most once during the development (after the release).
-LIBGC_VER_INFO = 4:11:3
+LIBGC_VER_INFO = 4:12:3
 LIBGCCPP_VER_INFO = 4:2:3
 
 # We currently use the source files directly from libatomic_ops, if we
