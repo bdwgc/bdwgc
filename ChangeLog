@@ -1095,6 +1095,19 @@ Also, includes 7.6.18 changes
 * Workaround Thread Sanitizer (TSan) false positive warnings
 
 
+== [7.6.24] (not released yet) ==
+
+* Eliminate 'int-to-ptr cast' gcc warning in GC_restart_all on OpenBSD
+* Eliminate 'int-to-ptr cast' gcc warnings in DEBUG_THREADS code
+* Fix 'missing GNU-stack section in atomic_ops_sysdeps' ld warning
+* Fix pthread id stored in GC_threads of child process
+* Fix pthread_sigmask result checking in GC_start_mark_threads_inner
+* Remove always-false check if C++ allocator.allocate returns null in test
+* Update libatomic_ops repo URL in README after repo transfer
+
+Also, includes 7.4.30 changes
+
+
 == [7.6.22] 2024-09-07 ==
 
 * Eliminate 'cast signed to bigger unsigned' CSA warnings in GC_find_limit
