@@ -571,7 +571,7 @@
 * Workaround unsupported 'X' asm constraint in tcc
 
 
-== [8.2.10] (not released yet) ==
+== [8.2.10] 2025-10-18 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
 * Add Serenity OS to list of platforms with POSIX threads in configure
