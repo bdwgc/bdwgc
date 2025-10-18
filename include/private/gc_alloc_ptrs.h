@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1996-1998 by Silicon Graphics.  All rights reserved.
- * Copyright (c) 2018-2021 Ivan Maidanski
+ * Copyright (c) 2018-2025 Ivan Maidanski
  *
  * THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
  * OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.

@@ -3,7 +3,7 @@
 # Copyright (c) 1996 by Silicon Graphics.  All rights reserved.
 # Copyright (c) 1998 by Fergus Henderson.  All rights reserved.
 # Copyright (c) 2000-2010 by Hewlett-Packard Company.  All rights reserved.
-# Copyright (c) 2010-2022 Ivan Maidanski
+# Copyright (c) 2010-2025 Ivan Maidanski
 ##
 # THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
 # OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
