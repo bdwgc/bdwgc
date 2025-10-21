@@ -2,9 +2,9 @@
 
 On many platforms, a single-threaded garbage collector library can be built
 to act as a plug-in `malloc` replacement. (Build it with
-`-DREDIRECT_MALLOC=GC_malloc -DIGNORE_FREE`.) This is often the best way to
+`-D REDIRECT_MALLOC=GC_malloc -D IGNORE_FREE`.) This is often the best way to
 deal with third-party libraries which leak or prematurely free objects.
-`-DREDIRECT_MALLOC=GC_malloc` is intended primarily as an easy way to adapt
+`-D REDIRECT_MALLOC=GC_malloc` is intended primarily as an easy way to adapt
 old code, not for new development.
 
 New code should use the interface discussed below.
@@ -36,7 +36,7 @@ of storage. Requires (amortized) time proportional to _bytes_. The resulting
 object will be automatically deallocated when unreferenced. References from
 objects allocated with the system malloc are usually not considered by the
 collector. (See `GC_MALLOC_UNCOLLECTABLE`, however. Building the collector
-with `-DREDIRECT_MALLOC=GC_malloc_uncollectable` is often a way around this.)
+with `-D REDIRECT_MALLOC=GC_malloc_uncollectable` is often a way around this.)
 `GC_MALLOC` is a macro which invokes `GC_malloc` by default or, if `GC_DEBUG`
 is defined before `gc.h` file is included, a debugging variant that checks
 occasionally for overwrite errors, and the like.
@@ -118,7 +118,7 @@ If you are concerned with multiprocessor performance and scalability, you
 should consider enabling and using thread-local allocation.
 
 If your platform supports it, you should also build the collector with
-parallel marking support (`-DPARALLEL_MARK`); configure has it on by default.
+parallel marking support (`-D PARALLEL_MARK`); configure has it on by default.
 
 If the collector is used in an environment in which pointer location
 information for heap objects is easily available, this can be passed on to the

@@ -9,7 +9,7 @@ that write to a cord; these allow for efficient construction of cords without
 requiring a bound on the size of a cord.
 
 The `cord` library is built along with `gc` library by default unless manually
-disabled (e.g., in case of cmake-based build, unless `-Dbuild_cord=OFF` option
+disabled (e.g., in case of cmake-based build, unless `-D build_cord=OFF` option
 is passed to `cmake`).
 
 More details on the data structure can be found in: Boehm, Atkinson, and Plass,

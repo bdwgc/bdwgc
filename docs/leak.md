@@ -38,7 +38,7 @@ To use the collector as a leak detector, do the following steps:
      a sufficient frequency for long running programs.)
 
 The second step can usually be accomplished with the
-`-DREDIRECT_MALLOC=GC_malloc` option when the collector is built, or by
+`-D REDIRECT_MALLOC=GC_malloc` option when the collector is built, or by
 defining `malloc`, `calloc`, `realloc`, `free` (as well as `posix_memalign`,
 `reallocarray`, `strdup`, `strndup`, `wcsdup`, BSD `memalign`, GNU `valloc`,
 GNU `pvalloc`) to call the corresponding garbage collector function. But this,
@@ -71,7 +71,7 @@ non-symbolic form, but it can be very useful with the aid of a debugger.
 The `leak_detector.h` file is located in the `include/gc` subdirectory of the
 distribution.
 
-Assume the collector has been built with `-DFIND_LEAK` or
+Assume the collector has been built with `-D FIND_LEAK` or
 `GC_set_find_leak(1)` exists as the first statement in `main`.
 
 The program to be tested for leaks could look like `tests/leak.c` file

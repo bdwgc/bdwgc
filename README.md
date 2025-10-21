@@ -196,7 +196,7 @@ the tests using CMake:
 ```sh
 mkdir out
 cd out
-cmake -Dbuild_tests=ON ..
+cmake -D build_tests=ON ..
 cmake --build .
 ctest
 ```
@@ -462,7 +462,7 @@ This is rarely necessary.  Details can be found in `gc_typed.h` file.
 The Ellis-Hull C++ interface to the collector is included in the collector
 distribution.  If you intend to use this, type
 `./configure --enable-cplusplus && make` (or
-`cmake -Denable_cplusplus=ON . && cmake --build .`, or
+`cmake -D enable_cplusplus=ON . && cmake --build .`, or
 `make -f Makefile.direct c++` depending on the build system you use).
 This creates `libgccpp.a` and `libgctba.a` files, or their shared library
 equivalents (`libgccpp.so` and `libgctba.so` files).  You should link with

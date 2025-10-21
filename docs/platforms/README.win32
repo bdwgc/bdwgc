@@ -24,13 +24,13 @@ characters are displayed explicitly, but in this case as red text.
 This may be suboptimal for some tastes and/or sets of default
 window colors.)
 
-In general -DREDIRECT_MALLOC is unlikely to work unless the
+In general "-D REDIRECT_MALLOC" is unlikely to work unless the
 application is completely statically linked.
 
 The collector normally allocates memory from the OS with VirtualAlloc.
 This appears to cause problems under Windows NT and Windows 2000 (but
 not Windows 95/98) if the memory is later passed to CreateDIBitmap.
-To work around this problem, build the collector with -DUSE_GLOBAL_ALLOC.
+To work around this problem, build the collector with "-D USE_GLOBAL_ALLOC".
 
 [Threads and incremental collection are discussed near the end, below.]
 
@@ -61,7 +61,7 @@ host) and via cross-compilation, e.g.
 "./configure --host=i686-pc-mingw32; make check"
 
 By default, configure instructs make to build the collector as a DLL (shared
-library), adding -D GC_DLL to CFLAGS.
+library), adding "-D GC_DLL" to CFLAGS.
 
 Parallel marker is enabled by default; it could be disabled by
 "--disable-parallel-mark" option.
@@ -79,7 +79,7 @@ The garbage collector in its default configuration expects at least 4-byte
 alignment.  Thus, the Borland default must be overridden.  (In my opinion,
 it should usually be anyway.  I expect that -a1 introduces major performance
 penalties on a 486 or Pentium.)  Note that this changes structure layouts.
-(As a last resort, -DFORCE_ALIGNMENT_ONE option could be passed to the
+(As a last resort, "-D FORCE_ALIGNMENT_ONE" option could be passed to the
 compiler to allow 1-byte alignment, but this would have significant negative
 performance implications.)
 
@@ -87,7 +87,7 @@ Digital Mars compiler
 ---------------------
 
 Same as MS Visual C++ but might require
--DAO_OLD_STYLE_INTERLOCKED_COMPARE_EXCHANGE option to compile with the
+"-D AO_OLD_STYLE_INTERLOCKED_COMPARE_EXCHANGE" option to compile with the
 parallel marker enabled.
 
 To build the collector, use the command:
@@ -128,7 +128,7 @@ All programs using libgc should be compiled with 4-byte alignment.
 For further explanations on this, see comments about Borland compiler.
 
 If the libgc is compiled as dll, the macro "GC_DLL" should be defined before
-including "gc.h" (for example, with -DGC_DLL compiler option). It's
+including "gc.h" (for example, with "-D GC_DLL" compiler option). It is
 important, otherwise resulting programs will not run.
 
 The alternate way to compile the collector is to use cmake build system:
@@ -161,7 +161,7 @@ call does not encounter a protection fault while it's running.
 (As usual, none of this is an issue unless GC_enable_incremental
 is called.)
 
-Note that incremental collection is disabled with -DSMALL_CONFIG.
+Note that incremental collection is disabled with "-D SMALL_CONFIG".
 
 Threads
 -------
@@ -178,7 +178,7 @@ be less than 100% reliable.
 To build the collector as a dynamic library which handles threads similarly
 to other platforms, type "nmake -f NT_MAKEFILE".  If automatic tracking of
 threads attached to the collector DLL (i.e. support of both kinds of thread
-tracking) is needed then delete "-DTHREAD_LOCAL_ALLOC" from NT_MAKEFILE
+tracking) is needed then delete "-D THREAD_LOCAL_ALLOC" from NT_MAKEFILE
 manually before the build.
 
 The incremental collection is supported only if it is enabled before any
@@ -211,7 +211,7 @@ correctly track threads.
 To build the collector for MinGW pthreads-win32 (or other non-Cygwin pthreads
 implementation for Windows), use Makefile.direct and explicitly set
 GC_WIN32_PTHREADS (or pass --enable-threads=pthreads to configure).
-Use -DPTW32_STATIC_LIB for the static threads library.
+Use "-D PTW32_STATIC_LIB" for the static threads library.
 
 The alternate (better) way to build the library is to use CMake script;
 please see cmake.md file for the details.
