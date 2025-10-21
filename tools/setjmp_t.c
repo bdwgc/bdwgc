@@ -137,9 +137,9 @@ main(void)
   (void)SETJMP(b);
   if (y == 1) {
     if (x == 2) {
-      printf("setjmp-based generic mark_regs code probably won't work.\n");
-      printf("But we rarely try that anymore.  If you have getcontect()\n");
-      printf("this probably doesn't matter.\n");
+      printf("setjmp-based generic code to push registers probably\n"
+             "will not work. But we rarely try that anymore.\n"
+             "If you have getcontext(), this probably does not matter.\n");
     } else if (x == 1) {
       printf("setjmp-based register marking code may work.\n");
     } else {
