@@ -270,7 +270,7 @@ block. This is done in the following steps:
   significant bits specify an offset within that page. (A hardware page may
   actually consist of multiple such pages. Normally, `HBLKSIZE` is usually the
   page size divided by a small power of two. Alternatively, if the collector
-  is built with `-DLARGE_CONFIG`, such a page may consist of multiple hardware
+  is built with `-D LARGE_CONFIG`, such a page may consist of multiple hardware
   pages.)
   * The page address part of the candidate pointer is looked up in
   a [table](tree.md). Each table entry contains either 0, indicating that

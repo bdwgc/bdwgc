@@ -25,7 +25,7 @@ To use threads, you need to abide by the following requirements:
    pthread implementations (in particular it will *not* work with
    MIT pthreads).
 
-2) You must compile the collector with "-DGC_THREADS -D_REENTRANT" specified
+2) You must compile the collector with "-D GC_THREADS -D _REENTRANT" specified
    in the Makefile.direct file.
 
 3a) Every file that makes thread calls should define GC_THREADS, and then
@@ -33,7 +33,7 @@ To use threads, you need to abide by the following requirements:
    macros which also provide the collector with information it requires.
 
 3b) A new alternative to (3a) is to build the collector and compile GC clients
-   with -DGC_USE_LD_WRAP, and to link the final program with
+   with "-D GC_USE_LD_WRAP", and to link the final program with
 
    (for ld) --wrap dlopen --wrap pthread_create \
             --wrap pthread_join --wrap pthread_detach \
