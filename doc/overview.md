@@ -230,7 +230,7 @@ to `malloc`/`free`, using programs written for `malloc`/`free`.
 Joel Bartlett's
 [mostly copying conservative garbage collector for C++](ftp://gatekeeper.dec.com/pub/compaq/WRL/research-reports/WRL-TN-12.ps).
 
-John Ellis and David Detlef's
+John Ellis and David Detlefs'
 [Safe Efficient Garbage Collection for C++](http://dl.acm.org/citation.cfm?id=1267983)
 proposal.
 
