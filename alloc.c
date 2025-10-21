@@ -569,7 +569,7 @@ GC_maybe_gc(void)
 #endif
   if (GC_need_full_gc || n_partial_gcs >= GC_full_freq) {
     GC_COND_LOG_PRINTF(
-        "***>Full mark for collection #%lu after %lu allocd bytes\n",
+        "***>Full mark for collection #%lu after %lu bytes allocated\n",
         (unsigned long)GC_gc_no + 1, (unsigned long)GC_bytes_allocd);
     GC_notify_full_gc();
     ENTER_GC();
