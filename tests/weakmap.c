@@ -370,7 +370,7 @@ weakmap_destroy(struct weakmap *wm)
   wm->links = NULL;
 }
 
-struct weakmap *pair_hcset;
+static struct weakmap *pair_set;
 
 /* Note: this should not exceed `sizeof(pair_magic)`. */
 #define PAIR_MAGIC_SIZE 16
@@ -393,17 +393,17 @@ static const char *const pair_magic = "PAIR_MAGIC_BYTES";
 static struct pair *
 pair_new(struct pair *car, struct pair *cdr)
 {
-  struct pair tmpl;
+  struct pair t;
 
   /* This is to clear the paddings (to avoid a compiler warning). */
-  memset(&tmpl, 0, sizeof(tmpl));
+  memset(&t, 0, sizeof(t));
 
-  tmpl.car = car;
-  tmpl.cdr = cdr;
-  memcpy(tmpl.magic, pair_magic, PAIR_MAGIC_SIZE);
-  tmpl.checksum = CSUM_SEED + (car != NULL ? car->checksum : 0)
-                  + (cdr != NULL ? cdr->checksum : 0);
-  return (struct pair *)weakmap_add(pair_hcset, &tmpl, sizeof(tmpl));
+  t.car = car;
+  t.cdr = cdr;
+  memcpy(t.magic, pair_magic, PAIR_MAGIC_SIZE);
+  t.checksum = CSUM_SEED + (car != NULL ? car->checksum : 0)
+               + (cdr != NULL ? cdr->checksum : 0);
+  return (struct pair *)weakmap_add(pair_set, &t, sizeof(t));
 }
 
 static void
@@ -494,8 +494,8 @@ main(void)
                              1 /* `adjust` */, 1 /* `clear` */);
   GC_register_disclaim_proc((int)weakobj_kind, weakmap_disclaim,
                             1 /* `mark_unconditionally` */);
-  pair_hcset = weakmap_new(WEAKMAP_CAPACITY, sizeof(struct pair_key),
-                           sizeof(struct pair), weakobj_kind);
+  pair_set = weakmap_new(WEAKMAP_CAPACITY, sizeof(struct pair_key),
+                         sizeof(struct pair), weakobj_kind);
 
 #if NTHREADS > 0
   for (i = 0; i < NTHREADS; ++i) {
@@ -521,7 +521,7 @@ main(void)
     }
   }
 #endif
-  weakmap_destroy(pair_hcset);
+  weakmap_destroy(pair_set);
   printf("%u added, %u found; %u removed, %u locked, %u marked; %u remains\n",
          (unsigned)stat_added, (unsigned)stat_found, (unsigned)stat_removed,
          (unsigned)stat_skip_locked, (unsigned)stat_skip_marked,

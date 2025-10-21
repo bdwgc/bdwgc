@@ -180,7 +180,7 @@ CORD_cmp(CORD x, CORD y)
   CORD_set_pos(xpos, x, 0);
   CORD_set_pos(ypos, y, 0);
   for (;;) {
-    long avail, yavail;
+    long avail, avail_y;
 
     if (!CORD_pos_valid(xpos)) {
       return CORD_pos_valid(ypos) ? -1 : 0;
@@ -188,19 +188,20 @@ CORD_cmp(CORD x, CORD y)
     if (!CORD_pos_valid(ypos))
       return 1;
     avail = CORD_pos_chars_left(xpos);
-    if (0 == avail || (yavail = CORD_pos_chars_left(ypos)) == 0) {
-      char xcurrent = CORD_pos_fetch(xpos);
-      char ycurrent = CORD_pos_fetch(ypos);
-      if (xcurrent != ycurrent)
-        return xcurrent - ycurrent;
+    if (0 == avail || (avail_y = CORD_pos_chars_left(ypos)) == 0) {
+      char cur_x = CORD_pos_fetch(xpos);
+      char cur_y = CORD_pos_fetch(ypos);
+
+      if (cur_x != cur_y)
+        return cur_x - cur_y;
       CORD_next(xpos);
       CORD_next(ypos);
     } else {
       /* Process as many characters as we can. */
       int result;
 
-      if (avail > yavail)
-        avail = yavail;
+      if (avail > avail_y)
+        avail = avail_y;
       result = strncmp(CORD_pos_cur_char_addr(xpos),
                        CORD_pos_cur_char_addr(ypos), (size_t)avail);
       if (result != 0)
@@ -225,7 +226,7 @@ CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
   CORD_set_pos(xpos, x, x_start);
   CORD_set_pos(ypos, y, y_start);
   for (count = 0; count < len;) {
-    long avail, yavail;
+    long avail, avail_y;
 
     if (!CORD_pos_valid(xpos)) {
       return CORD_pos_valid(ypos) ? -1 : 0;
@@ -233,12 +234,12 @@ CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
     if (!CORD_pos_valid(ypos))
       return 1;
     if ((avail = CORD_pos_chars_left(xpos)) <= 0
-        || (yavail = CORD_pos_chars_left(ypos)) <= 0) {
-      char xcurrent = CORD_pos_fetch(xpos);
-      char ycurrent = CORD_pos_fetch(ypos);
+        || (avail_y = CORD_pos_chars_left(ypos)) <= 0) {
+      char cur_x = CORD_pos_fetch(xpos);
+      char cur_y = CORD_pos_fetch(ypos);
 
-      if (xcurrent != ycurrent)
-        return xcurrent - ycurrent;
+      if (cur_x != cur_y)
+        return cur_x - cur_y;
       CORD_next(xpos);
       CORD_next(ypos);
       count++;
@@ -246,8 +247,8 @@ CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
       /* Process as many characters as we can. */
       int result;
 
-      if (avail > yavail)
-        avail = yavail;
+      if (avail > avail_y)
+        avail = avail_y;
       count += (size_t)avail;
       if (count > len)
         avail -= (long)(count - len);
@@ -517,9 +518,9 @@ CORD_chars(char c, size_t i)
 CORD
 CORD_from_file_eager(FILE *f)
 {
-  CORD_ec ecord;
+  CORD_ec ec;
 
-  CORD_ec_init(ecord);
+  CORD_ec_init(ec);
   for (;;) {
     int c = getc(f);
 
@@ -530,17 +531,17 @@ CORD_from_file_eager(FILE *f)
        */
       size_t count = 1;
 
-      CORD_ec_flush_buf(ecord);
+      CORD_ec_flush_buf(ec);
       while ((c = getc(f)) == 0)
         count++;
-      ecord[0].ec_cord = CORD_cat(ecord[0].ec_cord, CORD_nul(count));
+      ec[0].ec_cord = CORD_cat(ec[0].ec_cord, CORD_nul(count));
     }
     if (c == EOF)
       break;
-    CORD_ec_append(ecord, (char)c);
+    CORD_ec_append(ec, (char)c);
   }
   (void)fclose(f);
-  return CORD_balance(CORD_ec_to_cord(ecord));
+  return CORD_balance(CORD_ec_to_cord(ec));
 }
 
 /*

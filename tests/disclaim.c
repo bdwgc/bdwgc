@@ -63,7 +63,7 @@ static GC_RAND_STATE_T seed;
   } while (0)
 
 static int
-memeq(void *s, int c, size_t len)
+is_equal(void *s, int c, size_t len)
 {
   while (len--) {
     if (*(char *)s != c)
@@ -84,7 +84,7 @@ misc_sizes_dct(void *obj, void *cd)
   my_assert(log_size < sizeof(size_t) * 8);
   my_assert(cd == NULL);
   size = (size_t)1 << log_size;
-  my_assert(memeq((char *)obj + 1, MEM_FILL_BYTE, size - 1));
+  my_assert(is_equal((char *)obj + 1, MEM_FILL_BYTE, size - 1));
 #if defined(CPPCHECK)
   GC_noop1_ptr(cd);
 #endif
@@ -99,7 +99,7 @@ test_misc_sizes(void)
     void *p = GC_finalized_malloc((size_t)1 << i, &fc);
 
     CHECK_OUT_OF_MEMORY(p);
-    my_assert(memeq(p, 0, (size_t)1 << i));
+    my_assert(is_equal(p, 0, (size_t)1 << i));
     memset(p, MEM_FILL_BYTE, (size_t)1 << i);
     *(unsigned char *)p = (unsigned char)i;
   }
@@ -170,7 +170,7 @@ pair_new(pair_t car, pair_t cdr)
   CHECK_OUT_OF_MEMORY(p);
   pfc->cd = (void *)PTR_HASH(p);
   my_assert(!is_pair(p));
-  my_assert(memeq(p, 0, sizeof(struct pair_s)));
+  my_assert(is_equal(p, 0, sizeof(struct pair_s)));
   memcpy(p->magic, pair_magic, sizeof(p->magic));
   p->checksum = CSUM_SEED + (car != NULL ? car->checksum : 0)
                 + (cdr != NULL ? cdr->checksum : 0);
