@@ -37,10 +37,10 @@ static struct treenode *root[10] = { 0 };
 static struct treenode *root_nz[10] = { (struct treenode *)(GC_uintptr_t)2 };
 
 /* Declare it to avoid "no previous prototype" clang warning. */
-GC_TEST_EXPORT_API struct treenode **libsrl_getpelem(int i, int j);
+GC_TEST_EXPORT_API struct treenode **libsrl_get_p_element(int i, int j);
 
 #ifdef STATICROOTSLIB2
-#  define libsrl_getpelem libsrl_getpelem2
+#  define libsrl_get_p_element libsrl_get_p_element2
 #else
 
 GC_TEST_EXPORT_API struct treenode *libsrl_mktree(int i);
@@ -89,7 +89,7 @@ libsrl_init(void)
 #endif /* !STATICROOTSLIB2 */
 
 GC_TEST_EXPORT_API struct treenode **
-libsrl_getpelem(int i, int j)
+libsrl_get_p_element(int i, int j)
 {
 #if defined(CPPCHECK)
   struct treenode node = { NULL, NULL };

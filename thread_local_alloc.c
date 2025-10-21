@@ -51,16 +51,16 @@ return_single_freelist(void *fl, void **gfl)
     *gfl = fl;
   } else {
     void *q = fl;
-    void **qptr;
+    void **q_ptr;
 
     GC_ASSERT(GC_size(fl) == GC_size(*gfl));
     /* Concatenate. */
     do {
-      qptr = &obj_link(q);
-      q = *qptr;
+      q_ptr = &obj_link(q);
+      q = *q_ptr;
     } while (ADDR(q) >= HBLKSIZE);
     GC_ASSERT(NULL == q);
-    *qptr = *gfl;
+    *q_ptr = *gfl;
     *gfl = fl;
   }
 }

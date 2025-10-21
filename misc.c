@@ -559,21 +559,21 @@ GC_get_size_map_at(int i)
 }
 
 GC_API void GC_CALL
-GC_get_heap_usage_safe(GC_word *pheap_size, GC_word *pfree_bytes,
-                       GC_word *punmapped_bytes, GC_word *pbytes_since_gc,
-                       GC_word *ptotal_bytes)
+GC_get_heap_usage_safe(GC_word *p_heap_size, GC_word *p_free_bytes,
+                       GC_word *p_unmapped_bytes, GC_word *p_bytes_since_gc,
+                       GC_word *p_total_bytes)
 {
   READER_LOCK();
-  if (pheap_size != NULL)
-    *pheap_size = GC_heapsize - GC_unmapped_bytes;
-  if (pfree_bytes != NULL)
-    *pfree_bytes = GC_large_free_bytes - GC_unmapped_bytes;
-  if (punmapped_bytes != NULL)
-    *punmapped_bytes = GC_unmapped_bytes;
-  if (pbytes_since_gc != NULL)
-    *pbytes_since_gc = GC_bytes_allocd;
-  if (ptotal_bytes != NULL)
-    *ptotal_bytes = GC_bytes_allocd + GC_bytes_allocd_before_gc;
+  if (p_heap_size != NULL)
+    *p_heap_size = GC_heapsize - GC_unmapped_bytes;
+  if (p_free_bytes != NULL)
+    *p_free_bytes = GC_large_free_bytes - GC_unmapped_bytes;
+  if (p_unmapped_bytes != NULL)
+    *p_unmapped_bytes = GC_unmapped_bytes;
+  if (p_bytes_since_gc != NULL)
+    *p_bytes_since_gc = GC_bytes_allocd;
+  if (p_total_bytes != NULL)
+    *p_total_bytes = GC_bytes_allocd + GC_bytes_allocd_before_gc;
   READER_UNLOCK();
 }
 
@@ -1706,8 +1706,9 @@ STATIC HANDLE GC_log = 0;
  * This API function is defined in platform `roapi.h` file, but we cannot
  * include it here since it does not compile in C.
  */
-DECLSPEC_IMPORT HRESULT WINAPI
-RoGetActivationFactory(HSTRING activatableClassId, REFIID iid, void **factory);
+DECLSPEC_IMPORT HRESULT WINAPI RoGetActivationFactory(HSTRING appDataClassName,
+                                                      REFIID iid,
+                                                      void **factory);
 
 static GC_bool
 getWinRTLogPath(wchar_t *buf, size_t bufLen)

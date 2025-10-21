@@ -1286,7 +1286,7 @@ nacl_post_syscall_hook(void)
   }
 }
 
-STATIC GC_bool GC_nacl_thread_parking_inited = FALSE;
+STATIC GC_bool GC_nacl_thread_parking_init_done = FALSE;
 STATIC pthread_mutex_t GC_nacl_thread_alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 
 struct nacl_irt_blockhook {
@@ -1307,7 +1307,7 @@ GC_nacl_initialize_gc_thread(GC_thread me)
   GC_ASSERT(NULL == GC_nacl_gc_thread_self);
   GC_nacl_gc_thread_self = me;
   pthread_mutex_lock(&GC_nacl_thread_alloc_lock);
-  if (UNLIKELY(!GC_nacl_thread_parking_inited)) {
+  if (UNLIKELY(!GC_nacl_thread_parking_init_done)) {
     BZERO(GC_nacl_thread_parked, sizeof(GC_nacl_thread_parked));
     BZERO(GC_nacl_thread_used, sizeof(GC_nacl_thread_used));
     /*
@@ -1317,7 +1317,7 @@ GC_nacl_initialize_gc_thread(GC_thread me)
     nacl_interface_query("nacl-irt-blockhook-0.1", &gc_hook, sizeof(gc_hook));
     gc_hook.register_block_hooks(nacl_pre_syscall_hook,
                                  nacl_post_syscall_hook);
-    GC_nacl_thread_parking_inited = TRUE;
+    GC_nacl_thread_parking_init_done = TRUE;
   }
   GC_ASSERT(GC_nacl_num_gc_threads <= MAX_NACL_GC_THREADS);
   for (i = 0; i < MAX_NACL_GC_THREADS; i++) {

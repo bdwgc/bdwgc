@@ -72,7 +72,7 @@ GC_API void *GC_dlopen(const char * /* `path` */, int /* `mode` */);
           || (__POSIX_VISIBLE >= 199506) /*< xBSD internal macro */
 
 GC_API int GC_pthread_sigmask(int /* `how` */, const sigset_t *,
-                              sigset_t * /* `oset` */);
+                              sigset_t * /* `old_set` */);
 #      else
 #        define GC_NO_PTHREAD_SIGMASK
 #      endif
