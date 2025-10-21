@@ -16,6 +16,7 @@
 * Add assertion that value stored to GC_obj_map[] fits element type
 * Add assertion to GC_maybe_gc that GC is not in progress
 * Add assertion to ensure GC_unmapped_bytes cannot underflow
+* Add assertion to thread-local GC_gcj_malloc that thread key is initialized
 * Add assertion to verify GC_threads hash table entries are chained properly
 * Add assertions about GC_mark_state to alloc.c and mark.c
 * Add assertions about hidden ptr lowest bit in toggle-refs implementation
@@ -26,10 +27,10 @@
 * Add minimal testing of GC_allow_register_threads
 * Add missing cast in GC_is_init_called (refactoring)
 * Add missing undef GC_NO_THREAD_REDIRECTS in threaded tests
-* Add support of wasm32-wasi target
+* Add random-sized memory allocations to middletest
 * Add testing of remaining API functions (gctest and leaktest)
+* Add tree test written in C++ and linked with libgctba
 * Add verbose logging of events of getting memory from OS
-* Add visionOS simulator support
 * Adjust comments in block_unmap_inner
 * Adjust comments referring glibc version (documentation)
 * Adjust header includes in cord .c files (refactoring)
@@ -37,7 +38,10 @@
 * Adjust indentation in C preprocessor directives (reformatting)
 * Adjust naming of Win32/64 and x86/64 words in comments and documentation
 * Adjust pointer-to-int cast in GC_register_dynamic_libraries for WinCE
+* Adjust printed message for random backtrace (refactoring)
 * Adjust printing on amount of unmapped memory after GC
+* Allow 1-byte pointers alignment for bcc and wcc
+* Allow GC state to be re-initialized (in some configurations)
 * Allow GC_push_roots to work even when no exclusions registered
 * Allow custom AO_SRC_DIR, CURSES, EXEEXT, HOSTCC/CFLAGS for Makefile.direct
 * Allow disable USE_PROC_FOR_LIBRARIES even if malloc is redirected on Linux
@@ -48,7 +52,9 @@
 * Allow passing custom CFLAGS[_EXTRA] to Makefile.direct
 * Allow single signal usage for both world suspend and resume in gctest
 * Allow testing of retry-signals functionality
+* Allow to build libgc with same signal to suspend/resume threads (Linux)
 * Allow to build with forced WRAP_MARK_SOME
+* Allow to call GC_dump_regions and GC_print_free_list by gctest
 * Allow to compile tests with custom NTHREADS set to zero
 * Allow to cross-compile for MacOS X with missing mach-o/getsect.h
 * Allow to omit operator new/delete definitions in gc_cpp
@@ -59,6 +65,8 @@
 * Allow to use same signal for thread suspend and restart (default on E2K)
 * Always declare GC_set_and_save_fault_handler before its definition
 * Always invoke pending finalizers in GC_generic_malloc_uncollectable
+* Always notify of full GC before promoting black lists
+* Always pass non-zero size to oom_fn in GC_FAST_MALLOC_GRANS()
 * Always print error details message when gctest fails
 * Always set only one bit past end in GC_set_hdr_marks
 * Always specify relative path for private headers mentioned in .md docs
@@ -75,44 +83,57 @@
 * Assert that disappearing links are accessible during registration and GC
 * Assert that size of element of a typed object is nonzero (refactoring)
 * Assume argument of GC_set_fl_marks is non-null (refactoring)
+* Avoid code duplication across link_map-based GC_register_dynamic_libraries
 * Avoid code duplication between pthread_support.c and win32_threads.c
+* Avoid code duplication in FirstDLOpenedLinkMap, SysVGetDataStart
 * Avoid code duplication in GC_core_gcj_malloc (refactoring)
 * Avoid code duplication in GC_dyld_image_add/remove on Darwin (refactoring)
 * Avoid code duplication in GC_incremental_protection_needs (refactoring)
 * Avoid code duplication in GC_make_array_descriptor (refactoring)
 * Avoid code duplication in HAVE_FLAG_WNO_FRAME_ADDRESS of CMake script
+* Avoid code duplication in HEURISTIC1/STACK_GRAN dummy macros definition
 * Avoid code duplication in IGNORE_OFF_PAGE-specific malloc functions
 * Avoid code duplication regarding GC_push_roots in GC_mark_some_inner
 * Avoid duplication of magic numbers in disclaim.c, weakmap.c (refactoring)
 * Avoid fn call inlining in GC_call_with_stack_base/gc_active
 * Avoid static variable name duplication in GC_is_static/tmp_root
 * Avoid unmap of memory allocated during GC init regardless of threshold
+* Avoid useless GC_allochblk() call if GC_merge_unmapped() did nothing
+* Better describe NUMERIC_THREAD_ID macro in gc_locks.h
 * Better document GC_generate_random_heap/valid_address API functions
 * Better document GC_no_dls and NO_DEBUGGING macro
 * Better document GC_print_free_list regarding allocator lock
 * Better document and simplify define CAN_SAVE_CALL_ARGS in gcconfig.h
 * Better document link argument of GC_general_register_disappearing_link
 * Better document missing debugging version for aligned allocation routines
+* Better document out-of-memory behavior of API memory allocation functions
 * Better document preprocessor-related pointer checking routines in gc.h
 * Better document why REVEAL_POINTER should be used with allocator lock held
 * Better separate libgc build- and use-time macro descriptions in README
+* Build and run cordtest on make check in digimars.mak
+* Build cord.lib static library by digimars.mak
 * Build cord/de test by WCC_MAKEFILE on Win32
 * Build extra/gc.c in digimars.mak
 * Build with GC_wcsdup support if wcslen exists
+* Call ENTER/EXIT_GC() by GC_stop/start_world_external()
 * Call GC_init_parallel only from GC_init (refactoring)
 * Call syscall() to get E2K procedure stack directly in caller function
 * Change GC_Thread_Rep in pthread_support.h to match that of win32_threads.c
+* Change GC_bool definition from int to char (refactoring)
 * Change GC_build_fl prototype to accept size in granules (refactoring)
 * Change GC_gcj_malloc and friends to accept const pointer to descriptor
 * Change GC_warn_proc API to accept const C string
+* Change MACH_TYPE value to 'ARM32' for NaCl
 * Change NOT_MARKED value to nonzero (refactoring)
 * Change default GC_time_limit value from 50 to 15 ms
 * Change default value of max_prior_attempts to 3
 * Change enable_threads default to off if threads are unsupported (CMake)
 * Change file extension of README.* to lower case in doc/platforms
+* Change last_back_trace_gc_no initialization to zero (refactoring)
 * Change minimum heap growth to one block if requested explicitly
 * Change p local variable to current_p in push_all/conditional_eager
 * Change return type of GC_get_memory_use() from size_t to word
+* Change return type of GET_MEM() to void pointer (refactoring)
 * Change type of GC_collecting variable to match atomic operations over it
 * Change type of GC_find_header() argument to a const typeless pointer
 * Change type of client_data of GC_iterate_free_hblks from word to a pointer
@@ -122,9 +143,10 @@
 * Check highest bit of word using SIGNB instead of cast to signed_word
 * Check out-of-memory and set in_thread_creation inside GC_new_thread
 * Check pointer tag in all mark procedures (E2K)
+* Check pr_pagesize field when reading pagedata file on Solaris
+* Check that pointer after char in struct is properly aligned in gctest
 * Clear GC_thread_key thread-local value on unregistering the thread
 * Clear stack in GC_core_gcj_malloc only after releasing allocator lock
-* Code refactoring to support pointers larger than word (CHERI)
 * Collapse arch macro defines where possible (refactoring)
 * Comment out argument names of functions in cord public headers
 * Compile gc_dlopen.c and specific.c conditionally in Makefile.am
@@ -132,9 +154,14 @@
 * Consistent naming of GC_thread local variables (refactoring)
 * Consistent naming of variables of obj_kind type (refactoring)
 * Consistent use of CHECK_OUT_OF_MEMORY() in tests (refactoring)
+* Consistently use '__sparc' predefined macro w/o trailing underscores
 * Consistently use GC_word (instead of word) type in tests (refactoring)
+* Consistently use LinuxThreads name in documentation
+* Convert autoconf/cmake/cords/environment README to Markdown format
+* Declare GC_abort_on_oom() as no-return
 * Declare GC_noop1 as public function unconditionally
 * Declare GC_register_stackbottom symbol as internal on IA64 (refactoring)
+* Declare non-public GC_find_limit in a single place (refactoring)
 * Declare variables and arguments as pointer to const where applicable
 * Define ALIGNMENT macro based on CPP_PTRSZ value by default (refactoring)
 * Define AO_t to size_t instead of word (refactoring)
@@ -143,16 +170,20 @@
 * Define GC_GRANULE_BYTES macro based on GC_GRANULE_PTRS value (refactoring)
 * Define GC_VERSION_VAL_T public macro (refactoring)
 * Define GC_get_parallel and GC_set_markers_count in single-threaded GC
+* Define GC_is_static_root as static symbol (refactoring)
 * Define GC_print_stats as GC_INNER (refactoring)
 * Define GC_save_regs_ret_val variable only if used on IA64 (refactoring)
 * Define GC_self_thread_inner to lookup GC_thread of current thread
 * Define GC_thread type in a single place both for pthreads and Win32
 * Define HBLK_PAGE_ALIGNED() macro for internal use (refactoring)
 * Define LAZY_THRESHOLD const value as long in cord (refactoring)
+* Define STACK_GRAN only if needed (refactoring)
+* Define THREAD_ID_TO_VPTR internal macro (refactoring)
 * Define and use GC_find_starting_hblk inline function (refactoring)
 * Define and use SIGNAL_BASED_STOP_WORLD macro internally (refactoring)
 * Define clear/set_all_fl_marks internal functions (refactoring)
 * Define counter variables as static in gctest (refactoring)
+* Define getter and setter for CORD_oom_fn
 * Define internal macro NO_SEH_AVAILABLE where SEH is absent (refactoring)
 * Define internal macro for pointers rounding up by a mask (refactoring)
 * Define macros in gcconfig.h to use sigaction for SIGSEGV and SIGBUS
@@ -163,6 +194,7 @@
 * Define public GC_[p]valloc() and redirect to them in leak_detector.h
 * Define sized delete operator in 'gc' class
 * Define tunable values in cordtest as macro (refactoring)
+* Define variable GC_mach_threads as static again (refactoring)
 * Describe strategies to scan data roots on stack (Emscripten)
 * Detect overflow of size_t value addition before the operation in cordbscs
 * Detect presence of pthread_sigmask() in configure and cmake scripts
@@ -170,23 +202,32 @@
 * Disable memory unmapping explicitly in gcconfig.h for Emscripten
 * Disallow explicit unregister of non-main thread if registered by DllMain
 * Discard sections with pseudo-paths except heap in register_map_entries
+* Discontinue OpenBSD uthreads (GC_OPENBSD_UTHREADS) support
+* Discontinue support of Amiga, Encore Multimax, ancient MacOS, Xerox PCR
 * Do incremental mark some in GC_collect_a_little even if GC is disabled
 * Do not add extra byte to large ignore-off-page and uncollectible objects
 * Do not check INV_SZ_COMPUTATION_CHECK macro (refactoring)
 * Do not check dl_iterate_phdr presence by build scripts on OS X and Win32
+* Do not check for a misaligned pointer twice in GC_is_visible (refactoring)
 * Do not check presence of getcontext and dl_iterate_phdr by cmake on Win32
+* Do not compare boolean expressions to TRUE and FALSE (refactoring)
 * Do not compile pthread_start.c on Cygwin even if build shared libs (CMake)
 * Do not compile pthread_stop_world.c on Darwin (CMake)
 * Do not count time spent processing toggle-refs in stopped_mark
+* Do not decrement ecos_gc_brk pointer in tiny_sbrk (refactoring)
 * Do not define GC_pthread_start/exit for Orbis and Sony PSP (refactoring)
 * Do not define GETPAGESIZE on Win32 (refactoring)
 * Do not define SIG_HNDLR_PTR on Darwin unless really used
 * Do not define THREAD_SANITIZER if GC is built w/o threads support
+* Do not define _WINDOWS macro in digimars.mak (refactoring)
+* Do not define next_page as volatile in GC_SysVGetDataStart
 * Do not do unnecessary GC_read_dirty() from GC_enable_incremental
+* Do not expect GC_collect_or_expand to return false in GC_allocobj/large
 * Do not expose GC_nacl_gc_thread_self variable outside pthread_stop_world.c
 * Do not flush registers before reading procedure stack on E2K
 * Do not free entry in GC_delete_gc_thread to match that on Win32
 * Do not hard-code page size for wasm32-wasi (refactoring)
+* Do not include gc_pthread_redirects.h from extra/gc.c unless pthreads
 * Do not include gcconfig.h from extra/symbian source files (refactoring)
 * Do not include sched.h from pthread_start.c (refactoring)
 * Do not invoke GC_approx_sp() repeatedly in GC_stopped_mark (refactoring)
@@ -195,11 +236,15 @@
 * Do not prohibit threaded builds with malloc redirection on non-Linux
 * Do not put atomic_ops[_sysdeps].o to libgc.a in Makefile.direct
 * Do not reference internal files in comments of public header files
+* Do not require explicit GC initialization in gctest on Cygwin and Darwin
 * Do not set SIGBUS handler to catch write faults on Linux
 * Do not store E2K procedure stack to GC heap (refactoring)
 * Do not treat warnings as errors by default in digimars.mak
+* Do not turn off strict-aliasing optimizations
 * Do not use GC lock in GC_print_callers (refactoring)
+* Do not use GC_x_THREADS internally except GC_WIN32_THREADS (refactoring)
 * Do not use _CrtDbgReport() if NO_CRTDBGREPORT macro defined (MSVC/debug)
+* Do not use address of a local variable to get approximate stack pointer
 * Do not use atomic intrinsic in assertion of GC_reclaim_generic
 * Do not use deprecated _dyld_bind_fully_image_containing_address (Darwin)
 * Do not use deprecated get_etext and get_end on Darwin
@@ -230,6 +275,7 @@
 * Eliminate 'parameter can be declared as const pointer' cppcheck warnings
 * Eliminate 'scope of p variable could be reduced' cppcheck warning in de.c
 * Eliminate 'skipping config since static_assert is unknown' cppcheck FP
+* Eliminate 'strerror is not thread-safe' code defect in tests
 * Eliminate 'struct treenode member is never used' cppcheck warning
 * Eliminate 'volatile-qualified arg parameter' g++ warning in mach_dep.c
 * Eliminate code duplication in GC_PREFETCH_FOR_WRITE generic definition
@@ -238,15 +284,19 @@
 * Enable prefetch for MSVC (Windows/x86 and Windows/x64)
 * Enable prefetch loop in GC_mark_from on E2K
 * Enable without_libatomic_ops for targets requiring atomic_ops.c (CMake)
+* Ensure ENTER_GC() is not called recursively
 * Ensure GC is initialized when GC_push_all_stacks() is called (refactoring)
+* Ensure GC_dirty_inner symbol could be patched at runtime
 * Ensure GC_enable_incremental variable is accessed holding the lock
 * Ensure GC_n_set_marks() does not count extra bits in hb_marks
+* Ensure USE_WINALLOC is defined only for Win32 excluding Xbox One
 * Ensure a collection occurs between adjacent heap expansions
 * Ensure all macros defined in public cord_pos.h have 'CORD_' prefix
 * Ensure const value has proper type before negation operation in msvc_dbg
 * Ensure every test prints a message on success
 * Ensure that GC_init does not allocate any object itself (refactoring)
 * Explicitly check that word has at least 32 bits in shifts by 20+ bits
+* Explicitly specify initializer for STATIC variables (refactoring)
 * Export CORD_ec_append_cord(), CORD_ec_flush_buf() from cord shared library
 * Export CORD_oom_fn public variable from cord shared library
 * Export GC_apply_to_all_blocks() and GC_is_black_listed() as public API
@@ -265,7 +315,10 @@
 * Fix thread_id variable definition placement in main of subthreadcreatetest
 * Fix undefined behavior caused by potential overflow in MAKE_COOLER
 * Force pthread_mutex_lock usage for allocator lock if ThreadSanitizer
+* Freshen MIT licensing terms of gc_allocator.h
 * Get libpthread.so '.text' mapping only for glibc prior to v2.34 (Linux)
+* Group 'stubborn' API function declarations together (refactoring)
+* Group GC_free and GC_realloc API declarations (refactoring)
 * Group NEED_FIND_LIMIT definitions in gcconfig.h (refactoring)
 * Group all thread id fields together in GC_thread (refactoring)
 * Group char-width fields together in GC_arrays (refactoring)
@@ -282,17 +335,23 @@
 * Include sys/types.h and unistd.h from a single place (refactoring)
 * Increase number of iterations in leak and middle tests
 * Increase object kinds limit (to 24 items)
+* Increase realloc size twice for some allocations in realloctest
 * Increment allocated objects count after GC_memalign in gctest
-* Initial support of KOS/arm64
 * Initialize GC_retry_signals to true in GC_stop_init (refactoring)
 * Install ChangeLog among doc files
 * Introduce READER_LOCK/UNLOCK macros (refactoring)
+* Limit number of GC_collect_or_expand calls in GC_allocobj/large
 * Make abort message unique in write_fault_handler
 * Make all functions static in msvc_dbg.c except for backtrace[_symbols]
+* Make all global variables static in cord/de (refactoring)
+* Make callback of dl_iterate_phdr return only zero or one (refactoring)
 * Make comparisons to the lowest heap boundary strict
+* Make gc_pthread_redirects.h installation independent of threads API
 * Make links to mentioned platforms/README files in doc .md files
 * Make shift size smaller in GC_CLANG/GNUC/GLIBC_PREREQ (refactoring)
 * Mark GC_add_roots_inner() as GC_INNER (refactoring)
+* Mark comments as documentation in public headers
+* Mark down identifiers and code blocks in comments and documentation
 * Mention CMake-based build in README.md and README.QUICK
 * Mention all doc files in overview document
 * Mention gc_allocator.h in README.win32 (documentation)
@@ -300,13 +359,23 @@
 * Minimize THREADS-specific code in GC_invoke_finalizers (refactoring)
 * Minimize code difference between GC_push_marked/unconditionally
 * More clear message about total duration of full collections in gctest
+* Move ENTER/EXIT_GC() call into GC_collect_a_little_inner (refactoring)
 * Move GC_NO_THREADS_DISCOVERY definition to gcconfig.h (refactoring)
+* Move GC_approx_sp() implementation to a macro (refactoring)
+* Move GC_debug_gcj_malloc definition to dbg_mlc.c (refactoring)
+* Move GC_finalizer_nested/skipped variables into GC_arrays (refactoring)
 * Move GC_unblock_gc_signals to pthread_stop_world.c (refactoring)
+* Move GET_MEM() definition to gc_priv.h (refactoring)
 * Move HAVE_CLOCK_GETTIME definition from gc_priv.h to gcconfig.h
+* Move OS/2 information from README.win32 to README.os2
+* Move TEST_WITH_SYSTEM_MALLOC macro description to gctest.c
+* Move all macros mapping GC_arrays-located variables into struct GC_arrays
+* Move description comment for GC_INNER/API entities from .c to .h file
 * Move fields common between Concatenation and Function to Generic structure
 * Move increment of GC_bytes_allocd to GC_alloc_large (refactoring)
 * Move internals of GC_[signed_]word definition to gc_config_macros.h
 * Move non-cord [pkg]include_HEADERS assignments to include.am (refactoring)
+* Move non-debugging functions from dbg_mlc.c to reclaim.c (refactoring)
 * Move non-license info from LICENSE file to README and vice versa
 * Move platform-dependent getspecific() call to a dedicated function
 * Move platform-specific README files to doc/platforms
@@ -315,8 +384,11 @@
 * Move stack-related fields out of GC_thread to GC_stack_context_t
 * Move thread-only functions to pthread_support.c (refactoring)
 * Move used blocks total size checking from check_dirty to print_block_list
+* Move variables to GC_arrays for reinitialization purpose (refactoring)
 * Name all tests consistently (refactoring)
+* Name kind argument and variables uniformly (refactoring)
 * Never use mmap() for storing procedure stack on E2K (refactoring)
+* New API (GC_foreach_heap_section_inner) to iterate over heap blocks
 * New API for disappearing links registration accepting interior pointers
 * New API for more optimal usage of GC_calloc_explicitly_typed
 * New API function (GC_get_hblk_size) to get HBLKSIZE value
@@ -324,23 +396,32 @@
 * New API function to check if collector is built with DONT_ADD_BYTE_AT_END
 * New CMake option to link with external libatomic_ops (system library)
 * New GC_count_set_marks_in_hblk and GC_iterate_free_hblks API functions
+* New GC_get_avg_stopped_mark_time_ns API function
 * New macro (DONT_PROTECT_PTRFREE) to never protect pointer-free pages
+* New macro (NO_FIND_LEAK) to turn off support of find-leak mode
 * New macro (NO_MANUAL_VDB) to disallow manual VDB mode
+* New option (GC_DISABLE_SNPRINTF) to prevent snprintf usage by GC_printf
 * New public function (get_supported_vdbs) to list available VDB techniques
 * New public function GC_get_actual_vdb
+* Order GC_register_dynamic_libraries definitions lexicographically
 * Order libgc .c files lexicographically in build scripts
 * Output finalization information by GC_dump
+* Output info by gctest whether the test is multi-threaded
 * Pass ATOMIC_OPS_LIBS to tests using AO primitives directly (Automake)
+* Perform hblk-alignment in os2_alloc() instead of GET_MEM()
+* Perform overflow check before operation on pointer in GC_unix_mmap_get_mem
 * Perform overflow/underflow checks before operation on a pointer
 * Prefix size_t and ptrdiff_t with namespace 'std' in C++ files
+* Prefix/suffix no_sanitize attribute with double underscore (refactoring)
 * Preserve doc folders structure on package install
-* Preserve provenance of capability to heap block (CHERI)
 * Prevent requesting blocks past max_heapsize in GC_collect_or_expand
 * Prevent result of MAKE_COOLER to be NULL
+* Print duration of testing done in gctest
 * Print heap size in bytes (not MB) in out-of-memory warning if small heap
 * Print in-use heap statistic on heap growth
 * Print iteration number on thread creation or join failure in tests
 * Print objs_in_block as zero for large objects in GC_print_block_list
+* Print that back-height feature is not available only once
 * Print thread number on marker thread creation failure
 * Print value of links in GC_dump_finalization_links
 * Provide GC_HIDE/REVEAL_NZ_POINTER public macros
@@ -350,14 +431,18 @@
 * Provide global non-throwing operator new/delete in gccpp library
 * Provide mechanism to track allocations with heap profiling tools
 * Provide one flag in each add_compile_options/definitions of CMake script
+* Provide wcsdup symbol if redirect malloc
 * Put faq.html to codebase, update it and convert it to Markdown format
 * Put gc_badalc/cpp.cpp instead of .cc ones in CMake script (MSVC/BCC/WCC)
 * Really ignore bad GC_INITIAL/MAXIMUM_HEAP_SIZE values
+* Redirect C23 free_sized() and free_aligned_sized() in leak_detector.h
 * Redirect GC_gcj_malloc_ignore_off_page to GC_gcj_malloc for small objects
 * Redirect GC_malloc_explicitly_typed_ignore_off_page for small objects
+* Redirect SunOS obsolete cfree() in leak_detector.h
 * Redirect _aligned_malloc/free() in leak_detector.h
 * Redirect aligned_alloc() and reallocarray() in leak_detector.h
 * Redirect malloc_size() and _msize() in leak_detector.h
+* Reduce initial GC_proc_buf size to 8KB on Solaris
 * Reduce number of iterations in disclaim and cpp tests
 * Reduce scope of local variables used for assertion checking in add_to_fl
 * Reduce size of heap block per-granule maps twice for 4KB heap blocks
@@ -365,9 +450,12 @@
 * Refactoring of GC_n_set_marks and GC_print_block_descr
 * Refactoring of GC_protect_heap
 * Refactoring of rt_hash()
+* Refine README for autoconf and cmake
+* Refine README.win32 about builds by bcc/dmc/wcc
 * Refine WARN message in GC_proc_read_dirty regarding buffer size
 * Refine column names output by GC_print_block_list
 * Refine comment about call stack saving and gcc option for i686 in os_dep.c
+* Refine comment of GC_find_limit_with_bound
 * Refine comment of LOG_PHT_ENTRIES for the case of impossible collisions
 * Refine comments in code regarding DllMain-based threads registration
 * Refine comparisons to GC_greatest_plausible_heap_addr
@@ -375,14 +463,19 @@
 * Refine documentation of GC_MALLOC_WORDS_KIND
 * Refine documentation of GC_init_gcj_malloc and GC_get_back_ptr_info
 * Refine documentation of GC_register_disclaim_proc and GC_finalized_malloc
+* Refine environment and macros README files
 * Refine gcinterface.md that the allocator belongs to SGI STL
 * Refine main README about the ways available to build the library
 * Refine that GC_save_regs_in_stack is used by save_callers only on SPARC
+* Reformat C-style block comments to have no trailing star at EOLn
+* Reformat all C/C++ files with clang-format v19 based on GNU style
 * Reformat code of GC_save_callers()
 * Relax required dependencies for atomicopstest (CMake)
 * Remove -o option where not needed in Makefile.direct (refactoring)
 * Remove CORD_max_len debugging symbol
 * Remove EXPORTED_FUNCTIONS linker flag for gctest (Emscripten)
+* Remove GC_*_THREADS macros description from README
+* Remove GC_INVOKE_FINALIZERS internal macro (refactoring)
 * Remove GC_copyright symbol
 * Remove GC_mark_threads variable (refactoring)
 * Remove GC_min/max() and simplify heap bounds update in expand_hp_inner
@@ -392,40 +485,54 @@
 * Remove LOGWL, BYTES_PER_WORD, MAXOBJWORDS and various unused CPP_x macros
 * Remove MAIN_THREAD flag in GC_thread (refactoring)
 * Remove MARK_BIT_PER_GRANULE macro (refactoring)
-* Remove OpenBSD uthreads (GC_OPENBSD_UTHREADS) support
 * Remove STACK_GROWS_DOWN explicit definitions in gcconfig.h (refactoring)
 * Remove STACK_GROWS_DOWN macro usage (refactoring)
 * Remove Symbian makefile
 * Remove USED_HEAP_SIZE macro (refactoring)
+* Remove ancient BSD-pkg-all build target from Makefile.direct
 * Remove ancient OS2_MAKEFILE
-* Remove code duplication in GC_free[_inner] (refactoring)
-* Remove code duplication in gcconfig.h for Hurd (refactoring)
+* Remove checking for deprecated unsupported platforms (refactoring)
+* Remove code duplication in gcconfig.h for Hurd and in GC_free[_inner]
 * Remove comment from gc_cpp.h about bugs in ancient compilers
 * Remove commented out code in de_win
 * Remove de_win.h dependency on cord.h (refactoring)
 * Remove doc.am, and move gc.man to base folder (refactoring)
+* Remove dummy fields in GC_thread (refactoring)
 * Remove duplicate 'called once' check in GC_init_lib_bounds (refactoring)
+* Remove duplicate code with default ALIGNMENT macro definition (refactoring)
 * Remove duplicate documentation of GC_UNDERSCORE_STDCALL in configure
 * Remove duplication of random numbers generator formula (refactoring)
 * Remove empty default cases in configure (refactoring)
 * Remove extra parentheses in return statement (refactoring)
 * Remove extra space after sizeof (reformatting)
 * Remove extra variable and rename argument of GC_new_hblk (refactoring)
+* Remove implicit GC initialization by GC_set_warn_proc on Win32
+* Remove internal signed_word type (refactoring)
 * Remove main_altstack group of static variables (refactoring)
 * Remove main_pthread_id variable (refactoring)
 * Remove msvc_dbg.h file (refactoring)
+* Remove no-op GC_push_regs (refactoring)
+* Remove obj_map.c file (refactoring)
 * Remove obsolete AC_PROG_LIBTOOL in configure.ac (refactoring)
 * Remove oom_fn internal type from cord source (refactoring)
+* Remove outdated comment about MS Tools in README
 * Remove outdated info from README about Linux/m68k bug
+* Remove outdated note of GlobalAlloc+unmapping compatibility from README
+* Remove private [LOG_]MAX_MARK_PROCS macros (refactoring)
 * Remove private pthread_stop_world.h and darwin_stop_world.h (refactoring)
 * Remove redundant 'private' prefix in include directives in include/private
 * Remove redundant GC_ATTR_UNUSED for GC_mark_and_push
 * Remove redundant HOST_TIZEN macro check for SEARCH_FOR_DATA_START
 * Remove redundant Linux/SPARC checks (refactoring)
 * Remove redundant check a predefined macro of BCC (refactoring)
+* Remove redundant goto in GC_is_visible (refactoring)
 * Remove redundant includes from tools and disclaim tests (refactoring)
+* Remove redundant parentheses around dereference operators (refactoring)
 * Remove redundant pointer casts to void pointer (refactoring)
 * Remove specific DATASTART definition for ancient OpenBSD/m68k
+* Remove strange ALIGNMENT in unsupported Win32/ia64 configuration
+* Remove support of SEPARATE_GLOBALS macro
+* Remove support of deprecated GC_NO_BLACKLIST_WARNING environment variable
 * Remove thread_blocked field in GC_thread (refactoring)
 * Remove trailing dot in WARN messages
 * Remove unneeded cast to word in GC_PUSH_ONE_HEAP/STACK (refactoring)
@@ -438,7 +545,10 @@
 * Remove use of emscripten_scan_stack (refactoring)
 * Remove volatile qualifier for GC_dirty_pages except for MPROTECT_VDB
 * Remove volatile qualifier for GC_threads (pthreads)
+* Remove warning about ancient NetBSD 1.x in configure and cmake scripts
 * Remove warning at GC_init about USE_PROC_FOR_LIBRARIES and Linux threads
+* Remove workaround for Solaris 2.5 after migration to new structured procfs
+* Rename GC_FreeBSDGetDataStart to GC_SysVGetDataStart (refactoring)
 * Rename GC_[inner_]start_routine to match that for Win32 (refactoring)
 * Rename GC_enclosing_mapping to GC_enclosing_writable_mapping (refactoring)
 * Rename MAP_LEN internal macro to OBJ_MAP_LEN (refactoring)
@@ -449,47 +559,75 @@
 * Rename doc folder to docs
 * Rename mark_stack_ptr argument to mark_stack_top globally (refactoring)
 * Rename p argument to base in dbg_mlc.c/h (refactoring)
+* Rename platform-specific GC_*_get_mem to GC_get_mem (refactoring)
 * Rename size argument in GC_build_fl (refactoring)
 * Rename stack[_size] in GC_Thread_Rep and GC_register_altstack (refactoring)
+* Rename static GC_*_main_stack_base functions to os_main_stackbottom
+* Rename table argument of GC_grow_table (refactoring)
 * Rename thread_args and GC_main_thread in win32_threads.c (refactoring)
 * Reorder macro definitions for rare architectures in gcconfig.h
+* Replace 0 to NULL for pointer comparisons (refactoring)
 * Replace C style comments to C++ ones in gc_allocator.h
 * Replace C-style casts in C++ headers and cpptest (refactoring)
+* Replace EXPECT internal macro to LIKELY/UNLIKELY (refactoring)
 * Replace GC_MARK_FO macro with inline functions (refactoring)
+* Replace NO_UNIX_GET_MEM internal macro to NEED_UNIX_GET_MEM one
+* Replace SN_TARGET_ORBIS to GC_NO_TYPES/PLATFORM_THREADS (refactoring)
+* Replace abort to assertion in GC_do_parallel_mark (refactoring)
 * Replace comments about GC is held or not with relevant assertions
 * Replace hard-coded 0x80000000 to SIGNB for pointer-sized values
 * Replace init_netbsd_elf with init_linux_data_start on NetBSD (refactoring)
 * Replace obsolete AC_TRY_COMPILE/LINK/RUN in configure.ac (refactoring)
 * Replace target names with '$@' in Makefile.direct (refactoring)
 * Report 'none' if no machine-dependent code-to-use detected in configure
+* Report OS/arch info by gctest
 * Require to specify CPP_WORDSZ in gcconfig.h for each supported arch
+* Reset GC_max_root_size value by GC_win32_free_heap
+* Restore GC_interrupt_finalizers on return from GC_finalize_all
 * Return free memory to OS explicitly before getting new memory from OS
 * Roundup size passed to GC_expand_hp
 * Set name of GC marker threads on OpenBSD
+* Simplify USE_GLOBAL_ALLOC-specific code for GWW_VDB in gcconfig.h
 * Simplify code of GC_allochblk_nth (refactoring)
 * Simplify code to define USE_x_SPECIFIC macros in thread_local_alloc.h
+* Simplify condition in NO_GETCONTEXT definition (refactoring)
+* Simplify condition of USE_BUS/SEGV_SIGACT definitions (refactoring)
 * Simplify expression to clear extra bits in add_ext_descriptor (refactoring)
 * Simplify gcconfig code to define IRIX5 and ULTRIX on mips (refactoring)
+* Simplify loop in GC_enough_large_bytes_left (refactoring)
 * Simplify test_basics() and test_extras() in cordtest (refactoring)
 * Specify GC_CALLBACK calling conventions for GC_mark_proc
+* Specify all functions that save stack pointer as no-inline
 * Specify all public headers without path prefix in documentation
+* Specify error result in every sem_*() of darwin_semaphore.h as unlikely
 * Specify that error conditions are unlikely to be true in threads code
 * Specify that internal allocations failure is unlikely (refactoring)
 * Specify that out-of-memory is unlikely in typed alloc and make descriptor
+* Specify that the case of allocation fail in GC_*_get_mem() is unlikely
+* Start 'postfix' comments with a left angle bracket
 * State explicitly that license is MIT-style
 * Support 32-bit mode on E2K
 * Support CFLAGS_EXTRA in rare build scripts (NT/WCC_MAKEFILE, digimars.mak)
+* Support CHERI processor extension
+* Support Cosmo target (Cosmopolitan Libc)
 * Support Embox/x86 (single-threaded)
 * Support GC_memalign with alignments greater than HBLKSIZE
+* Support KOS/arm64 (KasperskyOS)
 * Support Linux/sw_64 (sunway-linux)
 * Support QNX on arm[64] and x86[_64]
+* Support Serenity OS on x86[_64]
 * Support ThreadSanitizer (GCC)
-* Support building with Zig (experimental)
+* Support build by CMake on SPARC
+* Support building with Zig
 * Support client stop function properly in maybe_gc and collect_a_little
 * Support disable_single_obj_compilation option in cmake script
+* Support incremental collection on NetBSD and multi-threaded FreeBSD
 * Support malloc redirection on E2K
+* Support no-OS RISC-V and RISC-V ILP32 ABI (rv64ilp32)
 * Support pointer mask/shift set at runtime
 * Support saving procedure stack at an offset on E2K (multi-threaded only)
+* Support visionOS simulator
+* Support wasm32-wasi target
 * Suppress a data race report in debug-related GC_n_set_marks
 * Test garbage collection from a deep recursion in gctest
 * Test manual self-suspend in gctest
@@ -502,33 +640,42 @@
 * Try find libatomic_ops installed by cmake if with_libatomic_ops (CMake)
 * Turn on MAKE_BACK_GRAPH for all Linux architectures in cmake and configure
 * Undefine PUSHn macros after use in win32_threads.c (refactoring)
+* Undefine USE_MUNMAP explicitly for ancient DOS4GW/NEXT/NONSTOP/OS2/RTEMS
 * Uniform usage of IS_FORWARDING_ADDR_OR_NIL() and FORWARDED_ADDR()
 * Uniform use of GC_lookup_by_pthread in GC_pthread_join/detach (refactoring)
 * Uniformly name Linux/i686 and Linux/x86_64 in documentation
 * Unify GC_Thread_Rep and thread id type in win32_threads.c (refactoring)
 * Unify GC_[mark_]lock_holder variable definition (refactoring)
+* Unify architecture naming in MACH_TYPE (refactoring)
 * Unify comments about the allocator lock (documentation)
+* Update comment in gcconfig.h about setting GC_stackbottom by client
 * Update information and better describe call stack saving support
 * Update next_random_no state using AO primitive
+* Update prpageheader/prasmap types definition to match that of Solaris 11
 * Update time statistics about stopped marking even if abandoned
+* Update/reformat list of supported arch-OS configurations in gcconfig.h
+* Use 'sizeof variable' when clearing GC_root_index (refactoring)
 * Use AO primitive in GC_noop1 instead of no_sanitize attribute
 * Use AO primitives in GC_RAND_NEXT instead of no_sanitize attribute
 * Use AO_t type for hb_marks, hb_sz, hb_descr fields (refactoring)
 * Use AS_HELP_STRING consistently for AC_ARG_WITH in configure (refactoring)
 * Use BZERO in GC_save_callers (refactoring)
+* Use BZERO in GC_update_check_page (refactoring)
 * Use BZERO() to clear jmp_buf variable in GC_with_callee_saves_pushed
-* Use LIKELY in GC_add_to_heap, GC_lookup_thread, GC_lookup_by_pthread
-* Use LIKELY in checks of MAIN_THREAD bit (refactoring)
 * Use GC_HIDE_NZ_POINTER() for hiding ci_arg value in GC_save_callers
 * Use GC_debug_generic_or_special_malloc in GC_debug_realloc (refactoring)
 * Use GC_delete_thread instead of GC_delete_gc_thread_no_free (refactoring)
 * Use GC_printf in cpptest consistently (refactoring)
 * Use IS_PTRFREE() consistently (refactoring)
+* Use LIKELY in GC_add_to_heap, GC_lookup_thread, GC_lookup_by_pthread
+* Use LIKELY in checks of MAIN_THREAD bit (refactoring)
 * Use __typeof__ in GC_PTR_ADD and similar if MS Clang
 * Use a dedicated integer type to hold function pointers (refactoring)
 * Use a macro internally to designate Cygwin and MSWin/WinCE (refactoring)
 * Use a macro internally to designate Free/Net/OpenBSD (refactoring)
+* Use atomic_ops_sysdeps.S by configure on any SPARC with non-GCC compiler
 * Use cast to void instead of the attribute to indicate unused arguments
+* Use clock_gettime() on Haiku
 * Use consistent variables naming in typd_mlc.c (refactoring)
 * Use distinct MACH_TYPE for WebAssembly (refactoring)
 * Use hdr identifier only for the type (refactoring)
@@ -536,8 +683,11 @@
 * Use inline keyword in GC_INLINE (bcc)
 * Use lb, lg and k argument names uniformly (refactoring)
 * Use modHBLKSZ where possible (refactoring)
+* Use named constants for GC_mark_mutex_state on Win32 (refactoring)
+* Use pointer to GC_NT_TIB instead of PNT_TIB in win32_threads.c
 * Use ptr_t instead of word internally where appropriate (refactoring)
 * Use register_my_thread_inner to add initial thread in pthread_support.c
+* Use short argument name in GC_get/set_bit public macro (refactoring)
 * Use signed_word instead of ptrdiff_t for pointers delta (refactoring)
 * Use single-argument suspend_handler for E2K, HP_PA, IA64, M68K
 * Use size_t in GC_repeat_read, GC_get_file_len and generic GC_write
@@ -549,10 +699,12 @@
 * Workaround 'GC_parallel_mark_disabled is always false' cppcheck FP
 * Workaround 'TEXT is unknown macro' cppcheck FP warning
 * Workaround 'address of a symbol cannot be null' cppcheck FP
+* Workaround 'casting unsigned e->e_phnum to wider int type' code defect FP
 * Workaround 'condition !setup_header() is always false' cppcheck FP
 * Workaround 'condition 0!=back_ptr is always true' cppcheck FP
 * Workaround 'condition weakmap_trylock()!=0' is always false' cppcheck FP
 * Workaround 'data access w/o lock' code defect FP in GC_incr_bytes_freed
+* Workaround 'dereference after comparison to null' FP defect in GC_finalize
 * Workaround 'if condition is same as previous if condition' cppcheck FP
 * Workaround 'integer overflow occurs in GC_make_descriptor' code defect FP
 * Workaround 'null ptr dereference' cppcheck FP in remove_all_threads_but_me
@@ -561,11 +713,13 @@
 * Workaround 'returning pointer to local variable base' cppcheck FP in misc
 * Workaround 'scope of sz can be reduced' cppcheck warning in GC_n_set_marks
 * Workaround 'struct member link_map::l_name is never used' cppcheck warning
+* Workaround 'tainted e_phnum use as loop bound' static analysis tool warning
 * Workaround 'total_time<0 is always false' cppcheck FP warning
 * Workaround 'uninitialized variable bs_lo' cppcheck FP (E2K)
 * Workaround 'uninitialized variable pos.cur_pos' cppcheck FP in cord files
 * Workaround 'uninitialized variable sp' cppcheck FP in setjmp_t.c
 * Workaround 'unsigned int underflow' code defect FP in GC_clear_fl_marks
+* Workaround 'use of uninitialized p[i]' gcc analyzer FP in leaktest
 * Workaround an integer overflow code defect in GC_make_descriptor
 * Workaround integer overflow code defect FP in GC_write, GC_repeat_read
 * Workaround unsupported 'X' asm constraint in tcc
