@@ -461,20 +461,20 @@ objects.
 
 ## Thread support
 
-We support several different threading models. Unfortunately Pthreads, the
+We support several different threading models. Unfortunately pthreads, the
 only reasonably well standardized thread model, supports too narrow
 an interface for conservative garbage collection. There appears to be no
 completely portable way to allow the collector to coexist with various
-Pthreads implementations. Hence we currently support only the more common
-Pthreads implementations.
+pthreads implementations. Hence we currently support only the more common
+pthreads implementations.
 
 In particular, it is very difficult for the collector to stop all other
 threads in the system and examine the register contents. This is currently
-accomplished with very different mechanisms for some Pthreads implementations.
-For Linux/HPUX/Tru64, Solaris and Irix it sends signals to individual Pthreads
+accomplished with very different mechanisms for some pthreads implementations.
+For Linux/HPUX/Tru64, Solaris and Irix it sends signals to individual pthreads
 and has them wait in the signal handler.
 
-The Linux and Irix implementations use only documented Pthreads calls, but
+The Linux and Irix implementations use only documented pthreads calls, but
 rely on extensions to their semantics. The Linux implementation
 `pthread_stop_world.c` file relies on only very mild extensions to the
 `pthreads` semantics, and already supports a large number of other UNIX-like

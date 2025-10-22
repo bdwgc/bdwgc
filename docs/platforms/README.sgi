@@ -10,7 +10,7 @@ version of malloc is linked in.
 
 Sproc threads are not supported.
 
-Pthreads support is provided.  This requires that:
+pthreads support is provided, it requires that:
 
 1) You compile the collector with "-D GC_THREADS" specified in Makefile.direct.
 

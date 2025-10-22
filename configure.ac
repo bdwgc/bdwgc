@@ -284,7 +284,7 @@ case "$THREADS" in
       *)
         AS_IF([test x$default_threadlibs != xtrue],
               [AC_MSG_ERROR(
-                    [Pthreads not supported by the GC on this platform])])
+                    [pthreads not supported by the GC on this platform])])
         # The default `THREADDLLIBS`.
         ;;
     esac
