@@ -111,25 +111,24 @@ main(void)
   (void)nested_sp(); /*< to workaround a bug in cppcheck */
 #endif
   if (nested_sp_fn() < ADDR(sp)) {
-    printf("Stack appears to grow down, which is the default.\n");
-    printf("A good guess for STACKBOTTOM on this machine is 0x%lx.\n",
+    printf("Stack appears to grow down, which is the default.\n"
+           "A good guess for STACKBOTTOM on this machine is 0x%lx.\n",
            ((unsigned long)ADDR(sp) + ps) & ~(unsigned long)(ps - 1));
   } else {
-    printf("Stack appears to grow up.\n");
-    printf("Define STACK_GROWS_UP in gc_priv.h\n");
+    printf("Stack appears to grow up.\n"
+           "Define STACK_GROWS_UP in gc_priv.h\n");
     /* Note: `sp` is rounded down. */
     printf("A good guess for STACKBOTTOM on this machine is 0x%lx.\n",
            (unsigned long)ADDR(sp) & ~(unsigned long)(ps - 1));
   }
-  printf("Note that this may vary between machines of ostensibly\n");
-  printf("the same architecture (e.g. Sun 3/50s and 3/80s).\n");
-  printf("On many machines the value is not fixed.\n");
-  printf("A good guess for ALIGNMENT on this machine is %lu.\n",
+  printf("Note that this may vary between machines of ostensibly\n"
+         "the same architecture (e.g. Sun 3/50s and 3/80s).\n"
+         "On many machines the value is not fixed.\n"
+         "A good guess for ALIGNMENT on this machine is %lu.\n",
          (unsigned long)(ADDR(&a.a_b) - ADDR(&a)));
 #ifndef WASI
-  printf("The following is a very dubious test of one root marking"
-         " strategy.\n");
-  printf("Results may not be accurate/useful:\n");
+  printf("The following is a very dubious test of one root marking\n"
+         "strategy. Results may not be accurate/useful:\n");
   /* Encourage the compiler to keep `x` in a callee-save register. */
   x = 2 * x - 1;
   printf("\n");
@@ -151,9 +150,10 @@ main(void)
   if (y == 1)
     LONGJMP(b, 1);
 #endif
-  printf("Some GC internal configuration stuff: \n");
-  printf("\tWORDSZ = %lu, ALIGNMENT = %d, GC_GRANULE_BYTES = %d\n",
+  printf("Some GC internal configuration stuff:\n"
+         "\tWORDSZ = %lu, ALIGNMENT = %d, GC_GRANULE_BYTES = %d\n",
          (unsigned long)CPP_WORDSZ, ALIGNMENT, GC_GRANULE_BYTES);
+
   printf("\tUsing one mark ");
 #ifdef USE_MARK_BYTES
   printf("byte");
