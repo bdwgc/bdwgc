@@ -17,20 +17,19 @@ is described in a bit more detail here, since
      the detailed collector configuration.
 
 The high and middle bits are used to look up an entry in the table described
-here. The resulting table entry consists of either a block descriptor
-(`struct hblkhdr *` or `hdr *`) identifying the layout of objects in the
-block, or an indication that this address range corresponds to the middle of
-a large block, together with a hint for locating the actual block descriptor.
-Such a hint consist of a displacement that can be subtracted from the middle
-bits of the candidate pointer without leaving the object.
+here. The resulting table entry consists of either a block descriptor (`hdr *`)
+identifying the layout of objects in the block, or an indication that this
+address range corresponds to the middle of a large block, together with a hint
+for locating the actual block descriptor. Such a hint consist of a displacement
+that can be subtracted from the middle bits of the candidate pointer without
+leaving the object.
 
-In either case, the block descriptor (`struct hblkhdr`) refers to a table
-of object starting addresses (the `hb_map` field). The starting address table
-is indexed by the low bits if the candidate pointer. The resulting entry
-contains a displacement to the beginning of the object, or an indication that
-this cannot be a valid object pointer. (If all interior pointer are
-recognized, pointers into large objects are handled specially,
-as appropriate.)
+In either case, the block descriptor (`hdr`) refers to a table of object
+starting addresses (the `hb_map` field). The starting address table is indexed
+by the low bits if the candidate pointer. The resulting entry contains
+a displacement to the beginning of the object, or an indication that this
+cannot be a valid object pointer. (If all interior pointer are recognized,
+pointers into large objects are handled specially, as appropriate.)
 
 ## The Tree
 
@@ -115,54 +114,53 @@ contributed originally by Dave Barrett.
        ^       |              |                       |                  |
        |       |              |                       |                  |
     BOTTOM_SZ  |              |   ha=GET_HDR_ADDR(p)  |                  |
-     (items)   +--------------+<----------------------+          +-------+
-       |   +--<|   index[]    |                                  |
-       |   |   +--------------+                      GC_obj_map: v
-       |   |   |              |              from      / +-+-+-----+-+-+-+-+  ---
-       v   |   |              |       GC_add_map_entry <0| | |     | | | | |   ^
-      ---  |   +--------------+                        \ +-+-+-----+-+-+-+-+   |
-           |   |   asc_link   |                          +-+-+-----+-+-+-+-+ MAXOBJGRANULES
-           |   +--------------+                      +-->| | |  j  | | | | |  +1
-           |   |     key      |                      |   +-+-+-----+-+-+-+-+   |
-           |   +--------------+                      |   +-+-+-----+-+-+-+-+   |
-           |   |  hash_link   |                      |   | | |     | | | | |   v
-           |   +--------------+                      |   +-+-+-----+-+-+-+-+  ---
-           |                                         |   |<--OBJ_MAP_LEN-->|
-           |                                         |   =HBLKSIZE/GC_GRANULE_BYTES
-     HDR(p)| GC_find_header(p)                       |    (1024 elements on Alpha)
-           |                           \ from        |    (8/16 bits each)
-           |    (hdr) (struct hblkhdr) / alloc_hdr() |
-           +--->+----------------------+             |
-      GET_HDR(p)| struct hblk *hb_next |             |
-                +----------------------+             |
-                | ...                  |             |
-                +----------------------+             |
-                | uchar  hb_obj_kind   |             |
-                +----------------------+             |
-                | uchar  hb_flags      |             |
-                +----------------------+             |
-                | hb_last_reclaimed    |             |
-                +----------------------+             |
-                | size_t hb_sz         |             |
-                +----------------------+             |
-                | word   hb_descr      |             |
-                +----------------------+             |
-                | uchar/ushort *hb_map |>------------+
-                +----------------------+
-                | AO_t   hb_n_marks    |
-       ---      +----------------------+
-        ^       |                      |
-        |       |                      | * if hdr is free, hb_sz is the size
-    HB_MARKS_SZ | char/AO_t hb_marks[] | of a heap chunk (struct hblk) of at
-        |       |                      | least MINHINCR*HBLKSIZE bytes (below);
-        v       |                      | otherwise, size of each object in chunk.
-       ---      +----------------------+
+     (items)   +--------------+<----------------------+                  |
+       |   +--<|   index[]    |                                          |
+       |   |   +--------------+                              GC_obj_map: v
+       |   |   |              |                      from      / +-+-+-----+-+-+-+-+  ---
+       v   |   |              |               GC_add_map_entry <0| | |     | | | | |   ^
+      ---  |   +--------------+                                \ +-+-+-----+-+-+-+-+   |
+           |   |   asc_link   |                                  +-+-+-----+-+-+-+-+ MAXOBJGRANULES
+           |   +--------------+                           +----->| | |  j  | | | | |  +1
+           |   |     key      |                           |      +-+-+-----+-+-+-+-+   |
+           |   +--------------+                           |      +-+-+-----+-+-+-+-+   |
+           |   |  hash_link   |                           |      | | |     | | | | |   v
+           |   +--------------+                           |      +-+-+-----+-+-+-+-+  ---
+           |                                              |      |<--OBJ_MAP_LEN-->|
+           |                                              |      =HBLKSIZE/GC_GRANULE_BYTES
+     HDR(p)| GC_find_header(p)                            |       (1024 elements on Alpha)
+           |          \ from                              |       (8/16 bits each)
+           |    (hdr) / alloc_hdr()                       |
+           +--->+----------------------------------+      |
+      GET_HDR(p)| struct hblk * hb_next            |      |
+                +----------------------------------+      |
+                | ...                              |      |
+                +----------------------------------+      |
+                | unsigned char hb_obj_kind        |      |
+                +----------------------------------+      |
+                | unsigned char hb_flags           |      |
+                +----------------------------------+      |
+                | unsigned short hb_last_reclaimed |      |
+                +----------------------------------+      |
+                | size_t        hb_sz              |      |
+                +----------------------------------+      |
+                | word          hb_descr           |      |
+                +----------------------------------+      |
+                | unsigned char/short *hb_map      |>-----+
+                +----------------------------------+
+                | AO_t          hb_n_marks         |
+       ---      +----------------------------------+
+        ^       |                                  |
+        |       |                                  | * if hdr is free, hb_sz is the size
+    HB_MARKS_SZ | char/AO_t     hb_marks[]         | of a heap chunk (struct hblk) of at
+        |       |                                  | least MINHINCR*HBLKSIZE bytes (below);
+        v       |                                  | otherwise, size of each object in chunk.
+       ---      +----------------------------------+
 
 
 Dynamic data structures above are interleaved throughout the heap in blocks
 of size `MINHINCR * HBLKSIZE` bytes as done by `GC_scratch_alloc` which cannot
-be freed; free lists are used (e.g. `alloc_hdr`). `hblk`'s below are
-collected.
+be freed; free lists are used (e.g. `alloc_hdr`). `hblk`'s below are collected.
 
 
                  (struct hblk)
