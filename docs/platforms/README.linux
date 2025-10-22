@@ -46,7 +46,7 @@ To use threads, you need to abide by the following requirements:
 
    In any case, _REENTRANT should be defined during compilation.
 
-4) Dlopen() disables collection during its execution.  (It can't run
+4) dlopen() disables collection during its execution.  (It can't run
    concurrently with the collector, since the collector looks at its
    data structures.  It can't acquire the allocator lock, since arbitrary
    user startup code may run as part of dlopen().)  Under unusual
