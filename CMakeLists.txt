@@ -517,6 +517,8 @@ endif()
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(sparc.*|SPARC.*)")
   # TODO: Handle NetBSD/SPARC (32-bit) specially.
   enable_language(ASM)
+  # Note: file extension `.S` (capital S) stands for the assembly code that
+  # must still pass through a preprocessor.
   set(SRC ${SRC} sparc_mach_dep.S)
 endif()
 
