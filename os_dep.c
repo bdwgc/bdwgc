@@ -293,7 +293,7 @@ GC_get_maps(void)
 #  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES) \
       || defined(IA64) || defined(INCLUDE_LINUX_THREAD_DESCR)     \
       || (defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB))       \
-      || defined(REDIR_MALLOC_AND_LINUXTHREADS)
+      || defined(REDIR_MALLOC_AND_LINUX_THREADS)
 GC_INNER const char *
 GC_parse_map_entry(const char *maps_ptr, ptr_t *p_start, ptr_t *p_end,
                    const char **p_prot, unsigned *p_maj_dev,
@@ -381,7 +381,7 @@ GC_enclosing_writable_mapping(ptr_t addr, ptr_t *startp, ptr_t *endp)
 }
 #  endif /* IA64 || INCLUDE_LINUX_THREAD_DESCR */
 
-#  ifdef REDIR_MALLOC_AND_LINUXTHREADS
+#  ifdef REDIR_MALLOC_AND_LINUX_THREADS
 GC_INNER GC_bool
 GC_text_mapping(const char *nm, ptr_t *startp, ptr_t *endp)
 {
@@ -421,7 +421,7 @@ GC_text_mapping(const char *nm, ptr_t *startp, ptr_t *endp)
   }
   return FALSE;
 }
-#  endif /* REDIR_MALLOC_AND_LINUXTHREADS */
+#  endif /* REDIR_MALLOC_AND_LINUX_THREADS */
 
 #  ifdef IA64
 static ptr_t
