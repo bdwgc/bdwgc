@@ -493,9 +493,9 @@ by the indicated amount (`n`) before trying to interpret them.  Applied after
 `POINTER_MASK`; see also the description of the latter macro.
 
 `DYNAMIC_POINTER_MASK` - Allows to set pointer mask and shift at runtime,
-typically before `GC_INIT()` call.  Overrides (undefines) `POINTER_MASK` and
-`POINTER_SHIFT` macros (i.e. the default mask and shift are assumed to be
-zeros regardless of the latter two macros).
+typically before `GC_INIT()` call.  Overrides (undoes definition of)
+`POINTER_MASK` and `POINTER_SHIFT` macros (i.e. the default mask and shift
+are assumed to be zeros regardless of the latter two macros).
 
 `ENABLE_TRACE` - Enables the `GC_TRACE=<addr>` environment setting to do its
 job.  By default this is not supported in order to keep the marker as fast as
@@ -518,8 +518,8 @@ compatibility and for the case when it is not possible to call
 `USE_PROC_FOR_LIBRARIES` - Causes the Linux collector to treat writable
 memory mappings (as reported by `/proc`) as roots, if it does not have
 other information about them.  It no longer traverses dynamic loader
-data structures to find dynamic library static data.  This may be
-required for applications that store pointers in mmap'ed segments without
+data structures to find dynamic library static data.  This may be required
+for applications that store pointers in segments obtained by `mmap()` without
 informing the collector.  But it typically performs poorly, especially
 since it will scan inactive but cached NPTL thread stacks completely.
 
