@@ -542,12 +542,12 @@ not copied).  If an error involving the object is detected, they are printed.
 
 The macros `GC_MALLOC`, `GC_MALLOC_ATOMIC`, `GC_REALLOC`, `GC_FREE`,
 `GC_REGISTER_FINALIZER` and friends are also provided.  These require the same
-arguments as the corresponding (nondebugging) routines.  If `gc.h` file is
+arguments as the corresponding (non-debugging) routines.  If `gc.h` file is
 included with `GC_DEBUG` defined, they call the debugging versions of these
 functions, passing the current file name and line number as the two
 extra arguments, where appropriate.  If `gc.h` file is included without
 `GC_DEBUG` macro defined then all these macros will instead be defined to
-their nondebugging equivalents.  (`GC_REGISTER_FINALIZER` is necessary, since
+their non-debugging equivalents.  (`GC_REGISTER_FINALIZER` is necessary, since
 pointers to objects with debugging information are really pointers to
 a displacement of 16 bytes from the object beginning, and some translation is
 necessary when finalization routines are invoked.  For details, about what is
