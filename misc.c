@@ -1503,7 +1503,7 @@ GC_init(void)
   if (GC_all_interior_pointers)
     GC_initialize_offsets();
   GC_register_displacement_inner(0);
-#ifdef REDIR_MALLOC_AND_LINUXTHREADS
+#ifdef REDIR_MALLOC_AND_LINUX_THREADS
   if (!GC_all_interior_pointers) {
     /* TLS ABI uses "pointer-sized" offsets for `dtv`. */
     GC_register_displacement_inner(sizeof(void *));
