@@ -329,8 +329,8 @@ GC_API void GC_CALL GC_init_gcj_malloc_mp(unsigned /* `mp_index` */,
                                           size_t /* `descr_offset` */);
 
 /**
- * Allocate an object of a given `kind`.  By default, there are only
- * a few kinds: composite (pointerful), atomic, uncollectible, etc.
+ * Allocate an object of a given `kind`.  By default, there are only a few
+ * kinds: composite (pointer-containing), atomic, uncollectible, etc.
  * We claim it is possible for clever client code that understands the
  * collector internals to add more, e.g. to communicate object layout
  * information to the collector.  Note that in the multi-threaded

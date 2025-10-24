@@ -3204,9 +3204,9 @@ GC_parse_version(int *pminor, const char *pverstr)
  *     file).  In case the soft-dirty bit is not supported by the kernel,
  *     `MPROTECT_VDB` may be defined as a fall back strategy.
  *
- *   - `MPROTECT_VDB`: Protect pages and then catch the faults to keep
- *     track of dirtied pages.  The implementation (and implementability)
- *     is highly system-dependent.  This usually fails when system calls
+ *   - `MPROTECT_VDB`: Protect pages and then catch the faults to keep track
+ *     of dirtied pages.  The implementation (and, even, the possibility of
+ *     it) is highly system-dependent.  This usually fails when system calls
  *     write to a protected page.  We prevent the `read` system call from
  *     doing so.  It is the clients responsibility to make sure that other
  *     system calls are similarly protected or write only to the stack.

@@ -12,7 +12,7 @@
  */
 
 /*
- * This is a reimplementation of a subset of the
+ * This is a custom implementation of a subset of the
  * `pthread_getspecific`/`pthread_setspecific` interface.  This appears
  * to outperform the standard LinuxThreads one by a significant margin.
  * The major restriction is that each thread may only make a single

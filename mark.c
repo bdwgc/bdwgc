@@ -710,7 +710,7 @@ GC_mark_from(mse *mark_stack_top, mse *mark_stack, mse *mark_stack_limit)
   GC_objects_are_marked = TRUE;
   INIT_HDR_CACHE;
 #if defined(OS2) || CPP_PTRSZ > CPP_WORDSZ
-  /* OS/2: use untweaked variant to circumvent a compiler problem. */
+  /* OS/2: avoid the tweaked variant to circumvent a compiler problem. */
   while (ADDR_GE((ptr_t)mark_stack_top, (ptr_t)mark_stack) && credit >= 0)
 #else
   while (((((word)mark_stack_top - (word)mark_stack) | (word)credit) & SIGNB)
