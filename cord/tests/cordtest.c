@@ -118,7 +118,10 @@ test_cord_x1(CORD x)
     ABORT("CORD_substr returned NULL");
   if (!CORD_IS_STRING(y))
     ABORT("short cord should usually be a string");
-  if (strcmp(y, "babab") != 0)
+  if (strcmp(y, ("ba"
+                 "ba"
+                 "b"))
+      != 0)
     ABORT("bad CORD_substr result");
 
   y = CORD_substr(x, SMALL_SUBSTR_POS, 8);
@@ -126,7 +129,11 @@ test_cord_x1(CORD x)
     ABORT("CORD_substr returned NULL");
   if (!CORD_IS_STRING(y))
     ABORT("short cord should usually be a string");
-  if (strcmp(y, "abababab") != 0)
+  if (strcmp(y, ("ab"
+                 "ab"
+                 "ab"
+                 "ab"))
+      != 0)
     ABORT("bad CORD_substr result (2)");
 
   y = CORD_substr(x, 2 * CORD_ITER_CNT - 1, 8);
@@ -159,7 +166,10 @@ test_cord_x2(CORD x)
     ABORT("CORD_substr returned NULL");
   if (!CORD_IS_STRING(y))
     ABORT("short cord should usually be a string");
-  if (strcmp(y, "babab") != 0)
+  if (strcmp(y, ("ba"
+                 "ba"
+                 "b"))
+      != 0)
     ABORT("bad CORD_substr result (4)");
 
   y = CORD_from_fn(id_cord_fn, 0, 13);
@@ -277,7 +287,10 @@ test_cords_f2(CORD w, CORD x, CORD y)
     ABORT("CORD_str failed 1");
   if (CORD_str(x, 0, "9abcdefghijk") != 35)
     ABORT("CORD_str failed 2");
-  if (CORD_str(x, 0, "9abcdefghijx") != CORD_NOT_FOUND)
+  if (CORD_str(x, 0,
+               ("9abcdefghij"
+                "x"))
+      != CORD_NOT_FOUND)
     ABORT("CORD_str failed 3");
   if (CORD_str(x, 0, "9>") != CORD_NOT_FOUND)
     ABORT("CORD_str failed 4");
