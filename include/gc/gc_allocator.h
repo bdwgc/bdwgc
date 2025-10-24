@@ -51,11 +51,11 @@ namespace boehmgc
 #endif
 
 #if __cplusplus >= 201103L
-#  define GC_ALCTR_PTRDIFF_T std::ptrdiff_t
-#  define GC_ALCTR_SIZE_T std::size_t
+#  define GC_ALLOCATOR_PTRDIFF_T std::ptrdiff_t
+#  define GC_ALLOCATOR_SIZE_T std::size_t
 #else
-#  define GC_ALCTR_PTRDIFF_T ptrdiff_t
-#  define GC_ALCTR_SIZE_T size_t
+#  define GC_ALLOCATOR_PTRDIFF_T ptrdiff_t
+#  define GC_ALLOCATOR_SIZE_T size_t
 #endif
 
 // First some helpers to allow us to dispatch on whether or not a type
@@ -94,7 +94,7 @@ GC_DECLARE_PTRFREE(long double);
 // a pointer-free object.
 template <class GC_Tp>
 inline void *
-GC_selective_alloc(GC_ALCTR_SIZE_T n, GC_Tp, bool ignore_off_page)
+GC_selective_alloc(GC_ALLOCATOR_SIZE_T n, GC_Tp, bool ignore_off_page)
 {
   void *obj = ignore_off_page ? GC_MALLOC_IGNORE_OFF_PAGE(n) : GC_MALLOC(n);
   if (0 == obj)
@@ -106,7 +106,7 @@ GC_selective_alloc(GC_ALCTR_SIZE_T n, GC_Tp, bool ignore_off_page)
 // Note: template-id not supported in this context by Watcom compiler.
 template <>
 inline void *
-GC_selective_alloc<GC_true_type>(GC_ALCTR_SIZE_T n, GC_true_type,
+GC_selective_alloc<GC_true_type>(GC_ALLOCATOR_SIZE_T n, GC_true_type,
                                  bool ignore_off_page)
 {
   void *obj = ignore_off_page ? GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE(n)
@@ -121,8 +121,8 @@ GC_selective_alloc<GC_true_type>(GC_ALCTR_SIZE_T n, GC_true_type,
 template <class GC_Tp> class gc_allocator
 {
 public:
-  typedef GC_ALCTR_SIZE_T size_type;
-  typedef GC_ALCTR_PTRDIFF_T difference_type;
+  typedef GC_ALLOCATOR_SIZE_T size_type;
+  typedef GC_ALLOCATOR_PTRDIFF_T difference_type;
   typedef GC_Tp *pointer;
   typedef const GC_Tp *const_pointer;
   typedef GC_Tp &reference;
@@ -186,7 +186,7 @@ public:
   GC_CONSTEXPR size_type
   max_size() const GC_NOEXCEPT
   {
-    return static_cast<GC_ALCTR_SIZE_T>(-1) / sizeof(GC_Tp);
+    return static_cast<GC_ALLOCATOR_SIZE_T>(-1) / sizeof(GC_Tp);
   }
 
   GC_CONSTEXPR void
@@ -205,8 +205,8 @@ public:
 template <> class gc_allocator<void>
 {
 public:
-  typedef GC_ALCTR_SIZE_T size_type;
-  typedef GC_ALCTR_PTRDIFF_T difference_type;
+  typedef GC_ALLOCATOR_SIZE_T size_type;
+  typedef GC_ALLOCATOR_PTRDIFF_T difference_type;
   typedef void *pointer;
   typedef const void *const_pointer;
   typedef void value_type;
@@ -236,8 +236,8 @@ operator!=(const gc_allocator<GC_T1> &,
 template <class GC_Tp> class gc_allocator_ignore_off_page
 {
 public:
-  typedef GC_ALCTR_SIZE_T size_type;
-  typedef GC_ALCTR_PTRDIFF_T difference_type;
+  typedef GC_ALLOCATOR_SIZE_T size_type;
+  typedef GC_ALLOCATOR_PTRDIFF_T difference_type;
   typedef GC_Tp *pointer;
   typedef const GC_Tp *const_pointer;
   typedef GC_Tp &reference;
@@ -303,7 +303,7 @@ public:
   GC_CONSTEXPR size_type
   max_size() const GC_NOEXCEPT
   {
-    return static_cast<GC_ALCTR_SIZE_T>(-1) / sizeof(GC_Tp);
+    return static_cast<GC_ALLOCATOR_SIZE_T>(-1) / sizeof(GC_Tp);
   }
 
   GC_CONSTEXPR void
@@ -322,8 +322,8 @@ public:
 template <> class gc_allocator_ignore_off_page<void>
 {
 public:
-  typedef GC_ALCTR_SIZE_T size_type;
-  typedef GC_ALCTR_PTRDIFF_T difference_type;
+  typedef GC_ALLOCATOR_SIZE_T size_type;
+  typedef GC_ALLOCATOR_PTRDIFF_T difference_type;
   typedef void *pointer;
   typedef const void *const_pointer;
   typedef void value_type;
@@ -358,8 +358,8 @@ operator!=(const gc_allocator_ignore_off_page<GC_T1> &,
 template <class GC_Tp> class traceable_allocator
 {
 public:
-  typedef GC_ALCTR_SIZE_T size_type;
-  typedef GC_ALCTR_PTRDIFF_T difference_type;
+  typedef GC_ALLOCATOR_SIZE_T size_type;
+  typedef GC_ALLOCATOR_PTRDIFF_T difference_type;
   typedef GC_Tp *pointer;
   typedef const GC_Tp *const_pointer;
   typedef GC_Tp &reference;
@@ -424,7 +424,7 @@ public:
   GC_CONSTEXPR size_type
   max_size() const GC_NOEXCEPT
   {
-    return static_cast<GC_ALCTR_SIZE_T>(-1) / sizeof(GC_Tp);
+    return static_cast<GC_ALLOCATOR_SIZE_T>(-1) / sizeof(GC_Tp);
   }
 
   GC_CONSTEXPR void
@@ -443,8 +443,8 @@ public:
 template <> class traceable_allocator<void>
 {
 public:
-  typedef GC_ALCTR_SIZE_T size_type;
-  typedef GC_ALCTR_PTRDIFF_T difference_type;
+  typedef GC_ALLOCATOR_SIZE_T size_type;
+  typedef GC_ALLOCATOR_PTRDIFF_T difference_type;
   typedef void *pointer;
   typedef const void *const_pointer;
   typedef void value_type;
@@ -470,8 +470,8 @@ operator!=(const traceable_allocator<GC_T1> &,
   return false;
 }
 
-#undef GC_ALCTR_PTRDIFF_T
-#undef GC_ALCTR_SIZE_T
+#undef GC_ALLOCATOR_PTRDIFF_T
+#undef GC_ALLOCATOR_SIZE_T
 
 #ifdef GC_NAMESPACE_ALLOCATOR
 }
