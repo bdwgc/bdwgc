@@ -947,7 +947,7 @@ GC_get_stack_base(struct GC_stack_base *sb)
     WARN("get_stack_bounds failed\n", 0);
     return GC_UNIMPLEMENTED;
   }
-  sb->mem_base = base + size;
+  sb->mem_base = (void *)(base + size);
   return GC_SUCCESS;
 }
 #  define HAVE_GET_STACK_BASE
