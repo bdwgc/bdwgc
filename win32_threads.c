@@ -1209,6 +1209,15 @@ GC_API void * GC_CALL GC_get_my_stackbottom(struct GC_stack_base *sb)
 #     endif
     }
 
+    /* Same as GC_thread_is_registered() but assumes the allocator lock */
+    /* is held.                                                         */
+    static GC_bool is_thread_registered_inner(void)
+    {
+      GC_thread me = GC_lookup_thread_inner(GetCurrentThreadId());
+
+      return me != NULL && !KNOWN_FINISHED(me);
+    }
+
     static void fork_prepare_proc(void)
     {
       LOCK();
@@ -1216,7 +1225,10 @@ GC_API void * GC_CALL GC_get_my_stackbottom(struct GC_stack_base *sb)
         if (GC_parallel)
           GC_wait_for_reclaim();
 #     endif
-      GC_wait_for_gc_completion(TRUE);
+      if (is_thread_registered_inner()) {
+        /* fork() is called from a thread registered in the collector. */
+        GC_wait_for_gc_completion(TRUE);
+      }
 #     ifdef PARALLEL_MARK
         if (GC_parallel)
           GC_acquire_mark_lock();
