@@ -3424,7 +3424,7 @@ extern ptr_t GC_data_start;
 
 #if defined(CAN_HANDLE_FORK) && !defined(CAN_CALL_ATFORK)      \
     && !defined(GC_NO_CAN_CALL_ATFORK) && !defined(HOST_TIZEN) \
-    && !defined(HURD) && (!defined(HOST_ANDROID) || __ANDROID_API__ >= 21)
+    && (!defined(HOST_ANDROID) || __ANDROID_API__ >= 21)
 /* Have working `pthread_atfork()`. */
 #  define CAN_CALL_ATFORK
 #endif
