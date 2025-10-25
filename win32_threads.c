@@ -1185,8 +1185,10 @@ GC_API void * GC_CALL GC_get_my_stackbottom(struct GC_stack_base *sb)
         GC_threads[hv] = NULL;
       }
 
+      if (NULL == me)
+        return; /* fork() is called from an unregistered thread */
+
       /* Put "me" back to GC_threads.   */
-      GC_ASSERT(me != NULL);
       thread_id = GetCurrentThreadId(); /* differs from that in parent */
       GC_threads[THREAD_TABLE_INDEX(thread_id)] = me;
 
