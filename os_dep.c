@@ -293,7 +293,7 @@ GC_get_maps(void)
 #  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES) \
       || defined(IA64) || defined(INCLUDE_LINUX_THREAD_DESCR)     \
       || (defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB))       \
-      || defined(REDIR_MALLOC_AND_LINUXTHREADS)
+      || defined(REDIR_MALLOC_AND_LINUX_THREADS)
 GC_INNER const char *
 GC_parse_map_entry(const char *maps_ptr, ptr_t *p_start, ptr_t *p_end,
                    const char **p_prot, unsigned *p_maj_dev,
@@ -381,7 +381,7 @@ GC_enclosing_writable_mapping(ptr_t addr, ptr_t *startp, ptr_t *endp)
 }
 #  endif /* IA64 || INCLUDE_LINUX_THREAD_DESCR */
 
-#  ifdef REDIR_MALLOC_AND_LINUXTHREADS
+#  ifdef REDIR_MALLOC_AND_LINUX_THREADS
 GC_INNER GC_bool
 GC_text_mapping(const char *nm, ptr_t *startp, ptr_t *endp)
 {
@@ -421,7 +421,7 @@ GC_text_mapping(const char *nm, ptr_t *startp, ptr_t *endp)
   }
   return FALSE;
 }
-#  endif /* REDIR_MALLOC_AND_LINUXTHREADS */
+#  endif /* REDIR_MALLOC_AND_LINUX_THREADS */
 
 #  ifdef IA64
 static ptr_t
@@ -880,7 +880,7 @@ GC_setpagesize(void)
 #endif /* !ANY_MSWIN */
 #ifdef SOFT_VDB
   {
-    size_t pgsize;
+    size_t v;
     unsigned log_pgsize = 0;
 
 #  if !defined(CPPCHECK)
@@ -889,7 +889,7 @@ GC_setpagesize(void)
       ABORT("Invalid page size");
     }
 #  endif
-    for (pgsize = GC_page_size; pgsize > 1; pgsize >>= 1)
+    for (v = GC_page_size; v > 1; v >>= 1)
       log_pgsize++;
     GC_log_pagesize = log_pgsize;
   }
@@ -947,7 +947,7 @@ GC_get_stack_base(struct GC_stack_base *sb)
     WARN("get_stack_bounds failed\n", 0);
     return GC_UNIMPLEMENTED;
   }
-  sb->mem_base = base + size;
+  sb->mem_base = (void *)(base + size);
   return GC_SUCCESS;
 }
 #  define HAVE_GET_STACK_BASE
@@ -2263,7 +2263,7 @@ GC_register_data_segments(void)
   HMODULE module_handle;
 #  define PBUFSIZ 512
   UCHAR path[PBUFSIZ];
-  FILE *myexefile;
+  FILE *exe_file;
   struct exe_hdr hdrdos; /*< MSDOS header */
   struct e32_exe hdr386; /*< real header for my executable */
   struct o32_obj seg;    /*< current segment */
@@ -2286,20 +2286,20 @@ GC_register_data_segments(void)
   if (DosQueryModuleName(module_handle, PBUFSIZ, path) != NO_ERROR) {
     ABORT("DosQueryModuleName failed");
   }
-  myexefile = fopen(path, "rb");
-  if (myexefile == 0) {
+  exe_file = fopen(path, "rb");
+  if (NULL == exe_file) {
     ABORT_ARG1("Failed to open executable", ": %s", path);
   }
-  if (fread((char *)&hdrdos, 1, sizeof(hdrdos), myexefile) < sizeof(hdrdos)) {
+  if (fread((char *)&hdrdos, 1, sizeof(hdrdos), exe_file) < sizeof(hdrdos)) {
     ABORT_ARG1("Could not read MSDOS header", " from: %s", path);
   }
   if (E_MAGIC(hdrdos) != EMAGIC) {
     ABORT_ARG1("Bad DOS magic number", " in file: %s", path);
   }
-  if (fseek(myexefile, E_LFANEW(hdrdos), SEEK_SET) != 0) {
+  if (fseek(exe_file, E_LFANEW(hdrdos), SEEK_SET) != 0) {
     ABORT_ARG1("Bad DOS magic number", " in file: %s", path);
   }
-  if (fread((char *)&hdr386, 1, sizeof(hdr386), myexefile) < sizeof(hdr386)) {
+  if (fread((char *)&hdr386, 1, sizeof(hdr386), exe_file) < sizeof(hdr386)) {
     ABORT_ARG1("Could not read OS/2 header", " from: %s", path);
   }
   if (E32_MAGIC1(hdr386) != E32MAGIC1 || E32_MAGIC2(hdr386) != E32MAGIC2) {
@@ -2311,12 +2311,12 @@ GC_register_data_segments(void)
   if (E32_CPU(hdr386) == E32CPU286) {
     ABORT_ARG1("GC cannot handle 80286 executables", ": %s", path);
   }
-  if (fseek(myexefile, E_LFANEW(hdrdos) + E32_OBJTAB(hdr386), SEEK_SET) != 0) {
+  if (fseek(exe_file, E_LFANEW(hdrdos) + E32_OBJTAB(hdr386), SEEK_SET) != 0) {
     ABORT_ARG1("Seek to object table failed", " in file: %s", path);
   }
   for (nsegs = E32_OBJCNT(hdr386); nsegs > 0; nsegs--) {
     int flags;
-    if (fread((char *)&seg, 1, sizeof(seg), myexefile) < sizeof(seg)) {
+    if (fread((char *)&seg, 1, sizeof(seg), exe_file) < sizeof(seg)) {
       ABORT_ARG1("Could not read obj table entry", " from file: %s", path);
     }
     flags = O32_FLAGS(seg);
@@ -2331,7 +2331,7 @@ GC_register_data_segments(void)
     GC_add_roots_inner((ptr_t)O32_BASE(seg),
                        (ptr_t)(O32_BASE(seg) + O32_SIZE(seg)), FALSE);
   }
-  (void)fclose(myexefile);
+  (void)fclose(exe_file);
 }
 
 #elif defined(OPENBSD)
@@ -2545,7 +2545,7 @@ GC_unix_sbrk_get_mem(size_t bytes)
 #    endif
   {
     ptr_t cur_brk = (ptr_t)sbrk(0);
-    SBRK_ARG_T lsbs = ADDR(cur_brk) & (GC_page_size - 1);
+    SBRK_ARG_T ofs = ADDR(cur_brk) & (GC_page_size - 1);
 
     GC_ASSERT(GC_page_size != 0);
     if (UNLIKELY((SBRK_ARG_T)bytes < 0)) {
@@ -2553,8 +2553,8 @@ GC_unix_sbrk_get_mem(size_t bytes)
       result = NULL;
       goto out;
     }
-    if (lsbs != 0) {
-      if ((ptr_t)sbrk((SBRK_ARG_T)GC_page_size - lsbs) == (ptr_t)(-1)) {
+    if (ofs != 0) {
+      if ((ptr_t)sbrk((SBRK_ARG_T)GC_page_size - ofs) == (ptr_t)(-1)) {
         result = NULL;
         goto out;
       }
@@ -3204,9 +3204,9 @@ GC_parse_version(int *pminor, const char *pverstr)
  *     file).  In case the soft-dirty bit is not supported by the kernel,
  *     `MPROTECT_VDB` may be defined as a fall back strategy.
  *
- *   - `MPROTECT_VDB`: Protect pages and then catch the faults to keep
- *     track of dirtied pages.  The implementation (and implementability)
- *     is highly system-dependent.  This usually fails when system calls
+ *   - `MPROTECT_VDB`: Protect pages and then catch the faults to keep track
+ *     of dirtied pages.  The implementation (and, even, the possibility of
+ *     it) is highly system-dependent.  This usually fails when system calls
  *     write to a protected page.  We prevent the `read` system call from
  *     doing so.  It is the clients responsibility to make sure that other
  *     system calls are similarly protected or write only to the stack.
@@ -5760,7 +5760,7 @@ GC_save_callers(struct callinfo info[NFRAMES])
 GC_INNER void
 GC_print_callers(struct callinfo info[NFRAMES])
 {
-  int i, reent_cnt;
+  int i, reentered;
 #  if defined(AO_HAVE_fetch_and_add1) && defined(AO_HAVE_fetch_and_sub1)
   static volatile AO_t reentry_count = 0;
 
@@ -5771,13 +5771,13 @@ GC_print_callers(struct callinfo info[NFRAMES])
    * a single output stream.
    */
   GC_ASSERT(I_DONT_HOLD_LOCK());
-  reent_cnt = (int)(GC_signed_word)AO_fetch_and_add1(&reentry_count);
+  reentered = (int)(GC_signed_word)AO_fetch_and_add1(&reentry_count);
 #  else
   static int reentry_count = 0;
 
   /* Note: this could use a different lock. */
   LOCK();
-  reent_cnt = reentry_count++;
+  reentered = reentry_count++;
   UNLOCK();
 #  endif
 #  if NFRAMES == 1
@@ -5807,7 +5807,7 @@ GC_print_callers(struct callinfo info[NFRAMES])
       GC_err_printf("\n");
     }
 #  endif
-    if (reent_cnt > 0) {
+    if (reentered > 0) {
       /*
        * We were called either concurrently or during an allocation
        * by `backtrace_symbols()` called from `GC_print_callers`; punt.

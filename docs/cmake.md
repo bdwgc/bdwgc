@@ -36,10 +36,10 @@ The steps are:
 
 Notes:
 
-  * Specify `-Denable_cplusplus=ON` option to build `gccpp` and `gctba`
+  * Specify `-D enable_cplusplus=ON` option to build `gccpp` and `gctba`
     libraries (i.e. the ones that provide bdwgc C++ support).
 
-  * Specify `-Dbuild_tests=ON` option to the tests (and run them by
+  * Specify `-D build_tests=ON` option to the tests (and run them by
     `ctest -V`).
 
 You can also run cmake from a build directory to build outside of the root of
@@ -48,7 +48,7 @@ the source tree - just specify the path to the latter, e.g.:
 ```sh
 mkdir out
 cd out
-cmake -G "Visual Studio 9 2008" -Dbuild_tests=ON ..
+cmake -G "Visual Studio 9 2008" -D build_tests=ON ..
 cmake --build . --config Release
 ctest --build-config Release -V
 ```
@@ -58,7 +58,7 @@ Here is a sample for Linux (build, test and install, w/o C++ support):
 ```sh
 mkdir out
 cd out
-cmake -Dbuild_tests=ON ..
+cmake -D build_tests=ON ..
 cmake --build .
 ctest
 make install

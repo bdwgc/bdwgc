@@ -15,7 +15,7 @@ any library routine."  This doesn't make a lot of sense to me, since there
 seems to be no documentation as to which routines can transitively call malloc.
 Nonetheless, under Solaris, the collector now allocates memory using mmap by
 default.  (It defines USE_MMAP in gcconfig.h.)
-You may want to reverse this decisions if you use -DREDIRECT_MALLOC=...
+You may want to reverse this decisions if you use "-D REDIRECT_MALLOC=...".
 
 Note:
 Before you run "make check", you need to set your LD_LIBRARY_PATH correctly
@@ -25,7 +25,7 @@ libgcc_s.so.1.  Alternatively, you can configure with --disable-shared.
 SOLARIS THREADS:
 
 Unless --disable-threads option is given, threads support is on by default in
-configure.  This causes the collector to be compiled with -D GC_THREADS
+configure.  This causes the collector to be compiled with "-D GC_THREADS"
 ensuring thread safety.  This assumes use of the pthread_ interface; old-style
 Solaris threads are no longer supported.  Thread-local allocation is on by
 default.  Parallel marking is on by default (it could be disabled manually

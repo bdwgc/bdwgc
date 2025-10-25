@@ -195,34 +195,34 @@ CORD_dump(CORD x)
 }
 
 CORD
-CORD_cat_char_star(CORD x, const char *y, size_t leny)
+CORD_cat_char_star(CORD x, const char *y, size_t len_y)
 {
   size_t result_len;
-  size_t lenx;
+  size_t len_x;
   int depth;
 
   if (x == CORD_EMPTY)
     return y;
-  if (leny == 0)
+  if (0 == len_y)
     return x;
   if (CORD_IS_STRING(x)) {
-    lenx = strlen(x);
-    result_len = lenx + leny;
+    len_x = strlen(x);
+    result_len = len_x + len_y;
     if (result_len <= SHORT_LIMIT) {
       char *result = (char *)GC_MALLOC_ATOMIC(result_len + 1);
 
       if (NULL == result)
         OUT_OF_MEMORY;
 #ifdef LINT2
-      memcpy(result, x, lenx + 1);
+      memcpy(result, x, len_x + 1);
 #else
       /*
-       * No need to copy the terminating zero as `result[lenx]` is
+       * No need to copy the terminating zero as `result[len_x]` is
        * written below.
        */
-      memcpy(result, x, lenx);
+      memcpy(result, x, len_x);
 #endif
-      memcpy(result + lenx, y, leny);
+      memcpy(result + len_x, y, len_y);
       result[result_len] = '\0';
       return (CORD)result;
     } else {
@@ -233,33 +233,32 @@ CORD_cat_char_star(CORD x, const char *y, size_t leny)
     CORD left;
     char *new_right;
 
-    lenx = LEN(x);
-
-    if (leny <= SHORT_LIMIT / 2 && IS_CONCATENATION(x)
+    len_x = LEN(x);
+    if (len_y <= SHORT_LIMIT / 2 && IS_CONCATENATION(x)
         && CORD_IS_STRING(right = ((const CordRep *)x)->data.concat.right)) {
       size_t right_len;
 
       /* Merge `y` into right part of `x`. */
       left = ((const CordRep *)x)->data.concat.left;
       if (!CORD_IS_STRING(left)) {
-        right_len = lenx - LEN(left);
+        right_len = len_x - LEN(left);
       } else if (((const CordRep *)x)->generic.left_len != 0) {
-        right_len = lenx - ((const CordRep *)x)->generic.left_len;
+        right_len = len_x - ((const CordRep *)x)->generic.left_len;
       } else {
         right_len = strlen(right);
       }
-      result_len = right_len + leny; /*< length of `new_right` */
+      result_len = right_len + len_y; /*< length of `new_right` */
       if (result_len <= SHORT_LIMIT) {
         new_right = (char *)GC_MALLOC_ATOMIC(result_len + 1);
         if (new_right == 0)
           OUT_OF_MEMORY;
         memcpy(new_right, right, right_len);
-        memcpy(new_right + right_len, y, leny);
+        memcpy(new_right + right_len, y, len_y);
         new_right[result_len] = '\0';
         y = new_right;
-        leny = result_len;
+        len_y = result_len;
         x = left;
-        lenx -= right_len;
+        len_x -= right_len;
         /* Now fall through to concatenate the two pieces: */
       }
       if (CORD_IS_STRING(x)) {
@@ -270,18 +269,18 @@ CORD_cat_char_star(CORD x, const char *y, size_t leny)
     } else {
       depth = DEPTH(x) + 1;
     }
-    result_len = lenx + leny;
+    result_len = len_x + len_y;
   }
   {
-    /* The general case; `lenx` and `result_len` are known. */
+    /* The general case; `len_x` and `result_len` are known. */
     CordRep *result = GC_NEW(CordRep);
 
     if (NULL == result)
       OUT_OF_MEMORY;
     result->generic.header = CONCAT_HDR;
     result->generic.depth = (char)depth;
-    if (lenx <= MAX_LEFT_LEN)
-      result->generic.left_len = (unsigned char)lenx;
+    if (len_x <= MAX_LEFT_LEN)
+      result->generic.left_len = (unsigned char)len_x;
     result->generic.len = (unsigned long)result_len;
     result->data.concat.left = x;
     GC_PTR_STORE_AND_DIRTY((/* no const */ void *)&result->data.concat.right,
@@ -300,7 +299,7 @@ CORD_cat(CORD x, CORD y)
 {
   size_t result_len;
   int depth;
-  size_t lenx;
+  size_t len_x;
 
   if (x == CORD_EMPTY)
     return y;
@@ -309,17 +308,17 @@ CORD_cat(CORD x, CORD y)
   if (CORD_IS_STRING(y)) {
     return CORD_cat_char_star(x, y, strlen(y));
   } else if (CORD_IS_STRING(x)) {
-    lenx = strlen(x);
+    len_x = strlen(x);
     depth = DEPTH(y) + 1;
   } else {
-    int depthy = DEPTH(y);
+    int depth_y = DEPTH(y);
 
-    lenx = LEN(x);
+    len_x = LEN(x);
     depth = DEPTH(x) + 1;
-    if (depthy >= depth)
-      depth = depthy + 1;
+    if (depth_y >= depth)
+      depth = depth_y + 1;
   }
-  result_len = lenx + LEN(y);
+  result_len = len_x + LEN(y);
   {
     CordRep *result = GC_NEW(CordRep);
 
@@ -327,8 +326,8 @@ CORD_cat(CORD x, CORD y)
       OUT_OF_MEMORY;
     result->generic.header = CONCAT_HDR;
     result->generic.depth = (char)depth;
-    if (lenx <= MAX_LEFT_LEN)
-      result->generic.left_len = (unsigned char)lenx;
+    if (len_x <= MAX_LEFT_LEN)
+      result->generic.left_len = (unsigned char)len_x;
     result->generic.len = (unsigned long)result_len;
     result->data.concat.left = x;
     GC_PTR_STORE_AND_DIRTY((/* no const */ void *)&result->data.concat.right,

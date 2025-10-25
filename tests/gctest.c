@@ -100,12 +100,12 @@ static int print_stats = 0;
 #    define INIT_PRINT_STATS (void)0
 #  else
 #    define INIT_PRINT_STATS                          \
-      {                                               \
+      do {                                            \
         if (GETENV("GC_PRINT_VERBOSE_STATS") != NULL) \
           print_stats = VERBOSE;                      \
         else if (GETENV("GC_PRINT_STATS") != NULL)    \
           print_stats = 1;                            \
-      }
+      } while (0)
 #  endif
 #endif /* !GC_PRINT_VERBOSE_STATS */
 
@@ -168,13 +168,15 @@ static CRITICAL_SECTION incr_cs;
 #  define INIT_PAGES_EXECUTABLE (void)0
 #endif
 
-#define CHECK_GCLIB_VERSION                                \
-  if (GC_get_version()                                     \
-      != (((GC_VERSION_VAL_T)GC_VERSION_MAJOR << 16)       \
-          | (GC_VERSION_MINOR << 8) | GC_VERSION_MICRO)) { \
-    GC_printf("libgc version mismatch\n");                 \
-    exit(1);                                               \
-  }
+#define CHECK_GC_LIB_VERSION                                 \
+  do {                                                       \
+    if (GC_get_version()                                     \
+        != (((GC_VERSION_VAL_T)GC_VERSION_MAJOR << 16)       \
+            | (GC_VERSION_MINOR << 8) | GC_VERSION_MICRO)) { \
+      GC_printf("libgc version mismatch\n");                 \
+      exit(1);                                               \
+    }                                                        \
+  } while (0)
 
 /*
  * Call `GC_INIT()` only on platforms on which we think we really need it,
@@ -203,7 +205,7 @@ static CRITICAL_SECTION incr_cs;
   INIT_MANUAL_VDB_ALLOWED; \
   INIT_PAGES_EXECUTABLE;   \
   GC_OPT_INIT;             \
-  CHECK_GCLIB_VERSION;     \
+  CHECK_GC_LIB_VERSION;    \
   INIT_PRINT_STATS;        \
   INIT_FIND_LEAK;          \
   INIT_PERF_MEASUREMENT
@@ -1311,7 +1313,7 @@ alloc_small(int n)
 #include "gc/gc_inline.h"
 
 static void
-test_tinyfl(void)
+test_tfls(void)
 {
   void *results[3];
   void *tfls[3][GC_TINY_FREELISTS];
@@ -1576,7 +1578,7 @@ inc_int_counter(void *pcounter)
   return NULL;
 }
 
-struct thr_hndl_sb_s {
+struct thr_handle_sb_s {
   void *gc_thread_handle;
   struct GC_stack_base sb;
 };
@@ -1584,8 +1586,8 @@ struct thr_hndl_sb_s {
 static void *GC_CALLBACK
 set_stackbottom(void *cd)
 {
-  GC_set_stackbottom(((struct thr_hndl_sb_s *)cd)->gc_thread_handle,
-                     &((struct thr_hndl_sb_s *)cd)->sb);
+  GC_set_stackbottom(((struct thr_handle_sb_s *)cd)->gc_thread_handle,
+                     &((struct thr_handle_sb_s *)cd)->sb);
   return NULL;
 }
 
@@ -1606,7 +1608,7 @@ run_one_test(void)
   pid_t pid;
   int wstatus;
 #endif
-  struct thr_hndl_sb_s thr_hndl_sb;
+  struct thr_handle_sb_s thr_handle_sb;
 
   GC_FREE(0);
 #ifdef THREADS
@@ -1615,7 +1617,7 @@ run_one_test(void)
     FAIL;
   }
 #endif
-  test_tinyfl();
+  test_tfls();
 #ifndef DBG_HDRS_ALL
   x = (char *)checkOOM(GC_malloc(7));
   AO_fetch_and_add1(&collectable_count);
@@ -1855,7 +1857,7 @@ run_one_test(void)
       AO_fetch_and_add1(&collectable_count);
     }
   }
-  thr_hndl_sb.gc_thread_handle = GC_get_my_stackbottom(&thr_hndl_sb.sb);
+  thr_handle_sb.gc_thread_handle = GC_get_my_stackbottom(&thr_handle_sb.sb);
 #ifdef GC_GCJ_SUPPORT
   GC_REGISTER_DISPLACEMENT(sizeof(struct fake_vtable *));
   GC_init_gcj_malloc_mp(0U, fake_gcj_mark_proc, GC_GCJ_MARK_DESCR_OFFSET);
@@ -1928,7 +1930,7 @@ run_one_test(void)
     exit(0);
   }
 #endif
-  (void)GC_call_with_reader_lock(set_stackbottom, &thr_hndl_sb,
+  (void)GC_call_with_reader_lock(set_stackbottom, &thr_handle_sb,
                                  1 /* `release` */);
 
   /* Repeated list reversal test. */
@@ -2408,7 +2410,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, WINMAIN_LPTSTR cmd, int n)
 #    define CONFIGURE_INIT_TASK_STACK_SIZE (64 * 1024)
 #    include <rtems/confdefs.h>
 rtems_task
-Init(rtems_task_argument ignord)
+Init(rtems_task_argument ignored)
 #  else
 int
 main(void)
@@ -2425,7 +2427,7 @@ main(void)
   GC_noop1((GC_word)(GC_funcptr_uint)(&WinMain));
 #    endif
 #  elif defined(RTEMS)
-  UNUSED_ARG(ignord);
+  UNUSED_ARG(ignored);
 #    if defined(CPPCHECK)
   GC_noop1((GC_word)(GC_funcptr_uint)(&Init));
 #    endif

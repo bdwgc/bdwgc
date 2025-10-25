@@ -94,7 +94,7 @@ void *big_realloc(void *p, size_t new_size) {
      the routines in `gc_typed.h` file to allocate large pointer-free regions
      of bitmaps, etc. Sometimes the problem can be solved with trivial changes
      of encoding in certain values. It is possible, to identify the source of
-     the bogus pointers by building the collector with `-DPRINT_BLACK_LIST`,
+     the bogus pointers by building the collector with `-D PRINT_BLACK_LIST`,
      which will cause it to print the "bogus pointers", along with their
      location.
 
@@ -136,7 +136,7 @@ Unexpected heap growth can be due to one of the following:
      it may be worth considering. If the collector recognizes interior
      pointers, object sizes are increased, so that one-past-the-end pointers
      are correctly recognized. The collector can be configured not to do this
-     (`-DDONT_ADD_BYTE_AT_END`).
+     (`-D DONT_ADD_BYTE_AT_END`).
 
 The collector rounds up object sizes so the result fits well into the chunk
 size (`HBLKSIZE`, normally 4 KB on 32-bit machines, 8 KB on 64-bit ones) used
@@ -149,7 +149,7 @@ and how many live objects were found in the chunk at the last collection.
 
 Growing data structures can usually be identified by:
 
-  1. Building the collector with `-DKEEP_BACK_PTRS`,
+  1. Building the collector with `-D KEEP_BACK_PTRS`,
 
   2. Preferably using debugging allocation (defining `GC_DEBUG` before
      including `gc.h` file and allocating with `GC_MALLOC`), so that objects
@@ -165,7 +165,7 @@ Growing data structures can usually be identified by:
 The same technique can often be used to identify problems with false pointers,
 by noting whether the reference chains printed
 by `GC_generate_random_backtrace` involve any misidentified pointers.
-An alternate technique is to build the collector with `-DPRINT_BLACK_LIST`
+An alternate technique is to build the collector with `-D PRINT_BLACK_LIST`
 which will cause it to report values that are almost, but not quite, look like
 heap pointers. It is very likely that actual false pointers will come from
 similar sources.
@@ -188,7 +188,7 @@ be resolved using one or more of the following techniques:
      most environments.)
 
   4. If your heap size is larger than 100 MB or so, build the collector with
-     `-DLARGE_CONFIG`. This allows the collector to keep more precise
+     `-D LARGE_CONFIG`. This allows the collector to keep more precise
      black-list information.
 
   5. If you are using heaps close to, or larger than, a gigabyte on a 32-bit
@@ -243,11 +243,11 @@ down the problem:
 
   5. Try removing any `GC_free` calls (e.g. with a suitable `#define`).
 
-  6. Rebuild the collector with `-DGC_ASSERTIONS`.
+  6. Rebuild the collector with `-D GC_ASSERTIONS`.
 
   7. If the following works on your platform (i.e. if `gctest` still works
      if you do this), try building the collector with
-     `-DREDIRECT_MALLOC=GC_malloc_uncollectable`. This will cause the
+     `-D REDIRECT_MALLOC=GC_malloc_uncollectable`. This will cause the
      collector to scan memory allocated with `malloc`.
 
 If all else fails, you will have to attack this with a debugger. The suggested

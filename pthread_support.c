@@ -2005,7 +2005,7 @@ GC_init_parallel(void)
 #  if !defined(GC_NO_PTHREAD_SIGMASK) && defined(GC_PTHREADS)
 #    define GC_wrap_pthread_sigmask WRAP_FUNC(pthread_sigmask)
 GC_API int
-GC_wrap_pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
+GC_wrap_pthread_sigmask(int how, const sigset_t *set, sigset_t *old_set)
 {
 #    ifdef GC_WIN32_THREADS
   /*
@@ -2026,7 +2026,7 @@ GC_wrap_pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
     set = &fudged_set;
   }
 #    endif
-  return REAL_FUNC(pthread_sigmask)(how, set, oset);
+  return REAL_FUNC(pthread_sigmask)(how, set, old_set);
 }
 #    undef GC_wrap_pthread_sigmask
 #  endif /* !GC_NO_PTHREAD_SIGMASK */

@@ -1334,7 +1334,7 @@ GC_start_mark_threads_inner(void)
 
     GC_marker_last_stack_min[i] = ADDR_LIMIT;
     /* There is no `_beginthreadex()` in WinCE. */
-    handle = CreateThread(NULL /* `lpsa` */,
+    handle = CreateThread(NULL /* `lpThreadAttributes` */,
                           MARK_THREAD_STACK_SIZE /* ignored */, GC_mark_thread,
                           NUMERIC_TO_VPTR(i), 0 /* `fdwCreate` */, &thread_id);
     if (UNLIKELY(NULL == handle)) {
@@ -1654,7 +1654,7 @@ GC_ExitThread(DWORD dwExitCode)
 GC_API GC_uintptr_t GC_CALL
 GC_beginthreadex(void *security, unsigned stack_size,
                  unsigned(__stdcall *start_address)(void *), void *arglist,
-                 unsigned initflag, unsigned *thrdaddr)
+                 unsigned initflag, unsigned *thr_addr)
 {
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
@@ -1666,7 +1666,7 @@ GC_beginthreadex(void *security, unsigned stack_size,
 
   if (GC_win32_dll_threads) {
     return _beginthreadex(security, stack_size, start_address, arglist,
-                          initflag, thrdaddr);
+                          initflag, thr_addr);
   } else {
     GC_uintptr_t thread_h;
     /* Note: this is handed off to and deallocated by child thread. */
@@ -1698,7 +1698,7 @@ GC_beginthreadex(void *security, unsigned stack_size,
     set_need_to_lock();
     thread_h = _beginthreadex(security, stack_size,
                               (unsigned(__stdcall *)(void *))GC_win32_start,
-                              psi, initflag, thrdaddr);
+                              psi, initflag, thr_addr);
     if (UNLIKELY(0 == thread_h))
       GC_free(psi);
     return thread_h;
@@ -1769,9 +1769,10 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, WINMAIN_LPTSTR lpCmdLine,
   GC_INIT();
 
   /* Start the main thread. */
-  thread_h = GC_CreateThread(
-      NULL /* `lpsa` */, WINMAIN_THREAD_STACK_SIZE /* ignored on WinCE */,
-      main_thread_start, &args, 0 /* `fdwCreate` */, &thread_id);
+  thread_h = GC_CreateThread(NULL /* `lpThreadAttributes` */,
+                             WINMAIN_THREAD_STACK_SIZE /* ignored on WinCE */,
+                             main_thread_start, &args, 0 /* `fdwCreate` */,
+                             &thread_id);
   if (NULL == thread_h)
     ABORT("GC_CreateThread(main_thread) failed");
 

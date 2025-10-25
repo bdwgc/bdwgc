@@ -2630,11 +2630,11 @@ extern char __global_base, __heap_base;
 #if defined(REDIRECT_MALLOC) && defined(THREADS) \
     && (defined(LINUX) || defined(NACL))
 /* TODO: Unclear if NaCl really needs this. */
-#  define REDIR_MALLOC_AND_LINUXTHREADS
+#  define REDIR_MALLOC_AND_LINUX_THREADS
 #endif
 
-#if defined(REDIR_MALLOC_AND_LINUXTHREADS) && !defined(NO_PROC_FOR_LIBRARIES) \
-    && !defined(USE_PROC_FOR_LIBRARIES)
+#if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
+    && !defined(NO_PROC_FOR_LIBRARIES) && !defined(USE_PROC_FOR_LIBRARIES)
 /*
  * NPTL allocates thread stacks with `mmap`, which is fine.  But it
  * keeps a cache of thread stacks.  Each thread stack contains a thread
@@ -3126,12 +3126,12 @@ extern ptr_t GC_data_start;
  * special handling on the collector side.  Checking `glibc` version at
  * compile time for the purpose seems to be fine.
  */
-#if defined(REDIR_MALLOC_AND_LINUXTHREADS) && !defined(HAVE_LIBPTHREAD_SO) \
+#if defined(REDIR_MALLOC_AND_LINUX_THREADS) && !defined(HAVE_LIBPTHREAD_SO) \
     && defined(__GLIBC__) && !GC_GLIBC_PREREQ(2, 34)
 #  define HAVE_LIBPTHREAD_SO
 #endif
 
-#if defined(REDIR_MALLOC_AND_LINUXTHREADS) \
+#if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
     && !defined(INCLUDE_LINUX_THREAD_DESCR)
 /*
  * Will not work, since `libc` and the dynamic loader use thread locals,
@@ -3424,7 +3424,7 @@ extern ptr_t GC_data_start;
 
 #if defined(CAN_HANDLE_FORK) && !defined(CAN_CALL_ATFORK)      \
     && !defined(GC_NO_CAN_CALL_ATFORK) && !defined(HOST_TIZEN) \
-    && !defined(HURD) && (!defined(HOST_ANDROID) || __ANDROID_API__ >= 21)
+    && (!defined(HOST_ANDROID) || __ANDROID_API__ >= 21)
 /* Have working `pthread_atfork()`. */
 #  define CAN_CALL_ATFORK
 #endif

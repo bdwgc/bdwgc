@@ -153,6 +153,6 @@ registering a finalizable object with user-defined dependencies. The problem
 is that this dependency information is also used for memory reclamation, not
 just finalization ordering. Thus misuse can result in dangling pointers even
 if finalization does not create any. The risk of dangling pointers can be
-eliminated by building the collector with `-DJAVA_FINALIZATION`. This forces
+eliminated by building the collector with `-D JAVA_FINALIZATION`. This forces
 objects reachable from finalizers to be marked, even though this dependency
 is not considered for finalization ordering.

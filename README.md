@@ -7,6 +7,7 @@
 [![GitHub Actions build status (zig build/test)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-build.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-build.yml?query=branch%3Amaster)
 [![GitHub Actions build status (zig cross-compile)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-cross-compile.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-cross-compile.yml?query=branch%3Amaster)
 [![GitHub Actions status (clang-format)](https://github.com/bdwgc/bdwgc/actions/workflows/clang-format-check.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/clang-format-check.yml?query=branch%3Amaster)
+[![GitHub Actions status (spell-check)](https://github.com/bdwgc/bdwgc/actions/workflows/spell-check.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/spell-check.yml?query=branch%3Amaster)
 [![CodeQL](https://github.com/bdwgc/bdwgc/workflows/CodeQL/badge.svg)](https://github.com/bdwgc/bdwgc/actions/workflows/CodeQL.yml?query=branch%3Amaster)
 [![Coverage status](https://coveralls.io/repos/github/bdwgc/bdwgc/badge.svg?branch=master)](https://coveralls.io/github/bdwgc/bdwgc)
 [![Coverity Scan build status](https://scan.coverity.com/projects/32099/badge.svg)](https://scan.coverity.com/projects/bdwgc-bdwgc)
@@ -196,7 +197,7 @@ the tests using CMake:
 ```sh
 mkdir out
 cd out
-cmake -Dbuild_tests=ON ..
+cmake -D build_tests=ON ..
 cmake --build .
 ctest
 ```
@@ -462,7 +463,7 @@ This is rarely necessary.  Details can be found in `gc_typed.h` file.
 The Ellis-Hull C++ interface to the collector is included in the collector
 distribution.  If you intend to use this, type
 `./configure --enable-cplusplus && make` (or
-`cmake -Denable_cplusplus=ON . && cmake --build .`, or
+`cmake -D enable_cplusplus=ON . && cmake --build .`, or
 `make -f Makefile.direct c++` depending on the build system you use).
 This creates `libgccpp.a` and `libgctba.a` files, or their shared library
 equivalents (`libgccpp.so` and `libgctba.so` files).  You should link with
@@ -542,12 +543,12 @@ not copied).  If an error involving the object is detected, they are printed.
 
 The macros `GC_MALLOC`, `GC_MALLOC_ATOMIC`, `GC_REALLOC`, `GC_FREE`,
 `GC_REGISTER_FINALIZER` and friends are also provided.  These require the same
-arguments as the corresponding (nondebugging) routines.  If `gc.h` file is
+arguments as the corresponding (non-debugging) routines.  If `gc.h` file is
 included with `GC_DEBUG` defined, they call the debugging versions of these
 functions, passing the current file name and line number as the two
 extra arguments, where appropriate.  If `gc.h` file is included without
 `GC_DEBUG` macro defined then all these macros will instead be defined to
-their nondebugging equivalents.  (`GC_REGISTER_FINALIZER` is necessary, since
+their non-debugging equivalents.  (`GC_REGISTER_FINALIZER` is necessary, since
 pointers to objects with debugging information are really pointers to
 a displacement of 16 bytes from the object beginning, and some translation is
 necessary when finalization routines are invoked.  For details, about what is

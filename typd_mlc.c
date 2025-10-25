@@ -440,18 +440,18 @@ GC_make_sequence_descriptor(complex_descriptor *first,
  * Build a descriptor for an array with `nelements` elements, each of
  * which can be described by a simple descriptor `d`.
  * We try to optimize some common cases.  If the result is `COMPLEX`,
- * a `complex_descriptor *` value is returned in `*pcomplex_d`.
+ * a `complex_descriptor *` value is returned in `*p_complex_d`.
  * If the result is `LEAF`, then a `LeafDescriptor` value is built in the
  * structure pointed to by `pleaf`.  The tag in the `*pleaf` structure
  * is not set.  If the result is `SIMPLE`, then a `GC_descr` value is
  * returned in `*psimple_d`.  If the result is `NO_MEM`, then we failed
  * to allocate the descriptor.  The implementation assumes `GC_DS_LENGTH`
- * is 0.  `*pleaf`, `*pcomplex_d` and `*psimple_d` may be used as
+ * is zero.  `*pleaf`, `*p_complex_d` and `*psimple_d` may be used as
  * temporaries during the construction.
  */
 STATIC int
 GC_make_array_descriptor(size_t nelements, size_t size, GC_descr d,
-                         GC_descr *psimple_d, complex_descriptor **pcomplex_d,
+                         GC_descr *psimple_d, complex_descriptor **p_complex_d,
                          struct LeafDescriptor *pleaf)
 {
   /*
@@ -483,7 +483,7 @@ GC_make_array_descriptor(size_t nelements, size_t size, GC_descr d,
     complex_descriptor *one_element, *beginning;
     int result = GC_make_array_descriptor(
         nelements / 2, 2 * size, GC_double_descr(d, BYTES_TO_PTRS(size)),
-        psimple_d, pcomplex_d, pleaf);
+        psimple_d, p_complex_d, pleaf);
 
     if ((nelements & 1) == 0 || UNLIKELY(NO_MEM == result))
       return result;
@@ -493,7 +493,7 @@ GC_make_array_descriptor(size_t nelements, size_t size, GC_descr d,
       return NO_MEM;
 
     if (COMPLEX == result) {
-      beginning = *pcomplex_d;
+      beginning = *p_complex_d;
     } else {
       beginning
           = SIMPLE == result
@@ -503,8 +503,8 @@ GC_make_array_descriptor(size_t nelements, size_t size, GC_descr d,
       if (UNLIKELY(NULL == beginning))
         return NO_MEM;
     }
-    *pcomplex_d = GC_make_sequence_descriptor(beginning, one_element);
-    if (UNLIKELY(NULL == *pcomplex_d))
+    *p_complex_d = GC_make_sequence_descriptor(beginning, one_element);
+    if (UNLIKELY(NULL == *p_complex_d))
       return NO_MEM;
 
     return COMPLEX;
@@ -525,7 +525,7 @@ struct GC_calloc_typed_descr_s {
 };
 
 GC_API int GC_CALL
-GC_calloc_prepare_explicitly_typed(struct GC_calloc_typed_descr_s *pctd,
+GC_calloc_prepare_explicitly_typed(struct GC_calloc_typed_descr_s *p_ctd,
                                    size_t ctd_sz, size_t n, size_t lb,
                                    GC_descr d)
 {
@@ -539,34 +539,34 @@ GC_calloc_prepare_explicitly_typed(struct GC_calloc_typed_descr_s *pctd,
   if (UNLIKELY((lb | n) > GC_SQRT_SIZE_MAX) /*< fast initial check */
       && n > GC_SIZE_MAX / lb) {
     /* `n * lb` overflows. */
-    pctd->alloc_lb = GC_SIZE_MAX;
-    pctd->descr_type = NO_MEM;
+    p_ctd->alloc_lb = GC_SIZE_MAX;
+    p_ctd->descr_type = NO_MEM;
     /* The rest of the fields are unset. */
     return 0; /*< failure */
   }
 
-  pctd->descr_type = GC_make_array_descriptor(n, lb, d, &pctd->simple_d,
-                                              &pctd->complex_d, &pctd->leaf);
-  switch (pctd->descr_type) {
+  p_ctd->descr_type = GC_make_array_descriptor(
+      n, lb, d, &p_ctd->simple_d, &p_ctd->complex_d, &p_ctd->leaf);
+  switch (p_ctd->descr_type) {
   case NO_MEM:
   case SIMPLE:
-    pctd->alloc_lb = (word)lb * n;
+    p_ctd->alloc_lb = (word)lb * n;
     break;
   case LEAF:
-    pctd->alloc_lb = SIZET_SAT_ADD(
+    p_ctd->alloc_lb = SIZET_SAT_ADD(
         lb * n, (BYTES_TO_PTRS_ROUNDUP(sizeof(struct LeafDescriptor)) + 1)
                         * sizeof(ptr_t)
                     - EXTRA_BYTES);
     break;
   case COMPLEX:
-    pctd->alloc_lb = SIZET_SAT_ADD(lb * n, sizeof(ptr_t) - EXTRA_BYTES);
+    p_ctd->alloc_lb = SIZET_SAT_ADD(lb * n, sizeof(ptr_t) - EXTRA_BYTES);
     break;
   }
   return 1; /*< success */
 }
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
-GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
+GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *p_ctd,
                               size_t ctd_sz)
 {
   void *op;
@@ -574,11 +574,12 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
 
   GC_ASSERT(sizeof(struct GC_calloc_typed_descr_s) == ctd_sz);
   (void)ctd_sz; /*< unused currently */
-  switch (pctd->descr_type) {
+  switch (p_ctd->descr_type) {
   case NO_MEM:
-    return (*GC_get_oom_fn())((size_t)pctd->alloc_lb);
+    return (*GC_get_oom_fn())((size_t)p_ctd->alloc_lb);
   case SIMPLE:
-    return GC_malloc_explicitly_typed((size_t)pctd->alloc_lb, pctd->simple_d);
+    return GC_malloc_explicitly_typed((size_t)p_ctd->alloc_lb,
+                                      p_ctd->simple_d);
   case LEAF:
   case COMPLEX:
     break;
@@ -586,12 +587,12 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
     ABORT_RET("Bad descriptor type");
     return NULL;
   }
-  op = GC_malloc_kind((size_t)pctd->alloc_lb, GC_array_kind);
+  op = GC_malloc_kind((size_t)p_ctd->alloc_lb, GC_array_kind);
   if (UNLIKELY(NULL == op))
     return NULL;
 
   lpw_m1 = BYTES_TO_PTRS(GC_size(op)) - 1;
-  if (pctd->descr_type == LEAF) {
+  if (p_ctd->descr_type == LEAF) {
     /* Set up the descriptor inside the object itself. */
     struct LeafDescriptor *lp
         = (struct LeafDescriptor *)((ptr_t *)op + lpw_m1
@@ -599,9 +600,9 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
                                         sizeof(struct LeafDescriptor)));
 
     lp->ld_tag = LEAF_TAG;
-    lp->ld_size = pctd->leaf.ld_size;
-    lp->ld_nelements = pctd->leaf.ld_nelements;
-    lp->ld_descriptor = pctd->leaf.ld_descriptor;
+    lp->ld_size = p_ctd->leaf.ld_size;
+    lp->ld_nelements = p_ctd->leaf.ld_nelements;
+    lp->ld_descriptor = p_ctd->leaf.ld_descriptor;
     /*
      * Hold the allocator lock (in the reader mode which should be enough)
      * while writing the descriptor `word` to the object to ensure that
@@ -620,11 +621,11 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
   } else {
 #ifndef GC_NO_FINALIZATION
     READER_LOCK();
-    ((complex_descriptor **)op)[lpw_m1] = pctd->complex_d;
+    ((complex_descriptor **)op)[lpw_m1] = p_ctd->complex_d;
     READER_UNLOCK_RELEASE();
 
     GC_dirty((ptr_t *)op + lpw_m1);
-    REACHABLE_AFTER_DIRTY(pctd->complex_d);
+    REACHABLE_AFTER_DIRTY(p_ctd->complex_d);
 
     /*
      * Make sure the descriptor is cleared once there is any danger
@@ -636,7 +637,7 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *pctd,
 #endif
     {
       /* Could not register it due to lack of memory.  Punt. */
-      return (*GC_get_oom_fn())((size_t)pctd->alloc_lb);
+      return (*GC_get_oom_fn())((size_t)p_ctd->alloc_lb);
     }
   }
   return op;

@@ -1,0 +1,22 @@
+# This workflow is to do spell-checking of the source code and documents.
+name: spell check
+
+on: [ push, pull_request ]
+
+jobs:
+  spellcheck:
+    name: Spell-check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Run cspell
+      uses: streetsidesoftware/cspell-action@v7
+      with:
+        files: "**/*.{c,cc,cpp,h,man,md}"
+        # Note: file `.cspell.json` contains the list of words (mostly names)
+        # to be ignored; the list is ordered alphabetically ignoring case.
+        incremental_files_only: false
+        verbose: true

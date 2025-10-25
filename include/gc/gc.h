@@ -996,11 +996,11 @@ GC_API size_t GC_CALL GC_get_obtained_from_os_bytes(void);
  * returning the consistent result.)  Passing `NULL` pointer is allowed
  * for any argument.  Returned (filled in) values are of `GC_word` type.
  */
-GC_API void GC_CALL GC_get_heap_usage_safe(GC_word * /* `pheap_size` */,
-                                           GC_word * /* `pfree_bytes` */,
-                                           GC_word * /* `punmapped_bytes` */,
-                                           GC_word * /* `pbytes_since_gc` */,
-                                           GC_word * /* `ptotal_bytes` */);
+GC_API void GC_CALL GC_get_heap_usage_safe(GC_word * /* `p_heap_size` */,
+                                           GC_word * /* `p_free_bytes` */,
+                                           GC_word * /* `p_unmapped_bytes` */,
+                                           GC_word * /* `p_bytes_since_gc` */,
+                                           GC_word * /* `p_total_bytes` */);
 
 /**
  * Structure used to query the GC statistics (profiling information).
@@ -2559,7 +2559,7 @@ GC_API GC_uintptr_t GC_CALL GC_beginthreadex(void * /* `security` */,
                                              unsigned(__stdcall *)(void *),
                                              void * /* `arglist` */,
                                              unsigned /* `initflag` */,
-                                             unsigned * /* `thrdaddr` */);
+                                             unsigned * /* `thr_addr` */);
 
 /*
  * Note: `_endthreadex()` is not currently marked as `noreturn` in VC++

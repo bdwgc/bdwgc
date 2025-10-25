@@ -418,7 +418,7 @@ GC_malloc_atomic(size_t lb)
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_malloc(size_t lb)
 {
-  /* Allocate `lb` bytes of composite (pointerful) data. */
+  /* Allocate `lb` bytes of composite (pointer-containing) data. */
   return GC_malloc_kind(lb, NORMAL);
 }
 
@@ -502,7 +502,10 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_malloc_uncollectable(size_t lb)
 {
-  /* Allocate `lb` bytes of pointerful, traced, but not collectible data. */
+  /*
+   * Allocate `lb` bytes of pointer-containing, traced, but not collectible
+   * data.
+   */
   return GC_generic_malloc_uncollectable(lb, UNCOLLECTABLE);
 }
 
@@ -553,7 +556,7 @@ malloc(size_t lb)
   return (void *)REDIRECT_MALLOC_F(lb);
 }
 
-#  ifdef REDIR_MALLOC_AND_LINUXTHREADS
+#  ifdef REDIR_MALLOC_AND_LINUX_THREADS
 #    ifdef HAVE_LIBPTHREAD_SO
 STATIC ptr_t GC_libpthread_start = NULL;
 STATIC ptr_t GC_libpthread_end = NULL;
@@ -599,7 +602,7 @@ GC_init_lib_bounds(void)
   RESTORE_CANCEL(cancel_state);
   lib_bounds_set = TRUE;
 }
-#  endif /* REDIR_MALLOC_AND_LINUXTHREADS */
+#  endif /* REDIR_MALLOC_AND_LINUX_THREADS */
 
 void *
 calloc(size_t n, size_t lb)
@@ -607,7 +610,7 @@ calloc(size_t n, size_t lb)
   if (UNLIKELY((lb | n) > GC_SQRT_SIZE_MAX) /*< fast initial test */
       && lb && n > GC_SIZE_MAX / lb)
     return (*GC_get_oom_fn())(GC_SIZE_MAX); /*< `n * lb` overflow */
-#  ifdef REDIR_MALLOC_AND_LINUXTHREADS
+#  ifdef REDIR_MALLOC_AND_LINUX_THREADS
   /*
    * The linker may allocate some memory that is only pointed to by
    * memory-mapped thread stacks.  Make sure it is not collectible.
@@ -733,7 +736,7 @@ GC_free(void *p)
   hhdr = HDR(p);
 #if defined(REDIRECT_MALLOC)                                           \
     && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
-        || defined(REDIR_MALLOC_AND_LINUXTHREADS)                      \
+        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
         || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
   /*
    * This might be called indirectly by `GC_print_callers` to free the
@@ -778,7 +781,7 @@ free(void *p)
 #  ifdef IGNORE_FREE
   UNUSED_ARG(p);
 #  else
-#    if defined(REDIR_MALLOC_AND_LINUXTHREADS) \
+#    if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
         && !defined(USE_PROC_FOR_LIBRARIES)
   /*
    * Do not bother with initialization checks.  If nothing has been

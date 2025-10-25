@@ -153,19 +153,19 @@ struct GC_calloc_typed_descr_s {
  * allocate multiple typed object arrays with the same layout and
  * number of elements.  The client should call it to be prepared for
  * the subsequent allocations by `GC_calloc_do_explicitly_typed()`, one
- * or many.  The result of the preparation is stored to `*pctd`, even
+ * or many.  The result of the preparation is stored to `*p_ctd`, even
  * in case of a failure.  The prepared structure could be just dropped
  * when no longer needed.  Returns 0 on failure, 1 on success; the
- * result could be ignored (as it is also stored to `*pctd` and checked
+ * result could be ignored (as it is also stored to `*p_ctd` and checked
  * later by `GC_calloc_do_explicitly_typed()`).
  */
 GC_API int GC_CALL GC_calloc_prepare_explicitly_typed(
-    struct GC_calloc_typed_descr_s * /* `pctd` */, size_t /* `sizeof_ctd` */,
+    struct GC_calloc_typed_descr_s * /* `p_ctd` */, size_t /* `sizeof_ctd` */,
     size_t /* `nelements` */, size_t /* `element_size_in_bytes` */, GC_descr);
 
 /** The actual object allocation for the prepared description. */
 GC_API GC_ATTR_MALLOC void *GC_CALL GC_calloc_do_explicitly_typed(
-    const struct GC_calloc_typed_descr_s * /* `pctd` */,
+    const struct GC_calloc_typed_descr_s * /* `p_ctd` */,
     size_t /* `sizeof_ctd` */);
 
 #ifdef GC_DEBUG

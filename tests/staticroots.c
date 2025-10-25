@@ -32,9 +32,9 @@ static char *staticroot;
 
 GC_TEST_IMPORT_API struct treenode *libsrl_mktree(int i);
 GC_TEST_IMPORT_API void *libsrl_init(void);
-GC_TEST_IMPORT_API struct treenode **libsrl_getpelem(int i, int j);
+GC_TEST_IMPORT_API struct treenode **libsrl_get_p_element(int i, int j);
 
-GC_TEST_IMPORT_API struct treenode **libsrl_getpelem2(int i, int j);
+GC_TEST_IMPORT_API struct treenode **libsrl_get_p_element2(int i, int j);
 
 static void
 init_staticroot(void)
@@ -67,9 +67,9 @@ main(void)
   for (j = 0; j < 4; j++) {
     for (i = 0; i < (int)(sizeof(root) / sizeof(root[0])); ++i) {
 #ifdef STATICROOTSLIB2
-      *libsrl_getpelem2(i, j) = libsrl_mktree(12);
+      *libsrl_get_p_element2(i, j) = libsrl_mktree(12);
 #endif
-      *libsrl_getpelem(i, j) = libsrl_mktree(12);
+      *libsrl_get_p_element(i, j) = libsrl_mktree(12);
       ((j & 1) != 0 ? root_nz : root)[i] = libsrl_mktree(12);
       GC_gcollect();
     }

@@ -2,7 +2,7 @@
 
 If Makefile.direct is used, in its default configuration the
 Boehm-Demers-Weiser garbage collector is not thread-safe. Generally, it can be
-made thread-safe by building the collector with `-DGC_THREADS` compilation
+made thread-safe by building the collector with `-D GC_THREADS` compilation
 flag. This has primarily the following effects:
 
   1. It causes the garbage collector to stop all other threads when it needs
@@ -32,7 +32,7 @@ The collector uses two facilities to enhance collector scalability on
 multiprocessors. They are intended to be used together. (The following refers
 to `Makefile.direct` file again.)
 
-  * Building the collector with `-DPARALLEL_MARK` allows the collector to run
+  * Building the collector with `-D PARALLEL_MARK` allows the collector to run
   the mark phase in parallel in multiple threads, and thus on multiple
   processors (or processor cores). The mark phase typically consumes the large
   majority of the collection time. Thus, this largely parallelizes the garbage
@@ -45,7 +45,7 @@ to `Makefile.direct` file again.)
   a child process). Another effect of this flag is to switch to a more
   concurrent implementation of `GC_malloc_many`, so that free lists can be
   built and memory can be cleared by more than one thread concurrently.
-  * Building the collector with `-DTHREAD_LOCAL_ALLOC` adds support for
+  * Building the collector with `-D THREAD_LOCAL_ALLOC` adds support for
   thread-local allocation. This causes `GC_malloc` (actually `GC_malloc_kind`)
   and `GC_gcj_malloc` to be redefined to perform thread-local allocation.
 
@@ -126,7 +126,7 @@ allocation. This was run with an ancient GC (released in 2000) on a dual
 processor Pentium III/500 machine under Linux 2.2.12.
 
 Running with a thread-unsafe collector, the benchmark ran in 9 seconds. With
-the simple thread-safe collector, built with `-DGC_THREADS`, the execution
+the simple thread-safe collector, built with `-D GC_THREADS`, the execution
 time increased to 10.3 seconds, or 23.5 elapsed seconds with two clients. (The
 times for the `malloc`/`free` variant with `glibc` `malloc` are 10.51
 (standard library, `pthreads` is not linked), 20.90 (one thread, `pthreads`
@@ -135,17 +135,17 @@ collector, since most objects are small.)
 
 The following table gives execution times for the collector built with
 parallel marking and thread-local allocation support
-(`-DGC_THREADS -DPARALLEL_MARK -DTHREAD_LOCAL_ALLOC`). We tested the client
+(`-D GC_THREADS -D PARALLEL_MARK -D THREAD_LOCAL_ALLOC`). We tested the client
 using either one or two marker threads, and running one or two client threads.
 Note that the client uses thread-local allocation exclusively. With
-`-DTHREAD_LOCAL_ALLOC` the collector switches to a locking strategy that
+`-D THREAD_LOCAL_ALLOC` the collector switches to a locking strategy that
 is better tuned to less frequent lock acquisition. The standard allocation
-primitives thus perform slightly worse than without `-DTHREAD_LOCAL_ALLOC`,
+primitives thus perform slightly worse than without `-D THREAD_LOCAL_ALLOC`,
 and should be avoided in time-critical code.
 
 (The results using `pthread_mutex_lock` directly for acquiring the allocator
 lock would have been worse still, at least for older versions of LinuxThreads.
-With `-DTHREAD_LOCAL_ALLOC`, we first repeatedly try to acquire the allocator
+With `-D THREAD_LOCAL_ALLOC`, we first repeatedly try to acquire the allocator
 lock with `pthread_mutex_try_lock`, busy-waiting between attempts. After
 a fixed number of attempts, we use `pthread_mutex_lock`.)
 

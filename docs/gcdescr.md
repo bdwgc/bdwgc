@@ -270,7 +270,7 @@ block. This is done in the following steps:
   significant bits specify an offset within that page. (A hardware page may
   actually consist of multiple such pages. Normally, `HBLKSIZE` is usually the
   page size divided by a small power of two. Alternatively, if the collector
-  is built with `-DLARGE_CONFIG`, such a page may consist of multiple hardware
+  is built with `-D LARGE_CONFIG`, such a page may consist of multiple hardware
   pages.)
   * The page address part of the candidate pointer is looked up in
   a [table](tree.md). Each table entry contains either 0, indicating that
@@ -461,20 +461,20 @@ objects.
 
 ## Thread support
 
-We support several different threading models. Unfortunately Pthreads, the
+We support several different threading models. Unfortunately pthreads, the
 only reasonably well standardized thread model, supports too narrow
 an interface for conservative garbage collection. There appears to be no
 completely portable way to allow the collector to coexist with various
-Pthreads implementations. Hence we currently support only the more common
-Pthreads implementations.
+pthreads implementations. Hence we currently support only the more common
+pthreads implementations.
 
 In particular, it is very difficult for the collector to stop all other
 threads in the system and examine the register contents. This is currently
-accomplished with very different mechanisms for some Pthreads implementations.
-For Linux/HPUX/Tru64, Solaris and Irix it sends signals to individual Pthreads
+accomplished with very different mechanisms for some pthreads implementations.
+For Linux/HPUX/Tru64, Solaris and Irix it sends signals to individual pthreads
 and has them wait in the signal handler.
 
-The Linux and Irix implementations use only documented Pthreads calls, but
+The Linux and Irix implementations use only documented pthreads calls, but
 rely on extensions to their semantics. The Linux implementation
 `pthread_stop_world.c` file relies on only very mild extensions to the
 `pthreads` semantics, and already supports a large number of other UNIX-like

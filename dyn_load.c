@@ -1001,7 +1001,7 @@ GC_register_dynamic_libraries(void)
    * not worry about.  This may also work under other SVR4 variants.
    */
   static int fd = -1;
-  static prmap_t *addr_map = 0;
+  static prmap_t *addr_map = NULL;
   /* Number of records currently in `addr_map`. */
   static int current_sz = 0;
   char buf[6 + 20 + 1];
@@ -1129,28 +1129,28 @@ GC_register_dynamic_libraries(void)
 GC_INNER void
 GC_register_dynamic_libraries(void)
 {
-  int ldibuflen = 8192;
+  unsigned buf_len = 8192;
 
   GC_ASSERT(I_HOLD_LOCK());
   for (;;) {
     int len;
     struct ld_info *ldi;
 #    if defined(CPPCHECK)
-    char ldibuf[ldibuflen];
+    char buf[buf_len];
 #    else
-    char *ldibuf = alloca(ldibuflen);
+    char *buf = alloca(buf_len);
 #    endif
 
-    len = loadquery(L_GETINFO, ldibuf, ldibuflen);
+    len = loadquery(L_GETINFO, buf, buf_len);
     if (len < 0) {
       if (errno != ENOMEM) {
         ABORT("loadquery failed");
       }
-      ldibuflen *= 2;
+      buf_len *= 2;
       continue;
     }
 
-    ldi = (struct ld_info *)ldibuf;
+    ldi = (struct ld_info *)buf;
     for (;;) {
       len = ldi->ldinfo_next;
       GC_add_roots_inner((ptr_t)ldi->ldinfo_dataorg,
@@ -1253,15 +1253,16 @@ GC_dyld_name_for_hdr(const struct GC_MACH_HEADER *phdr)
 static void
 dyld_section_add_del(const struct GC_MACH_HEADER *phdr, intptr_t slide,
                      const char *dlpi_name, GC_has_static_roots_func callback,
-                     const char *seg, const char *secnam, GC_bool is_add)
+                     const char *seg, const char *section_name, GC_bool is_add)
 {
   ptr_t start, finish;
   unsigned long sec_size;
 #    ifdef USE_GETSECTBYNAME
 #      if CPP_WORDSZ == 64
-  const struct section_64 *sec = getsectbynamefromheader_64(phdr, seg, secnam);
+  const struct section_64 *sec
+      = getsectbynamefromheader_64(phdr, seg, section_name);
 #      else
-  const struct section *sec = getsectbynamefromheader(phdr, seg, secnam);
+  const struct section *sec = getsectbynamefromheader(phdr, seg, section_name);
 #      endif
 
   if (NULL == sec)
@@ -1272,7 +1273,7 @@ dyld_section_add_del(const struct GC_MACH_HEADER *phdr, intptr_t slide,
 
   UNUSED_ARG(slide);
   sec_size = 0;
-  start = (ptr_t)getsectiondata(phdr, seg, secnam, &sec_size);
+  start = (ptr_t)getsectiondata(phdr, seg, section_name, &sec_size);
   if (NULL == start)
     return;
 #    endif
@@ -1294,7 +1295,7 @@ dyld_section_add_del(const struct GC_MACH_HEADER *phdr, intptr_t slide,
   }
 #    ifdef DARWIN_DEBUG
   GC_log_printf("%s section __DATA,%s at %p-%p (%lu bytes) from image %s\n",
-                is_add ? "Added" : "Removed", secnam, (void *)start,
+                is_add ? "Added" : "Removed", section_name, (void *)start,
                 (void *)finish, sec_size, dlpi_name);
 #    endif
 }
@@ -1326,12 +1327,12 @@ dyld_image_add_del(const struct GC_MACH_HEADER *phdr, intptr_t slide,
   for (j = 0; j < sizeof(GC_dyld_bss_prefixes) / sizeof(char *); j++) {
     /* Our manufactured aligned BSS sections. */
     for (i = 0; i <= L2_MAX_OFILE_ALIGNMENT; i++) {
-      char secnam[11 + 20 + 1];
+      char section_name[11 + 20 + 1];
 
-      GC_snprintf_s_ld_s(secnam, sizeof(secnam), GC_dyld_bss_prefixes[j],
-                         (long)i, "");
+      GC_snprintf_s_ld_s(section_name, sizeof(section_name),
+                         GC_dyld_bss_prefixes[j], (long)i, "");
       dyld_section_add_del(phdr, slide, dlpi_name, 0 /* `callback` */,
-                           SEG_DATA, secnam, is_add);
+                           SEG_DATA, section_name, is_add);
     }
   }
 

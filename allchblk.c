@@ -923,16 +923,18 @@ next_hblk_fits_better(const hdr *hhdr, size_t size_avail, size_t size_needed,
     return FALSE; /*< not enough size */
 
   next_ofs = ALIGN_PAD_SZ(next_hbp, align_m1);
-  return next_size >= size_needed + next_ofs
+  if (size_needed + next_ofs > next_size)
+    return FALSE; /*< not enough size */
 #ifndef NO_BLACK_LISTING
-         && !GC_is_black_listed(next_hbp + divHBLKSZ(next_ofs), size_needed)
+  if (GC_is_black_listed(next_hbp + divHBLKSZ(next_ofs), size_needed))
+    return FALSE;
 #endif
-      ;
+  return TRUE;
 }
 
 static struct hblk *
-find_nonbl_hblk(struct hblk *last_hbp, size_t size_remain,
-                size_t eff_size_needed, size_t align_m1)
+find_non_bl_hblk(struct hblk *last_hbp, size_t size_remain,
+                 size_t eff_size_needed, size_t align_m1)
 {
 #ifdef NO_BLACK_LISTING
   UNUSED_ARG(size_remain);
@@ -1086,7 +1088,7 @@ retry:
       break;
     }
 
-    last_hbp = find_nonbl_hblk(
+    last_hbp = find_non_bl_hblk(
         hbp, size_avail - size_needed,
         (flags & IGNORE_OFF_PAGE) != 0 ? HBLKSIZE : size_needed, align_m1);
     /* Is non-black-listed part of enough size? */

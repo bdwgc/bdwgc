@@ -710,7 +710,7 @@ GC_mark_from(mse *mark_stack_top, mse *mark_stack, mse *mark_stack_limit)
   GC_objects_are_marked = TRUE;
   INIT_HDR_CACHE;
 #if defined(OS2) || CPP_PTRSZ > CPP_WORDSZ
-  /* OS/2: use untweaked variant to circumvent a compiler problem. */
+  /* OS/2: avoid the tweaked variant to circumvent a compiler problem. */
   while (ADDR_GE((ptr_t)mark_stack_top, (ptr_t)mark_stack) && credit >= 0)
 #else
   while (((((word)mark_stack_top - (word)mark_stack) | (word)credit) & SIGNB)
@@ -1890,30 +1890,30 @@ GC_push_conditional_eager(void *bottom, void *top, GC_bool all)
     && !defined(MARK_BIT_PER_OBJ) && GC_GRANULE_PTRS <= 4
 #  define USE_PUSH_MARKED_ACCELERATORS
 #  if GC_GRANULE_PTRS == 1
-#    define PUSH_GRANULE(q)                                \
-      do {                                                 \
-        ptr_t qcontents = (q)[0];                          \
-        GC_PUSH_ONE_HEAP(qcontents, q, GC_mark_stack_top); \
+#    define PUSH_GRANULE(q)                                 \
+      do {                                                  \
+        ptr_t q_contents = (q)[0];                          \
+        GC_PUSH_ONE_HEAP(q_contents, q, GC_mark_stack_top); \
       } while (0)
 #  elif GC_GRANULE_PTRS == 2
-#    define PUSH_GRANULE(q)                                      \
-      do {                                                       \
-        ptr_t qcontents = (q)[0];                                \
-        GC_PUSH_ONE_HEAP(qcontents, q, GC_mark_stack_top);       \
-        qcontents = (q)[1];                                      \
-        GC_PUSH_ONE_HEAP(qcontents, (q) + 1, GC_mark_stack_top); \
+#    define PUSH_GRANULE(q)                                       \
+      do {                                                        \
+        ptr_t q_contents = (q)[0];                                \
+        GC_PUSH_ONE_HEAP(q_contents, q, GC_mark_stack_top);       \
+        q_contents = (q)[1];                                      \
+        GC_PUSH_ONE_HEAP(q_contents, (q) + 1, GC_mark_stack_top); \
       } while (0)
 #  else
-#    define PUSH_GRANULE(q)                                      \
-      do {                                                       \
-        ptr_t qcontents = (q)[0];                                \
-        GC_PUSH_ONE_HEAP(qcontents, q, GC_mark_stack_top);       \
-        qcontents = (q)[1];                                      \
-        GC_PUSH_ONE_HEAP(qcontents, (q) + 1, GC_mark_stack_top); \
-        qcontents = (q)[2];                                      \
-        GC_PUSH_ONE_HEAP(qcontents, (q) + 2, GC_mark_stack_top); \
-        qcontents = (q)[3];                                      \
-        GC_PUSH_ONE_HEAP(qcontents, (q) + 3, GC_mark_stack_top); \
+#    define PUSH_GRANULE(q)                                       \
+      do {                                                        \
+        ptr_t q_contents = (q)[0];                                \
+        GC_PUSH_ONE_HEAP(q_contents, q, GC_mark_stack_top);       \
+        q_contents = (q)[1];                                      \
+        GC_PUSH_ONE_HEAP(q_contents, (q) + 1, GC_mark_stack_top); \
+        q_contents = (q)[2];                                      \
+        GC_PUSH_ONE_HEAP(q_contents, (q) + 2, GC_mark_stack_top); \
+        q_contents = (q)[3];                                      \
+        GC_PUSH_ONE_HEAP(q_contents, (q) + 3, GC_mark_stack_top); \
       } while (0)
 #  endif
 

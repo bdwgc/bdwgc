@@ -3903,14 +3903,14 @@ GC_INNER void GC_setpagesize(void);
 
 GC_INNER void GC_initialize_offsets(void);
 
-#if defined(REDIR_MALLOC_AND_LINUXTHREADS) \
+#if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
     && !defined(REDIRECT_MALLOC_IN_HEADER)
 GC_INNER void GC_init_lib_bounds(void);
 #else
 #  define GC_init_lib_bounds() (void)0
 #endif
 
-#ifdef REDIR_MALLOC_AND_LINUXTHREADS
+#ifdef REDIR_MALLOC_AND_LINUX_THREADS
 /*
  * Find the text (code) mapping for the library whose name, after
  * stripping the directory part, starts with `nm`.
@@ -4083,7 +4083,7 @@ GC_INNER void GC_init_linux_data_start(void);
 #  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES) \
       || defined(IA64) || defined(INCLUDE_LINUX_THREAD_DESCR)     \
       || (defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB))       \
-      || defined(REDIR_MALLOC_AND_LINUXTHREADS)
+      || defined(REDIR_MALLOC_AND_LINUX_THREADS)
 /*
  * Assign various fields of the first line in `maps_ptr` to `*p_start`,
  * `*p_end`, `*p_prot`, `*p_maj_dev` and `*p_mapping_name`.

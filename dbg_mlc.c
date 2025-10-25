@@ -716,7 +716,7 @@ GC_debug_free(void *p)
   if (NULL == base) {
 #if defined(REDIRECT_MALLOC)                                           \
     && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
-        || defined(REDIR_MALLOC_AND_LINUXTHREADS)                      \
+        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
         || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
     /*
      * In some cases, we should ignore objects that do not belong to
