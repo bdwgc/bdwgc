@@ -968,6 +968,15 @@ STATIC void GC_wait_for_gc_completion(GC_bool wait_for_all)
 IF_CANCEL(static int fork_cancel_state;)
                                 /* protected by allocation lock.        */
 
+/* Same as GC_thread_is_registered() but assumes the allocator lock */
+/* is held.                                                         */
+static GC_bool is_thread_registered_inner(void)
+{
+  GC_thread me = GC_lookup_thread(pthread_self());
+
+  return me != NULL && !(me -> flags & FINISHED);
+}
+
 /* Called before a fork()               */
 static void fork_prepare_proc(void)
 {
@@ -992,7 +1001,10 @@ static void fork_prepare_proc(void)
         if (GC_parallel)
           GC_wait_for_reclaim();
 #     endif
-      GC_wait_for_gc_completion(TRUE);
+      if (is_thread_registered_inner()) {
+        /* fork() is called from a thread registered in the collector. */
+        GC_wait_for_gc_completion(TRUE);
+      }
 #     if defined(PARALLEL_MARK)
         if (GC_parallel)
           GC_acquire_mark_lock();
