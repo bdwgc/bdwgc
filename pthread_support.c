@@ -829,11 +829,11 @@ GC_API void GC_CALL GC_register_altstack(void *stack, GC_word stack_size,
     GC_threads[hv] = me;
   }
 
-/* Remove all entries from the GC_threads table, except the one for */
-/* the current thread.  Also update thread identifiers stored in    */
-/* the table for the current thread.  We need to do this in the     */
-/* child process after a fork(), since only the current thread      */
-/* survives in the child.                                           */
+/* Remove all entries from the GC_threads table, except the one (if */
+/* any) for the current thread.  Also update thread identifiers     */
+/* stored in the table for the current thread.  We need to do this  */
+/* in the child process after a fork(), since only the current      */
+/* thread survives in the child.                                    */
 STATIC void GC_remove_all_threads_but_me(void)
 {
     int hv;
@@ -870,12 +870,9 @@ STATIC void GC_remove_all_threads_but_me(void)
       store_to_threads_table(hv, NULL);
     }
 
-#   if defined(CPPCHECK) || defined(LINT2)
-      if (NULL == me)
-        ABORT("Current thread is not found after fork");
-#   else
-      GC_ASSERT(me != NULL);
-#   endif
+    if (NULL == me)
+      return; /* fork() is called from an unregistered thread */
+
     /* Update pthread's id as it is not guaranteed to be the same   */
     /* between this (child) process and the parent one.             */
     me -> id = pthread_self();

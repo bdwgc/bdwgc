@@ -512,6 +512,7 @@ GC_API void GC_CALL GC_set_handle_fork(int);
 /* non-zero); GC_atfork_child is to be called immediately in the child  */
 /* branch (i.e., fork result is 0).  Note that GC_atfork_child() call   */
 /* should, of course, precede GC_start_mark_threads call (if any).      */
+/* Note that fork() could be called from an unregistered thread.        */
 GC_API void GC_CALL GC_atfork_prepare(void);
 GC_API void GC_CALL GC_atfork_parent(void);
 GC_API void GC_CALL GC_atfork_child(void);
