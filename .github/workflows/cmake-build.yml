@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ macos-13, macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-13, macos-latest, ubuntu-24.04-arm, ubuntu-latest, windows-latest ]
         c_compiler: [ cl, clang, gcc ]
         cxx_compiler: [ cl, clang++, g++ ]
         enable_cplusplus: [ off, on ]
@@ -35,6 +35,8 @@ jobs:
           c_compiler: cl
         - os: macos-latest
           c_compiler: gcc
+        - os: ubuntu-24.04-arm
+          c_compiler: cl
         - os: ubuntu-latest
           c_compiler: cl
         - enable_threads: off
@@ -54,6 +56,8 @@ jobs:
         - os: macos-13
           enable_cplusplus: off
         - os: macos-latest
+          enable_cplusplus: off
+        - os: ubuntu-24.04-arm
           enable_cplusplus: off
         - os: ubuntu-latest
           enable_cplusplus: off
