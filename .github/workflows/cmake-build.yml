@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ macos-13, macos-latest, ubuntu-24.04-arm, ubuntu-latest, windows-latest ]
+        os: [ macos-13, macos-latest, ubuntu-24.04-arm, ubuntu-latest, windows-11-arm, windows-latest ]
         c_compiler: [ cl, clang, gcc ]
         cxx_compiler: [ cl, clang++, g++ ]
         enable_cplusplus: [ off, on ]
@@ -64,13 +64,25 @@ jobs:
         - os: windows-latest
           c_compiler: cl
           enable_cplusplus: off
+        - os: windows-11-arm
+          c_compiler: cl
+          enable_cplusplus: off
         - os: windows-latest # TODO: replacement operator cannot be inline
           c_compiler: clang
           enable_cplusplus: on
         - os: windows-latest
           c_compiler: gcc
           enable_cplusplus: off
+        - os: windows-11-arm
+          c_compiler: clang
+          enable_cplusplus: on
+        - os: windows-11-arm
+          c_compiler: gcc
+          enable_cplusplus: off
         - os: windows-latest # TODO: support dependency on libatomic_ops
+          c_compiler: cl
+          enable_threads: on
+        - os: windows-11-arm
           c_compiler: cl
           enable_threads: on
         include:
@@ -78,6 +90,12 @@ jobs:
           c_compiler: gcc
           cmake_generator_opt: '-G "Unix Makefiles"'
         - os: windows-latest
+          c_compiler: clang
+          cmake_generator_opt: '-G "Unix Makefiles"'
+        - os: windows-11-arm
+          c_compiler: gcc
+          cmake_generator_opt: '-G "Unix Makefiles"'
+        - os: windows-11-arm
           c_compiler: clang
           cmake_generator_opt: '-G "Unix Makefiles"'
 
