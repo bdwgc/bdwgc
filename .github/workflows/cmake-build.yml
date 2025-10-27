@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-13, macos-latest, ubuntu-latest, windows-latest ]
         c_compiler: [ cl, clang, gcc ]
         cxx_compiler: [ cl, clang++, g++ ]
         enable_cplusplus: [ off, on ]
@@ -27,6 +27,10 @@ jobs:
         redirect_malloc: [ off, on ]
         shared_libs: [ off, on ]
         exclude:
+        - os: macos-13
+          c_compiler: cl
+        - os: macos-13
+          c_compiler: gcc
         - os: macos-latest
           c_compiler: cl
         - os: macos-latest
@@ -47,6 +51,8 @@ jobs:
           cxx_compiler: cl
         - c_compiler: gcc
           cxx_compiler: clang++
+        - os: macos-13
+          enable_cplusplus: off
         - os: macos-latest
           enable_cplusplus: off
         - os: ubuntu-latest
