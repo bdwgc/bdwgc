@@ -773,33 +773,39 @@ GC_debug_free(void *p)
   } else
 #endif
   /* else */ {
-    const hdr *hhdr = HDR(p);
+    const hdr *hhdr;
 
+    LOCK();
+#ifdef LOG_ALLOCS
+    GC_log_printf("GC_debug_free(%p) after GC #%lu\n", p,
+                  (unsigned long)GC_gc_no);
+#endif
+    hhdr = HDR(p);
     if (hhdr->hb_obj_kind == UNCOLLECTABLE
 #ifdef GC_ATOMIC_UNCOLLECTABLE
         || hhdr->hb_obj_kind == AUNCOLLECTABLE
 #endif
     ) {
-      GC_free(base);
+      GC_free_inner(base);
+      UNLOCK();
     } else {
       size_t sz = hhdr->hb_sz;
-      size_t i;
-      size_t lpw = BYTES_TO_PTRS(sz - sizeof(oh));
+      size_t i, lpw;
 
-      for (i = 0; i < lpw; ++i)
-        ((GC_uintptr_t *)p)[i] = GC_FREED_MEM_MARKER;
-      GC_ASSERT((GC_uintptr_t *)p + i == (GC_uintptr_t *)(base + sz));
       /*
        * Update the counter even though the real deallocation
        * is deferred.
        */
-      LOCK();
 #ifdef LINT2
       GC_incr_bytes_freed(sz);
 #else
       GC_bytes_freed += sz;
 #endif
       UNLOCK();
+      lpw = BYTES_TO_PTRS(sz - sizeof(oh));
+      for (i = 0; i < lpw; ++i)
+        ((GC_uintptr_t *)p)[i] = GC_FREED_MEM_MARKER;
+      GC_ASSERT((GC_uintptr_t *)p + i == (GC_uintptr_t *)(base + sz));
     }
   }
 }
