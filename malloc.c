@@ -474,16 +474,11 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
     op = GC_generic_malloc_aligned(lb, kind, 0 /* `flags` */,
                                    0 /* `align_m1` */);
     if (op /* `!= NULL` */) { /*< CPPCHECK */
-      hdr *hhdr = HDR(op);
+      hdr *hhdr;
 
       GC_ASSERT(HBLKDISPL(op) == 0); /*< large block */
-
-      /*
-       * We do not need to acquire the allocator lock before `HDR(op)`,
-       * since we have an undisguised pointer, but we need it while we
-       * adjust the mark bits.
-       */
       LOCK();
+      hhdr = HDR(op);
       set_mark_bit_from_hdr(hhdr, 0); /*< the only object */
 #ifndef THREADS
       /*
@@ -730,6 +725,7 @@ GC_free(void *p)
     return;
   }
 
+  LOCK();
 #ifdef LOG_ALLOCS
   GC_log_printf("GC_free(%p) after GC #%lu\n", p, (unsigned long)GC_gc_no);
 #endif
@@ -744,11 +740,12 @@ GC_free(void *p)
    * `malloc` calls during initialization.  For the others, this seems
    * to happen implicitly.  Do not try to deallocate that memory.
    */
-  if (UNLIKELY(NULL == hhdr))
+  if (UNLIKELY(NULL == hhdr)) {
+    UNLOCK();
     return;
+  }
 #endif
   GC_ASSERT(GC_base(p) == p);
-  LOCK();
   free_internal(p, hhdr);
   FREE_PROFILER_HOOK(p);
   UNLOCK();

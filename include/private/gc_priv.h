@@ -3449,12 +3449,14 @@ GC_EXTERN GC_bool GC_print_back_height;
 void GC_print_back_graph_stats(void);
 #endif
 
-#ifdef THREADS
 /*
  * Explicitly deallocate the object when we already hold the allocator lock.
- * Only used for internally allocated objects.
+ * Assumes the argument points to the beginning (base) of the object.
  */
+#ifdef THREADS
 GC_INNER void GC_free_inner(void *p);
+#else
+#  define GC_free_inner(p) GC_free(p)
 #endif
 
 #ifdef VALGRIND_TRACKING
@@ -3492,11 +3494,7 @@ GC_INNER void GC_debug_free_inner(void *p);
 #  define GC_INTERNAL_MALLOC(lb, k) GC_generic_malloc_inner(lb, k, 0)
 #  define GC_INTERNAL_MALLOC_IGNORE_OFF_PAGE(lb, k) \
     GC_generic_malloc_inner(lb, k, IGNORE_OFF_PAGE)
-#  ifdef THREADS
-#    define GC_INTERNAL_FREE GC_free_inner
-#  else
-#    define GC_INTERNAL_FREE GC_free
-#  endif
+#  define GC_INTERNAL_FREE GC_free_inner
 #endif /* !DBG_HDRS_ALL */
 
 /* Memory unmapping routines. */
