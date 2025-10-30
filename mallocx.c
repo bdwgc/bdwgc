@@ -254,6 +254,18 @@ GC_get_expl_freed_bytes_since_gc(void)
   return (size_t)GC_bytes_freed;
 }
 
+#ifdef PARALLEL_MARK
+static void
+acquire_mark_lock_notify_builders(void)
+{
+  GC_acquire_mark_lock();
+  --GC_fl_builder_count;
+  if (0 == GC_fl_builder_count)
+    GC_notify_all_builder();
+  GC_release_mark_lock();
+}
+#endif
+
 GC_API void GC_CALL
 GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
 {
@@ -286,6 +298,7 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
 #endif
     return;
   }
+
   GC_ASSERT(kind < MAXOBJKINDS);
   lg = BYTES_TO_GRANULES(lb_adjusted);
   if (UNLIKELY(get_have_errors()))
@@ -294,6 +307,7 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
   GC_DBG_COLLECT_AT_MALLOC(lb_adjusted - EXTRA_BYTES);
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
+
   LOCK();
   /* Do our share of marking work. */
   if (GC_incremental && !GC_dont_gc) {
@@ -339,7 +353,7 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
           (void)AO_fetch_and_add(&GC_bytes_allocd_tmp, (AO_t)my_bytes_allocd);
           GC_acquire_mark_lock();
           --GC_fl_builder_count;
-          if (GC_fl_builder_count == 0)
+          if (0 == GC_fl_builder_count)
             GC_notify_all_builder();
 #  ifdef THREAD_SANITIZER
           GC_release_mark_lock();
@@ -351,25 +365,20 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
           GC_bytes_found += (GC_signed_word)my_bytes_allocd;
           GC_release_mark_lock();
 #  endif
-          (void)GC_clear_stack(0);
+          (void)GC_clear_stack(NULL);
           return;
         }
 
-        GC_acquire_mark_lock();
-        --GC_fl_builder_count;
-        if (GC_fl_builder_count == 0)
-          GC_notify_all_builder();
-        GC_release_mark_lock();
+        acquire_mark_lock_notify_builders();
+
         /*
          * The allocator lock is needed for access to the reclaim list.
          * We must decrement `GC_fl_builder_count` before reacquiring
          * the allocator lock.  Hopefully this path is rare.
          */
         LOCK();
-
-        /* Reload `rlh` after locking. */
-        rlh = ok->ok_reclaim_list;
-        if (NULL == rlh)
+        rlh = ok->ok_reclaim_list; /*< reload `rlh` after locking */
+        if (UNLIKELY(NULL == rlh))
           break;
         continue;
       }
@@ -381,17 +390,22 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
         /* We also reclaimed memory, so we need to adjust that count. */
         GC_bytes_found += (GC_signed_word)my_bytes_allocd;
         GC_bytes_allocd += my_bytes_allocd;
-        goto out;
+        *result = op;
+        UNLOCK();
+        (void)GC_clear_stack(NULL);
+        return;
       }
     }
   }
+
   /*
    * Next try to use prefix of global free list if there is one.
    * We do not refill it, but we need to use it up before allocating
    * a new block ourselves.
    */
   opp = &ok->ok_freelist[lg];
-  if ((op = *opp) != NULL) {
+  op = *opp;
+  if (op != NULL) {
     *opp = NULL;
     my_bytes_allocd = 0;
     for (p = op; p != NULL; p = obj_link(p)) {
@@ -403,11 +417,9 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
       }
     }
     GC_bytes_allocd += my_bytes_allocd;
-    goto out;
-  }
 
-  /* Next try to allocate a new block worth of objects of this size. */
-  {
+  } else {
+    /* Next try to allocate a new block worth of objects of this size. */
     struct hblk *h
         = GC_allochblk(lb_adjusted, kind, 0 /* `flags` */, 0 /* `align_m1` */);
 
@@ -424,33 +436,29 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
 
         op = GC_build_fl(h, NULL, lg, ok->ok_init || GC_debugging_started);
         *result = op;
-        GC_acquire_mark_lock();
-        --GC_fl_builder_count;
-        if (GC_fl_builder_count == 0)
-          GC_notify_all_builder();
-        GC_release_mark_lock();
-        (void)GC_clear_stack(0);
+
+        acquire_mark_lock_notify_builders();
+        (void)GC_clear_stack(NULL);
         return;
       }
 #endif
+
       op = GC_build_fl(h, NULL, lg, ok->ok_init || GC_debugging_started);
-      goto out;
+    } else {
+      /*
+       * As a last attempt, try allocating a single object.
+       * Note that this may trigger a collection or expand the heap.
+       */
+      op = GC_generic_malloc_inner(lb_adjusted - EXTRA_BYTES, kind,
+                                   0 /* `flags` */);
+      if (op != NULL)
+        obj_link(op) = NULL;
     }
   }
 
-  /*
-   * As a last attempt, try allocating a single object.
-   * Note that this may trigger a collection or expand the heap.
-   */
-  op = GC_generic_malloc_inner(lb_adjusted - EXTRA_BYTES, kind,
-                               0 /* `flags` */);
-  if (op != NULL)
-    obj_link(op) = NULL;
-
-out:
   *result = op;
   UNLOCK();
-  (void)GC_clear_stack(0);
+  (void)GC_clear_stack(NULL);
 }
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
