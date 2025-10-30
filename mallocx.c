@@ -374,54 +374,54 @@ GC_API void GC_CALL GC_generic_malloc_many(size_t lb, int k, void **result)
                   ++ GC_fl_builder_count;
                   UNLOCK();
                   GC_release_mark_lock();
-              }
-#           endif
-            op = GC_reclaim_generic(hbp, hhdr, lb,
-                                    ok -> ok_init, 0, &my_bytes_allocd);
-            if (op != 0) {
-#             ifdef PARALLEL_MARK
-                if (GC_parallel) {
-                  *result = op;
-                  (void)AO_fetch_and_add(&GC_bytes_allocd_tmp,
-                                         (AO_t)my_bytes_allocd);
+
+                  op = GC_reclaim_generic(hbp, hhdr, lb, ok -> ok_init, NULL,
+                                          &my_bytes_allocd);
+                  if (op != NULL) {
+                      *result = op;
+                      (void)AO_fetch_and_add(&GC_bytes_allocd_tmp,
+                                             (AO_t)my_bytes_allocd);
+                      GC_acquire_mark_lock();
+                      -- GC_fl_builder_count;
+                      if (GC_fl_builder_count == 0) GC_notify_all_builder();
+#                     ifdef THREAD_SANITIZER
+                        GC_release_mark_lock();
+                        LOCK();
+                        GC_bytes_found += my_bytes_allocd;
+                        UNLOCK();
+#                     else
+                        GC_bytes_found += my_bytes_allocd;
+                                        /* The result may be inaccurate. */
+                        GC_release_mark_lock();
+#                     endif
+                      (void) GC_clear_stack(0);
+                      return;
+                  }
+
                   GC_acquire_mark_lock();
                   -- GC_fl_builder_count;
                   if (GC_fl_builder_count == 0) GC_notify_all_builder();
-#                 ifdef THREAD_SANITIZER
-                    GC_release_mark_lock();
-                    LOCK();
-                    GC_bytes_found += my_bytes_allocd;
-                    UNLOCK();
-#                 else
-                    GC_bytes_found += my_bytes_allocd;
-                                        /* The result may be inaccurate. */
-                    GC_release_mark_lock();
-#                 endif
-                  (void) GC_clear_stack(0);
-                  return;
-                }
-#             endif
-              /* We also reclaimed memory, so we need to adjust       */
-              /* that count.                                          */
+                  GC_release_mark_lock();
+                  LOCK();
+                  /* GC lock is needed for reclaim list access.   We    */
+                  /* must decrement fl_builder_count before reacquiring */
+                  /* the lock.  Hopefully this path is rare.            */
+
+                  rlh = ok -> ok_reclaim_list; /* reload rlh after locking */
+                  if (NULL == rlh) break;
+                  continue;
+              }
+#           endif
+
+            op = GC_reclaim_generic(hbp, hhdr, lb, ok -> ok_init, NULL,
+                                    &my_bytes_allocd);
+            if (op != NULL) {
+              /* We also reclaimed memory, so we need to adjust */
+              /* that count.                                    */
               GC_bytes_found += my_bytes_allocd;
               GC_bytes_allocd += my_bytes_allocd;
               goto out;
             }
-#           ifdef PARALLEL_MARK
-              if (GC_parallel) {
-                GC_acquire_mark_lock();
-                -- GC_fl_builder_count;
-                if (GC_fl_builder_count == 0) GC_notify_all_builder();
-                GC_release_mark_lock();
-                LOCK();
-                /* GC lock is needed for reclaim list access.   We      */
-                /* must decrement fl_builder_count before reacquiring   */
-                /* the lock.  Hopefully this path is rare.              */
-
-                rlh = ok -> ok_reclaim_list; /* reload rlh after locking */
-                if (NULL == rlh) break;
-              }
-#           endif
         }
     }
     /* Next try to use prefix of global free list if there is one.      */
