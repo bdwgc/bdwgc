@@ -331,13 +331,10 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
         ++GC_fl_builder_count;
         UNLOCK();
         GC_release_mark_lock();
-      }
-#endif
-      op = GC_reclaim_generic(hbp, hhdr, lb_adjusted, ok->ok_init, 0,
-                              &my_bytes_allocd);
-      if (op != 0) {
-#ifdef PARALLEL_MARK
-        if (GC_parallel) {
+
+        op = GC_reclaim_generic(hbp, hhdr, lb_adjusted, ok->ok_init, NULL,
+                                &my_bytes_allocd);
+        if (op != NULL) {
           *result = op;
           (void)AO_fetch_and_add(&GC_bytes_allocd_tmp, (AO_t)my_bytes_allocd);
           GC_acquire_mark_lock();
@@ -357,14 +354,7 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
           (void)GC_clear_stack(0);
           return;
         }
-#endif
-        /* We also reclaimed memory, so we need to adjust that count. */
-        GC_bytes_found += (GC_signed_word)my_bytes_allocd;
-        GC_bytes_allocd += my_bytes_allocd;
-        goto out;
-      }
-#ifdef PARALLEL_MARK
-      if (GC_parallel) {
+
         GC_acquire_mark_lock();
         --GC_fl_builder_count;
         if (GC_fl_builder_count == 0)
@@ -381,8 +371,18 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
         rlh = ok->ok_reclaim_list;
         if (NULL == rlh)
           break;
+        continue;
       }
 #endif
+
+      op = GC_reclaim_generic(hbp, hhdr, lb_adjusted, ok->ok_init, NULL,
+                              &my_bytes_allocd);
+      if (op != NULL) {
+        /* We also reclaimed memory, so we need to adjust that count. */
+        GC_bytes_found += (GC_signed_word)my_bytes_allocd;
+        GC_bytes_allocd += my_bytes_allocd;
+        goto out;
+      }
     }
   }
   /*
