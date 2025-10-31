@@ -4688,7 +4688,6 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
 {
     int i;
     static int reentry_count = 0;
-    GC_bool stop = FALSE;
     DCL_LOCK_STATE;
 
     /* FIXME: This should probably use a different lock, so that we     */
@@ -4702,7 +4701,11 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
 #   else
       GC_err_printf("\tCall chain at allocation:\n");
 #   endif
-    for (i = 0; i < NFRAMES && !stop; i++) {
+    for (i = 0; i < NFRAMES; i++) {
+#       ifdef CALLINFO_USE_ADDR2LINE
+          GC_bool stop = FALSE;
+#       endif
+
         if (info[i].ci_pc == 0) break;
 #       if NARGS > 0
         {
@@ -4725,9 +4728,6 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
             continue;
         }
         {
-#         ifdef LINUX
-            FILE *pipe;
-#         endif
           char buf[40];
           char *name;
 #         if defined(GC_HAVE_BUILTIN_BACKTRACE) \
@@ -4742,9 +4742,10 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
             sprintf(buf, "##PC##= 0x%lx", (unsigned long)info[i].ci_pc);
             name = buf;
           }
-#         if defined(LINUX) && !defined(SMALL_CONFIG)
+#         ifdef CALLINFO_USE_ADDR2LINE
             /* Try for a line number. */
             {
+                FILE *pipe;
 #               define EXE_SZ 100
                 static char exe_name[EXE_SZ];
 #               define CMD_SZ 200
@@ -4827,7 +4828,7 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
                 pclose(pipe);
                 out:;
             }
-#         endif /* LINUX */
+#         endif
           GC_err_printf("\t\t%s\n", name);
 #         if defined(GC_HAVE_BUILTIN_BACKTRACE) \
              && !defined(GC_BACKTRACE_SYMBOLS_BROKEN)
@@ -4835,6 +4836,10 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
               free(sym_name);   /* May call GC_[debug_]free; that's OK  */
 #         endif
         }
+#       ifdef CALLINFO_USE_ADDR2LINE
+          if (stop)
+            break;
+#       endif
     }
     LOCK();
       --reentry_count;
