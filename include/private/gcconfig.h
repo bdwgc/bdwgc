@@ -1487,7 +1487,7 @@ extern int _etext, _end;
 #    endif
 #    define MAP_FAILED ((void *)(~(GC_uintptr_t)0))
 #    define HEAP_START ((word)0x40000000)
-#  endif /* DGUX */
+#  endif
 #  ifdef LINUX
 /*
  * This encourages `mmap()` to give us low addresses, thus allowing the
@@ -1680,9 +1680,13 @@ extern char *_STACKTOP;
 #  define MACH_TYPE "LOONGARCH"
 #  define CPP_WORDSZ (__SIZEOF_SIZE_T__ * 8)
 #  ifdef LINUX
-#    pragma weak __data_start
+#    if defined(__GLIBC__)
+#      pragma weak __data_start
 extern int __data_start[];
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #endif /* LOONGARCH */
 
@@ -1702,9 +1706,13 @@ extern int __data_start[];
 #    else
 #      define CPP_WORDSZ 32
 #    endif
-#    pragma weak __data_start
+#    if defined(__GLIBC__)
+#      pragma weak __data_start
 extern int __data_start[];
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #    ifndef HBLKSIZE
 #      define HBLKSIZE 4096
 #    endif
@@ -1804,8 +1812,12 @@ extern char **environ;
 #    define HBLKSIZE 4096
 #  endif
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[];
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #endif /* NIOS2 */
 
@@ -1816,8 +1828,12 @@ extern int __data_start[];
 #    define HBLKSIZE 4096
 #  endif
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[];
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #endif /* OR1K */
 
@@ -2075,9 +2091,13 @@ extern int _etext[], _end[];
 #    endif
 #  endif
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[] __attribute__((__weak__));
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 extern int _end[] __attribute__((__weak__));
-#    define DATASTART ((ptr_t)__data_start)
 #    define DATAEND ((ptr_t)_end)
 #    define CACHE_LINE_SIZE 256
 #    define GETPAGESIZE() 4096
@@ -2098,15 +2118,15 @@ extern int _end[] __attribute__((__weak__));
 #    define HBLKSIZE 4096
 #  endif
 #  ifdef LINUX
-#    if defined(HOST_ANDROID)
-#      define SEARCH_FOR_DATA_START
-#    else
+#    if defined(__GLIBC__)
 extern int __data_start[] __attribute__((__weak__));
 #      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
 #    endif
 #  endif
 #  ifdef COSMO
-/* Empty. */
+/* Nothing specific. */
 #  endif
 #  ifdef DARWIN
 /* OS X, iOS, visionOS */
@@ -2350,7 +2370,7 @@ EXTERN_C_BEGIN
 #    endif
 #  endif
 #  ifdef COSMO
-/* Empty. */
+/* Nothing specific. */
 #  endif
 #  ifdef DARWIN
 #    define DARWIN_DONT_PARSE_STACK 1
@@ -2444,8 +2464,12 @@ LONG64 durango_get_stack_bottom(void);
 #  define CPP_WORDSZ 32
 #  define CACHE_LINE_SIZE 64
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[] __attribute__((__weak__));
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #endif /* ARC */
 
@@ -2467,8 +2491,12 @@ extern int __data_start[] __attribute__((__weak__));
 #  define PREFETCH(x) __insn_prefetch(x)
 #  define CACHE_LINE_SIZE 64
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[];
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #endif /* TILEPRO */
 
@@ -2481,8 +2509,12 @@ extern int __data_start[];
 #  define PREFETCH(x) __insn_prefetch_l1(x)
 #  define CACHE_LINE_SIZE 64
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[];
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #endif /* TILEGX */
 
@@ -2493,8 +2525,12 @@ extern int __data_start[];
 /* Nothing specific. */
 #  endif
 #  ifdef LINUX
+#    if defined(__GLIBC__)
 extern int __data_start[] __attribute__((__weak__));
-#    define DATASTART ((ptr_t)__data_start)
+#      define DATASTART ((ptr_t)__data_start)
+#    else
+#      define SEARCH_FOR_DATA_START
+#    endif
 #  endif
 #  ifdef NETBSD
 /* Nothing specific. */
