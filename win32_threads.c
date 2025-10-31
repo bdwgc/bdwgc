@@ -3257,6 +3257,7 @@ GC_INNER void GC_thr_init(void)
     GC_thread t;
     DCL_LOCK_STATE;
 
+    if (!EXPECT(GC_is_initialized, TRUE)) GC_init();
     GC_ASSERT(!GC_win32_dll_threads);
     t = GC_lookup_pthread(thread);
     result = pthread_detach(thread);

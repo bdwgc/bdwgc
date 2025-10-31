@@ -2016,6 +2016,13 @@ GC_INNER_PTHRSTART void GC_thread_exit_proc(void *arg)
     DCL_LOCK_STATE;
 
     INIT_REAL_SYMS();
+    if (!EXPECT(GC_is_initialized, TRUE)) {
+      /*
+       * The only case this seems to be needed is when the client calls
+       * pthread_detach(pthread_self()) before the collector initialization.
+       */
+      GC_init();
+    }
     LOCK();
     t = (GC_thread)COVERT_DATAFLOW(GC_lookup_thread(thread));
     UNLOCK();
