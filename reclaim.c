@@ -21,10 +21,6 @@
 #  include "gc/gc_disclaim.h"
 #endif
 
-#ifdef PARALLEL_MARK
-GC_INNER GC_signed_word GC_fl_builder_count = 0;
-#endif
-
 /*
  * We defer printing of leaked objects until we are done with the
  * collection cycle, since the routine for printing objects needs
@@ -867,7 +863,7 @@ GC_start_reclaim(GC_bool report_if_found)
   int kind;
 
   GC_ASSERT(I_HOLD_LOCK());
-#if defined(PARALLEL_MARK)
+#ifdef PARALLEL_MARK
   GC_ASSERT(0 == GC_fl_builder_count);
 #endif
   /* Reset in-use counters.  `GC_reclaim_block` recomputes them. */
@@ -923,7 +919,7 @@ GC_start_reclaim(GC_bool report_if_found)
    */
   GC_reclaim_unconditionally_marked();
 #endif
-#if defined(PARALLEL_MARK)
+#ifdef PARALLEL_MARK
   GC_ASSERT(0 == GC_fl_builder_count);
 #endif
 }
