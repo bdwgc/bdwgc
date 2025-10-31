@@ -2710,6 +2710,13 @@ GC_wrap_pthread_detach(pthread_t thread)
   GC_thread t;
 
   INIT_REAL_SYMS();
+  if (UNLIKELY(!GC_is_initialized)) {
+    /*
+     * The only case this seems to be needed is when the client calls
+     * `pthread_detach(pthread_self())` before the collector initialization.
+     */
+    GC_init();
+  }
   READER_LOCK();
   t = (GC_thread)COVERT_DATAFLOW_P(GC_lookup_by_pthread(thread));
   READER_UNLOCK();
