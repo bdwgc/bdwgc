@@ -2790,6 +2790,14 @@
 # define NEED_CALLINFO
 #endif
 
+#if defined(NEED_CALLINFO) && defined(LINUX) && !defined(SMALL_CONFIG) \
+    && !defined(CALLINFO_USE_ADDR2LINE) && !defined(REDIRECT_MALLOC)
+  /* Use addr2line utility when printing callers to get symbol line */
+  /* numbers.  Not supported in case of malloc redirection because  */
+  /* the current implementation uses popen() which may call malloc. */
+# define CALLINFO_USE_ADDR2LINE
+#endif
+
 #if defined(FREEBSD) && !defined(HAVE_DLADDR)
   /* TODO: Define for Darwin, Linux, Solaris. */
   /* TODO: Detect dladdr() presence by configure. */
