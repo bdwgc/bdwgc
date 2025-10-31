@@ -1031,6 +1031,8 @@ STATIC unsigned GC_helper_count = 0;
  */
 STATIC unsigned GC_active_count = 0;
 
+GC_INNER GC_signed_word GC_fl_builder_count = 0;
+
 #  ifdef LINT2
 #    define LOCAL_MARK_STACK_SIZE (HBLKSIZE / 8)
 #  else
