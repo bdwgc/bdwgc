@@ -5315,7 +5315,7 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
       GC_err_printf("\tCall chain at allocation:\n");
 #   endif
     for (i = 0; i < NFRAMES; i++) {
-#       if defined(LINUX) && !defined(SMALL_CONFIG)
+#       ifdef CALLINFO_USE_ADDR2LINE
           GC_bool stop = FALSE;
 #       endif
 
@@ -5358,7 +5358,7 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
             buf[sizeof(buf) - 1] = '\0';
             name = buf;
           }
-#         if defined(LINUX) && !defined(SMALL_CONFIG)
+#         ifdef CALLINFO_USE_ADDR2LINE
             /* Try for a line number. */
             do {
                 FILE *pipe;
@@ -5464,7 +5464,7 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
               free(sym_name);   /* May call GC_[debug_]free; that's OK  */
 #         endif
         }
-#       if defined(LINUX) && !defined(SMALL_CONFIG)
+#       ifdef CALLINFO_USE_ADDR2LINE
           if (stop)
             break;
 #       endif
