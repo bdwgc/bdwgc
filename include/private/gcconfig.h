@@ -1547,7 +1547,7 @@ EXTERN_C_BEGIN
 #       endif
 #       define MAP_FAILED (void *) ((word)-1)
 #       define HEAP_START (ptr_t)0x40000000
-#   endif /* DGUX */
+#   endif
 #   ifdef LINUX
 #       if !defined(REDIRECT_MALLOC)
 #           define MPROTECT_VDB
@@ -1765,9 +1765,13 @@ EXTERN_C_BEGIN
 # ifdef LOONGARCH
 #   define MACH_TYPE "LoongArch"
 #   ifdef LINUX
-#     pragma weak __data_start
-      extern int __data_start[];
-#     define DATASTART ((ptr_t)(__data_start))
+#     if defined(__GLIBC__)
+#       pragma weak __data_start
+        extern int __data_start[];
+#       define DATASTART ((ptr_t)(__data_start))
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #     define CPP_WORDSZ (__SIZEOF_SIZE_T__ * 8)
 #     define ALIGNMENT (CPP_WORDSZ/8)
 #   endif
@@ -1776,9 +1780,13 @@ EXTERN_C_BEGIN
 # ifdef MIPS
 #   define MACH_TYPE "MIPS"
 #   ifdef LINUX
-#     pragma weak __data_start
-      extern int __data_start[];
-#     define DATASTART ((ptr_t)(__data_start))
+#     if defined(__GLIBC__)
+#       pragma weak __data_start
+        extern int __data_start[];
+#       define DATASTART ((ptr_t)(__data_start))
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #     ifdef _MIPS_SZPTR
 #       define CPP_WORDSZ _MIPS_SZPTR
 #       define ALIGNMENT (_MIPS_SZPTR/8)
@@ -1886,8 +1894,12 @@ EXTERN_C_BEGIN
 #   define CPP_WORDSZ 32
 #   define MACH_TYPE "NIOS2"
 #   ifdef LINUX
-      extern int __data_start[];
-#     define DATASTART ((ptr_t)(__data_start))
+#     if defined(__GLIBC__)
+        extern int __data_start[];
+#       define DATASTART ((ptr_t)(__data_start))
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #     define ALIGNMENT 4
 #     ifndef HBLKSIZE
 #       define HBLKSIZE 4096
@@ -1899,8 +1911,12 @@ EXTERN_C_BEGIN
 #   define CPP_WORDSZ 32
 #   define MACH_TYPE "OR1K"
 #   ifdef LINUX
-      extern int __data_start[];
-#     define DATASTART ((ptr_t)(__data_start))
+#     if defined(__GLIBC__)
+        extern int __data_start[];
+#       define DATASTART ((ptr_t)(__data_start))
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #     define ALIGNMENT 4
 #     ifndef HBLKSIZE
 #       define HBLKSIZE 4096
@@ -2178,8 +2194,12 @@ EXTERN_C_BEGIN
 #     endif
 #   endif
 #   ifdef LINUX
+#     if defined(__GLIBC__)
         extern int __data_start[] __attribute__((__weak__));
 #       define DATASTART ((ptr_t)(__data_start))
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
         extern int _end[] __attribute__((__weak__));
 #       define DATAEND ((ptr_t)(_end))
 #       define CACHE_LINE_SIZE 256
@@ -2209,11 +2229,11 @@ EXTERN_C_BEGIN
 #     if !defined(REDIRECT_MALLOC)
 #       define MPROTECT_VDB
 #     endif
-#     if defined(HOST_ANDROID)
-#       define SEARCH_FOR_DATA_START
-#     else
+#     if defined(__GLIBC__)
         extern int __data_start[] __attribute__((__weak__));
 #       define DATASTART ((ptr_t)__data_start)
+#     else
+#       define SEARCH_FOR_DATA_START
 #     endif
 #   endif
 #   ifdef DARWIN
@@ -2547,8 +2567,12 @@ EXTERN_C_BEGIN
 #   define ALIGNMENT 4
 #   define CACHE_LINE_SIZE 64
 #   ifdef LINUX
-      extern int __data_start[] __attribute__((__weak__));
-#     define DATASTART ((ptr_t)__data_start)
+#     if defined(__GLIBC__)
+        extern int __data_start[] __attribute__((__weak__));
+#       define DATASTART ((ptr_t)__data_start)
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #   endif
 # endif /* ARC */
 
@@ -2575,8 +2599,12 @@ EXTERN_C_BEGIN
 #   define PREFETCH(x) __insn_prefetch(x)
 #   define CACHE_LINE_SIZE 64
 #   ifdef LINUX
-      extern int __data_start[];
-#     define DATASTART ((ptr_t)__data_start)
+#     if defined(__GLIBC__)
+        extern int __data_start[];
+#       define DATASTART ((ptr_t)__data_start)
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #   endif
 # endif /* TILEPRO */
 
@@ -2590,8 +2618,12 @@ EXTERN_C_BEGIN
 #   define PREFETCH(x) __insn_prefetch_l1(x)
 #   define CACHE_LINE_SIZE 64
 #   ifdef LINUX
-      extern int __data_start[];
-#     define DATASTART ((ptr_t)__data_start)
+#     if defined(__GLIBC__)
+        extern int __data_start[];
+#       define DATASTART ((ptr_t)__data_start)
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #   endif
 # endif /* TILEGX */
 
@@ -2603,8 +2635,12 @@ EXTERN_C_BEGIN
       /* Nothing specific. */
 #   endif
 #   ifdef LINUX
-      extern int __data_start[] __attribute__((__weak__));
-#     define DATASTART ((ptr_t)__data_start)
+#     if defined(__GLIBC__)
+        extern int __data_start[] __attribute__((__weak__));
+#       define DATASTART ((ptr_t)__data_start)
+#     else
+#       define SEARCH_FOR_DATA_START
+#     endif
 #   endif
 #   ifdef NETBSD
       /* Nothing specific. */
