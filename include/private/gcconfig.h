@@ -2978,6 +2978,14 @@
 # define NEED_CALLINFO
 #endif
 
+#if defined(NEED_CALLINFO) && defined(LINUX) && !defined(SMALL_CONFIG) \
+    && !defined(CALLINFO_USE_ADDR2LINE) && !defined(REDIRECT_MALLOC)
+  /* Use addr2line utility when printing callers to get symbol line */
+  /* numbers.  Not supported in case of malloc redirection because  */
+  /* the current implementation uses popen() which may call malloc. */
+# define CALLINFO_USE_ADDR2LINE
+#endif
+
 #if (defined(FREEBSD) || (defined(DARWIN) && !defined(_POSIX_C_SOURCE)) \
         || (defined(SOLARIS) && (!defined(_XOPEN_SOURCE) \
                                  || defined(__EXTENSIONS__))) \
