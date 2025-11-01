@@ -13,13 +13,13 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ macos-13, ubuntu-latest, windows-latest ]
+        os: [ macos-15-intel, ubuntu-latest, windows-latest ]
         c_compiler: [ cl, clang, gcc ]
         build_type: [ Debug, Release ]
         exclude:
-        - os: macos-13
+        - os: macos-15-intel
           c_compiler: cl
-        - os: macos-13
+        - os: macos-15-intel
           c_compiler: gcc
         - os: ubuntu-latest
           c_compiler: cl
