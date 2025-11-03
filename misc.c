@@ -589,7 +589,15 @@ fill_prof_stats(struct GC_prof_stats_s *pstats)
   pstats->non_gc_bytes = GC_non_gc_bytes;
   pstats->gc_no = GC_gc_no; /*< could be -1 */
 #  ifdef PARALLEL_MARK
-  pstats->markers_m1 = (word)((GC_signed_word)GC_markers_m1);
+  {
+    GC_signed_word markers_m1 = (GC_signed_word)GC_markers_m1;
+
+#    ifdef LINT2
+    if (markers_m1 < 0)
+      ABORT("GC_markers_m1 is negative");
+#    endif
+    pstats->markers_m1 = (word)markers_m1;
+  }
 #  else
   /* A single marker. */
   pstats->markers_m1 = 0;
