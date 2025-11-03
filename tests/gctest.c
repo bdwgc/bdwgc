@@ -2314,7 +2314,7 @@ static void
 enable_incremental_mode(void)
 {
 #ifndef NO_INCREMENTAL
-  unsigned vdbs = GC_get_supported_vdbs();
+  unsigned vdbs = (unsigned)COVERT_DATAFLOW(GC_get_supported_vdbs());
 #endif
 
 #if !defined(CPPCHECK)
