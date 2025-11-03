@@ -1290,28 +1290,27 @@ GC_enqueue_all_finalizers(void)
   GC_fo_entries = 0;
 }
 
+static int invoke_finalizers_internal(GC_bool all);
+
 GC_API void GC_CALL
 GC_finalize_all(void)
 {
-  LOCK();
-  while (GC_fo_entries > 0) {
-    unsigned saved_interrupt_finalizers;
-
+  for (;;) {
+    LOCK();
+    if (0 == GC_fo_entries) {
+      UNLOCK();
+      break;
+    }
     GC_enqueue_all_finalizers();
-    /* Reset temporarily. */
-    saved_interrupt_finalizers = GC_interrupt_finalizers;
-    GC_interrupt_finalizers = 0;
     UNLOCK();
-    GC_invoke_finalizers();
+
     /*
      * Running the finalizers in this thread is arguably not a good idea
      * when we should be notifying another thread to run them.
      * But otherwise we do not have a great way to wait for them to run.
      */
-    LOCK();
-    GC_interrupt_finalizers = saved_interrupt_finalizers;
+    (void)invoke_finalizers_internal(TRUE);
   }
-  UNLOCK();
 }
 
 #  endif /* !JAVA_FINALIZATION_NOT_NEEDED */
@@ -1348,19 +1347,25 @@ GC_should_invoke_finalizers(void)
 GC_API int GC_CALL
 GC_invoke_finalizers(void)
 {
+  GC_ASSERT(I_DONT_HOLD_LOCK());
+  return invoke_finalizers_internal(FALSE);
+}
+
+static int
+invoke_finalizers_internal(GC_bool all)
+{
   int count = 0;
   word bytes_freed_before = 0; /*< initialized to prevent warning */
 
-  GC_ASSERT(I_DONT_HOLD_LOCK());
   while (GC_should_invoke_finalizers()) {
     struct finalizable_object *curr_fo;
     ptr_t real_ptr;
 
     LOCK();
-    if (count == 0) {
+    if (0 == count) {
       /* Note: we hold the allocator lock here. */
       bytes_freed_before = GC_bytes_freed;
-    } else if (UNLIKELY(GC_interrupt_finalizers != 0)
+    } else if (UNLIKELY(GC_interrupt_finalizers != 0) && !all
                && (unsigned)count >= GC_interrupt_finalizers) {
       UNLOCK();
       break;
@@ -1478,7 +1483,7 @@ GC_notify_or_invoke_finalizers(void)
     UNLOCK();
     /* Skip `GC_invoke_finalizers()` if nested. */
     if (pnested != NULL) {
-      (void)GC_invoke_finalizers();
+      (void)invoke_finalizers_internal(FALSE);
       /* Reset since no more finalizers or interrupted. */
       *pnested = 0;
 #  ifndef THREADS
