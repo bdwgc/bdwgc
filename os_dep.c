@@ -4738,7 +4738,8 @@ STATIC void *GC_mprotect_thread(void *arg)
   /* Even if this doesn't get updated property, it isn't really a problem. */
   STATIC int GC_sigbus_count = 0;
 
-  STATIC void GC_darwin_sigbus(int num, siginfo_t *sip, void *context)
+  STATIC void GC_darwin_sigbus(int num, siginfo_t *sip GC_ATTR_UNUSED,
+                               void *context GC_ATTR_UNUSED)
   {
     if (num != SIGBUS)
       ABORT("Got a non-sigbus signal in the sigbus handler");
