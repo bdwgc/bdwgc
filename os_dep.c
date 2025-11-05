@@ -5124,6 +5124,8 @@ STATIC int GC_sigbus_count = 0;
 STATIC void
 GC_darwin_sigbus(int num, siginfo_t *sip, void *context)
 {
+  UNUSED_ARG(sip);
+  UNUSED_ARG(context);
   if (num != SIGBUS)
     ABORT("Got a non-sigbus signal in the sigbus handler");
 
