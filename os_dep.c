@@ -5049,14 +5049,11 @@ catch_exception_raise(mach_port_t exception_port GC_ATTR_UNUSED,
       word index = PHT_HASH(h+i);
       async_set_pht_entry_from_index(GC_dirty_pages, index);
     }
-  } else if (GC_mprotect_state == GC_MP_DISCARDING) {
+  } else {
     /* Lie to the thread for now. No sense UNPROTECT()ing the memory
        when we're just going to PROTECT() it again later. The thread
        will just fault again once it resumes */
-  } else {
-    /* Shouldn't happen, i don't think */
-    GC_err_printf("KERN_PROTECTION_FAILURE while world is stopped\n");
-    return FWD();
+    /* Could happen (but rarely) even if the state is GC_MP_STOPPED. */
   }
   return KERN_SUCCESS;
 }
