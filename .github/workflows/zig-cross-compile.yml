@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: [ "0.15.1" ]
+        zig_version: [ "0.15.2" ]
         # Some of the triples are commented out just to speedup this workflow.
         ttriple: [
           aarch64-linux-gnu,
