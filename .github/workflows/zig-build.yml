@@ -30,9 +30,6 @@ jobs:
         linkage: [ static, dynamic ]
         build_cord: [ false, true ]
         exclude:
-        - build_cord: true # FIXME: cordtest exited with error code 9
-          linkage: dynamic
-          ttriple: native-native-msvc
         - os: macos-latest
           ttriple: native-native-msvc
         - os: ubuntu-latest
