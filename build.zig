@@ -395,11 +395,7 @@ pub fn build(b: *std.Build) void {
 
     if (linkage == .dynamic) {
         flags.append(b.allocator, "-D GC_DLL") catch unreachable;
-        if (t.abi == .msvc) {
-            // TODO: depend on `user32.lib` file instead
-            flags.append(b.allocator,
-                         "-D DONT_USE_USER32_DLL") catch unreachable;
-        } else {
+        if (t.abi != .msvc) {
             // `zig cc` supports these flags.
             flags.append(b.allocator,
                          "-D GC_VISIBILITY_HIDDEN_SET") catch unreachable;
@@ -514,6 +510,9 @@ pub fn build(b: *std.Build) void {
     });
     gc.addIncludePath(b.path("include"));
     gc.linkLibC();
+    if (linkage == .dynamic and t.abi == .msvc) {
+      gc.linkSystemLibrary("user32");
+    }
 
     var gccpp: *std.Build.Step.Compile = undefined;
     var gctba: *std.Build.Step.Compile = undefined;
