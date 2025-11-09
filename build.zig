@@ -636,7 +636,16 @@ pub fn build(b: *std.Build) void {
     // only if `test` step is requested.
     const test_step = b.step("test", "Run tests");
     addTest(b, gc, test_step, flags, "gctest", "tests/gctest.c");
-    if (build_cord) {
+    if (build_cord
+        and !(linkage == .dynamic and t.abi == .msvc)) {
+        // On Windows, the client code which uses `cord.dll` file
+        // (like `cordtest.exe`) should not link the static C library
+        // (`libcmt.lib` file), otherwise `FILE`-related functions
+        // might not work (because own set of opened `FILE` instances
+        // is maintained by each copy of the C library thus making
+        // impossible to pass `FILE` pointer from `.exe` to `.dll` code).
+        // TODO: as of zig 0.15.2, it is not possible to force linking
+        // `msvcrt.lib` instead of `libcmt.lib` file.
         addTestExt(b, gc, cord, test_step, flags,
                    "cordtest", "cord/tests/cordtest.c");
         // TODO: add `de` test (Windows only)
