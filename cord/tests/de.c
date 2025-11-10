@@ -687,9 +687,9 @@ main(int argc, char **argv)
 #  endif
 
   if (argc != 2) {
-    fprintf(stderr, "Usage: %s file\n", argv[0]);
+    fprintf(stderr, "Usage: %s <file_name>\n", argv[0]);
     fprintf(stderr, "Cursor keys: ^B(left) ^F(right) ^P(up) ^N(down)\n");
-    fprintf(stderr, "Undo: ^U    Write to <file>.new: ^W\n");
+    fprintf(stderr, "Undo: ^U    Write to <file_name>.new: ^W\n");
     fprintf(stderr, "Quit: ^D    Repeat count: ^R[n]\n");
     fprintf(stderr, "Top: ^T     Locate (search, find): ^L text ^L\n");
     exit(1);
