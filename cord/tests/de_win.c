@@ -289,7 +289,7 @@ WndProc(HWND hwnd_arg, UINT message, WPARAM wParam, LPARAM lParam)
     case IDM_HELPCONTENTS:
       de_error("Cursor keys: ^B(left) ^F(right) ^P(up) ^N(down)\n"
                "Undo: ^U    Write: ^W   Quit:^D  Repeat count: ^R[n]\n"
-               "Top: ^T   Locate (search, find): ^L text ^L\n");
+               "Top: ^T     Locate (search, find): ^L text ^L");
       return 0;
     }
     break;
