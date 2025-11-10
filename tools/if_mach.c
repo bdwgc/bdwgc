@@ -22,8 +22,14 @@
 int
 main(int argc, char **argv)
 {
-  if (argc < 4)
-    goto Usage;
+  if (argc < 4) {
+    fprintf(stderr,
+            "Usage: %s <mach_type> <os_type> <command> [<args>]\n"
+            "Current mach_type = %s, os_type = %s\n",
+            argv[0], MACH_TYPE, OS_TYPE);
+    return 1;
+  }
+
   if (strcmp(MACH_TYPE, argv[1]) != 0)
     return 0;
   if (strlen(OS_TYPE) > 0 && strlen(argv[2]) > 0
@@ -34,10 +40,4 @@ main(int argc, char **argv)
   execvp(TRUSTED_STRING(argv[3]), (EXECV_ARGV_T)(argv + 3));
   perror("Could not execute");
   return 3;
-
-Usage:
-  fprintf(stderr, "Usage: %s mach_type os_type command\n", argv[0]);
-  fprintf(stderr, "Currently mach_type = %s, os_type = %s\n", MACH_TYPE,
-          OS_TYPE);
-  return 1;
 }

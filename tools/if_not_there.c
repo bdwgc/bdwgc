@@ -19,8 +19,10 @@ main(int argc, char **argv)
 #endif
   const char *fname;
 
-  if (argc != 2)
-    goto Usage;
+  if (argc != 2) {
+    fprintf(stderr, "Usage: %s <file_name>\n", argv[0]);
+    return 1;
+  }
 
   fname = TRUSTED_STRING(argv[1]);
   f = fopen(fname, "rb");
@@ -37,8 +39,4 @@ main(int argc, char **argv)
 #endif
   /* The file is missing. */
   return 2;
-
-Usage:
-  fprintf(stderr, "Usage: %s file_name\n", argv[0]);
-  return 1;
 }
