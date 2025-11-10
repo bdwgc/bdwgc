@@ -61,10 +61,10 @@ static const struct GC_finalizer_closure fclos
     = { testobj_finalize, &free_count };
 
 static testobj_t
-testobj_new(int model)
+testobj_new(int type)
 {
   testobj_t obj;
-  switch (model) {
+  switch (type) {
 #ifndef GC_NO_FINALIZATION
   case 0:
     obj = (struct testobj_s *)GC_malloc(sizeof(struct testobj_s));
@@ -91,38 +91,38 @@ testobj_new(int model)
 #define ALLOC_CNT (2 * 1024 * 1024)
 #define KEEP_CNT (32 * 1024)
 
-static char const *model_str[3]
+static char const *type_str[3]
     = { "regular finalization", "finalize on reclaim", "no finalization" };
 
 int
 main(int argc, const char *argv[])
 {
   int i;
-  int model, model_min, model_max;
+  int type, type_min, type_max;
   testobj_t *keep_arr;
 
   GC_INIT();
   GC_init_finalized_malloc();
   if (argc == 2 && strcmp(argv[1], "--help") == 0) {
     fprintf(stderr,
-            "Usage: %s [FINALIZATION_MODEL]\n"
-            "\t0 -- original finalization\n"
-            "\t1 -- finalization on reclaim\n"
-            "\t2 -- no finalization\n",
+            "Usage: %s [<finalization_type>]\n"
+            "\t0 - original\n"
+            "\t1 - on reclaim\n"
+            "\t2 - none\n",
             argv[0]);
     return 1;
   }
   if (argc == 2) {
-    model_min = model_max = (int)COVERT_DATAFLOW(atoi(argv[1]));
-    if (model_min < 0 || model_max > 2)
+    type_min = type_max = (int)COVERT_DATAFLOW(atoi(argv[1]));
+    if (type_min < 0 || type_max > 2)
       exit(2);
   } else {
 #ifndef GC_NO_FINALIZATION
-    model_min = 0;
+    type_min = 0;
 #else
-    model_min = 1;
+    type_min = 1;
 #endif
-    model_max = 2;
+    type_max = 2;
   }
   if (GC_get_find_leak())
     printf("This test program is not designed for leak detection mode\n");
@@ -130,7 +130,7 @@ main(int argc, const char *argv[])
   keep_arr = (testobj_t *)GC_malloc(sizeof(void *) * KEEP_CNT);
   CHECK_OUT_OF_MEMORY(keep_arr);
   printf("\t\t\tfin. ratio       time/s    time/fin.\n");
-  for (model = model_min; model <= model_max; ++model) {
+  for (type = type_min; type <= type_max; ++type) {
     double t = 0.0;
 #ifndef NO_CLOCK
     CLOCK_TYPE tI, tF;
@@ -140,7 +140,7 @@ main(int argc, const char *argv[])
     free_count = 0;
     for (i = 0; i < ALLOC_CNT; ++i) {
       int k = rand() % KEEP_CNT;
-      keep_arr[k] = testobj_new(model);
+      keep_arr[k] = testobj_new(type);
     }
     GC_gcollect();
 #ifndef NO_CLOCK
@@ -154,13 +154,13 @@ main(int argc, const char *argv[])
 #else
 #  define PRINTF_SPEC_12g "%12g"
 #endif
-    if (model < 2 && free_count > 0) {
+    if (type < 2 && free_count > 0) {
       printf("%20s: %12.4f " PRINTF_SPEC_12g " " PRINTF_SPEC_12g "\n",
-             model_str[model], free_count / (double)ALLOC_CNT, t,
+             type_str[type], free_count / (double)ALLOC_CNT, t,
              t / free_count);
     } else {
-      printf("%20s: %12.4f " PRINTF_SPEC_12g " %12s\n", model_str[model], 0.0,
-             t, "N/A");
+      printf("%20s: %12.4f " PRINTF_SPEC_12g " %12s\n", type_str[type], 0.0, t,
+             "N/A");
     }
   }
   return 0;
