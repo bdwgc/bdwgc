@@ -686,14 +686,15 @@ main(int argc, char **argv)
   GC_enable_incremental();
 #  endif
 
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s <file_name>\n", argv[0]);
-    fprintf(stderr, "Cursor keys: ^B(left) ^F(right) ^P(up) ^N(down)\n");
-    fprintf(stderr, "Undo: ^U    Write to <file_name>.new: ^W\n");
-    fprintf(stderr, "Quit: ^D    Repeat count: ^R[n]\n");
-    fprintf(stderr, "Top: ^T     Locate (search, find): ^L text ^L\n");
-    exit(1);
+  if (argc < 2) {
+    fprintf(stderr, "File name argument required\n");
+
+    printf("Usage: %s <file_name>\n"
+           "%s\n",
+           argv[0], HELP_CONTENT_STR);
+    return 0;
   }
+
   arg_file_name = argv[1];
   buf = GC_MALLOC_ATOMIC(8192);
   if (NULL == buf)

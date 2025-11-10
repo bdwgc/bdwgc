@@ -103,16 +103,16 @@ main(int argc, const char *argv[])
 
   GC_INIT();
   GC_init_finalized_malloc();
-  if (argc == 2 && strcmp(argv[1], "--help") == 0) {
-    fprintf(stderr,
-            "Usage: %s [<finalization_type>]\n"
-            "\t0 - original\n"
-            "\t1 - on reclaim\n"
-            "\t2 - none\n",
-            argv[0]);
-    return 1;
-  }
   if (argc == 2) {
+    if (strcmp(argv[1], "--help") == 0) {
+      printf("Usage: %s [<finalization_type>]\n"
+             "\t0 - original\n"
+             "\t1 - on reclaim\n"
+             "\t2 - none\n",
+             argv[0]);
+      return 0;
+    }
+
     type_min = type_max = (int)COVERT_DATAFLOW(atoi(argv[1]));
     if (type_min < 0 || type_max > 2)
       exit(2);
