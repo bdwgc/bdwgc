@@ -367,7 +367,7 @@ main(int argc, const char *argv[])
   GC_PTR_STORE_AND_DIRTY(xptr, x);
   x = 0;
   if (argc != 2 || (n = atoi(argv[1])) <= 0) {
-    GC_printf("usage: cpptest <number-of-iterations>\n"
+    GC_printf("Usage: cpptest <number_of_iterations>\n"
               "Assuming %d iterations\n",
               N_TESTS);
     n = N_TESTS;
