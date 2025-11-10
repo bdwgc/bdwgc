@@ -70,7 +70,7 @@ void move_cursor(int column, int line);
 /* Invalidate given row (`line`) on the screen. */
 void invalidate_line(int line);
 
-/* Display error message. */
+/* Display error message.  The trailing "\n" is not needed. */
 void de_error(const char *s);
 
 #endif /* DE_WIN_H */

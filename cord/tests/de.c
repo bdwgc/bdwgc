@@ -50,10 +50,10 @@
 #else
 #  include <curses.h>
 #  include <unistd.h> /*< for `sleep` */
-#  define de_error(s)     \
-    {                     \
-      fprintf(stderr, s); \
-      sleep(2);           \
+#  define de_error(s)             \
+    {                             \
+      fprintf(stderr, "%s\n", s); \
+      sleep(2);                   \
     }
 #endif
 
@@ -609,7 +609,7 @@ do_command(int c)
 
         if ((out = fopen(CORD_to_const_char_star(name), "wb")) == NULL
             || CORD_put(current, out) == EOF) {
-          de_error("Write failed\n");
+          de_error("Write failed");
           need_redisplay = ALL;
         } else {
           fclose(out);
