@@ -83,7 +83,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
 
     if (RegisterClass(&wndclass) == 0) {
       de_error("RegisterClass error");
-      return 0;
+      return 1;
     }
   }
 
@@ -108,7 +108,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
       hInstance, NULL /* `lpParam` */);
   if (NULL == hwnd) {
     de_error("CreateWindow error");
-    return 0;
+    return 1;
   }
 
   ShowWindow(hwnd, nCmdShow);
