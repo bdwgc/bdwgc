@@ -32,7 +32,8 @@ main(int argc, char **argv)
   fprintf(stderr, "^^^^Starting command^^^^\n");
   fflush(stdout);
   execvp(TRUSTED_STRING(argv[3]), (EXECV_ARGV_T)(argv + 3));
-  perror("Couldn't execute");
+  perror("Could not execute");
+  return 3;
 
 Usage:
   fprintf(stderr, "Usage: %s mach_type os_type command\n", argv[0]);
