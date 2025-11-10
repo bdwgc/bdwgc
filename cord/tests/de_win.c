@@ -287,9 +287,8 @@ WndProc(HWND hwnd_arg, UINT message, WPARAM wParam, LPARAM lParam)
       }
       return 0;
     case IDM_HELPCONTENTS:
-      de_error("Cursor keys: ^B(left) ^F(right) ^P(up) ^N(down)\n"
-               "Undo: ^U    Write: ^W   Quit:^D  Repeat count: ^R[n]\n"
-               "Top: ^T     Locate (search, find): ^L text ^L");
+      /* Not an error, just show a message box. */
+      de_error(HELP_CONTENT_STR);
       return 0;
     }
     break;

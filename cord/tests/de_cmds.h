@@ -27,6 +27,12 @@
 #define LOCATE 12 /*< ^L */
 #define TOP 20    /*< ^T */
 
+#define HELP_CONTENT_STR                              \
+  "Cursor keys: ^B(left) ^F(right) ^P(up) ^N(down)\n" \
+  "Undo: ^U    Write to <file_name>.new: ^W\n"        \
+  "Quit: ^D    Repeat count: ^R[n]\n"                 \
+  "Top: ^T     Locate (search, find): ^L text ^L"
+
 /*
  * Execute an editor command.  The argument may be an integer greater
  * 255 denoting a windows command, one of the control characters, or
