@@ -654,7 +654,11 @@ pub fn build(b: *std.Build) void {
     addTest(b, gc, test_step, flags, "middletest", "tests/middle.c");
     addTest(b, gc, test_step, flags, "realloctest", "tests/realloc.c");
     addTest(b, gc, test_step, flags, "smashtest", "tests/smash.c");
-    // TODO: add `staticroots` test
+    // TODO: build `staticrootstest` with `-D STATICROOTSLIB2`.
+    addTestExt(b, gc, test_step, flags, "staticrootstest",
+               "tests/staticroots.c", .{
+                   .filename2 = "tests/staticroots_lib.c",
+               });
     if (enable_gc_debug) {
         addTest(b, gc, test_step, flags, "tracetest", "tests/trace.c");
     }
@@ -710,6 +714,7 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
               flags: std.ArrayListUnmanaged([]const u8),
               testname: []const u8, filename: []const u8,
               ext_args: struct {
+                  filename2: ?[]const u8 = null,
                   lib2: ?*std.Build.Step.Compile = null,
               }) void {
     const test_exe = b.addExecutable(.{
@@ -723,6 +728,12 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
         .file = b.path(filename),
         .flags = flags.items,
     });
+    if (ext_args.filename2 != null) {
+        test_exe.addCSourceFile(.{
+            .file = b.path(ext_args.filename2.?),
+            .flags = flags.items,
+        });
+    }
     test_exe.addIncludePath(b.path("include"));
     test_exe.linkLibrary(gc);
     if (ext_args.lib2 != null) {
