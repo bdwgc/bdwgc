@@ -36,7 +36,7 @@ comptime {
     if (builtin.zig_version.order(required_ver) == .lt) {
         @compileError(std.fmt.comptimePrint(
             "Zig version {} does not meet the build requirement of {}",
-            .{ builtin.zig_version, required_ver },
+            .{ builtin.zig_version, required_ver, }
         ));
     }
 }
@@ -565,7 +565,7 @@ pub fn build(b: *std.Build) void {
             .root_module = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
-            })
+            }),
         });
         cord.addCSourceFiles(.{
             .files = &.{
@@ -645,8 +645,8 @@ pub fn build(b: *std.Build) void {
         // impossible to pass `FILE` pointer from `.exe` to `.dll` code).
         // TODO: as of zig 0.15.2, it is not possible to force linking
         // `msvcrt.lib` instead of `libcmt.lib` file.
-        addTestExt(b, gc, cord, test_step, flags,
-                   "cordtest", "cord/tests/cordtest.c");
+        addTestExt(b, gc, test_step, flags,
+                   "cordtest", "cord/tests/cordtest.c", .{ .lib2 = cord, });
         // TODO: add `de` test (Windows only)
     }
     addTest(b, gc, test_step, flags, "hugetest", "tests/huge.c");
@@ -672,10 +672,11 @@ pub fn build(b: *std.Build) void {
         }
     }
     if (enable_cplusplus) {
-        addTestExt(b, gc, gccpp, test_step, flags, "cpptest", "tests/cpp.cc");
+        addTestExt(b, gc, test_step, flags, "cpptest", "tests/cpp.cc",
+                   .{ .lib2 = gccpp, });
         if (enable_throw_bad_alloc_library) {
-            addTestExt(b, gc, gctba, test_step, flags,
-                       "treetest", "tests/tree.cc");
+            addTestExt(b, gc, test_step, flags, "treetest", "tests/tree.cc",
+                       .{ .lib2 = gctba, });
         }
     }
     if (enable_disclaim) {
@@ -701,28 +702,31 @@ fn addTest(b: *std.Build, gc: *std.Build.Step.Compile,
            test_step: *std.Build.Step,
            flags: std.ArrayListUnmanaged([]const u8), testname: []const u8,
            filename: []const u8) void {
-    addTestExt(b, gc, null, test_step, flags, testname, filename);
+    addTestExt(b, gc, test_step, flags, testname, filename, .{});
 }
 
 fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
-              lib2: ?*std.Build.Step.Compile, test_step: *std.Build.Step,
-              flags: std.ArrayListUnmanaged([]const u8), testname: []const u8,
-              filename: []const u8) void {
+              test_step: *std.Build.Step,
+              flags: std.ArrayListUnmanaged([]const u8),
+              testname: []const u8, filename: []const u8,
+              ext_args: struct {
+                  lib2: ?*std.Build.Step.Compile = null,
+              }) void {
     const test_exe = b.addExecutable(.{
         .name = testname,
         .root_module = b.createModule(.{
             .optimize = gc.root_module.optimize.?,
-            .target = gc.root_module.resolved_target.?
-        })
+            .target = gc.root_module.resolved_target.?,
+        }),
     });
     test_exe.addCSourceFile(.{
         .file = b.path(filename),
-        .flags = flags.items
+        .flags = flags.items,
     });
     test_exe.addIncludePath(b.path("include"));
     test_exe.linkLibrary(gc);
-    if (lib2 != null) {
-        test_exe.linkLibrary(lib2.?);
+    if (ext_args.lib2 != null) {
+        test_exe.linkLibrary(ext_args.lib2.?);
     }
     test_exe.linkLibC();
     const run_test_exe = b.addRunArtifact(test_exe);
@@ -731,6 +735,6 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
 
 fn installHeader(b: *std.Build, lib: *std.Build.Step.Compile,
                  hfile: []const u8) void {
-   const src_path = b.pathJoin(&.{ "include", hfile });
+   const src_path = b.pathJoin(&.{ "include", hfile, });
    lib.installHeader(b.path(src_path), hfile);
 }
