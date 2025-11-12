@@ -44,4 +44,7 @@ void do_command(int);
 /* OS-independent initialization. */
 void generic_init(void);
 
+/* Check whether the program is running in the non-interactive mode. */
+int is_prompt_disabled(void);
+
 #endif /* DE_CMDS_H */
