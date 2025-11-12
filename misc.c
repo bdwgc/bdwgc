@@ -2211,7 +2211,9 @@ GC_default_on_abort(const char *msg)
 
   if (msg != NULL) {
 #  ifdef MSGBOX_ON_ERROR
-    GC_win32_MessageBoxA(msg, "Fatal error in GC", MB_ICONERROR | MB_OK);
+    if (NULL == GETENV("GC_PROMPT_DISABLED")) {
+      GC_win32_MessageBoxA(msg, "Fatal error in GC", MB_ICONERROR | MB_OK);
+    }
     /* Also duplicate `msg` to the collector log file. */
 #  endif
 

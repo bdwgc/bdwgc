@@ -17,6 +17,10 @@ file would be too large.  On some platforms, this also causes `SIGSEGV` to be
 caught and result in an infinite loop in a handler, allowing similar debugging
 techniques.
 
+`GC_PROMPT_DISABLED` - The client code is running in the non-interactive mode.
+If set, any non-interactive action (like showing a GUI dialog box on error)
+will be avoided in the collector.
+
 `GC_PRINT_STATS` - Turns on the collector logging.  Has no effect if the
 collector is built with `SMALL_CONFIG` macro defined.
 

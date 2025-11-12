@@ -28,7 +28,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h> /*< for `exit` */
+#include <stdlib.h> /*< for `getenv`, `exit` */
 
 #include "gc.h"
 #include "gc/cord.h"
@@ -671,11 +671,22 @@ generic_init(void)
   fix_cursor();
 }
 
+int
+is_prompt_disabled(void)
+{
+#if defined(NO_GETENV) && !defined(CPPCHECK)
+  return 0;
+#else
+  const char *value = getenv("GC_PROMPT_DISABLED");
+
+  return value != NULL && *value != '\0';
+#endif
+}
+
 #ifndef WIN32
 int
 main(int argc, char **argv)
 {
-  int c;
   void *buf;
 
   /* The application is not for testing leak detection mode. */
@@ -705,10 +716,14 @@ main(int argc, char **argv)
   nonl();
   cbreak();
   generic_init();
-  while ((c = getchar()) != QUIT) {
-    if (c == EOF)
-      break;
-    do_command(c);
+  if (!is_prompt_disabled()) {
+    int c;
+
+    while ((c = getchar()) != QUIT) {
+      if (c == EOF)
+        break;
+      do_command(c);
+    }
   }
   move(LINES - 1, 0);
   clrtoeol();

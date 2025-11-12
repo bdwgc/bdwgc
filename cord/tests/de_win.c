@@ -44,6 +44,11 @@ static HWND hwnd;
 void
 de_error(const char *s)
 {
+  if (is_prompt_disabled()) {
+    fprintf(stderr, "%s\n", s);
+    return;
+  }
+
   (void)MessageBoxA(hwnd, s, "Demonstration Editor",
                     MB_ICONINFORMATION | MB_OK);
   InvalidateRect(hwnd, NULL, TRUE);
@@ -112,9 +117,12 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
   }
 
   ShowWindow(hwnd, nCmdShow);
+  if (is_prompt_disabled()) {
+    /* Exit not waiting for the user input. */
+    return 0;
+  }
 
   hAccel = LoadAccelerators(hInstance, szAppName);
-
   while (GetMessage(&msg, NULL, 0, 0)) {
     if (!TranslateAccelerator(hwnd, hAccel, &msg)) {
       TranslateMessage(&msg);
