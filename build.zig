@@ -647,7 +647,15 @@ pub fn build(b: *std.Build) void {
         // `msvcrt.lib` instead of `libcmt.lib` file.
         addTestExt(b, gc, test_step, flags,
                    "cordtest", "cord/tests/cordtest.c", .{ .lib2 = cord, });
-        // TODO: add `de` test (Windows only)
+        if (t.os.tag == .windows) {
+            addTestExt(b, gc, test_step, flags, "de", "cord/tests/de.c", .{
+                           .filename2 = "cord/tests/de_win.c",
+                           .rc_filename = "cord/tests/de_win.rc",
+                           .lib2 = cord,
+                           .sysLibName = "gdi32",
+                           .sysLibName2 = "user32",
+                       });
+        }
     }
     addTest(b, gc, test_step, flags, "hugetest", "tests/huge.c");
     addTest(b, gc, test_step, flags, "leaktest", "tests/leak.c");
@@ -715,7 +723,10 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
               testname: []const u8, filename: []const u8,
               ext_args: struct {
                   filename2: ?[]const u8 = null,
+                  rc_filename: ?[]const u8 = null,
                   lib2: ?*std.Build.Step.Compile = null,
+                  sysLibName: ?[]const u8 = null,
+                  sysLibName2: ?[]const u8 = null,
               }) void {
     const test_exe = b.addExecutable(.{
         .name = testname,
@@ -734,12 +745,22 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
             .flags = flags.items,
         });
     }
+    if (ext_args.rc_filename != null) {
+        test_exe.addWin32ResourceFile(
+            .{ .file = b.path(ext_args.rc_filename.?), });
+    }
     test_exe.addIncludePath(b.path("include"));
     test_exe.linkLibrary(gc);
     if (ext_args.lib2 != null) {
         test_exe.linkLibrary(ext_args.lib2.?);
     }
     test_exe.linkLibC();
+    if (ext_args.sysLibName != null) {
+        test_exe.linkSystemLibrary(ext_args.sysLibName.?);
+    }
+    if (ext_args.sysLibName2 != null) {
+        test_exe.linkSystemLibrary(ext_args.sysLibName2.?);
+    }
     const run_test_exe = b.addRunArtifact(test_exe);
     run_test_exe.setEnvironmentVariable("GC_PROMPT_DISABLED", "1");
     test_step.dependOn(&run_test_exe.step);
