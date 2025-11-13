@@ -22,7 +22,7 @@ gc.obj: extra\gc.c
 .cpp.obj:
 	$(CC) -c $(CFLAGS) -Aa $*
 
-check: gctest.exe cpptest.exe treetest.exe cordtest.exe
+check: gctest.exe cpptest.exe treetest.exe cordtest.exe de.exe
 	gctest.exe
 	cpptest.exe
 	treetest.exe
@@ -41,7 +41,7 @@ gc.def: digimars.mak
 	echo GC_is_visible_print_proc >>gc.def
 	echo GC_is_valid_displacement_print_proc >>gc.def
 
-# FIXME: building `cord` as DLL results in `cordtest` fail.
+# TODO: cannot build `cord` as DLL because of static linking of C runtime.
 cord.lib: cord\cordbscs.obj cord\cordprnt.obj cord\cordxtra.obj
 	lib -c cord.lib cord\cordbscs.obj cord\cordprnt.obj cord\cordxtra.obj
 
@@ -57,7 +57,7 @@ cord\cordxtra.obj: cord\cordxtra.c
 clean:
 	del *.log *.map *.obj gc.def gc.dll gc.lib
 	del tests\*.obj gctest.exe cpptest.exe treetest.exe
-	del cord\*.obj cord.lib cord\tests\cordtest.obj cordtest.exe
+	del cord\*.obj cord.lib cord\tests\*.obj cordtest.exe de.exe
 
 gctest.exe: gc.lib tests\gctest.obj
 	$(CC) -ogctest.exe tests\gctest.obj gc.lib
@@ -82,6 +82,16 @@ cordtest.exe: cord\tests\cordtest.obj cord.lib gc.lib
 
 cord\tests\cordtest.obj: cord\tests\cordtest.c
 	$(CC) -c $(CORD_CFLAGS) cord\tests\cordtest.c -ocord\tests\cordtest.obj
+
+# TODO: compile `de_win.rc`.
+de.exe: cord\tests\de.obj cord\tests\de_win.obj cord.lib gc.lib
+	$(CC) -ode.exe cord\tests\de.obj cord\tests\de_win.obj cord.lib gc.lib gdi32.lib user32.lib
+
+cord\tests\de.obj: cord\tests\de.c
+	$(CC) -c $(CORD_CFLAGS) cord\tests\de.c -ocord\tests\de.obj
+
+cord\tests\de_win.obj: cord\tests\de_win.c
+	$(CC) -c $(CORD_CFLAGS) cord\tests\de_win.c -ocord\tests\de_win.obj
 
 gc_badalc.obj: gc_badalc.cc gc_badalc.cpp
 gc_cpp.obj: gc_cpp.cc gc_cpp.cpp
