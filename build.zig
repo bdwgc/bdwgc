@@ -741,6 +741,7 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
     }
     test_exe.linkLibC();
     const run_test_exe = b.addRunArtifact(test_exe);
+    run_test_exe.setEnvironmentVariable("GC_PROMPT_DISABLED", "1");
     test_step.dependOn(&run_test_exe.step);
 }
 

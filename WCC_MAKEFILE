@@ -91,6 +91,7 @@ check-deps-mswin: .SYMBOLIC
 check-deps: gctest.exe cpptest.exe treetest.exe cordtest.exe check-deps-mswin .SYMBOLIC
 
 check: check-deps .SYMBOLIC
+        set GC_PROMPT_DISABLED=1
         *gctest.exe
         *cpptest.exe
         *treetest.exe

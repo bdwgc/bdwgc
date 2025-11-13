@@ -255,11 +255,11 @@ treetest$(EXEEXT): $(srcdir)/tests/tree.cc $(srcdir)/include/gc/gc.h \
 check-cpp-deps: cpptest$(EXEEXT) treetest$(EXEEXT)
 
 check-cpp: check-cpp-deps
-	./cpptest
-	./treetest
+	GC_PROMPT_DISABLED=1 ./cpptest
+	GC_PROMPT_DISABLED=1 ./treetest
 
 c++-t: c++ cpptest$(EXEEXT)
-	./cpptest 1
+	GC_PROMPT_DISABLED=1 ./cpptest 1
 
 c++-nt: c++
 	@echo "Use ./cpptest 1 to test the leak library"
@@ -392,12 +392,13 @@ setjmp_test$(EXEEXT): $(srcdir)/tools/setjmp_t.c $(srcdir)/include/gc/gc.h \
 check-deps: cordtest$(EXEEXT) gctest$(EXEEXT) setjmp_test$(EXEEXT) \
   cpptest$(EXEEXT) treetest$(EXEEXT)
 
+# Note: `export GC_PROMPT_DISABLED=1` is not always working, unfortunately.
 check: check-deps
 	./setjmp_test
-	./gctest
-	./cordtest
-	./cpptest
-	./treetest
+	GC_PROMPT_DISABLED=1 ./gctest
+	GC_PROMPT_DISABLED=1 ./cordtest
+	GC_PROMPT_DISABLED=1 ./cpptest
+	GC_PROMPT_DISABLED=1 ./treetest
 
 # A synonym to `check` (for compatibility with older GC versions).
 test: check

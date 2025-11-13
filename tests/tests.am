@@ -12,6 +12,8 @@
 test_ldadd = $(nodist_libgc_la_OBJECTS) $(top_builddir)/libgc.la \
             $(EXTRA_TEST_LIBS)
 
+TESTS_ENVIRONMENT = GC_PROMPT_DISABLED=1
+
 TESTS += gctest$(EXEEXT)
 check_PROGRAMS += gctest
 gctest_SOURCES = tests/gctest.c
@@ -181,6 +183,7 @@ endif
 
 # Run the tests directly (without `test-driver`):
 .PHONY: check-without-test-driver
+check-without-test-driver: export GC_PROMPT_DISABLED=1
 check-without-test-driver: $(TESTS)
 	./gctest$(EXEEXT)
 	./hugetest$(EXEEXT)
