@@ -23,6 +23,7 @@ gc.obj: extra\gc.c
 	$(CC) -c $(CFLAGS) -Aa $*
 
 check: gctest.exe cpptest.exe treetest.exe cordtest.exe de.exe
+	set GC_PROMPT_DISABLED=1
 	gctest.exe
 	cpptest.exe
 	treetest.exe

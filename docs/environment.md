@@ -19,7 +19,8 @@ techniques.
 
 `GC_PROMPT_DISABLED` - The client code is running in the non-interactive mode.
 If set, any non-interactive action (like showing a GUI dialog box on error)
-will be avoided in the collector.
+will be avoided in the collector.  The variable is set explicitly by the
+collector build scripts prior to the tests execution.
 
 `GC_PRINT_STATS` - Turns on the collector logging.  Has no effect if the
 collector is built with `SMALL_CONFIG` macro defined.

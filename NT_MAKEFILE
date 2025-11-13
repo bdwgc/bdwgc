@@ -111,6 +111,7 @@ all: gc.lib cord.lib gccpp.lib gctba.lib
 check-deps: gctest.exe cpptest.exe treetest.exe cordtest.exe de.exe
 
 check: check-deps
+	set GC_PROMPT_DISABLED=1
 	gctest.exe
 	cordtest.exe
 	cpptest.exe

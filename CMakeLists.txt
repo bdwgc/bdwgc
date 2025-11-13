@@ -837,6 +837,8 @@ if (install_headers)
 endif(install_headers)
 
 if (build_tests)
+  SET(CTEST_ENVIRONMENT
+      "GC_PROMPT_DISABLED=1")
   if (build_cord)
     add_executable(cordtest cord/tests/cordtest.c ${NODIST_SRC})
     target_link_libraries(cordtest PRIVATE cord gc)
