@@ -101,7 +101,7 @@ GC_cond_add_roots(ptr_t base, ptr_t limit)
 GC_INNER GC_bool
 GC_register_main_static_data(void)
 {
-#    if defined(MSWINCE) || defined(CYGWIN32)
+#    if defined(CYGWIN) || defined(MSWINCE)
   return FALSE;
 #    else
   return GC_no_win32_dlls;
@@ -124,7 +124,7 @@ GC_dump_meminfo(MEMORY_BASIC_INFORMATION *buf)
 }
 #  endif /* DEBUG_VIRTUALQUERY */
 
-#  if defined(MSWINCE) || defined(CYGWIN32)
+#  if defined(CYGWIN) || defined(MSWINCE)
 /* FIXME: Should we really need to scan `MEM_PRIVATE` sections? */
 /*
  * For now, we do not add `MEM_PRIVATE` sections to the data roots for

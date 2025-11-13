@@ -192,7 +192,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
    * The following should be a no-op according to the Win32 documentation.
    * There is an empirical evidence that it is not.
    */
-#  if defined(MPROTECT_VDB) && !defined(CYGWIN32)
+#  if defined(MPROTECT_VDB) && !defined(CYGWIN)
   if (GC_auto_incremental
 #    ifdef GWW_VDB
       && !GC_gww_dirty_init()

@@ -410,7 +410,7 @@ EXTERN_C_BEGIN
 #  else
 #    define I386
 #  endif
-#  define CYGWIN32
+#  define CYGWIN
 #  define mach_type_known
 #endif /* __CYGWIN__ */
 #if defined(__INTERIX)
@@ -604,7 +604,7 @@ EXTERN_C_BEGIN
  *   - `HEXAGON`: Qualcomm Hexagon (running `LINUX`);
  *   - `HP_PA`: HP9000/700 and HP9000/800 32/64-bit (running `HPUX`, `LINUX`,
  *     `OPENBSD`);
- *   - `I386`: Intel 486/586/686 (running `BSDI`, `CYGWIN32` environment,
+ *   - `I386`: Intel 486/586/686 (running `BSDI`, `CYGWIN` environment,
  *     `DARWIN` (macOS), `DGUX`, `DJGPP` environment, `DOS4GW` environment,
  *     `EMBOX`, `FREEBSD`, `HAIKU`, `HURD`, `INTERIX`, `LINUX`, `MSWIN32`,
  *     `MSWINCE`, `NACL` environment, `NETBSD`, `NEXT`, `OPENBSD`, `OS2`,
@@ -639,8 +639,8 @@ EXTERN_C_BEGIN
  *   - `WEBASSEMBLY`: WebAssembly/Wasm (running `EMSCRIPTEN` environment,
  *     `WASI` environment);
  *   - `X86_64`: AMD x86-64 ILP32/64-bit (running `COSMO` environment,
- *     `CYGWIN32` environment, `DARWIN` (macOS), `FREEBSD`, `HAIKU`,
- *     `HURD`, `LINUX`, `MSWIN32`, `MSWIN_XBOX1`, `NETBSD`, `OPENBSD`,
+ *     `CYGWIN` environment, `DARWIN` (macOS), `FREEBSD`, `HAIKU`, `HURD`,
+ *     `LINUX`, `MSWIN32`, `MSWIN_XBOX1`, `NETBSD`, `OPENBSD`,
  *     `PLATFORM_GETMEM` environment, `QNX`, `SERENITY`, `SOLARIS`).
  */
 
@@ -827,15 +827,15 @@ EXTERN_C_BEGIN
  * (or most, at least) supported architectures.
  */
 
-#ifdef CYGWIN32
-#  define OS_TYPE "CYGWIN32"
+#ifdef CYGWIN
+#  define OS_TYPE "CYGWIN"
 #  define RETRY_GET_THREAD_CONTEXT
 #  ifdef USE_WINALLOC
 #    define GWW_VDB
 #  elif defined(USE_MMAP)
 #    define USE_MMAP_ANON
 #  endif
-#endif /* CYGWIN32 */
+#endif /* CYGWIN */
 
 #ifdef COSMO
 #  define OS_TYPE "COSMO"
@@ -1556,7 +1556,7 @@ EXTERN_C_BEGIN
 #      define SOFT_VDB
 #    endif
 #  endif
-#  ifdef CYGWIN32
+#  ifdef CYGWIN
 #    define WOW64_THREAD_CONTEXT_WORKAROUND
 #    define DATASTART ((ptr_t)GC_DATASTART) /*< defined in `gc.h` file */
 #    define DATAEND ((ptr_t)GC_DATAEND)
@@ -2414,7 +2414,7 @@ extern int _etext[];
 #    define DATASTART GC_SysVGetDataStart(0x1000, (ptr_t)_etext)
 #    define PROC_VDB
 #  endif
-#  ifdef CYGWIN32
+#  ifdef CYGWIN
 #    ifndef USE_WINALLOC
 #      if defined(THREAD_LOCAL_ALLOC)
 /*
@@ -2593,7 +2593,7 @@ extern char __global_base, __heap_base;
 #  endif
 #endif /* WEBASSEMBLY */
 
-#if defined(CYGWIN32) || defined(MSWIN32) || defined(MSWINCE)
+#if defined(CYGWIN) || defined(MSWIN32) || defined(MSWINCE)
 /* Note: it does not include Xbox One. */
 #  define ANY_MSWIN
 #endif
@@ -2893,7 +2893,7 @@ EXTERN_C_BEGIN
 #endif
 
 /* `USE_WINALLOC` is only an option for Cygwin. */
-#ifndef CYGWIN32
+#ifndef CYGWIN
 #  undef USE_WINALLOC
 #endif
 #if defined(MSWIN32) || defined(MSWINCE)
@@ -2906,7 +2906,7 @@ EXTERN_C_BEGIN
 
 #if defined(ANY_BSD) || defined(DARWIN) || defined(IRIX5) || defined(LINUX) \
     || defined(SERENITY) || defined(SOLARIS)                                \
-    || ((defined(CYGWIN32) || defined(USE_MMAP) || defined(USE_MUNMAP))     \
+    || ((defined(CYGWIN) || defined(USE_MMAP) || defined(USE_MUNMAP))       \
         && !defined(USE_WINALLOC))
 /* Try both `sbrk` and `mmap`, in that order. */
 #  define MMAP_SUPPORTED
@@ -3117,7 +3117,7 @@ EXTERN_C_BEGIN
 #if defined(HEURISTIC2) || defined(SEARCH_FOR_DATA_START) || defined(IA64)    \
     || defined(DGUX) || defined(FREEBSD) || defined(OPENBSD) || defined(SVR4) \
     || (defined(HPUX) && defined(SPECIFIC_MAIN_STACKBOTTOM))                  \
-    || (defined(CYGWIN32) && defined(I386) && defined(USE_MMAP)               \
+    || (defined(CYGWIN) && defined(I386) && defined(USE_MMAP)                 \
         && !defined(USE_WINALLOC))                                            \
     || (defined(NETBSD) && defined(__ELF__))
 #  define NEED_FIND_LIMIT
@@ -3193,7 +3193,7 @@ extern ptr_t GC_data_start;
       || (defined(GC_WIN32_THREADS) && !defined(ANY_MSWIN)                \
           && !defined(MSWIN_XBOX1))
 #    error Inconsistent configuration
-#  elif defined(GC_WIN32_PTHREADS) && defined(CYGWIN32)
+#  elif defined(GC_WIN32_PTHREADS) && defined(CYGWIN)
 #    error Inconsistent configuration (GC_PTHREADS)
 #  endif
 #  if defined(PARALLEL_MARK) && !defined(THREADS)
@@ -3214,8 +3214,8 @@ extern ptr_t GC_data_start;
 #endif
 
 /* Whether `GC_page_size` is to be set to a value other than page size. */
-#if defined(CYGWIN32) && (defined(MPROTECT_VDB) || defined(USE_MUNMAP)) \
-    || (!defined(ANY_MSWIN) && !defined(WASI) && !defined(USE_MMAP)     \
+#if defined(CYGWIN) && (defined(MPROTECT_VDB) || defined(USE_MUNMAP)) \
+    || (!defined(ANY_MSWIN) && !defined(WASI) && !defined(USE_MMAP)   \
         && (defined(GC_DISABLE_INCREMENTAL) || defined(DEFAULT_VDB)))
 /*
  * Cygwin: use the allocation granularity instead.
@@ -3387,7 +3387,7 @@ extern ptr_t GC_data_start;
 #endif
 
 #if !defined(HAVE_CLOCK_GETTIME) && defined(_POSIX_TIMERS) \
-    && (defined(CYGWIN32) || (defined(LINUX) && defined(__USE_POSIX199309)))
+    && (defined(CYGWIN) || (defined(LINUX) && defined(__USE_POSIX199309)))
 #  define HAVE_CLOCK_GETTIME 1
 #endif
 
@@ -3452,8 +3452,8 @@ extern ptr_t GC_data_start;
  * Workaround "failed to create new win32 semaphore" Cygwin fatal error
  * during semaphores fixup-after-fork.
  */
-#if defined(CYGWIN32) && defined(THREADS) && defined(CAN_HANDLE_FORK) \
-    && !defined(CYGWIN_SEM_FIXUP_AFTER_FORK_BUG_FIXED)                \
+#if defined(CYGWIN) && defined(THREADS) && defined(CAN_HANDLE_FORK) \
+    && !defined(CYGWIN_SEM_FIXUP_AFTER_FORK_BUG_FIXED)              \
     && !defined(EMULATE_PTHREAD_SEMAPHORE)
 #  define EMULATE_PTHREAD_SEMAPHORE
 #endif
@@ -3466,7 +3466,7 @@ extern ptr_t GC_data_start;
 #endif
 
 #if !defined(CAN_HANDLE_FORK) && !defined(HAVE_NO_FORK) \
-    && !(defined(CYGWIN32) || defined(SOLARIS) || defined(UNIX_LIKE))
+    && !(defined(CYGWIN) || defined(SOLARIS) || defined(UNIX_LIKE))
 #  define HAVE_NO_FORK
 #endif
 

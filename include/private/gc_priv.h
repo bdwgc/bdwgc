@@ -1431,7 +1431,7 @@ struct roots {
 #      define MAX_HEAP_SECTS 7680
 #    endif
 #  elif defined(SMALL_CONFIG) && !defined(USE_PROC_FOR_LIBRARIES)
-#    if defined(PARALLEL_MARK) && (defined(MSWIN32) || defined(CYGWIN32))
+#    if defined(PARALLEL_MARK) && (defined(CYGWIN) || defined(MSWIN32))
 #      define MAX_HEAP_SECTS 384
 #    else
 #      define MAX_HEAP_SECTS 128 /*< roughly 256 MB (`128 * 2048 * 1024`) */
@@ -2419,7 +2419,7 @@ GC_EXTERN size_t GC_real_page_size;
 #if defined(ANY_MSWIN) || defined(MSWIN_XBOX1) || defined(OS2)
 GC_INNER void *GC_get_mem(size_t lb);
 #  define GET_MEM(lb) GC_get_mem(lb)
-#  if defined(CYGWIN32) && !defined(USE_WINALLOC)
+#  if defined(CYGWIN) && !defined(USE_WINALLOC)
 #    define NEED_UNIX_GET_MEM
 #  endif
 #elif defined(DOS4GW) || defined(EMBOX) || defined(KOS) || defined(NEXT) \
@@ -3956,7 +3956,7 @@ GC_INNER void GC_push_many_regs(const word *regs, unsigned count);
 GC_INNER void GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo,
                                 ptr_t *phi);
 
-#  if defined(MPROTECT_VDB) && !defined(CYGWIN32)
+#  if defined(MPROTECT_VDB) && !defined(CYGWIN)
 GC_INNER void GC_set_write_fault_handler(void);
 #  endif
 #  if defined(WRAP_MARK_SOME) && !defined(GC_PTHREADS)
@@ -4297,7 +4297,7 @@ GC_INNER void GC_start_mark_threads_inner(void);
  * Some macros for `setjmp()` working across signal handlers, where
  * possible.
  */
-#if (defined(UNIX_LIKE) || (defined(NEED_FIND_LIMIT) && defined(CYGWIN32))) \
+#if (defined(UNIX_LIKE) || (defined(NEED_FIND_LIMIT) && defined(CYGWIN))) \
     && !defined(GC_NO_SIGSETJMP)
 #  if defined(SUNOS5SIGS) && !defined(FREEBSD) && !defined(LINUX)
 EXTERN_C_END
