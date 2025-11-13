@@ -23,7 +23,7 @@
 #  include <sys/syscall.h>
 #endif
 
-#if defined(UNIX_LIKE) || defined(CYGWIN32) || defined(SYMBIAN) \
+#if defined(CYGWIN) || defined(SYMBIAN) || defined(UNIX_LIKE) \
     || (defined(CONSOLE_LOG) && defined(MSWIN32))
 #  include <fcntl.h>
 #  include <sys/stat.h>
@@ -1167,9 +1167,9 @@ GC_init(void)
   }
 #  endif
 #endif
-#if ((defined(UNIX_LIKE) && !defined(GC_ANDROID_LOG))                   \
-     || (defined(CONSOLE_LOG) && defined(MSWIN32)) || defined(CYGWIN32) \
-     || defined(SYMBIAN))                                               \
+#if ((defined(UNIX_LIKE) && !defined(GC_ANDROID_LOG))                 \
+     || (defined(CONSOLE_LOG) && defined(MSWIN32)) || defined(CYGWIN) \
+     || defined(SYMBIAN))                                             \
     && !defined(SMALL_CONFIG)
   {
     const char *fname = TRUSTED_STRING(GETENV("GC_LOG_FILE"));
@@ -2086,7 +2086,7 @@ GC_printf(const char *format, ...)
     /* Ignore errors silently. */
 #else
     if (WRITE(GC_stdout, buf, strlen(buf)) < 0
-#  if defined(CYGWIN32) || (defined(CONSOLE_LOG) && defined(MSWIN32))
+#  if (defined(CONSOLE_LOG) && defined(MSWIN32)) || defined(CYGWIN)
         && GC_stdout != GC_DEFAULT_STDOUT_FD
 #  endif
     ) {
@@ -2111,7 +2111,7 @@ GC_log_printf(const char *format, ...)
   (void)WRITE(GC_log, buf, strlen(buf));
 #else
   if (WRITE(GC_log, buf, strlen(buf)) < 0
-#  if defined(CYGWIN32) || (defined(CONSOLE_LOG) && defined(MSWIN32))
+#  if (defined(CONSOLE_LOG) && defined(MSWIN32)) || defined(CYGWIN)
       && GC_log != GC_DEFAULT_STDERR_FD
 #  endif
   ) {

@@ -323,7 +323,7 @@ typedef struct GC_Thread_Rep *GC_thread;
 
 #  if defined(GC_PTHREADS) || defined(GC_PTHREADS_PARAMARK)
 /* Convert an opaque `pthread_t` value to a pointer identifying the thread. */
-#    if defined(GC_WIN32_THREADS) && !defined(CYGWIN32)                  \
+#    if defined(GC_WIN32_THREADS) && !defined(CYGWIN)                    \
         && (defined(GC_WIN32_PTHREADS) || defined(GC_PTHREADS_PARAMARK)) \
         && !defined(__WINPTHREADS_VERSION_MAJOR)
 /*

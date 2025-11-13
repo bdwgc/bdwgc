@@ -70,7 +70,7 @@ main(void)
   /* Is this right for recent versions? */
   printf("-lthread -lposix4\n");
 #  endif
-#  ifdef CYGWIN32
+#  ifdef CYGWIN
   printf("-lpthread\n");
 #  endif
 #  if defined(GC_WIN32_PTHREADS)

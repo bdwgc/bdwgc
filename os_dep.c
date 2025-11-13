@@ -22,8 +22,7 @@
 #  include <signal.h>
 #endif
 
-#if defined(UNIX_LIKE) || defined(CYGWIN32) || defined(NACL) \
-    || defined(SYMBIAN)
+#if defined(CYGWIN) || defined(NACL) || defined(SYMBIAN) || defined(UNIX_LIKE)
 #  include <fcntl.h>
 #endif
 
@@ -719,7 +718,7 @@ GC_INNER GC_bool GC_dont_query_stack_min = FALSE;
 
 GC_INNER SYSTEM_INFO GC_sysinfo;
 
-#  ifndef CYGWIN32
+#  ifndef CYGWIN
 #    define is_writable(prot)                               \
       ((prot) == PAGE_READWRITE || (prot) == PAGE_WRITECOPY \
        || (prot) == PAGE_EXECUTE_READWRITE                  \
@@ -774,7 +773,7 @@ GC_get_stack_base(struct GC_stack_base *sb)
   sb->mem_base = trunc_sp + size;
   return GC_SUCCESS;
 }
-#  else /* CYGWIN32 */
+#  else /* CYGWIN */
 GC_API int GC_CALL
 GC_get_stack_base(struct GC_stack_base *sb)
 {
@@ -792,7 +791,7 @@ GC_get_stack_base(struct GC_stack_base *sb)
 #    endif
   return GC_SUCCESS;
 }
-#  endif /* CYGWIN32 */
+#  endif /* CYGWIN */
 #  define HAVE_GET_STACK_BASE
 
 #elif defined(OS2)
@@ -2715,7 +2714,7 @@ GC_get_mem(size_t bytes)
   return result;
 }
 
-#elif defined(CYGWIN32) || defined(MSWIN32)
+#elif defined(CYGWIN) || defined(MSWIN32)
 #  ifdef USE_GLOBAL_ALLOC
 #    define GLOBAL_ALLOC_TEST 1
 #  else
@@ -2797,7 +2796,7 @@ GC_get_mem(size_t bytes)
     GC_heap_bases[GC_n_heap_bases++] = (ptr_t)result;
   return result;
 }
-#endif /* CYGWIN32 || MSWIN32 */
+#endif /* CYGWIN || MSWIN32 */
 
 #if (defined(ANY_MSWIN) || defined(MSWIN_XBOX1)) && !defined(GC_NO_DEINIT)
 GC_API void GC_CALL
@@ -2806,7 +2805,7 @@ GC_win32_free_heap(void)
 #  if defined(USE_WINALLOC) && !defined(REDIRECT_MALLOC)
   GC_free_malloc_heap_list();
 #  endif
-#  if defined(CYGWIN32) || defined(MSWIN32)
+#  if defined(CYGWIN) || defined(MSWIN32)
 #    ifndef MSWINRT_FLAVOR
 #      ifdef MSWIN32
   if (GLOBAL_ALLOC_TEST)
@@ -2814,7 +2813,7 @@ GC_win32_free_heap(void)
   {
     while (GC_n_heap_bases > 0) {
       GC_n_heap_bases--;
-#      ifdef CYGWIN32
+#      ifdef CYGWIN
       /* FIXME: Is it OK to use non-GC `free()` here? */
 #      else
       GlobalFree(GC_heap_bases[GC_n_heap_bases]);
@@ -2823,8 +2822,8 @@ GC_win32_free_heap(void)
     }
     return;
   }
-#    endif /* !MSWINRT_FLAVOR */
-#    ifndef CYGWIN32
+#    endif
+#    ifndef CYGWIN
   /* Avoiding `VirtualAlloc` leak. */
   while (GC_n_heap_bases > 0) {
     VirtualFree(GC_heap_bases[--GC_n_heap_bases], 0, MEM_RELEASE);
@@ -2911,8 +2910,7 @@ block_unmap_inner(ptr_t start_addr, size_t len)
   if (len != 0) {
 #    ifdef SN_TARGET_PS3
     ps3_free_mem(start_addr, len);
-#    elif defined(AIX) || defined(COSMO) || defined(CYGWIN32) \
-        || defined(HPUX)                                      \
+#    elif defined(AIX) || defined(COSMO) || defined(CYGWIN) || defined(HPUX) \
         || (defined(LINUX) && !defined(PREFER_MMAP_PROT_NONE))
     /*
      * On AIX, `mmap(PROT_NONE)` fails with `ENOMEM` unless the
@@ -2930,7 +2928,7 @@ block_unmap_inner(ptr_t start_addr, size_t len)
     if (mprotect(start_addr, len, PROT_NONE))
       ABORT_ON_REMAP_FAIL("unmap: mprotect", start_addr, len);
 #      endif
-#      if !defined(CYGWIN32)
+#      if !defined(CYGWIN)
     /*
      * On Linux (and some other platforms probably), `mprotect(PROT_NONE)`
      * is just disabling access to the pages but not returning them to OS.
@@ -3419,7 +3417,7 @@ STATIC mach_port_t GC_task_self = 0;
 
 #  elif !defined(USE_WINALLOC)
 #    include <sys/mman.h>
-#    if !defined(AIX) && !defined(CYGWIN32) && !defined(HAIKU)
+#    if !defined(AIX) && !defined(CYGWIN) && !defined(HAIKU)
 #      include <sys/syscall.h>
 #    endif
 
@@ -3537,8 +3535,8 @@ is_header_found_async(const void *p)
 #        define CODE_OK (si->si_code == 2) /*< experimentally determined */
 #      elif defined(IRIX5)
 #        define CODE_OK (si->si_code == EACCES)
-#      elif defined(AIX) || defined(COSMO) || defined(CYGWIN32) \
-          || defined(HAIKU) || defined(HURD) || defined(LINUX)  \
+#      elif defined(AIX) || defined(COSMO) || defined(CYGWIN)  \
+          || defined(HAIKU) || defined(HURD) || defined(LINUX) \
           || defined(NETBSD)
 /*
  * Linux/i686: Empirically `c.trapno == 14`, but is that useful?
@@ -3681,7 +3679,7 @@ GC_write_fault_handler(struct _EXCEPTION_POINTERS *exc_info)
 #    endif
 }
 
-#    if defined(GC_WIN32_THREADS) && !defined(CYGWIN32)
+#    if defined(GC_WIN32_THREADS) && !defined(CYGWIN)
 GC_INNER void
 GC_set_write_fault_handler(void)
 {
