@@ -27,6 +27,10 @@
 #  define NOSERVICE
 #  include <windows.h>
 
+#  if defined(__DMC__)
+#    define INT_PTR int
+#  endif
+
 #  include <ctype.h>
 
 #  include "gc.h"
