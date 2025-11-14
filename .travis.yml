@@ -361,6 +361,11 @@ jobs:
     - NO_CLONE_LIBATOMIC_OPS=true
 
 before_install:
+- if [[ "$REPORT_COVERAGE" == true ]]; then
+    mkdir -p ../coveralls;
+    wget -O - https://coveralls.io/coveralls-linux.tar.gz | tar xf - --gz --directory ../coveralls;
+    export PATH=`pwd`/../coveralls:$PATH;
+  fi
 - if [[ "$AUTOMAKE_VER" != "" || "$LIBTOOL_VER" != ""
         || "$M4_VER" != "" ]]; then
     GNUTOOLS_ROOT=`pwd`/../gnu-tools;
@@ -399,7 +404,6 @@ install:
   fi
 - "./autogen.sh"
 - if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
-- if [[ "$REPORT_COVERAGE" == true ]]; then gem install coveralls-lcov; fi
 
 script:
 - if [[ "$CSA_CHECK" != true
@@ -437,7 +441,7 @@ after_success:
     lcov --capture --base-directory . --directory . --output-file coverage.info &&
     lcov --remove coverage.info '/usr/*' 'cord/tests/*' 'tests/*' --output-file coverage.info &&
     lcov --list coverage.info &&
-    coveralls-lcov --repo-token=${COVERALLS_REPO_TOKEN} coverage.info;
+    coveralls report coverage.info -r ${COVERALLS_REPO_TOKEN};
   fi
 
 before_deploy:
