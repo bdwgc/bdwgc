@@ -728,6 +728,7 @@ GC_push_all_stack_partially_eager(ptr_t bottom, ptr_t top, ptr_t cold_gc_frame)
 #  endif
   /* else */ {
     GC_push_all_eager(bottom, top);
+    UNUSED_ARG(cold_gc_frame);
   }
 #  ifdef TRACE_BUF
   GC_add_trace_entry("GC_push_all_stack", bottom, top);
