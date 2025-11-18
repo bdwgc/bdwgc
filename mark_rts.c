@@ -709,7 +709,7 @@ GC_INNER void GC_push_all_stack_sections(ptr_t lo, ptr_t hi,
  * GC_dirty() call.
  */
 STATIC void GC_push_all_stack_partially_eager(ptr_t bottom, ptr_t top,
-                                              ptr_t cold_gc_frame)
+        ptr_t cold_gc_frame GC_ATTR_UNUSED)
 {
 #ifndef NEED_FIXUP_POINTER
   if (GC_all_interior_pointers) {
