@@ -1838,11 +1838,11 @@ GC_push_all_eager(void *bottom, void *top)
 #undef GC_least_plausible_heap_addr
 }
 
+#if !defined(NEED_FIXUP_POINTER)
 GC_INNER void
 GC_push_all_stack(ptr_t bottom, ptr_t top)
 {
   GC_ASSERT(I_HOLD_LOCK());
-#ifndef NEED_FIXUP_POINTER
   if (GC_all_interior_pointers
 #  if defined(THREADS) && defined(MPROTECT_VDB)
       && !GC_auto_incremental
@@ -1850,12 +1850,11 @@ GC_push_all_stack(ptr_t bottom, ptr_t top)
       && ADDR_LT((ptr_t)GC_mark_stack_top,
                  (ptr_t)(GC_mark_stack_limit - INITIAL_MARK_STACK_SIZE / 8))) {
     GC_push_all(bottom, top);
-  } else
-#endif
-  /* else */ {
+  } else {
     GC_push_all_eager(bottom, top);
   }
 }
+#endif
 
 #if defined(WRAP_MARK_SOME) && defined(PARALLEL_MARK)
 GC_ATTR_NO_SANITIZE_ADDR_MEM_THREAD
