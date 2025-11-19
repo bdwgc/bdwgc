@@ -1728,9 +1728,13 @@ GC_INNER GC_bool GC_collection_in_progress(void);
                 GC_push_all((/* no volatile */ void *)&(sym), \
                             (/* no volatile */ void *)(&(sym) + 1))
 
-GC_INNER void GC_push_all_stack(ptr_t b, ptr_t t);
+#if defined(NEED_FIXUP_POINTER)
+# define GC_push_all_stack(b, t) GC_push_all_eager(b, t)
+#else
+  GC_INNER void GC_push_all_stack(void *b, void *t);
                                     /* As GC_push_all but consider      */
                                     /* interior pointers as valid.      */
+#endif
 
 #if defined(WRAP_MARK_SOME) && defined(PARALLEL_MARK)
   /* GC_mark_local does not handle memory protection faults yet.  So,   */
