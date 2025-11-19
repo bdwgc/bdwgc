@@ -1492,22 +1492,21 @@ GC_API void GC_CALL GC_push_all_eager(void *bottom, void *top)
 #   undef GC_least_plausible_heap_addr
 }
 
-GC_INNER void GC_push_all_stack(ptr_t bottom, ptr_t top)
+#if !defined(NEED_FIXUP_POINTER)
+GC_INNER void GC_push_all_stack(void *bottom, void *top)
 {
-#   ifndef NEED_FIXUP_POINTER
-      if (GC_all_interior_pointers
-#         if defined(THREADS) && defined(MPROTECT_VDB)
-            && !GC_auto_incremental
-#         endif
-          && (word)GC_mark_stack_top
-             < (word)(GC_mark_stack_limit - INITIAL_MARK_STACK_SIZE/8)) {
-        GC_push_all(bottom, top);
-      } else
-#   endif
-    /* else */ {
+    if (GC_all_interior_pointers
+#       if defined(THREADS) && defined(MPROTECT_VDB)
+          && !GC_auto_incremental
+#       endif
+        && (word)GC_mark_stack_top
+           < (word)(GC_mark_stack_limit - INITIAL_MARK_STACK_SIZE/8)) {
+      GC_push_all(bottom, top);
+    } else {
       GC_push_all_eager(bottom, top);
     }
 }
+#endif
 
 #if defined(WRAP_MARK_SOME) && defined(PARALLEL_MARK)
   /* Similar to GC_push_conditional but scans the whole region immediately. */
