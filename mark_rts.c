@@ -690,9 +690,9 @@ GC_INNER void GC_push_all_stack_sections(
     while (traced_stack_sect != NULL) {
         GC_ASSERT((word)lo HOTTER_THAN (word)traced_stack_sect);
 #       ifdef STACK_GROWS_UP
-            GC_push_all_stack((ptr_t)traced_stack_sect, lo);
+            GC_push_all_stack(traced_stack_sect, lo);
 #       else /* STACK_GROWS_DOWN */
-            GC_push_all_stack(lo, (ptr_t)traced_stack_sect);
+            GC_push_all_stack(lo, traced_stack_sect);
 #       endif
         lo = traced_stack_sect -> saved_stack_ptr;
         GC_ASSERT(lo != NULL);
