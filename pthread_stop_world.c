@@ -778,8 +778,8 @@ GC_INNER void GC_push_all_stacks(void)
 #       endif
 #       ifdef NACL
           /* Push reg_storage as roots, this will cover the reg context. */
-          GC_push_all_stack((ptr_t)p -> stop_info.reg_storage,
-              (ptr_t)(p -> stop_info.reg_storage + NACL_GC_REG_STORAGE_SIZE));
+          GC_push_all_stack(p -> stop_info.reg_storage,
+              p -> stop_info.reg_storage + NACL_GC_REG_STORAGE_SIZE);
           total_size += NACL_GC_REG_STORAGE_SIZE * sizeof(ptr_t);
 #       endif
 #       ifdef IA64

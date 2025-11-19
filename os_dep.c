@@ -2758,7 +2758,7 @@ PCR_ERes GC_push_thread_stack(PCR_Th_T *t, PCR_Any dummy)
 
     info.ti_stkLow = info.ti_stkHi = 0;
     result = PCR_ThCtl_GetInfo(t, &info);
-    GC_push_all_stack((ptr_t)(info.ti_stkLow), (ptr_t)(info.ti_stkHi));
+    GC_push_all_stack(info.ti_stkLow, info.ti_stkHi);
     return(result);
 }
 
@@ -2767,7 +2767,7 @@ PCR_ERes GC_push_thread_stack(PCR_Th_T *t, PCR_Any dummy)
 /* overflow.                                                    */
 PCR_ERes GC_push_old_obj(void *p, size_t size, PCR_Any data)
 {
-    GC_push_all_stack((ptr_t)p, (ptr_t)p + size);
+    GC_push_all_stack(p, (ptr_t)p + size);
     return(PCR_ERes_okay);
 }
 
