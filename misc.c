@@ -88,7 +88,7 @@ int GC_dont_gc = FALSE;
 
 int GC_dont_precollect = FALSE;
 
-GC_bool GC_quiet = 0; /*< used also in `msvc_dbg.c` file */
+int GC_quiet = 0;
 
 #if !defined(NO_CLOCK) || !defined(SMALL_CONFIG)
 GC_INNER int GC_print_stats = 0;
