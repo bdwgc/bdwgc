@@ -3750,6 +3750,8 @@ GC_API_PRIV void GC_err_printf(const char *format, ...)
 GC_API_PRIV void GC_log_printf(const char *format, ...)
     GC_ATTR_FORMAT_PRINTF(1, 2);
 
+extern int GC_quiet; /*< visible outside currently */
+
 #ifndef GC_ANDROID_LOG
 #  define GC_PRINT_STATS_FLAG (GC_print_stats != 0)
 #  define GC_INFOLOG_PRINTF GC_COND_LOG_PRINTF
@@ -3759,7 +3761,6 @@ GC_API_PRIV void GC_log_printf(const char *format, ...)
  */
 #  define GC_verbose_log_printf GC_log_printf
 #else
-extern GC_bool GC_quiet;
 #  define GC_PRINT_STATS_FLAG (!GC_quiet)
 /* `INFO`/`DBG` loggers are enabled even if `GC_print_stats` is off. */
 #  ifndef GC_INFOLOG_PRINTF

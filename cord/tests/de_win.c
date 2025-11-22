@@ -400,6 +400,6 @@ invalidate_line(int i)
  * ANSI C does not allow translation units to be empty.
  * So we guarantee this one is nonempty.
  */
-extern int GC_quiet;
+extern int GC_quiet_de_win;
 
 #endif /* !WIN32 */
