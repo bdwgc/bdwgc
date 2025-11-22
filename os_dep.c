@@ -174,7 +174,7 @@ GC_get_maps(void)
 {
   ssize_t result;
   static char *maps_buf = NULL;
-  static size_t maps_buf_sz = 1;
+  static size_t maps_buf_sz_m1 = 0;
   size_t maps_size;
 #  ifndef SINGLE_THREADED_PROCESS
   size_t old_maps_size = 0;
@@ -214,20 +214,20 @@ GC_get_maps(void)
   do {
     int f;
 
-    while (maps_size >= maps_buf_sz) {
+    while (maps_size > maps_buf_sz_m1) {
 #  ifdef LINT2
       /* Workaround passing tainted `maps_buf` to a tainted sink. */
       GC_noop1_ptr(maps_buf);
 #  else
-      GC_scratch_recycle_no_gww(maps_buf, maps_buf_sz);
+      GC_scratch_recycle_no_gww(maps_buf, maps_buf_sz_m1 + 1);
 #  endif
       /* Grow only by powers of 2, since we leak "too small" buffers. */
-      while (maps_size >= maps_buf_sz)
-        maps_buf_sz *= 2;
-      maps_buf = GC_scratch_alloc(maps_buf_sz);
+      while (maps_size > maps_buf_sz_m1)
+        maps_buf_sz_m1 = (maps_buf_sz_m1 << 1) + 1;
+      maps_buf = GC_scratch_alloc(maps_buf_sz_m1 + 1);
       if (NULL == maps_buf)
         ABORT_ARG1("Insufficient space for /proc/self/maps buffer",
-                   ", %lu bytes requested", (unsigned long)maps_buf_sz);
+                   ", %lu bytes requested", (unsigned long)maps_buf_sz_m1 + 1);
 #  ifndef SINGLE_THREADED_PROCESS
       /*
        * Recompute initial length, since we allocated.
@@ -238,7 +238,7 @@ GC_get_maps(void)
         ABORT("Cannot determine length of /proc/self/maps");
 #  endif
     }
-    GC_ASSERT(maps_buf_sz >= maps_size + 1);
+    GC_ASSERT(maps_buf_sz_m1 >= maps_size);
     f = open("/proc/self/maps", O_RDONLY);
     if (-1 == f)
       ABORT_ARG1("Cannot open /proc/self/maps", ": errno= %d", errno);
@@ -247,12 +247,12 @@ GC_get_maps(void)
 #  endif
     maps_size = 0;
     do {
-      result = GC_repeat_read(f, maps_buf, maps_buf_sz - 1);
+      result = GC_repeat_read(f, maps_buf, maps_buf_sz_m1);
       if (result < 0) {
         ABORT_ARG1("Failed to read /proc/self/maps", ": errno= %d", errno);
       }
       maps_size += (size_t)result;
-    } while ((size_t)result == maps_buf_sz - 1);
+    } while ((size_t)result == maps_buf_sz_m1);
     close(f);
     if (0 == maps_size)
       ABORT("Empty /proc/self/maps");
@@ -264,7 +264,7 @@ GC_get_maps(void)
            maps_size);
     }
 #  endif
-  } while (maps_size >= maps_buf_sz
+  } while (maps_size > maps_buf_sz_m1
 #  ifndef SINGLE_THREADED_PROCESS
            || maps_size < old_maps_size
 #  endif
