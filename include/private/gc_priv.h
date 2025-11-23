@@ -3820,10 +3820,26 @@ GC_EXTERN GC_bool GC_force_unmap_on_gcollect;
 #endif
 
 #ifdef MSWIN32
-GC_EXTERN GC_bool GC_no_win32_dlls; /*< defined in `os_dep.c` file */
+#  if (defined(_MSC_VER) && _MSC_VER >= 1800 || defined(_WIN64) \
+       || defined(MSWINRT_FLAVOR))                              \
+      && !defined(GC_WINNT)
+/*
+ * MS Visual Studio 2013 deprecates `GetVersion`, but on the other hand
+ * it cannot be used to target pre-Win2K.
+ */
+#    define GC_WINNT
+#  endif
+#  ifdef GC_WINNT
+#    define GC_no_win32_dlls FALSE
+#    define GC_wnt TRUE
+#  else
+GC_EXTERN GC_bool GC_no_win32_dlls;
 
 /* Is this a Windows NT derivative (i.e. NT, Win2K, XP or later)? */
 GC_EXTERN GC_bool GC_wnt;
+
+GC_INNER void GC_init_win32(void);
+#  endif
 #endif
 
 #ifdef THREADS
@@ -3943,10 +3959,6 @@ GC_INNER void GC_add_current_malloc_heap(void);
 GC_INNER void GC_build_back_graph(void);
 
 GC_INNER void GC_traverse_back_graph(void);
-#endif
-
-#ifdef MSWIN32
-GC_INNER void GC_init_win32(void);
 #endif
 
 #ifndef ANY_MSWIN

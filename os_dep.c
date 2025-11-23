@@ -1861,7 +1861,7 @@ detect_GetWriteWatch(void)
 #    define GetWriteWatch_alloc_flag 0
 #  endif /* !GWW_VDB */
 
-#  ifdef MSWIN32
+#  if defined(MSWIN32) && !defined(GC_WINNT)
 /*
  * Unfortunately, we have to handle win32s very differently from Windows NT,
  * since `VirtualQuery()` has very different semantics.  In particular,
@@ -1873,19 +1873,11 @@ detect_GetWriteWatch(void)
  */
 
 GC_INNER GC_bool GC_no_win32_dlls = FALSE;
-
 GC_INNER GC_bool GC_wnt = FALSE;
 
 GC_INNER void
 GC_init_win32(void)
 {
-#    if defined(_WIN64) || (defined(_MSC_VER) && _MSC_VER >= 1800)
-  /*
-   * MS Visual Studio 2013 deprecates `GetVersion`, but on the other hand
-   * it cannot be used to target pre-Win2K.
-   */
-  GC_wnt = TRUE;
-#    else
   /*
    * Set `GC_wnt`.  If we are running under win32s, assume that no DLL file
    * will be loaded.  I doubt anyone still runs win32s, but...
@@ -1893,8 +1885,7 @@ GC_init_win32(void)
   DWORD v = GetVersion();
 
   GC_wnt = !(v & (DWORD)0x80000000UL);
-  GC_no_win32_dlls |= ((!GC_wnt) && (v & 0xff) <= 3);
-#    endif
+  GC_no_win32_dlls = !GC_wnt && (v & 0xff) <= 3;
 #    ifdef USE_MUNMAP
   if (GC_no_win32_dlls) {
     /*
@@ -1972,7 +1963,7 @@ GC_register_root_section(ptr_t static_root)
   if (base != limit)
     GC_add_roots_inner(base, limit, FALSE);
 }
-#  endif /* MSWIN32 */
+#  endif /* MSWIN32 && !GC_WINNT */
 
 #  if defined(USE_WINALLOC) && !defined(REDIRECT_MALLOC)
 /*
@@ -2108,7 +2099,7 @@ GC_is_heap_base(const void *p)
 GC_INNER void
 GC_register_data_segments(void)
 {
-#  ifdef MSWIN32
+#  if defined(MSWIN32) && !defined(GC_WINNT)
   /* Note: any other GC global variable would fit too. */
   GC_register_root_section((ptr_t)&GC_pages_executable);
 #  endif
@@ -2716,7 +2707,7 @@ GC_get_mem(size_t bytes)
 
 #elif defined(CYGWIN) || defined(MSWIN32)
 #  ifdef USE_GLOBAL_ALLOC
-#    define GLOBAL_ALLOC_TEST 1
+#    define GLOBAL_ALLOC_TEST TRUE
 #  else
 #    define GLOBAL_ALLOC_TEST GC_no_win32_dlls
 #  endif
@@ -2740,7 +2731,7 @@ GC_get_mem(size_t bytes)
 #  ifndef USE_WINALLOC
   result = GC_unix_get_mem(bytes);
 #  else
-#    if defined(MSWIN32) && !defined(MSWINRT_FLAVOR)
+#    if defined(MSWIN32) && !defined(GC_WINNT)
   if (GLOBAL_ALLOC_TEST) {
     /*
      * `VirtualAlloc()` does not like `PAGE_EXECUTE_READWRITE`.
@@ -2805,31 +2796,27 @@ GC_win32_free_heap(void)
 #  if defined(USE_WINALLOC) && !defined(REDIRECT_MALLOC)
   GC_free_malloc_heap_list();
 #  endif
-#  if defined(CYGWIN) || defined(MSWIN32)
-#    ifndef MSWINRT_FLAVOR
-#      ifdef MSWIN32
-  if (GLOBAL_ALLOC_TEST)
-#      endif
-  {
+#  ifdef CYGWIN
+  if (GC_n_heap_bases > 0) {
+    /* FIXME: Is it OK to use non-GC `free()` for elements here? */
+    BZERO(GC_heap_bases, GC_n_heap_bases * sizeof(ptr_t));
+    GC_n_heap_bases = 0;
+  }
+#  else
+#    if defined(MSWIN32) && !defined(GC_WINNT)
+  if (GLOBAL_ALLOC_TEST) {
     while (GC_n_heap_bases > 0) {
-      GC_n_heap_bases--;
-#      ifdef CYGWIN
-      /* FIXME: Is it OK to use non-GC `free()` here? */
-#      else
-      GlobalFree(GC_heap_bases[GC_n_heap_bases]);
-#      endif
-      GC_heap_bases[GC_n_heap_bases] = 0;
+      GlobalFree(GC_heap_bases[--GC_n_heap_bases]);
+      GC_heap_bases[GC_n_heap_bases] = NULL;
     }
     return;
   }
 #    endif
-#    ifndef CYGWIN
   /* Avoiding `VirtualAlloc` leak. */
   while (GC_n_heap_bases > 0) {
     VirtualFree(GC_heap_bases[--GC_n_heap_bases], 0, MEM_RELEASE);
-    GC_heap_bases[GC_n_heap_bases] = 0;
+    GC_heap_bases[GC_n_heap_bases] = NULL;
   }
-#    endif
 #  endif
 }
 #endif
