@@ -120,9 +120,6 @@ GC_add_ext_descriptor(const word *bm, size_t nbits)
   return result;
 }
 
-/* Table of bitmap descriptors for `n` pointer-long all-pointer objects. */
-STATIC GC_descr GC_bm_table[CPP_WORDSZ / 2] = { 0 };
-
 /*
  * Return a descriptor for the concatenation of 2 objects, each one is
  * `lpw` pointers long and described by descriptor `d`.  The result is
@@ -132,9 +129,12 @@ STATIC GC_descr GC_bm_table[CPP_WORDSZ / 2] = { 0 };
 STATIC GC_descr
 GC_double_descr(GC_descr d, size_t lpw)
 {
-  GC_ASSERT(GC_bm_table[0] == GC_DS_BITMAP); /*< `bm` table is initialized */
   if ((d & GC_DS_TAGS) == GC_DS_LENGTH) {
-    d = GC_bm_table[BYTES_TO_PTRS(d)];
+    /* Convert to bitmap descriptor for all-pointer objects of `d` size. */
+    GC_ASSERT(CPP_WORDSZ >= BYTES_TO_PTRS(d));
+    d = d < sizeof(ptr_t)
+            ? GC_DS_BITMAP
+            : (GC_WORD_MAX << (CPP_WORDSZ - BYTES_TO_PTRS(d))) | GC_DS_BITMAP;
   }
   d |= (d & ~(GC_descr)GC_DS_TAGS) >> lpw;
   return d;
@@ -149,8 +149,6 @@ STATIC mse *GC_CALLBACK GC_array_mark_proc(word *addr, mse *mark_stack_top,
 STATIC void
 GC_init_explicit_typing(void)
 {
-  unsigned i;
-
   /*
    * Set up object kind with simple indirect descriptor.
    * Descriptor is in the last `word` of the object.
@@ -165,11 +163,6 @@ GC_init_explicit_typing(void)
   GC_array_kind = (int)GC_new_kind_inner(
       GC_new_free_list_inner(), GC_MAKE_PROC(GC_array_mark_proc_index, 0),
       FALSE, TRUE);
-
-  GC_bm_table[0] = GC_DS_BITMAP;
-  for (i = 1; i < CPP_WORDSZ / 2; i++) {
-    GC_bm_table[i] = (GC_WORD_MAX << (CPP_WORDSZ - i)) | GC_DS_BITMAP;
-  }
 }
 
 STATIC mse *GC_CALLBACK
