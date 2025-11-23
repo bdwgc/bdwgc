@@ -1148,7 +1148,7 @@ GC_init(void)
     GC_pointer_mask = GC_WORD_MAX;
 #endif
   GC_setpagesize();
-#ifdef MSWIN32
+#if defined(MSWIN32) && !defined(GC_WINNT)
   GC_init_win32();
 #endif
 #ifdef GC_READ_ENV_FILE

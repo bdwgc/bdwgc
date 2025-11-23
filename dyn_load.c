@@ -142,7 +142,7 @@ GC_register_dynamic_libraries(void)
   ptr_t p, base, limit;
 
   GC_ASSERT(I_HOLD_LOCK());
-#  ifdef MSWIN32
+#  if defined(MSWIN32) && !defined(GC_WINNT)
   if (GC_no_win32_dlls)
     return;
 #  endif
