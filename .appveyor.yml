@@ -114,7 +114,7 @@ environment:
     CFLAGS_EXTRA: -DCONSOLE_LOG -DUSE_MMAP -DUSE_MUNMAP -zp1 -DFORCE_ALIGNMENT_ONE
     WCC_INC_SUBDIR: nt
   - TARGET: cygwin64
-    CFLAGS_EXTRA: -std=c11 -D USE_WINALLOC -Wno-array-bounds
+    CFLAGS_EXTRA: -std=c11 -D GC_USE_MEM_TOP_DOWN -D USE_WINALLOC -Wno-array-bounds
     CONF_OPTIONS: --disable-threads
   - TARGET: cygwin64
     CFLAGS_EXTRA: -D GCTEST_PRINT_VERBOSE -D DONT_PROTECT_PTRFREE -Wno-array-bounds
