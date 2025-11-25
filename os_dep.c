@@ -4857,21 +4857,6 @@ static struct {
   thread_state_flavor_t flavors[MAX_EXCEPTION_PORTS];
 } GC_old_exc_ports;
 
-STATIC struct ports_s {
-  void (*volatile os_callback[3])(void);
-  mach_port_t exception;
-#  if defined(THREADS)
-  mach_port_t reply;
-#  endif
-} GC_ports = { { /*< this is to prevent stripping these routines as dead */
-                 (void (*)(void))catch_exception_raise,
-                 (void (*)(void))catch_exception_raise_state,
-                 (void (*)(void))catch_exception_raise_state_identity },
-#  ifdef THREADS
-               0 /* `exception` */,
-#  endif
-               0 };
-
 typedef struct {
   mach_msg_header_t head;
 } GC_msg_t;
@@ -4882,7 +4867,11 @@ typedef enum {
   GC_MP_STOPPED
 } GC_mprotect_state_t;
 
+STATIC mach_port_t GC_exception_port = 0;
+
 #  ifdef THREADS
+STATIC mach_port_t GC_reply_port = 0;
+
 /*
  * FIXME: 1 and 2 seem to be safe to use in the `msgh_id` field, but it
  * is not documented.  Use the source and see if they should be OK.
@@ -4908,12 +4897,12 @@ GC_mprotect_thread_notify(mach_msg_id_t id)
   /* remote, local */
   buf.msg.head.msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_MAKE_SEND, 0);
   buf.msg.head.msgh_size = sizeof(buf.msg);
-  buf.msg.head.msgh_remote_port = GC_ports.exception;
+  buf.msg.head.msgh_remote_port = GC_exception_port;
   buf.msg.head.msgh_local_port = MACH_PORT_NULL;
   buf.msg.head.msgh_id = id;
 
   r = mach_msg(&buf.msg.head, MACH_SEND_MSG | MACH_RCV_MSG | MACH_RCV_LARGE,
-               sizeof(buf.msg), sizeof(buf), GC_ports.reply,
+               sizeof(buf.msg), sizeof(buf), GC_reply_port,
                MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
   if (r != MACH_MSG_SUCCESS)
     ABORT("mach_msg failed in GC_mprotect_thread_notify");
@@ -4931,7 +4920,7 @@ GC_mprotect_thread_reply(void)
   /* remote, local */
   msg.head.msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_MAKE_SEND, 0);
   msg.head.msgh_size = sizeof(msg);
-  msg.head.msgh_remote_port = GC_ports.reply;
+  msg.head.msgh_remote_port = GC_reply_port;
   msg.head.msgh_local_port = MACH_PORT_NULL;
   msg.head.msgh_id = ID_ACK;
 
@@ -5032,12 +5021,12 @@ GC_mprotect_thread(void *arg)
         &msg.head,
         MACH_RCV_MSG | MACH_RCV_LARGE
             | (GC_mprotect_state == GC_MP_DISCARDING ? MACH_RCV_TIMEOUT : 0),
-        0, sizeof(msg), GC_ports.exception,
+        0, sizeof(msg), GC_exception_port,
         GC_mprotect_state == GC_MP_DISCARDING ? 0 : MACH_MSG_TIMEOUT_NONE,
         MACH_PORT_NULL);
     id = r == MACH_MSG_SUCCESS ? msg.head.msgh_id : -1;
 
-#  if defined(THREADS)
+#  ifdef THREADS
     if (GC_mprotect_state == GC_MP_DISCARDING) {
       if (r == MACH_RCV_TIMED_OUT) {
         GC_mprotect_state = GC_MP_STOPPED;
@@ -5047,7 +5036,7 @@ GC_mprotect_thread(void *arg)
       if (r == MACH_MSG_SUCCESS && (id == ID_STOP || id == ID_RESUME))
         ABORT("Out of order mprotect thread request");
     }
-#  endif /* THREADS */
+#  endif
 
     if (r != MACH_MSG_SUCCESS) {
       ABORT_ARG2("mach_msg failed", ": errcode= %d (%s)", (int)r,
@@ -5055,7 +5044,7 @@ GC_mprotect_thread(void *arg)
     }
 
     switch (id) {
-#  if defined(THREADS)
+#  ifdef THREADS
     case ID_STOP:
       if (GC_mprotect_state != GC_MP_NORMAL)
         ABORT("Called mprotect_stop when state wasn't normal");
@@ -5067,11 +5056,17 @@ GC_mprotect_thread(void *arg)
       GC_mprotect_state = GC_MP_NORMAL;
       GC_mprotect_thread_reply();
       break;
-#  endif /* THREADS */
+#  endif
     default:
       /* Handle the message (it calls `catch_exception_raise`). */
-      if (!exc_server(&msg.head, &reply.head))
+      if (!exc_server(&msg.head, &reply.head)) {
+        /* This is to prevent stripping these routines as dead. */
+        GC_noop1((word)(GC_funcptr_uint)catch_exception_raise);
+        GC_noop1((word)(GC_funcptr_uint)catch_exception_raise_state);
+        GC_noop1((word)(GC_funcptr_uint)catch_exception_raise_state_identity);
+
         ABORT("exc_server failed");
+      }
       /* Send the reply. */
       r = mach_msg(&reply.head, MACH_SEND_MSG, reply.head.msgh_size, 0,
                    MACH_PORT_NULL, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
@@ -5165,18 +5160,18 @@ GC_dirty_init(void)
   GC_task_self = me = mach_task_self();
   GC_ASSERT(me != 0);
 
-  r = mach_port_allocate(me, MACH_PORT_RIGHT_RECEIVE, &GC_ports.exception);
+  r = mach_port_allocate(me, MACH_PORT_RIGHT_RECEIVE, &GC_exception_port);
   /* TODO: Call `WARN()` and return `FALSE` in case of a failure. */
   if (r != KERN_SUCCESS)
     ABORT("mach_port_allocate failed (exception port)");
 
-  r = mach_port_insert_right(me, GC_ports.exception, GC_ports.exception,
+  r = mach_port_insert_right(me, GC_exception_port, GC_exception_port,
                              MACH_MSG_TYPE_MAKE_SEND);
   if (r != KERN_SUCCESS)
     ABORT("mach_port_insert_right failed (exception port)");
 
-#  if defined(THREADS)
-  r = mach_port_allocate(me, MACH_PORT_RIGHT_RECEIVE, &GC_ports.reply);
+#  ifdef THREADS
+  r = mach_port_allocate(me, MACH_PORT_RIGHT_RECEIVE, &GC_reply_port);
   if (r != KERN_SUCCESS)
     ABORT("mach_port_allocate failed (reply port)");
 #  endif
@@ -5190,7 +5185,7 @@ GC_dirty_init(void)
   if (r != KERN_SUCCESS)
     ABORT("task_get_exception_ports failed");
 
-  r = task_set_exception_ports(me, mask, GC_ports.exception, EXCEPTION_DEFAULT,
+  r = task_set_exception_ports(me, mask, GC_exception_port, EXCEPTION_DEFAULT,
                                GC_MACH_THREAD_STATE);
   if (r != KERN_SUCCESS)
     ABORT("task_set_exception_ports failed");
@@ -5219,9 +5214,6 @@ GC_dirty_init(void)
     }
   }
 #  endif /* BROKEN_EXCEPTION_HANDLING */
-#  if defined(CPPCHECK)
-  GC_noop1((word)(GC_funcptr_uint)GC_ports.os_callback[0]);
-#  endif
   return TRUE;
 }
 
