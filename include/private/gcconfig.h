@@ -901,6 +901,11 @@ extern int _modules_data_start[], _apps_bss_end[];
 #  define SPECIFIC_MAIN_STACKBOTTOM
 #  ifdef __ELF__
 #    define DYNAMIC_LOADING
+#    if (defined(__DragonFly__) || defined(__FreeBSD_kernel__) \
+         || __FreeBSD__ >= 7)                                  \
+        && !defined(HAVE_DL_ITERATE_PHDR)
+#      define HAVE_DL_ITERATE_PHDR
+#    endif
 #  endif
 #  ifndef USE_MMAP
 /* `sbrk()` is not available. */
@@ -2839,10 +2844,24 @@ EXTERN_C_BEGIN
 #  define GC_NETBSD_THREADS_WORKAROUND
 #endif
 
-#if defined(OPENBSD) && defined(THREADS)
+#if defined(OPENBSD) && (defined(DYNAMIC_LOADING) || defined(THREADS))
 EXTERN_C_END
 #  include <sys/param.h>
 EXTERN_C_BEGIN
+#  if (OpenBSD >= 200519) && !defined(HAVE_DL_ITERATE_PHDR)
+#    define HAVE_DL_ITERATE_PHDR
+#  endif
+#endif
+
+#if defined(DYNAMIC_LOADING) && !defined(HAVE_DL_ITERATE_PHDR) \
+    && !defined(USE_PROC_FOR_LIBRARIES)                        \
+    && (GC_GLIBC_PREREQ(2, 3) || defined(HOST_ANDROID))
+/*
+ * This is the preferred way to walk dynamic libraries for `glibc` 2.2.4+.
+ * Unfortunately, it does not work for older versions.
+ */
+/* TODO: Are others OK here, too? */
+#  define HAVE_DL_ITERATE_PHDR
 #endif
 
 #if defined(AIX) || defined(ANY_BSD) || defined(BSD) || defined(COSMO)     \

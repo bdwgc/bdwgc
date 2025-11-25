@@ -80,10 +80,6 @@ GC_INNER unsigned GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
 
 ptr_t GC_stackbottom = 0;
 
-#if defined(E2K) && defined(THREADS) || defined(IA64)
-GC_INNER ptr_t GC_register_stackbottom = NULL;
-#endif
-
 int GC_dont_gc = FALSE;
 
 int GC_dont_precollect = FALSE;
@@ -108,11 +104,7 @@ GC_INNER GC_bool GC_dump_regularly = TRUE;
 #  else
 GC_INNER GC_bool GC_dump_regularly = FALSE;
 #  endif
-#  ifndef NO_CLOCK
-/* The time that the collector was initialized at. */
-STATIC CLOCK_TYPE GC_init_time = CLOCK_TYPE_INITIALIZER;
-#  endif
-#endif /* !NO_DEBUGGING */
+#endif
 
 #ifdef KEEP_BACK_PTRS
 GC_INNER long GC_backtraces = 0;
@@ -291,11 +283,6 @@ GC_clear_stack(void *arg)
 #    define BIG_CLEAR_SIZE 2048
 #  else
 #    define DEGRADE_RATE 50
-
-STATIC word GC_bytes_allocd_at_reset = 0;
-
-/* `GC_gc_no` value when we last did this. */
-STATIC word GC_stack_last_cleared = 0;
 #  endif
 
 #  if defined(__APPLE_CC__) && !GC_CLANG_PREREQ(6, 0)
@@ -2561,15 +2548,6 @@ GC_call_with_stack_base(GC_stack_base_func fn, void *arg)
 }
 
 #ifndef THREADS
-
-GC_INNER ptr_t GC_blocked_sp = NULL;
-
-#  ifdef IA64
-STATIC ptr_t GC_blocked_register_sp = NULL;
-#  endif
-
-GC_INNER struct GC_traced_stack_sect_s *GC_traced_stack_sect = NULL;
-
 /* This is nearly the same as in `pthread_support.c` file. */
 GC_ATTR_NOINLINE
 GC_API void *GC_CALL
@@ -2587,7 +2565,7 @@ GC_call_with_gc_active(GC_fn_type fn, void *client_data)
   if (HOTTER_THAN(GC_stackbottom, stacksect.saved_stack_ptr))
     GC_stackbottom = stacksect.saved_stack_ptr;
 
-  if (GC_blocked_sp == NULL) {
+  if (NULL == GC_blocked_sp) {
     /* We are not inside `GC_do_blocking()` - do nothing more. */
     client_data = (*(GC_fn_type volatile *)&fn)(client_data);
     /* Prevent treating the above as a tail call. */
@@ -2608,7 +2586,7 @@ GC_call_with_gc_active(GC_fn_type fn, void *client_data)
   GC_traced_stack_sect = &stacksect;
 
   client_data = (*(GC_fn_type volatile *)&fn)(client_data);
-  GC_ASSERT(GC_blocked_sp == NULL);
+  GC_ASSERT(NULL == GC_blocked_sp);
   GC_ASSERT(GC_traced_stack_sect == &stacksect);
 
 #  if defined(CPPCHECK)
@@ -2631,7 +2609,7 @@ GC_do_blocking_inner(ptr_t data, void *context)
 {
   UNUSED_ARG(context);
   GC_ASSERT(GC_is_initialized);
-  GC_ASSERT(GC_blocked_sp == NULL);
+  GC_ASSERT(NULL == GC_blocked_sp);
 #  ifdef SPARC
   GC_blocked_sp = GC_save_regs_in_stack();
 #  else
@@ -2679,7 +2657,6 @@ GC_get_my_stackbottom(struct GC_stack_base *sb)
 #  endif
   return &GC_stackbottom; /*< `gc_thread_handle` */
 }
-
 #endif /* !THREADS */
 
 GC_API void *GC_CALL

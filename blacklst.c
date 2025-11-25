@@ -33,8 +33,6 @@
  *   - `GC_promote_black_lists`.
  */
 
-GC_INNER word GC_black_list_spacing = 0;
-
 STATIC void
 GC_clear_bl(word *bl)
 {

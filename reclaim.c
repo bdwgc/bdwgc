@@ -27,13 +27,6 @@
  * to run outside the collector, e.g. without the allocator lock.
  */
 
-#ifndef NO_FIND_LEAK
-#  ifndef MAX_LEAKED
-#    define MAX_LEAKED 40
-#  endif
-STATIC ptr_t GC_leaked[MAX_LEAKED] = { NULL };
-#endif
-
 #if !defined(EAGER_SWEEP) && defined(ENABLE_DISCLAIM)
 STATIC void GC_reclaim_unconditionally_marked(void);
 #endif
@@ -41,18 +34,6 @@ STATIC void GC_reclaim_unconditionally_marked(void);
 #ifndef SHORT_DBG_HDRS
 
 #  include "private/dbg_mlc.h"
-
-#  ifndef MAX_SMASHED
-#    define MAX_SMASHED 20
-#  endif
-
-/*
- * List of smashed (clobbered) locations.  We defer printing these,
- * since we cannot always print them nicely with the allocator lock held.
- * We put them here instead of in `GC_arrays`, since it may be useful to
- * be able to look at them with the debugger.
- */
-STATIC ptr_t GC_smashed[MAX_SMASHED] = { NULL };
 
 GC_INNER void
 GC_add_smashed(ptr_t smashed)
@@ -113,7 +94,7 @@ GC_print_all_smashed_proc(void)
       ABORT("Invalid GC_smashed element");
 #  endif
     GC_print_smashed_obj("", base + sizeof(oh), GC_smashed[i]);
-    GC_smashed[i] = 0;
+    GC_smashed[i] = NULL;
   }
   GC_n_smashed = 0;
 }
@@ -139,6 +120,19 @@ GC_has_other_debug_info(ptr_t base)
   return 1;
 }
 #endif /* !SHORT_DBG_HDRS */
+
+GC_INNER void
+GC_push_reclaim_structures(void)
+{
+#ifndef NO_FIND_LEAK
+  if (UNLIKELY(GC_n_leaked > 0))
+    GC_push_all(GC_leaked, GC_leaked + GC_n_leaked);
+#endif
+#ifndef SHORT_DBG_HDRS
+  if (UNLIKELY(GC_n_smashed > 0))
+    GC_push_all(GC_smashed, GC_smashed + GC_n_smashed);
+#endif
+}
 
 GC_INNER void
 GC_default_print_heap_obj_proc(ptr_t p)

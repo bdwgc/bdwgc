@@ -1408,14 +1408,9 @@ invoke_finalizers_internal(GC_bool all)
   return count;
 }
 
-static word last_finalizer_notification = 0;
-
 GC_INNER void
 GC_notify_or_invoke_finalizers(void)
 {
-#  if defined(KEEP_BACK_PTRS) || defined(MAKE_BACK_GRAPH)
-  static word last_back_trace_gc_no = 0;
-#  endif
   GC_finalizer_notifier_proc notifier_fn = 0;
 
 #  if defined(THREADS) && !defined(KEEP_BACK_PTRS) && !defined(MAKE_BACK_GRAPH)
@@ -1430,7 +1425,7 @@ GC_notify_or_invoke_finalizers(void)
    * This is a convenient place to generate backtraces if appropriate,
    * since that code is not callable with the allocator lock.
    */
-  if (GC_gc_no != last_back_trace_gc_no
+  if (GC_gc_no != GC_last_back_trace_gc_no
       && LIKELY(GC_gc_no > 1) /*< skip initial collection */) {
 #    ifdef KEEP_BACK_PTRS
     static GC_bool bt_in_progress = FALSE;
@@ -1457,7 +1452,7 @@ GC_notify_or_invoke_finalizers(void)
       bt_in_progress = FALSE;
     }
 #    endif
-    last_back_trace_gc_no = GC_gc_no;
+    GC_last_back_trace_gc_no = GC_gc_no;
 #    ifdef MAKE_BACK_GRAPH
     if (GC_print_back_height) {
       GC_print_back_graph_stats();
@@ -1500,9 +1495,9 @@ GC_notify_or_invoke_finalizers(void)
   }
 
   /* These variables require synchronization to avoid data race. */
-  if (last_finalizer_notification != GC_gc_no) {
+  if (GC_last_finalizer_notification != GC_gc_no) {
     notifier_fn = GC_finalizer_notifier;
-    last_finalizer_notification = GC_gc_no;
+    GC_last_finalizer_notification = GC_gc_no;
   }
   UNLOCK();
   if (notifier_fn != 0) {

@@ -120,10 +120,6 @@ GC_get_avg_stopped_mark_time_ns(void)
 
 #endif /* !NO_CLOCK */
 
-#ifndef GC_DISABLE_INCREMENTAL
-GC_INNER GC_bool GC_incremental = FALSE; /*< by default, stop the world */
-#endif
-
 GC_API int GC_CALL
 GC_is_incremental_mode(void)
 {
@@ -265,13 +261,7 @@ GC_get_time_limit_tv(void)
   tv.tv_nsec = GC_time_lim_nsec;
   return tv;
 }
-
-/* Time at which we stopped world.  Used only by `GC_timeout_stop_func()`. */
-STATIC CLOCK_TYPE GC_start_time = CLOCK_TYPE_INITIALIZER;
 #endif /* !NO_CLOCK */
-
-/* Number of attempts at finishing collection within `GC_time_limit`. */
-STATIC int GC_n_attempts = 0;
 
 /* Note: accessed holding the allocator lock. */
 STATIC GC_stop_func GC_default_stop_func = GC_never_stop_func;
@@ -538,8 +528,6 @@ GC_notify_full_gc(void)
   }
 }
 
-STATIC GC_bool GC_is_full_gc = FALSE;
-
 STATIC GC_bool GC_stopped_mark(GC_stop_func stop_func);
 STATIC void GC_finish_collection(void);
 
@@ -550,8 +538,6 @@ STATIC void GC_finish_collection(void);
 STATIC void
 GC_maybe_gc(void)
 {
-  static int n_partial_gcs = 0;
-
   GC_ASSERT(I_HOLD_LOCK());
   ASSERT_CANCEL_DISABLED();
   if (!GC_should_collect())
@@ -567,7 +553,7 @@ GC_maybe_gc(void)
   if (GC_parallel)
     GC_wait_for_reclaim();
 #endif
-  if (GC_need_full_gc || n_partial_gcs >= GC_full_freq) {
+  if (GC_need_full_gc || GC_n_partial_gcs >= GC_full_freq) {
     GC_COND_LOG_PRINTF(
         "***>Full mark for collection #%lu after %lu bytes allocated\n",
         (unsigned long)GC_gc_no + 1, (unsigned long)GC_bytes_allocd);
@@ -577,10 +563,10 @@ GC_maybe_gc(void)
     (void)GC_reclaim_all((GC_stop_func)0, TRUE);
     GC_clear_marks();
     EXIT_GC();
-    n_partial_gcs = 0;
+    GC_n_partial_gcs = 0;
     GC_is_full_gc = TRUE;
   } else {
-    n_partial_gcs++;
+    GC_n_partial_gcs++;
   }
 
   /*

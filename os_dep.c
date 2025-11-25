@@ -173,8 +173,6 @@ GC_INNER const char *
 GC_get_maps(void)
 {
   ssize_t result;
-  static char *maps_buf = NULL;
-  static size_t maps_buf_sz_m1 = 0;
   size_t maps_size;
 #  ifndef SINGLE_THREADED_PROCESS
   size_t old_maps_size = 0;
@@ -207,27 +205,28 @@ GC_get_maps(void)
 #  endif
 
   /*
-   * Read `/proc/self/maps` file, growing `maps_buf` as necessary.
+   * Read `/proc/self/maps` file, growing `GC_maps_buf` as necessary.
    * Note that we may not allocate conventionally, and thus cannot
    * use `stdio` functionality.
    */
   do {
     int f;
 
-    while (maps_size > maps_buf_sz_m1) {
+    while (maps_size > GC_maps_buf_sz_m1) {
 #  ifdef LINT2
-      /* Workaround passing tainted `maps_buf` to a tainted sink. */
-      GC_noop1_ptr(maps_buf);
+      /* Workaround passing tainted `GC_maps_buf` to a tainted sink. */
+      GC_noop1_ptr(GC_maps_buf);
 #  else
-      GC_scratch_recycle_no_gww(maps_buf, maps_buf_sz_m1 + 1);
+      GC_scratch_recycle_no_gww(GC_maps_buf, GC_maps_buf_sz_m1 + 1);
 #  endif
       /* Grow only by powers of 2, since we leak "too small" buffers. */
-      while (maps_size > maps_buf_sz_m1)
-        maps_buf_sz_m1 = (maps_buf_sz_m1 << 1) + 1;
-      maps_buf = GC_scratch_alloc(maps_buf_sz_m1 + 1);
-      if (NULL == maps_buf)
+      while (maps_size > GC_maps_buf_sz_m1)
+        GC_maps_buf_sz_m1 = (GC_maps_buf_sz_m1 << 1) + 1;
+      GC_maps_buf = GC_scratch_alloc(GC_maps_buf_sz_m1 + 1);
+      if (NULL == GC_maps_buf)
         ABORT_ARG1("Insufficient space for /proc/self/maps buffer",
-                   ", %lu bytes requested", (unsigned long)maps_buf_sz_m1 + 1);
+                   ", %lu bytes requested",
+                   (unsigned long)GC_maps_buf_sz_m1 + 1);
 #  ifndef SINGLE_THREADED_PROCESS
       /*
        * Recompute initial length, since we allocated.
@@ -238,7 +237,7 @@ GC_get_maps(void)
         ABORT("Cannot determine length of /proc/self/maps");
 #  endif
     }
-    GC_ASSERT(maps_buf_sz_m1 >= maps_size);
+    GC_ASSERT(GC_maps_buf_sz_m1 >= maps_size);
     f = open("/proc/self/maps", O_RDONLY);
     if (-1 == f)
       ABORT_ARG1("Cannot open /proc/self/maps", ": errno= %d", errno);
@@ -247,12 +246,12 @@ GC_get_maps(void)
 #  endif
     maps_size = 0;
     do {
-      result = GC_repeat_read(f, maps_buf, maps_buf_sz_m1);
+      result = GC_repeat_read(f, GC_maps_buf, GC_maps_buf_sz_m1);
       if (result < 0) {
         ABORT_ARG1("Failed to read /proc/self/maps", ": errno= %d", errno);
       }
       maps_size += (size_t)result;
-    } while ((size_t)result == maps_buf_sz_m1);
+    } while ((size_t)result == GC_maps_buf_sz_m1);
     close(f);
     if (0 == maps_size)
       ABORT("Empty /proc/self/maps");
@@ -264,13 +263,13 @@ GC_get_maps(void)
            maps_size);
     }
 #  endif
-  } while (maps_size > maps_buf_sz_m1
+  } while (maps_size > GC_maps_buf_sz_m1
 #  ifndef SINGLE_THREADED_PROCESS
            || maps_size < old_maps_size
 #  endif
   );
-  maps_buf[maps_size] = '\0';
-  return maps_buf;
+  GC_maps_buf[maps_size] = '\0';
+  return GC_maps_buf;
 }
 
 /*
@@ -1981,12 +1980,6 @@ GC_register_root_section(ptr_t static_root)
 #    define GC_INITIAL_MAX_ROOT_SIZE 100000
 STATIC size_t GC_max_root_size = GC_INITIAL_MAX_ROOT_SIZE;
 
-/* In the long run, a better data structure would also be nice... */
-STATIC struct GC_malloc_heap_list {
-  void *allocation_base;
-  struct GC_malloc_heap_list *next;
-} *GC_malloc_heap_l = NULL;
-
 /*
  * Is `p` the base of one of the `malloc` heap sections we already
  * know about?
@@ -2866,7 +2859,7 @@ GC_unmap_start(ptr_t start, size_t bytes)
 static void
 block_unmap_inner(ptr_t start_addr, size_t len)
 {
-  if (0 == start_addr)
+  if (NULL == start_addr)
     return;
 
 #  ifdef USE_WINALLOC
@@ -2968,7 +2961,7 @@ GC_remap(ptr_t start, size_t bytes)
   ptr_t start_addr = GC_unmap_start(start, bytes);
   ptr_t end_addr = GC_unmap_end(start, bytes);
   word len = (word)(end_addr - start_addr);
-  if (0 == start_addr) {
+  if (NULL == start_addr) {
     return;
   }
 
@@ -3051,9 +3044,9 @@ GC_unmap_gap(ptr_t start1, size_t bytes1, ptr_t start2, size_t bytes2)
   ptr_t end_addr = start2_addr;
 
   GC_ASSERT(start1 + bytes1 == start2);
-  if (0 == start1_addr)
+  if (NULL == start1_addr)
     start_addr = GC_unmap_start(start1, bytes1 + bytes2);
-  if (0 == start2_addr)
+  if (NULL == start2_addr)
     end_addr = GC_unmap_end(start1, bytes1 + bytes2);
   block_unmap_inner(start_addr, (size_t)(end_addr - start_addr));
 }
@@ -3216,13 +3209,6 @@ GC_or_pages(page_hash_table pht1, const word *pht2)
 
 #ifdef GWW_VDB
 
-/*
- * Note: this is still susceptible to overflow, if there are very large
- * allocations, and everything is dirty.
- */
-#  define GC_GWW_BUF_LEN (MAXHINCR * HBLKSIZE / 4096 /* x86 page size */)
-static PVOID gww_buf[GC_GWW_BUF_LEN];
-
 #  ifndef MPROTECT_VDB
 #    define GC_gww_dirty_init GC_dirty_init
 #  endif
@@ -3248,7 +3234,7 @@ GC_gww_read_dirty(GC_bool output_unneeded)
     GC_ULONG_PTR count;
 
     do {
-      PVOID *pages = gww_buf;
+      PVOID *pages = GC_gww_buf;
       DWORD page_size;
 
       count = GC_GWW_BUF_LEN;
@@ -3273,12 +3259,11 @@ GC_gww_read_dirty(GC_bool output_unneeded)
               GC_heap_sects[i].hs_bytes, pages, &count, &page_size)
           != 0) {
         static int warn_count = 0;
-        static const struct hblk *last_warned = NULL;
         struct hblk *start = (struct hblk *)GC_heap_sects[i].hs_start;
         size_t nblocks = divHBLKSZ(GC_heap_sects[i].hs_bytes);
 
-        if (i != 0 && last_warned != start && warn_count++ < 5) {
-          last_warned = start;
+        if (i != 0 && GC_gww_last_warned != start && warn_count++ < 5) {
+          GC_gww_last_warned = start;
           WARN("GC_gww_read_dirty unexpectedly failed at %p:"
                " Falling back to marking all pages dirty\n",
                start);
@@ -3392,7 +3377,6 @@ async_set_pht_entry_from_index(volatile page_hash_table db, size_t index)
  * seems to decrease the likelihood of some of the problems described below.
  */
 #    include <mach/vm_map.h>
-STATIC mach_port_t GC_task_self = 0;
 #    define PROTECT_INNER(addr, len, allow_write, C_msg_prefix)            \
       if (vm_protect(GC_task_self, (vm_address_t)(addr), (vm_size_t)(len), \
                      FALSE,                                                \
@@ -3918,10 +3902,6 @@ GC_handle_protected_regions_limit(void)
 
 #endif /* MPROTECT_VDB */
 
-#if !defined(THREADS) && (defined(PROC_VDB) || defined(SOFT_VDB))
-static pid_t saved_proc_pid; /*< `pid` used to compose `/proc` file names */
-#endif
-
 #ifdef PROC_VDB
 /*
  * This implementation assumes the Solaris new structured `/proc`
@@ -3959,7 +3939,6 @@ struct prasmap {
 
 #  define INITIAL_BUF_SZ 8192
 STATIC size_t GC_proc_buf_size = INITIAL_BUF_SZ;
-STATIC char *GC_proc_buf = NULL;
 STATIC int GC_proc_fd = -1;
 
 static GC_bool
@@ -3978,7 +3957,7 @@ proc_dirty_open_files(void)
     WARN("Could not set FD_CLOEXEC for /proc\n", 0);
 #  ifndef THREADS
   /* Updated on success only. */
-  saved_proc_pid = pid;
+  GC_saved_proc_pid = pid;
 #  endif
   return TRUE;
 }
@@ -4034,7 +4013,7 @@ GC_proc_read_dirty(GC_bool output_unneeded)
    * Note, this is not needed for the multi-threaded case because
    * `fork_child_proc()` reopens the file right after `fork()` call.
    */
-  if (getpid() != saved_proc_pid
+  if (getpid() != GC_saved_proc_pid
       && (-1 == GC_proc_fd /*< no need to retry */
           || (close(GC_proc_fd), !proc_dirty_open_files()))) {
     /* Failed to reopen the file.  Punt! */
@@ -4175,9 +4154,6 @@ open_proc_fd(pid_t pid, const char *slash_filename, int mode)
 
 typedef uint64_t pagemap_elem_t;
 
-static pagemap_elem_t *soft_vdb_buf;
-static int pagemap_fd;
-
 static GC_bool
 soft_dirty_open_files(void)
 {
@@ -4186,15 +4162,15 @@ soft_dirty_open_files(void)
   clear_refs_fd = open_proc_fd(pid, "/clear_refs", O_WRONLY);
   if (-1 == clear_refs_fd)
     return FALSE;
-  pagemap_fd = open_proc_fd(pid, "/pagemap", O_RDONLY);
-  if (-1 == pagemap_fd) {
+  GC_pagemap_fd = open_proc_fd(pid, "/pagemap", O_RDONLY);
+  if (-1 == GC_pagemap_fd) {
     close(clear_refs_fd);
     clear_refs_fd = -1;
     return FALSE;
   }
 #  ifndef THREADS
   /* Updated on success only. */
-  saved_proc_pid = pid;
+  GC_saved_proc_pid = pid;
 #  endif
   return TRUE;
 }
@@ -4209,7 +4185,7 @@ GC_dirty_update_child(void)
     return;
   }
   close(clear_refs_fd);
-  close(pagemap_fd);
+  close(GC_pagemap_fd);
   if (!soft_dirty_open_files())
     GC_incremental = FALSE;
 }
@@ -4242,9 +4218,9 @@ detect_soft_dirty_supported(ptr_t vaddr)
 
   for (;;) {
     /* Read the relevant PTE from the `pagemap` file. */
-    if (lseek(pagemap_fd, fpos, SEEK_SET) == (off_t)(-1))
+    if (lseek(GC_pagemap_fd, fpos, SEEK_SET) == (off_t)(-1))
       return FALSE;
-    if (PROC_READ(pagemap_fd, buf, sizeof(buf)) != (int)sizeof(buf))
+    if (PROC_READ(GC_pagemap_fd, buf, sizeof(buf)) != (int)sizeof(buf))
       return FALSE;
 
     /* Is the soft-dirty bit unset? */
@@ -4314,7 +4290,7 @@ GC_dirty_init(void)
 #    endif
 #  endif
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(NULL == soft_vdb_buf);
+  GC_ASSERT(NULL == GC_soft_vdb_buf);
 #  ifndef NO_SOFT_VDB_LINUX_VER_RUNTIME_CHECK
   if (!ensure_min_linux_ver(3, 18)) {
     GC_COND_LOG_PRINTF(
@@ -4324,25 +4300,21 @@ GC_dirty_init(void)
 #  endif
   if (!soft_dirty_open_files())
     return FALSE;
-  soft_vdb_buf = (pagemap_elem_t *)GC_scratch_alloc(VDB_BUF_SZ);
-  if (NULL == soft_vdb_buf)
+  GC_soft_vdb_buf = GC_scratch_alloc(VDB_BUF_SZ);
+  if (NULL == GC_soft_vdb_buf)
     ABORT("Insufficient space for /proc pagemap buffer");
-  if (!detect_soft_dirty_supported((ptr_t)soft_vdb_buf)) {
+  if (!detect_soft_dirty_supported(GC_soft_vdb_buf)) {
     GC_COND_LOG_PRINTF("Soft-dirty bit is not supported by kernel\n");
     /* Release the resources. */
-    GC_scratch_recycle_no_gww(soft_vdb_buf, VDB_BUF_SZ);
-    soft_vdb_buf = NULL;
+    GC_scratch_recycle_no_gww(GC_soft_vdb_buf, VDB_BUF_SZ);
+    GC_soft_vdb_buf = NULL;
     close(clear_refs_fd);
     clear_refs_fd = -1;
-    close(pagemap_fd);
+    close(GC_pagemap_fd);
     return FALSE;
   }
   return TRUE;
 }
-
-static off_t pagemap_buf_fpos; /*< valid only if `pagemap_buf_len > 0` */
-
-static size_t pagemap_buf_len;
 
 /*
  * Read bytes from `/proc/self/pagemap` file at given file position.
@@ -4360,11 +4332,11 @@ pagemap_buffered_read(size_t *pres, off_t fpos, size_t len,
 
   GC_ASSERT(GC_page_size != 0);
   GC_ASSERT(len > 0);
-  if (pagemap_buf_fpos <= fpos
-      && fpos < pagemap_buf_fpos + (off_t)pagemap_buf_len) {
+  if (GC_pagemap_buf_fpos <= fpos
+      && fpos < GC_pagemap_buf_fpos + (off_t)GC_pagemap_buf_len) {
     /* The requested data is already in the buffer. */
-    ofs = (size_t)(fpos - pagemap_buf_fpos);
-    res = (ssize_t)(pagemap_buf_fpos + pagemap_buf_len - fpos);
+    ofs = (size_t)(fpos - GC_pagemap_buf_fpos);
+    res = (ssize_t)(GC_pagemap_buf_fpos + GC_pagemap_buf_len - fpos);
   } else {
     off_t aligned_pos = fpos
                         & ~(off_t)(GC_page_size < VDB_BUF_SZ ? GC_page_size - 1
@@ -4373,9 +4345,9 @@ pagemap_buffered_read(size_t *pres, off_t fpos, size_t len,
     for (;;) {
       size_t count;
 
-      if ((0 == pagemap_buf_len
-           || pagemap_buf_fpos + (off_t)pagemap_buf_len != aligned_pos)
-          && lseek(pagemap_fd, aligned_pos, SEEK_SET) == (off_t)(-1))
+      if ((0 == GC_pagemap_buf_len
+           || GC_pagemap_buf_fpos + (off_t)GC_pagemap_buf_len != aligned_pos)
+          && lseek(GC_pagemap_fd, aligned_pos, SEEK_SET) == (off_t)(-1))
         ABORT_ARG2("Failed to lseek /proc/self/pagemap",
                    ": offset= %lu, errno= %d", (unsigned long)fpos, errno);
 
@@ -4392,7 +4364,7 @@ pagemap_buffered_read(size_t *pres, off_t fpos, size_t len,
       }
 
       GC_ASSERT(count % sizeof(pagemap_elem_t) == 0);
-      res = PROC_READ(pagemap_fd, soft_vdb_buf, count);
+      res = PROC_READ(GC_pagemap_fd, GC_soft_vdb_buf, count);
       if (res > (ssize_t)ofs)
         break;
       if (res <= 0)
@@ -4403,14 +4375,14 @@ pagemap_buffered_read(size_t *pres, off_t fpos, size_t len,
     }
 
     /* Save the buffer (file window) position and size. */
-    pagemap_buf_fpos = aligned_pos;
-    pagemap_buf_len = (size_t)res;
+    GC_pagemap_buf_fpos = aligned_pos;
+    GC_pagemap_buf_len = (size_t)res;
     res -= (ssize_t)ofs;
   }
 
   GC_ASSERT(ofs % sizeof(pagemap_elem_t) == 0);
   *pres = (size_t)res < len ? (size_t)res : len;
-  return &soft_vdb_buf[ofs / sizeof(pagemap_elem_t)];
+  return &((pagemap_elem_t *)GC_soft_vdb_buf)[ofs / sizeof(pagemap_elem_t)];
 }
 
 static void
@@ -4526,9 +4498,9 @@ GC_soft_read_dirty(GC_bool output_unneeded)
   GC_ASSERT(I_HOLD_LOCK());
 #  ifndef THREADS
   /* Similar as for `GC_proc_read_dirty`. */
-  if (getpid() != saved_proc_pid
+  if (getpid() != GC_saved_proc_pid
       && (-1 == clear_refs_fd /*< no need to retry */
-          || (close(clear_refs_fd), close(pagemap_fd),
+          || (close(clear_refs_fd), close(GC_pagemap_fd),
               !soft_dirty_open_files()))) {
     /* Failed to reopen the files. */
     if (!output_unneeded) {
@@ -4546,7 +4518,7 @@ GC_soft_read_dirty(GC_bool output_unneeded)
     size_t i;
 
     BZERO(GC_grungy_pages, sizeof(GC_grungy_pages));
-    pagemap_buf_len = 0; /*< invalidate `soft_vdb_buf` */
+    GC_pagemap_buf_len = 0; /*< invalidate `GC_soft_vdb_buf` */
 
     for (i = 0; i < GC_n_heap_sects; ++i) {
       ptr_t start = GC_heap_sects[i].hs_start;
@@ -4571,8 +4543,6 @@ GC_soft_read_dirty(GC_bool output_unneeded)
 #endif /* SOFT_VDB */
 
 #ifndef NO_MANUAL_VDB
-GC_INNER GC_bool GC_manual_vdb = FALSE;
-
 void
 GC_dirty_inner(const void *p)
 {
@@ -4587,7 +4557,7 @@ GC_dirty_inner(const void *p)
 #  endif
   async_set_pht_entry_from_index(GC_dirty_pages, index);
 }
-#endif /* !NO_MANUAL_VDB */
+#endif
 
 #ifndef GC_DISABLE_INCREMENTAL
 GC_INNER void
@@ -4760,7 +4730,6 @@ GC_remove_protection(struct hblk *h, size_t nblocks, GC_bool is_ptrfree)
  */
 
 #  include <mach/exception.h>
-#  include <mach/mach.h>
 #  include <mach/mach_error.h>
 #  include <mach/task.h>
 
@@ -4866,8 +4835,6 @@ typedef enum {
   GC_MP_DISCARDING,
   GC_MP_STOPPED
 } GC_mprotect_state_t;
-
-STATIC mach_port_t GC_exception_port = 0;
 
 #  ifdef THREADS
 STATIC mach_port_t GC_reply_port = 0;
@@ -5381,15 +5348,12 @@ catch_exception_raise(mach_port_t exception_port, mach_port_t thread,
      * faulting over and over, and we will hit the limit pretty quickly.
      */
 #  ifdef BROKEN_EXCEPTION_HANDLING
-    static const char *last_fault;
-    static int last_fault_count;
-
-    if (addr != last_fault) {
-      last_fault = addr;
-      last_fault_count = 0;
+    if (addr != GC_darwin_last_fault_addr) {
+      GC_darwin_last_fault_addr = addr;
+      GC_darwin_fault_count = 0;
     }
-    if (++last_fault_count < 32) {
-      if (last_fault_count == 1)
+    if (++GC_darwin_fault_count < 32) {
+      if (GC_darwin_fault_count == 1)
         WARN("Ignoring KERN_PROTECTION_FAILURE at %p\n", addr);
       return KERN_SUCCESS;
     }

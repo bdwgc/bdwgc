@@ -17,10 +17,6 @@
 
 #if !defined(PLATFORM_MACH_DEP) && !defined(SN_TARGET_PSP2)
 
-#  if defined(IA64) && !defined(THREADS)
-GC_INNER ptr_t GC_save_regs_ret_val = NULL;
-#  endif
-
 #  if defined(UNIX_LIKE) && !defined(STACK_NOT_SCANNED)
 #    include <signal.h>
 #    ifndef NO_GETCONTEXT

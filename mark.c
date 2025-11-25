@@ -1423,12 +1423,10 @@ GC_help_marker(word my_mark_no)
 static void
 alloc_mark_stack(size_t n)
 {
+  mse *new_stack;
 #ifdef GWW_VDB
-  static GC_bool GC_incremental_at_stack_alloc = FALSE;
-
   GC_bool recycle_old;
 #endif
-  mse *new_stack;
 
   GC_ASSERT(I_HOLD_LOCK());
   new_stack = (mse *)GC_scratch_alloc(n * sizeof(struct GC_ms_entry));
