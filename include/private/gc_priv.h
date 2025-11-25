@@ -981,6 +981,10 @@ EXTERN_C_END
 #  include <pthread.h> /*< for `pthread_t` */
 #endif
 
+#if defined(MPROTECT_VDB) && defined(DARWIN)
+#  include <mach/mach.h> /*< for `mach_port_t`, at least */
+#endif
+
 #if __STDC_VERSION__ >= 201112L
 #  include <assert.h> /*< for `static_assert` */
 #endif
@@ -1447,6 +1451,22 @@ struct roots {
 #  endif
 #endif /* !MAX_HEAP_SECTS */
 
+#ifdef GWW_VDB
+/*
+ * Note: this is still susceptible to overflow, if there are very large
+ * allocations, and everything is dirty.
+ */
+#  define GC_GWW_BUF_LEN (MAXHINCR * HBLKSIZE / 4096 /* x86 page size */)
+#endif
+
+#if !defined(NO_FIND_LEAK) && !defined(MAX_LEAKED)
+#  define MAX_LEAKED 40
+#endif
+
+#if !defined(SHORT_DBG_HDRS) && !defined(MAX_SMASHED)
+#  define MAX_SMASHED 20
+#endif
+
 typedef struct GC_ms_entry {
   ptr_t mse_start; /*< beginning of object, pointer-aligned one */
 #ifdef PARALLEL_MARK
@@ -1459,6 +1479,16 @@ typedef struct GC_ms_entry {
   word mse_descr;
 #endif
 } mse;
+
+/* This is used by `GC_call_with_gc_active`, `GC_push_all_stack_sections`. */
+struct GC_traced_stack_sect_s {
+  ptr_t saved_stack_ptr;
+#ifdef IA64
+  ptr_t saved_backing_store_ptr;
+  ptr_t backing_store_end;
+#endif
+  struct GC_traced_stack_sect_s *prev;
+};
 
 /*
  * Current state of marking.  Used to remember where we are during the
@@ -1505,6 +1535,29 @@ struct HeapSect {
   ptr_t hs_start;
   size_t hs_bytes;
 };
+
+#if defined(USE_WINALLOC) && !defined(REDIRECT_MALLOC)
+/* In the long run, a better data structure would also be nice... */
+struct GC_malloc_heap_list {
+  void *allocation_base;
+  struct GC_malloc_heap_list *next;
+};
+#endif
+
+#if defined(DYNAMIC_LOADING) && !defined(ANY_MSWIN) \
+    && !defined(USE_PROC_FOR_LIBRARIES) && defined(HAVE_DL_ITERATE_PHDR)
+struct load_segment_s {
+  ptr_t start;
+  ptr_t end;
+  /*
+   * The room for the second segment if we remove a `PT_GNU_RELRO` segment
+   * from the middle.
+   */
+  ptr_t start2;
+  ptr_t end2;
+};
+#  define MAX_LOAD_SEGS MAX_ROOT_SETS
+#endif
 
 #ifdef MAKE_BACK_GRAPH
 /* The maximum in-degree we handle directly. */
@@ -1685,9 +1738,36 @@ struct _GC_arrays {
 #define GC_non_gc_bytes_at_gc GC_arrays._non_gc_bytes_at_gc
   word _non_gc_bytes_at_gc;
 
+#ifndef NO_BLACK_LISTING
+  /*
+   * Average number of bytes between black-listed blocks.  Approximate.
+   * Counts only blocks that are "stack black-listed", i.e. that are
+   * problematic in the interior of an object.
+   */
+#  define GC_black_list_spacing GC_arrays._black_list_spacing
+  word _black_list_spacing;
+#endif
+
+#if !defined(ALWAYS_SMALL_CLEAR_STACK) && !defined(STACK_NOT_SCANNED) \
+    && !defined(THREADS)
+#  define GC_bytes_allocd_at_reset GC_arrays._bytes_allocd_at_reset
+  word _bytes_allocd_at_reset;
+
+  /* `GC_gc_no` value when we last did this. */
+#  define GC_stack_last_cleared GC_arrays._stack_last_cleared
+  word _stack_last_cleared;
+#endif
+
   /* The number of extra calls to `GC_mark_some` that we have made. */
 #define GC_mark_deficit GC_arrays._mark_deficit
   size_t _mark_deficit;
+
+/* Number of attempts at finishing collection within `GC_time_limit`. */
+#define GC_n_attempts GC_arrays._n_attempts
+  int _n_attempts;
+
+#define GC_n_partial_gcs GC_arrays._n_partial_gcs
+  int _n_partial_gcs;
 
 #ifndef NO_BLACK_LISTING
   /*
@@ -1743,6 +1823,38 @@ struct _GC_arrays {
   volatile AO_t _bytes_allocd_tmp;
 #else
   mse *_mark_stack_top;
+#endif
+
+#if defined(USE_WINALLOC) && !defined(REDIRECT_MALLOC)
+#  define GC_malloc_heap_l GC_arrays._malloc_heap_l
+  struct GC_malloc_heap_list *_malloc_heap_l;
+#endif
+
+#ifdef GWW_VDB
+#  define GC_gww_last_warned GC_arrays._gww_last_warned
+  const struct hblk *_gww_last_warned;
+#endif
+
+#ifdef PROC_VDB
+#  define GC_proc_buf GC_arrays._proc_buf
+  char *_proc_buf;
+#endif
+
+#ifdef SOFT_VDB
+#  define GC_soft_vdb_buf GC_arrays._soft_vdb_buf
+#  define GC_pagemap_buf_len GC_arrays._pagemap_buf_len
+#  define GC_pagemap_buf_fpos GC_arrays._pagemap_buf_fpos
+#  define GC_pagemap_fd GC_arrays._pagemap_fd
+  ptr_t _soft_vdb_buf;
+  size_t _pagemap_buf_len;
+  off_t _pagemap_buf_fpos; /*< valid only if `_pagemap_buf_len > 0` */
+  int _pagemap_fd;
+#endif
+
+#if !defined(THREADS) && (defined(PROC_VDB) || defined(SOFT_VDB))
+  /* `pid` used to compose `/proc` file names. */
+#  define GC_saved_proc_pid GC_arrays._saved_proc_pid
+  pid_t _saved_proc_pid;
 #endif
 
 #ifdef DYNAMIC_POINTER_MASK
@@ -1813,10 +1925,37 @@ struct _GC_arrays {
 #define GC_objects_are_marked GC_arrays._objects_are_marked
   GC_bool _objects_are_marked;
 
-#ifndef GC_DISABLE_INCREMENTAL
+#define GC_is_full_gc GC_arrays._is_full_gc
+  GC_bool _is_full_gc;
+
+#ifdef GC_DISABLE_INCREMENTAL
+#  define GC_incremental FALSE
+#else
+  /*
+   * Using incremental/generational collection.  Assumes dirty bits are
+   * being maintained.
+   */
+#  define GC_incremental GC_arrays._incremental
+  GC_bool _incremental;
+
 #  define GC_should_start_incremental_collection \
     GC_arrays._should_start_incremental_collection
   GC_bool _should_start_incremental_collection;
+#endif
+
+#ifdef GWW_VDB
+#  define GC_incremental_at_stack_alloc GC_arrays._incremental_at_stack_alloc
+  GC_bool _incremental_at_stack_alloc;
+#endif
+
+#ifndef NO_MANUAL_VDB
+  /*
+   * The incremental collection is in the manual VDB mode.
+   * Assumes `GC_incremental` is `TRUE`.  Should not be modified once
+   * `GC_incremental` is set to `TRUE`.
+   */
+#  define GC_manual_vdb GC_arrays._manual_vdb
+  GC_bool _manual_vdb;
 #endif
 
 #ifndef GC_NO_FINALIZATION
@@ -1961,6 +2100,37 @@ struct _GC_arrays {
   volatile ptr_t _first_nonempty;
 #endif
 
+#ifndef THREADS
+  /* Note: `NULL` value means we are not inside `GC_do_blocking()` call. */
+#  define GC_blocked_sp GC_arrays._blocked_sp
+  ptr_t _blocked_sp;
+
+#  ifdef IA64
+#    define GC_blocked_register_sp GC_arrays._blocked_register_sp
+  ptr_t _blocked_register_sp;
+
+  /* Value returned from register flushing routine (`ar.bsp`). */
+#    define GC_save_regs_ret_val GC_arrays._save_regs_ret_val
+  ptr_t _save_regs_ret_val;
+#  endif
+
+  /*
+   * Points to the "frame" data held in stack by the innermost
+   * `GC_call_with_gc_active()`.  `NULL` if no such "frame" active.
+   */
+#  define GC_traced_stack_sect GC_arrays._traced_stack_sect
+  struct GC_traced_stack_sect_s *_traced_stack_sect;
+#endif
+
+#if defined(E2K) && defined(THREADS) || defined(IA64)
+  /*
+   * The bottom of the register stack of the primordial thread.
+   * E2K: holds the offset (`ps_ofs`) instead of a pointer.
+   */
+#  define GC_register_stackbottom GC_arrays._register_stackbottom
+  ptr_t _register_stackbottom;
+#endif
+
 #ifdef ENABLE_TRACE
 #  define GC_trace_ptr GC_arrays._trace_ptr
   ptr_t _trace_ptr;
@@ -2035,13 +2205,38 @@ struct _GC_arrays {
   ptr_t *_gcjobjfreelist;
 #endif
 
+#ifdef NEED_PROC_MAPS
+#  define GC_maps_buf GC_arrays._maps_buf
+#  define GC_maps_buf_sz_m1 GC_arrays._maps_buf_sz_m1
+  char *_maps_buf;
+  size_t _maps_buf_sz_m1;
+#endif
+
 #define GC_fo_entries GC_arrays._fo_entries
   size_t _fo_entries;
 
+#ifndef NO_DEBUGGING
+#  define GC_last_root_set GC_arrays._last_root_set
+#  ifndef HAS_REAL_READER_LOCK
+  size_t _last_root_set; /*< no shared access */
+#  elif defined(AO_HAVE_load) || defined(AO_HAVE_store)
+  volatile AO_t _last_root_set;
+#  else
+  /* Note: a race is acceptable, it is just a cached index. */
+  volatile size_t _last_root_set;
+#  endif
+#endif
+
 #ifndef GC_NO_FINALIZATION
+#  define GC_last_finalizer_notification GC_arrays._last_finalizer_notification
 #  define GC_dl_hashtbl GC_arrays._dl_hashtbl
 #  define GC_fnlz_roots GC_arrays._fnlz_roots
 #  define GC_log_fo_table_size GC_arrays._log_fo_table_size
+  word _last_finalizer_notification;
+#  if defined(KEEP_BACK_PTRS) || defined(MAKE_BACK_GRAPH)
+#    define GC_last_back_trace_gc_no GC_arrays._last_back_trace_gc_no
+  word _last_back_trace_gc_no;
+#  endif
 #  ifndef GC_LONG_REFS_NOT_NEEDED
 #    define GC_ll_hashtbl GC_arrays._ll_hashtbl
   struct dl_hashtbl_s _ll_hashtbl;
@@ -2063,6 +2258,19 @@ struct _GC_arrays {
 #ifdef TRACE_BUF
 #  define GC_trace_buf_pos GC_arrays._trace_buf_pos
   size_t _trace_buf_pos; /*< an index in the circular buffer */
+#endif
+
+#if defined(MPROTECT_VDB) && defined(DARWIN)
+#  define GC_task_self GC_arrays._task_self
+#  define GC_exception_port GC_arrays._exception_port
+  mach_port_t _task_self;
+  mach_port_t _exception_port;
+#  ifdef BROKEN_EXCEPTION_HANDLING
+#    define GC_darwin_last_fault_addr GC_arrays._darwin_last_fault_addr
+#    define GC_darwin_fault_count GC_arrays._darwin_fault_count
+  static const char *_darwin_last_fault_addr;
+  static int _darwin_fault_count;
+#  endif
 #endif
 
   /*
@@ -2183,6 +2391,17 @@ struct _GC_arrays {
   size_t _envfile_length;
 #endif
 
+#ifndef NO_CLOCK
+#  ifndef NO_DEBUGGING
+  /* The time that the collector was initialized at. */
+#    define GC_init_time GC_arrays._init_time
+  CLOCK_TYPE _init_time;
+#  endif
+  /* Time at which we stopped world.  Used only by `GC_timeout_stop_func()`. */
+#  define GC_start_time GC_arrays._start_time
+  CLOCK_TYPE _start_time;
+#endif
+
 #ifndef ANY_MSWIN
   /*
    * The hash table header.  Used only to check whether a range
@@ -2190,6 +2409,22 @@ struct _GC_arrays {
    */
 #  define GC_root_index GC_arrays._root_index
   struct roots *_root_index[RT_SIZE];
+#endif
+
+#ifndef NO_FIND_LEAK
+#  define GC_leaked GC_arrays._leaked
+  ptr_t _leaked[MAX_LEAKED];
+#endif
+
+#ifndef SHORT_DBG_HDRS
+  /*
+   * List of smashed (clobbered) locations.  We defer printing these,
+   * since we cannot always print them nicely with the allocator lock held.
+   * We put them here instead of in `GC_arrays`, since it may be useful to
+   * be able to look at them with the debugger.
+   */
+#  define GC_smashed GC_arrays._smashed
+  ptr_t _smashed[MAX_SMASHED];
 #endif
 
 #if defined(SAVE_CALL_CHAIN) && !defined(DONT_SAVE_TO_LAST_STACK) \
@@ -2314,6 +2549,29 @@ struct _GC_arrays {
    */
 #define GC_top_index GC_arrays._top_index
   bottom_index *_top_index[TOP_SZ];
+
+#if defined(DYNAMIC_LOADING) && !defined(ANY_MSWIN) \
+    && !defined(USE_PROC_FOR_LIBRARIES) && defined(HAVE_DL_ITERATE_PHDR)
+/*
+ * Instead of registering `PT_LOAD` sections directly, we keep them in
+ * a temporary list, and filter them by excluding `PT_GNU_RELRO` segments.
+ * Processing `PT_GNU_RELRO` sections with `GC_exclude_static_roots` instead
+ * would be superficially cleaner.  But it runs into trouble if a client
+ * registers an overlapping segment, which unfortunately seems quite
+ * possible.
+ */
+#  define GC_n_load_segs GC_arrays._n_load_segs
+#  define GC_load_segs_overflow_warned GC_arrays._load_segs_overflow_warned
+#  define GC_load_segs GC_arrays._load_segs
+  size_t _n_load_segs;
+  GC_bool _load_segs_overflow_warned;
+  struct load_segment_s _load_segs[MAX_LOAD_SEGS];
+#endif
+
+#ifdef GWW_VDB
+#  define GC_gww_buf GC_arrays._gww_buf
+  void *_gww_buf[GC_GWW_BUF_LEN];
+#endif
 
 #ifdef ECOS
 #  ifndef ECOS_GC_MEMORY_SIZE
@@ -2485,16 +2743,6 @@ struct blocking_data {
   void *client_data; /*< and result */
 };
 
-/* This is used by `GC_call_with_gc_active`, `GC_push_all_stack_sections`. */
-struct GC_traced_stack_sect_s {
-  ptr_t saved_stack_ptr;
-#ifdef IA64
-  ptr_t saved_backing_store_ptr;
-  ptr_t backing_store_end;
-#endif
-  struct GC_traced_stack_sect_s *prev;
-};
-
 #ifdef THREADS
 /*
  * Process all "traced stack sections" - scan entire stack except for
@@ -2509,24 +2757,6 @@ GC_push_all_stack_sections(ptr_t lo, ptr_t hi,
  * Updated on every `GC_push_all_stacks()` call.
  */
 GC_EXTERN word GC_total_stacksize;
-
-#else
-/* Note: `NULL` value means we are not inside `GC_do_blocking()` call. */
-GC_EXTERN ptr_t GC_blocked_sp;
-
-/*
- * Points to the "frame" data held in stack by the innermost
- * `GC_call_with_gc_active()`.  `NULL` if no such "frame" active.
- */
-GC_EXTERN struct GC_traced_stack_sect_s *GC_traced_stack_sect;
-#endif /* !THREADS */
-
-#if defined(E2K) && defined(THREADS) || defined(IA64)
-/*
- * The bottom of the register stack of the primordial thread.
- * E2K: holds the offset (`ps_ofs`) instead of a pointer.
- */
-GC_EXTERN ptr_t GC_register_stackbottom;
 #endif
 
 #ifdef IA64
@@ -2746,6 +2976,8 @@ GC_API_PRIV GC_push_other_roots_proc GC_push_other_roots;
 #ifdef THREADS
 GC_INNER void GC_push_thread_structures(void);
 #endif
+
+GC_INNER void GC_push_reclaim_structures(void);
 
 /*
  * A pointer set to `GC_push_typed_structures_proc` lazily so that we can
@@ -3042,13 +3274,6 @@ void GC_add_trace_entry(const char *caller_fn_name, ptr_t arg1, ptr_t arg2);
  * unreasonable immediate heap growth.
  */
 #  define BL_LIMIT GC_black_list_spacing
-
-/*
- * Average number of bytes between black-listed blocks.  Approximate.
- * Counts only blocks that are "stack black-listed", i.e. that are
- * problematic in the interior of an object.
- */
-GC_EXTERN word GC_black_list_spacing;
 
 /*
  * The interval between unsuppressed warnings about repeated allocation
@@ -3574,12 +3799,6 @@ GC_INNER void GC_stackbase_info_update_after_fork(void);
 #  define GC_dirty(p) (void)(p)
 #  define REACHABLE_AFTER_DIRTY(p) (void)(p)
 #else
-/*
- * The incremental collection is in the manual VDB mode.
- * Assumes `GC_incremental` is `TRUE`.  Should not be modified once
- * `GC_incremental` is set to `TRUE`.
- */
-GC_EXTERN GC_bool GC_manual_vdb;
 
 #  define GC_auto_incremental (GC_incremental && !GC_manual_vdb)
 
@@ -3595,15 +3814,7 @@ GC_API_PATCHABLE void GC_dirty_inner(const void *p);
 #  define REACHABLE_AFTER_DIRTY(p) GC_reachable_here(p)
 #endif /* !NO_MANUAL_VDB */
 
-#ifdef GC_DISABLE_INCREMENTAL
-#  define GC_incremental FALSE
-#else
-/*
- * Using incremental/generational collection.  Assumes dirty bits are
- * being maintained.
- */
-GC_EXTERN GC_bool GC_incremental;
-
+#ifndef GC_DISABLE_INCREMENTAL
 /* Virtual dirty bit (VDB) implementations; each one exports the following. */
 
 /*
@@ -3870,10 +4081,7 @@ GC_EXTERN GC_bool GC_write_disabled;
 #  ifdef MSWINCE
 GC_EXTERN GC_bool GC_dont_query_stack_min;
 #  endif
-#elif defined(IA64)
-/* Value returned from register flushing routine (`ar.bsp`). */
-GC_EXTERN ptr_t GC_save_regs_ret_val;
-#endif /* !THREADS */
+#endif /* THREADS */
 
 #ifdef THREAD_LOCAL_ALLOC
 GC_EXTERN GC_bool GC_world_stopped; /*< defined in `alloc.c` file */

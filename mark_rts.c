@@ -441,23 +441,15 @@ GC_remove_roots_subregion(ptr_t b, ptr_t e)
 GC_API int GC_CALL
 GC_is_tmp_root(void *p)
 {
-#  ifndef HAS_REAL_READER_LOCK
-  static size_t last_root_set; /*< initialized to 0; no shared access */
-#  elif defined(AO_HAVE_load) || defined(AO_HAVE_store)
-  static volatile AO_t last_root_set;
-#  else
-  /* Note: a race is acceptable, it is just a cached index. */
-  static volatile size_t last_root_set;
-#  endif
   size_t i;
   int res;
 
   READER_LOCK();
   /* First try the cached root. */
 #  if defined(AO_HAVE_load) && defined(HAS_REAL_READER_LOCK)
-  i = AO_load(&last_root_set);
+  i = AO_load(&GC_last_root_set);
 #  else
-  i = last_root_set;
+  i = GC_last_root_set;
 #  endif
   if (i < n_root_sets
       && ADDR_INSIDE((ptr_t)p, GC_static_roots[i].r_start,
@@ -470,9 +462,9 @@ GC_is_tmp_root(void *p)
                       GC_static_roots[i].r_end)) {
         res = (int)GC_static_roots[i].r_tmp;
 #  if defined(AO_HAVE_store) && defined(HAS_REAL_READER_LOCK)
-        AO_store(&last_root_set, i);
+        AO_store(&GC_last_root_set, i);
 #  else
-        last_root_set = i;
+        GC_last_root_set = i;
 #  endif
         break;
       }
@@ -927,6 +919,7 @@ GC_push_roots(GC_bool all, ptr_t cold_gc_frame)
    * Mark from the collector internal roots if those might otherwise
    * have been excluded.
    */
+  GC_push_reclaim_structures();
 #ifndef GC_NO_FINALIZATION
   GC_push_finalizer_structures();
 #endif

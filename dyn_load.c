@@ -234,13 +234,6 @@ GC_register_dynamic_libraries(void)
 #    define ELFSIZE ARCH_ELFSIZE
 #  endif
 
-#  if defined(OPENBSD)
-#    include <sys/param.h>
-#    if (OpenBSD >= 200519) && !defined(HAVE_DL_ITERATE_PHDR)
-#      define HAVE_DL_ITERATE_PHDR
-#    endif
-#  endif /* OPENBSD */
-
 #  if defined(DGUX) || defined(HURD) || defined(NACL) || defined(SCO_ELF) \
       || defined(SERENITY)                                                \
       || ((defined(ANY_BSD) || defined(LINUX)) && defined(__ELF__))
@@ -505,74 +498,32 @@ GC_register_main_static_data(void)
 
 #    else /* !USE_PROC_FOR_LIBRARIES */
 
-/*
- * The following is the preferred way to walk dynamic libraries for
- * `glibc` 2.2.4+.  Unfortunately, it does not work for older versions.
- */
-
-#      if GC_GLIBC_PREREQ(2, 3) || defined(HOST_ANDROID)
-/* Are others OK here, too? */
-#        ifndef HAVE_DL_ITERATE_PHDR
-#          define HAVE_DL_ITERATE_PHDR
-#        endif
-#        ifdef HOST_ANDROID
+#      ifdef HOST_ANDROID
 /* Android headers might have no such definition for some targets. */
 EXTERN_C_BEGIN
 extern int dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *),
                            void *data);
 EXTERN_C_END
-#        endif
-#      endif /* __GLIBC__ >= 2 || HOST_ANDROID */
+#      endif
 
-#      if defined(__DragonFly__) || defined(__FreeBSD_kernel__) \
-          || (defined(FREEBSD) && __FreeBSD__ >= 7)
+#      ifdef HAVE_DL_ITERATE_PHDR
+#        if defined(__DragonFly__) || defined(__FreeBSD_kernel__) \
+            || (defined(FREEBSD) && __FreeBSD__ >= 7)
 /*
  * On the FreeBSD system, any target system at major version 7 shall have
  * `dl_iterate_phdr`; therefore, we need not make it weak as below.
  */
-#        ifndef HAVE_DL_ITERATE_PHDR
-#          define HAVE_DL_ITERATE_PHDR
-#        endif
-#        define DL_ITERATE_PHDR_STRONG
-#      elif defined(HAVE_DL_ITERATE_PHDR)
+#          define DL_ITERATE_PHDR_STRONG
+#        else
 /*
  * We have the header files for a `glibc` that includes `dl_iterate_phdr`.
  * It may still not be available in the library on the target system.
  * Thus we also treat it as a weak symbol.
  */
 EXTERN_C_BEGIN
-#        pragma weak dl_iterate_phdr
+#          pragma weak dl_iterate_phdr
 EXTERN_C_END
-#      endif
-
-#      ifdef HAVE_DL_ITERATE_PHDR
-
-#        ifdef PT_GNU_RELRO
-/*
- * Instead of registering `PT_LOAD` sections directly, we keep them
- * in a temporary list, and filter them by excluding `PT_GNU_RELRO`
- * segments.  Processing `PT_GNU_RELRO` sections with
- * `GC_exclude_static_roots` instead would be superficially cleaner.
- * But it runs into trouble if a client registers an overlapping segment,
- * which unfortunately seems quite possible.
- */
-
-#          define MAX_LOAD_SEGS MAX_ROOT_SETS
-
-static struct load_segment {
-  ptr_t start;
-  ptr_t end;
-  /*
-   * The room for the second segment if we remove a `PT_GNU_RELRO` segment
-   * from the middle.
-   */
-  ptr_t start2;
-  ptr_t end2;
-} load_segs[MAX_LOAD_SEGS];
-
-static int n_load_segs;
-static GC_bool load_segs_overflow;
-#        endif /* PT_GNU_RELRO */
+#        endif
 
 STATIC int
 GC_register_dynlib_callback(struct dl_phdr_info *info, size_t size, void *ptr)
@@ -625,20 +576,20 @@ GC_register_dynlib_callback(struct dl_phdr_info *info, size_t size, void *ptr)
        */
       my_start = PTR_ALIGN_DOWN(my_start, ALIGNMENT);
 #          endif
-      if (n_load_segs >= MAX_LOAD_SEGS) {
-        if (!load_segs_overflow) {
+      if (GC_n_load_segs >= MAX_LOAD_SEGS) {
+        if (!GC_load_segs_overflow_warned) {
           WARN("Too many PT_LOAD segments;"
                " registering as roots directly...\n",
                0);
-          load_segs_overflow = TRUE;
+          GC_load_segs_overflow_warned = TRUE;
         }
         GC_add_roots_inner(my_start, my_end, TRUE);
       } else {
-        load_segs[n_load_segs].start = my_start;
-        load_segs[n_load_segs].end = my_end;
-        load_segs[n_load_segs].start2 = NULL;
-        load_segs[n_load_segs].end2 = NULL;
-        ++n_load_segs;
+        GC_load_segs[GC_n_load_segs].start = my_start;
+        GC_load_segs[GC_n_load_segs].end = my_end;
+        GC_load_segs[GC_n_load_segs].start2 = NULL;
+        GC_load_segs[GC_n_load_segs].end2 = NULL;
+        ++GC_n_load_segs;
       }
 #        else
       GC_add_roots_inner(my_start, my_end, TRUE);
@@ -656,7 +607,7 @@ GC_register_dynlib_callback(struct dl_phdr_info *info, size_t size, void *ptr)
        * by this entry is typically a subset of a previously
        * encountered `PT_LOAD` segment, so we need to exclude it.
        */
-      int j;
+      size_t j;
 
 #          ifdef CHERI_PURECAP
       my_start = load_ptr + p->p_vaddr;
@@ -664,17 +615,19 @@ GC_register_dynlib_callback(struct dl_phdr_info *info, size_t size, void *ptr)
       my_start = (ptr_t)((GC_uintptr_t)load_ptr + p->p_vaddr);
 #          endif
       my_end = my_start + p->p_memsz;
-      for (j = n_load_segs; --j >= 0;) {
-        if (ADDR_INSIDE(my_start, load_segs[j].start, load_segs[j].end)) {
-          if (load_segs[j].start2 != NULL) {
+      for (j = GC_n_load_segs; j > 0;) {
+        j--;
+        if (ADDR_INSIDE(my_start, GC_load_segs[j].start,
+                        GC_load_segs[j].end)) {
+          if (GC_load_segs[j].start2 != NULL) {
             WARN("More than one GNU_RELRO segment per load one\n", 0);
           } else {
-            GC_ASSERT(
-                ADDR_GE(PTR_ALIGN_UP(load_segs[j].end, GC_page_size), my_end));
+            GC_ASSERT(ADDR_GE(PTR_ALIGN_UP(GC_load_segs[j].end, GC_page_size),
+                              my_end));
             /* Remove it from the existing load segment. */
-            load_segs[j].end2 = load_segs[j].end;
-            load_segs[j].end = my_start;
-            load_segs[j].start2 = my_end;
+            GC_load_segs[j].end2 = GC_load_segs[j].end;
+            GC_load_segs[j].end = my_start;
+            GC_load_segs[j].start2 = my_end;
             /*
              * Note that `start2` may be greater than `end2` because of
              * `p->p_memsz` value is multiple of page size.
@@ -683,8 +636,7 @@ GC_register_dynlib_callback(struct dl_phdr_info *info, size_t size, void *ptr)
           break;
         }
         if (0 == j && 0 == GC_has_static_roots)
-          WARN("Failed to find PT_GNU_RELRO segment"
-               " inside PT_LOAD region\n",
+          WARN("Failed to find PT_GNU_RELRO segment inside PT_LOAD region\n",
                0);
         /*
          * No warning reported in case of the callback is present because
@@ -729,29 +681,21 @@ GC_register_dynamic_libraries_dl_iterate_phdr(void)
     return FALSE;
 
 #        ifdef PT_GNU_RELRO
-  {
-    static GC_bool excluded_segs = FALSE;
-    n_load_segs = 0;
-    load_segs_overflow = FALSE;
-    if (UNLIKELY(!excluded_segs)) {
-      GC_exclude_static_roots_inner((ptr_t)load_segs,
-                                    (ptr_t)load_segs + sizeof(load_segs));
-      excluded_segs = TRUE;
-    }
-  }
+  GC_n_load_segs = 0;
+  GC_load_segs_overflow_warned = FALSE;
 #        endif
 
   did_something = 0;
   dl_iterate_phdr(GC_register_dynlib_callback, &did_something);
   if (did_something) {
 #        ifdef PT_GNU_RELRO
-    int i;
+    size_t i;
 
-    for (i = 0; i < n_load_segs; ++i) {
-      if (ADDR_LT(load_segs[i].start, load_segs[i].end))
-        GC_add_roots_inner(load_segs[i].start, load_segs[i].end, TRUE);
-      if (ADDR_LT(load_segs[i].start2, load_segs[i].end2))
-        GC_add_roots_inner(load_segs[i].start2, load_segs[i].end2, TRUE);
+    for (i = 0; i < GC_n_load_segs; ++i) {
+      if (ADDR_LT(GC_load_segs[i].start, GC_load_segs[i].end))
+        GC_add_roots_inner(GC_load_segs[i].start, GC_load_segs[i].end, TRUE);
+      if (ADDR_LT(GC_load_segs[i].start2, GC_load_segs[i].end2))
+        GC_add_roots_inner(GC_load_segs[i].start2, GC_load_segs[i].end2, TRUE);
     }
 #        endif
   } else {
