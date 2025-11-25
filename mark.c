@@ -774,10 +774,10 @@ GC_mark_from(mse *mark_stack_top, mse *mark_stack, mse *mark_stack_limit)
             = descr - PTRS_TO_BYTES(SPLIT_RANGE_PTRS - 1);
 #ifdef ENABLE_TRACE
         if (ADDR_INSIDE(GC_trace_ptr, current_p, current_p + descr)) {
-          GC_log_printf("GC #%lu: large section; start %p, len %lu,"
-                        " splitting at %p\n",
-                        (unsigned long)GC_gc_no, (void *)current_p,
-                        (unsigned long)descr, (void *)limit);
+          GC_log_printf(
+              "GC #%lu: large section; start %p, len %lu, splitting at %p\n",
+              (unsigned long)GC_gc_no, (void *)current_p, (unsigned long)descr,
+              (void *)limit);
         }
 #endif
         /*

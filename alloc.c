@@ -311,9 +311,9 @@ GC_timeout_stop_func(void)
 #  endif
   if (time_diff >= GC_time_limit
       && (time_diff > GC_time_limit || nsec_diff >= GC_time_lim_nsec)) {
-    GC_COND_LOG_PRINTF("Abandoning stopped marking after %lu ms %lu ns"
-                       " (attempt %d)\n",
-                       time_diff, nsec_diff, GC_n_attempts);
+    GC_COND_LOG_PRINTF(
+        "Abandoning stopped marking after %lu ms %lu ns (attempt %d)\n",
+        time_diff, nsec_diff, GC_n_attempts);
     return TRUE;
   }
 
@@ -1046,9 +1046,9 @@ GC_stopped_mark(GC_stop_func stop_func)
       GC_world_stopped_total_divisor = ++divisor;
       if (GC_PRINT_STATS_FLAG && 0 == abandoned_at) {
         GC_ASSERT(divisor != 0);
-        GC_log_printf("World-stopped marking took %lu ms %lu ns"
-                      " (%u ms in average)\n",
-                      time_diff, ns_frac_diff, total_time / divisor);
+        GC_log_printf(
+            "World-stopped marking took %lu ms %lu ns (%u ms in average)\n",
+            time_diff, ns_frac_diff, total_time / divisor);
       }
     }
   }
@@ -1407,12 +1407,12 @@ GC_finish_collection(void)
     /* A convenient place to output finalization statistics. */
     GC_print_finalization_stats();
 #  endif
-    GC_log_printf("Finalize and initiate sweep took %lu ms %lu ns"
-                  " + %lu ms %lu ns\n",
-                  MS_TIME_DIFF(finalize_time, start_time),
-                  NS_FRAC_TIME_DIFF(finalize_time, start_time),
-                  MS_TIME_DIFF(done_time, finalize_time),
-                  NS_FRAC_TIME_DIFF(done_time, finalize_time));
+    GC_log_printf(
+        "Finalize and initiate sweep took %lu ms %lu ns + %lu ms %lu ns\n",
+        MS_TIME_DIFF(finalize_time, start_time),
+        NS_FRAC_TIME_DIFF(finalize_time, start_time),
+        MS_TIME_DIFF(done_time, finalize_time),
+        NS_FRAC_TIME_DIFF(done_time, finalize_time));
   }
 #elif !defined(SMALL_CONFIG) && !defined(GC_NO_FINALIZATION)
   if (GC_print_stats)

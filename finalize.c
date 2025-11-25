@@ -1527,11 +1527,11 @@ GC_print_finalization_stats(void)
 
   for (fo = GC_fnlz_roots.finalize_now; fo != NULL; fo = fo_next(fo))
     ++ready;
-  GC_log_printf("%lu finalization-ready objects;"
-                " %ld/%ld short/long links cleared\n",
-                ready, (long)GC_old_dl_entries - (long)GC_dl_hashtbl.entries,
-                (long)IF_LONG_REFS_PRESENT_ELSE(
-                    GC_old_ll_entries - GC_ll_hashtbl.entries, 0));
+  GC_log_printf(
+      "%lu finalization-ready objects; %ld/%ld short/long links cleared\n",
+      ready, (long)GC_old_dl_entries - (long)GC_dl_hashtbl.entries,
+      (long)IF_LONG_REFS_PRESENT_ELSE(
+          GC_old_ll_entries - GC_ll_hashtbl.entries, 0));
 }
 #  endif /* !SMALL_CONFIG */
 

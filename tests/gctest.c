@@ -843,8 +843,8 @@ test_generic_malloc_or_special(const void *p)
   }
   p2 = checkOOM(GC_GENERIC_OR_SPECIAL_MALLOC(10, kind));
   if (GC_get_kind_and_size(p2, NULL) != kind) {
-    GC_printf("GC_generic_or_special_malloc:"
-              " unexpected kind of returned object\n");
+    GC_printf(
+        "GC_generic_or_special_malloc: unexpected kind of returned object\n");
     FAIL;
   }
   GC_FREE(p2);
@@ -1727,9 +1727,9 @@ run_one_test(void)
       p = checkOOM(GC_memalign(i, 17));
       AO_fetch_and_add1(&collectable_count);
       if (ADDR(p) % i != 0 || *(int *)p != 0 || GC_base(p) != p) {
-        GC_printf("GC_memalign(%u,17) produced incorrect result:"
-                  " %p (base= %p)\n",
-                  (unsigned)i, p, GC_base(p));
+        GC_printf(
+            "GC_memalign(%u,17) produced incorrect result: %p (base= %p)\n",
+            (unsigned)i, p, GC_base(p));
         FAIL;
       }
       if (i >= (size_t)GC_GRANULE_BYTES && i <= HBLKSIZE)
@@ -1758,9 +1758,9 @@ run_one_test(void)
     AO_fetch_and_add1(&collectable_count);
     if ((ADDR(p) & 0x1ff) != 0 || *(int *)p != 0 || GC_base(p) != p
         || (GC_size(p) & 0x1e0 /* at least */) != 0) {
-      GC_printf("GC_pvalloc() produced incorrect result:"
-                " %p (base= %p, size= %lu)\n",
-                p, GC_base(p), (unsigned long)GC_size(p));
+      GC_printf(
+          "GC_pvalloc() produced incorrect result: %p (base= %p, size= %lu)\n",
+          p, GC_base(p), (unsigned long)GC_size(p));
       FAIL;
     }
   }
@@ -2195,8 +2195,7 @@ check_heap_stats(void)
 #  endif
     if (finalized_count > finalizable_count
         || finalized_count < finalizable_count / 2) {
-      GC_printf("Finalized %d/%d objects - "
-                "finalization is probably broken\n",
+      GC_printf("Finalized %d/%d objects - finalization is probably broken\n",
                 finalized_count, finalizable_count);
       FAIL;
     } else {
