@@ -114,10 +114,9 @@ GC_register_main_static_data(void)
 void
 GC_dump_meminfo(MEMORY_BASIC_INFORMATION *buf)
 {
-  GC_printf("BaseAddress= 0x%lx, AllocationBase= 0x%lx,"
-            " RegionSize= 0x%lx(%lu)\n",
-            buf->BaseAddress, buf->AllocationBase, buf->RegionSize,
-            buf->RegionSize);
+  GC_printf(
+      "BaseAddress= 0x%lx, AllocationBase= 0x%lx, RegionSize= 0x%lx(%lu)\n",
+      buf->BaseAddress, buf->AllocationBase, buf->RegionSize, buf->RegionSize);
   GC_printf("\tAllocationProtect= 0x%lx, State= 0x%lx, Protect= 0x%lx, "
             "Type= 0x%lx\n",
             buf->AllocationProtect, buf->State, buf->Protect, buf->Type);
@@ -578,8 +577,7 @@ GC_register_dynlib_callback(struct dl_phdr_info *info, size_t size, void *ptr)
 #          endif
       if (GC_n_load_segs >= MAX_LOAD_SEGS) {
         if (!GC_load_segs_overflow_warned) {
-          WARN("Too many PT_LOAD segments;"
-               " registering as roots directly...\n",
+          WARN("Too many PT_LOAD segments; registering as roots directly...\n",
                0);
           GC_load_segs_overflow_warned = TRUE;
         }

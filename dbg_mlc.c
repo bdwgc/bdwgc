@@ -212,8 +212,8 @@ GC_generate_random_backtrace(void)
 
   GC_ASSERT(I_DONT_HOLD_LOCK());
   if (GC_try_to_collect(GC_never_stop_func) == 0) {
-    GC_err_printf("Cannot generate a backtrace: "
-                  "garbage collection is disabled!\n");
+    GC_err_printf(
+        "Cannot generate a backtrace: garbage collection is disabled!\n");
     return;
   }
 
@@ -1022,9 +1022,8 @@ GC_debug_register_finalizer(void *obj, GC_finalization_proc fn, void *cd,
     return;
   }
   if ((ptr_t)obj - base != sizeof(oh)) {
-    GC_err_printf("GC_debug_register_finalizer called with"
-                  " non-base-pointer %p\n",
-                  obj);
+    GC_err_printf(
+        "GC_debug_register_finalizer called with non-base-pointer %p\n", obj);
   }
   if (0 == fn) {
     GC_register_finalizer(base, 0, NULL, &my_old_fn, &my_old_cd);
@@ -1149,8 +1148,7 @@ GC_debug_toggleref_add(void *obj, int is_strong_ref)
   ptr_t base = (ptr_t)GC_base(obj);
 
   if ((ptr_t)obj - base != sizeof(oh)) {
-    GC_err_printf("GC_debug_toggleref_add called with"
-                  " non-base-pointer %p\n",
+    GC_err_printf("GC_debug_toggleref_add called with non-base-pointer %p\n",
                   obj);
   }
   return GC_toggleref_add(base, is_strong_ref);

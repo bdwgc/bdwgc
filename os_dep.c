@@ -1441,8 +1441,7 @@ GC_get_main_stack_base(void)
     }
     (void)pthread_attr_destroy(&attr);
   }
-  WARN("pthread_getattr_np or pthread_attr_getstack failed"
-       " for main thread\n",
+  WARN("pthread_getattr_np or pthread_attr_getstack failed for main thread\n",
        0);
 #  endif
 #  ifdef STACKBOTTOM
@@ -3265,7 +3264,7 @@ GC_gww_read_dirty(GC_bool output_unneeded)
         if (i != 0 && GC_gww_last_warned != start && warn_count++ < 5) {
           GC_gww_last_warned = start;
           WARN("GC_gww_read_dirty unexpectedly failed at %p:"
-               " Falling back to marking all pages dirty\n",
+               " falling back to marking all pages dirty\n",
                start);
         }
         if (!output_unneeded) {
@@ -5043,8 +5042,7 @@ GC_mprotect_thread(void *arg)
          * not die...
          */
 #  ifdef BROKEN_EXCEPTION_HANDLING
-        GC_err_printf("mach_msg failed with %d %s while sending "
-                      "exc reply\n",
+        GC_err_printf("mach_msg failed with %d %s while sending exc reply\n",
                       (int)r, mach_error_string(r));
 #  else
         ABORT("mach_msg failed while sending exception reply");
@@ -5108,15 +5106,14 @@ GC_dirty_init(void)
      * `GC_mach_handler_thread`).  For now, we just disable incremental
      * mode if `fork()` handling is requested by the client.
      */
-    WARN("Can't turn on GC incremental mode as fork()"
-         " handling requested\n",
+    WARN("Cannot turn on GC incremental mode as fork() handling requested\n",
          0);
     return FALSE;
   }
 #  endif
 
-  GC_VERBOSE_LOG_PRINTF("Initializing mach/darwin mprotect"
-                        " virtual dirty bit implementation\n");
+  GC_VERBOSE_LOG_PRINTF(
+      "Initializing mach/darwin mprotect virtual dirty bit implementation\n");
 #  ifdef BROKEN_EXCEPTION_HANDLING
   WARN("Enabling workarounds for various darwin exception handling bugs\n", 0);
 #  endif

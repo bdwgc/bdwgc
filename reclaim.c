@@ -804,8 +804,8 @@ GC_print_block_list(void)
 {
   struct Print_stats pstats;
 
-  GC_printf("kind(0=ptrfree/1=normal/2=unc.),"
-            "obj_sz,#marks_set,#objs_in_block\n");
+  GC_printf(
+      "kind(0=ptrfree/1=normal/2=unc.),obj_sz,#marks_set,#objs_in_block\n");
   BZERO(&pstats, sizeof(pstats));
   GC_apply_to_all_blocks(GC_print_block_descr, &pstats);
   GC_printf("blocks= %lu, total_bytes= %lu\n",

@@ -82,8 +82,8 @@ new_back_edges(void)
     return result;
   }
   if (GC_n_back_edge_structs >= MAX_BACK_EDGE_STRUCTS - 1) {
-    ABORT("Needed too much space for back edges: adjust "
-          "MAX_BACK_EDGE_STRUCTS");
+    ABORT("Needed too much space for back edges:"
+          " adjust MAX_BACK_EDGE_STRUCTS");
   }
   return &GC_back_edge_space[GC_n_back_edge_structs++];
 }
@@ -582,18 +582,16 @@ void
 GC_print_back_graph_stats(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
-  GC_printf("Maximum backwards height of reachable objects"
-            " at GC #%lu is %lu\n",
-            (unsigned long)GC_gc_no,
-            (unsigned long)GC_backgraph_deepest_height);
+  GC_printf(
+      "Maximum backwards height of reachable objects at GC #%lu is %lu\n",
+      (unsigned long)GC_gc_no, (unsigned long)GC_backgraph_deepest_height);
   if (GC_backgraph_deepest_height > GC_backgraph_max_deepest_h) {
     ptr_t obj = GC_backgraph_deepest_obj;
 
     GC_backgraph_max_deepest_h = GC_backgraph_deepest_height;
     UNLOCK();
-    GC_err_printf(
-        "The following unreachable object is last in a longest chain "
-        "of unreachable objects:\n");
+    GC_err_printf("The following unreachable object is last"
+                  " in a longest chain of unreachable objects:\n");
     GC_print_heap_obj(obj);
     LOCK();
   }
