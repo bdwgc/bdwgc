@@ -35,6 +35,13 @@ typedef struct {
   struct hblk *block;
 } page_entry;
 
+/* Declare symbols externally visible for debugging purpose. */
+EXTERN_C_BEGIN
+extern page_entry GC_sums[NSUMS];
+extern int GC_n_dirty_errors, GC_n_faulted_dirty_errors;
+extern unsigned long GC_n_clean, GC_n_dirty;
+EXTERN_C_END
+
 page_entry GC_sums[NSUMS] = { { FALSE, 0, 0, NULL } };
 
 /* Record of pages on which we saw a write fault. */
