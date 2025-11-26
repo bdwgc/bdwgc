@@ -1004,7 +1004,6 @@ if (enable_docs)
             docs/platforms/README.sgi
             docs/platforms/README.solaris2
             docs/platforms/README.symbian
-            docs/platforms/README.uts
             docs/platforms/README.win32
             docs/platforms/README.win64
           DESTINATION "${CMAKE_INSTALL_DOCDIR}/docs/platforms")

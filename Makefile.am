@@ -238,7 +238,6 @@ dist_docdocsplatforms_DATA = \
     docs/platforms/README.sgi \
     docs/platforms/README.solaris2 \
     docs/platforms/README.symbian \
-    docs/platforms/README.uts \
     docs/platforms/README.win32 \
     docs/platforms/README.win64
 
