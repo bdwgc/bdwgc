@@ -1838,7 +1838,7 @@ GC_push_all_eager(void *bottom, void *top)
 
 #if !defined(NEED_FIXUP_POINTER) && !defined(NO_ALL_INTERIOR_POINTERS)
 GC_INNER void
-GC_push_all_stack(ptr_t bottom, ptr_t top)
+GC_push_all_stack(void *bottom, void *top)
 {
   GC_ASSERT(I_HOLD_LOCK());
   if (GC_all_interior_pointers
