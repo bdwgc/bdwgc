@@ -61,7 +61,7 @@ endif()
 # Customize the build by passing "-D<option_name>=ON|OFF" in the command line.
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(build_cord "Build cord library" ON)
-option(build_tests "Build tests" OFF)
+option(build_tests "Build tests" ON)
 option(enable_docs "Build and install documentation" ON)
 option(enable_threads "Support threads" ${default_enable_threads})
 option(enable_parallel_mark "Parallelize marking and free list construction" ON)

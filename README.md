@@ -197,7 +197,7 @@ the tests using CMake:
 ```sh
 mkdir out
 cd out
-cmake -D build_tests=ON ..
+cmake ..
 cmake --build .
 ctest
 ```
