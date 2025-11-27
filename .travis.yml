@@ -845,7 +845,7 @@ script:
          CFLAGS_EXTRA="$CFLAGS_EXTRA" LDFLAGS="$LDFLAGS";
   fi
 - if [[ "$CMAKE_OPTIONS" != "" ]]; then
-    cmake $CMAKE_OPTIONS -Dbuild_tests=ON -Denable_werror=ON -Werror=dev .
+    cmake $CMAKE_OPTIONS -Denable_werror=ON -Werror=dev .
     && cmake --build . $CMAKE_BUILD_OPTIONS --parallel;
   fi
 - if [[ "$CMAKE_OPTIONS" != "" ]]; then
