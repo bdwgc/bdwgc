@@ -663,9 +663,9 @@ GC_push_all_stack_sections(ptr_t lo /* top */, ptr_t hi /* bottom */,
   while (traced_stack_sect != NULL) {
     GC_ASSERT(HOTTER_THAN(lo, (ptr_t)traced_stack_sect));
 #  ifdef STACK_GROWS_UP
-    GC_push_all_stack((ptr_t)traced_stack_sect, lo);
+    GC_push_all_stack(traced_stack_sect, lo);
 #  else
-    GC_push_all_stack(lo, (ptr_t)traced_stack_sect);
+    GC_push_all_stack(lo, traced_stack_sect);
 #  endif
     lo = traced_stack_sect->saved_stack_ptr;
     GC_ASSERT(lo != NULL);

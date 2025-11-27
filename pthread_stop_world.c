@@ -944,8 +944,8 @@ GC_push_all_stacks(void)
 #  endif
 #  ifdef NACL
       /* Push `reg_storage` as roots, this will cover the reg context. */
-      GC_push_all_stack((ptr_t)p->reg_storage,
-                        (ptr_t)(p->reg_storage + NACL_GC_REG_STORAGE_SIZE));
+      GC_push_all_stack(p->reg_storage,
+                        p->reg_storage + NACL_GC_REG_STORAGE_SIZE);
       total_size += NACL_GC_REG_STORAGE_SIZE * sizeof(ptr_t);
 #  endif
 #  ifdef E2K

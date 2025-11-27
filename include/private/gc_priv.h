@@ -2922,7 +2922,7 @@ GC_INNER GC_bool GC_collection_in_progress(void);
 #  define GC_push_all_stack(b, t) GC_push_all_eager(b, t)
 #else
 /* Same as `GC_push_all` but consider interior pointers as valid. */
-GC_INNER void GC_push_all_stack(ptr_t b, ptr_t t);
+GC_INNER void GC_push_all_stack(void *b, void *t);
 #endif
 
 #ifdef NO_VDB_FOR_STATIC_ROOTS
