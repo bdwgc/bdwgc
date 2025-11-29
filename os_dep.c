@@ -5454,7 +5454,7 @@ GC_INNER void GC_print_callers(struct callinfo info[NFRAMES])
 #               endif
                 name = result_buf;
             } while (0);
-#         endif /* LINUX */
+#         endif
           GC_err_printf("\t\t%s\n", name);
 #         if defined(GC_HAVE_BUILTIN_BACKTRACE) \
              && !defined(GC_BACKTRACE_SYMBOLS_BROKEN)
