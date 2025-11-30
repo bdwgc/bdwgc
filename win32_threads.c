@@ -1423,13 +1423,14 @@ GC_INNER void GC_start_world(void)
 # ifdef GC_ASSERTIONS
     DWORD thread_id = GetCurrentThreadId();
 # endif
-  int i;
 
   GC_ASSERT(I_HOLD_LOCK());
 #ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     LONG my_max = GC_get_max_thread_index();
     GC_bool pending_delete;
+    int i;
+
     for (i = 0; i <= my_max; i++) {
       GC_thread t = (GC_thread)(dll_thread_table + i);
       if (t -> suspended) {
