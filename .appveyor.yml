@@ -24,7 +24,7 @@ environment:
   - TARGET: cmake
     CFLAGS_EXTRA: -DNO_FIND_LEAK
     CMAKE_CONFIG: Release
-    CMAKE_OPTIONS: -Dbuild_tests=OFF -DCMAKE_BUILD_TYPE=MinSizeRel -Denable_parallel_mark=OFF
+    CMAKE_OPTIONS: -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=MinSizeRel -Denable_parallel_mark=OFF
   - TARGET: cmake
     CMAKE_OPTIONS: -Denable_gc_assertions=ON -Denable_thread_local_alloc=OFF -Ddisable_single_obj_compilation=ON
   - TARGET: cmake
@@ -34,7 +34,7 @@ environment:
     CMAKE_OPTIONS: -A Win32 -Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_large_config=ON
   - TARGET: cmake
     CMAKE_CONFIG: Release
-    CMAKE_OPTIONS: -A ARM64 -Dbuild_tests=OFF -DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON
+    CMAKE_OPTIONS: -A ARM64 -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON
   - TARGET: cmake-bcc
     CFLAGS_EXTRA: -DCONSOLE_LOG
     CMAKE_OPTIONS: -Denable_cplusplus=ON -Denable_gc_assertions=ON
