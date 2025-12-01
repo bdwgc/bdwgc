@@ -1,3 +1,71 @@
+2025-11-10  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/de.c [!WIN32] (main): Add trailing "\n" to format string of
+	`fprintf()` call (after "^W"); add a space before "^D" in format string
+	of another `fprintf()` call.
+
+2025-11-05  Ivan Maidanski <ivmai@mail.ru>
+
+	* os_dep.c [MPROTECT_VDB && DARWIN] (catch_exception_raise):
+	If `GC_mprotect_state` is `GC_MP_STOPPED`, then return `KERN_SUCCESS`
+	instead of printing error message and calling `FWD()`.
+
+2025-10-31  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gcconfig.h [NEED_CALLINFO && LINUX && !SMALL_CONFIG
+	&& !CALLINFO_USE_ADDR2LINE && !REDIRECT_MALLOC]
+	(CALLINFO_USE_ADDR2LINE): New macro; add comment.
+	* os_dep.c [NEED_CALLINFO] (GC_print_callers): Check
+	`CALLINFO_USE_ADDR2LINE` macro instead of `LINUX` and `SMALL_CONFIG`;
+	move `stop` local variable inside `for` loop; move `pipe` local
+	variable to the inner block.
+
+2025-10-25  Ivan Maidanski <ivmai@mail.ru>
+
+	* pthread_support.c (GC_pthread_detach): Call `GC_init_parallel()` if
+	`parallel_initialized` is false; add comment.
+
+2025-10-25  Ivan Maidanski <ivmai@mail.ru>
+
+	* pthread_support.c [CAN_HANDLE_FORK] (is_thread_registered_inner):
+	New `static` function.
+	* win32_threads.c [CAN_HANDLE_FORK] (is_thread_registered_inner):
+	Likewise.
+	* pthread_support.c [CAN_HANDLE_FORK] (GC_fork_prepare_proc): Call
+	`GC_wait_for_gc_completion(TRUE)` only if the thread is registered in
+	the collector.
+	* win32_threads.c [CAN_HANDLE_FORK] (GC_fork_prepare_proc): Likewise.
+
+2025-10-21  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/overview.html: Fix typo in surname (David Detlefs).
+
+2025-10-21  Ivan Maidanski <ivmai@mail.ru>
+
+	* tools/setjmp_t.c (main): Fix typos ("to push registers",
+	"getcontext") in printed message.
+
+2012-09-09  Ivan Maidanski <ivmai@mail.ru>
+
+	* alloc.c (GC_stopped_mark, GC_try_to_collect_general): Use GC_noop6
+	instead of var-args GC_noop.
+	* include/private/gc_priv.h (GC_noop): Replace var-args (and
+	platform-specific) prototype with GC_noop6 one.
+	* mark.c (GC_noop): Replace with GC_noop6 (with all arguments
+	ignored); refine comment.
+
+2012-09-09  Ivan Maidanski <ivmai@mail.ru>
+
+	* misc.c (GC_init): Remove dummy GC_noop call from Lint-only code.
+	* tests/test.c (main): Likewise.
+
+2012-09-08  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_locks.h (GC_noop1): Remove prototype (since
+	already declared in gc_priv.h).
+	* pthread_support.c (GC_pause): Replace varargs GC_noop invocation
+	(with a single argument) to GC_noop1.
+
 [7.2t]
 
 2025-10-17  Ivan Maidanski <ivmai@mail.ru>
