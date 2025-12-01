@@ -60,8 +60,8 @@ endif()
 
 # Customize the build by passing "-D<option_name>=ON|OFF" in the command line.
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+# `option(BUILD_TESTING "Build tests" ON)` - the standard one
 option(build_cord "Build cord library" ON)
-option(build_tests "Build tests" ON)
 option(enable_docs "Build and install documentation" ON)
 option(enable_threads "Support threads" ${default_enable_threads})
 option(enable_parallel_mark "Parallelize marking and free list construction" ON)
@@ -836,7 +836,7 @@ if (install_headers)
           DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 endif(install_headers)
 
-if (build_tests)
+if (BUILD_TESTING)
   SET(CTEST_ENVIRONMENT
       "GC_PROMPT_DISABLED=1")
   if (build_cord)
@@ -967,8 +967,8 @@ if (build_tests)
     target_link_libraries(weakmaptest
                 PRIVATE gc ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST})
     add_test(NAME weakmaptest COMMAND weakmaptest)
-  endif()
-endif(build_tests)
+  endif(enable_disclaim)
+endif()
 
 if (enable_docs)
   install(FILES AUTHORS ChangeLog LICENSE README.md

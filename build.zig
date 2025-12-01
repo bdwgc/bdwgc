@@ -631,8 +631,7 @@ pub fn build(b: *std.Build) void {
         b.installArtifact(cord);
     }
 
-    // Note: there is no `build_tests` option, as the tests are built
-    // only if `test` step is requested.
+    // Note: the tests are built only if `test` step is requested.
     const test_step = b.step("test", "Run tests");
     addTest(b, gc, test_step, flags, "gctest", "tests/gctest.c");
     if (build_cord

@@ -39,7 +39,7 @@ Notes:
   * Specify `-D enable_cplusplus=ON` option to build `gccpp` and `gctba`
     libraries (i.e. the ones that provide bdwgc C++ support);
 
-  * Specify `-D build_tests=OFF` option to skip compilation of the tests.
+  * Specify `-D BUILD_TESTING=OFF` option to skip compilation of the tests.
 
 You can also run cmake from a build directory to build outside of the root of
 the source tree - just specify the path to the latter, e.g.:
