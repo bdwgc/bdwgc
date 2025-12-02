@@ -136,17 +136,17 @@ install:
 
 build_script:
 - cmd: if %TARGET%==cmake (
-    mkdir out && cd out
+    mkdir build && cd build
     && cmake %CMAKE_OPTIONS% -Denable_werror=ON -DCFLAGS_EXTRA="%CFLAGS_EXTRA%" ..
     && cmake --build . --config %CMAKE_CONFIG% --verbose --parallel )
 - cmd: if %TARGET%==cmake-mingw (
     set "path=C:\Program Files\CMake\bin;C:\%MINGW_FOLDER%\bin"
-    && mkdir out && cd out
+    && mkdir build && cd build
     && cmake -G "MinGW Makefiles" %CMAKE_OPTIONS% -Denable_werror=ON -DCFLAGS_EXTRA="%CFLAGS_EXTRA%" ..
     && cmake --build . --config %CMAKE_CONFIG% --verbose --parallel )
 - cmd: if %TARGET%==cmake-msys (
     set "path=C:\msys64\usr\bin;%path%"
-    && mkdir out && cd out
+    && mkdir build && cd build
     && cmake -G "MSYS Makefiles" %CMAKE_OPTIONS% -Denable_werror=ON -DCFLAGS_EXTRA="%CFLAGS_EXTRA%" ..
     && cmake --build . --config %CMAKE_CONFIG% --verbose --parallel )
 - cmd: if %TARGET%==nmake (
@@ -186,7 +186,7 @@ build_script:
     && set "watcom=%cd%\..\watcom"
     && set "path=C:\Program Files\CMake\bin;%cd%\..\watcom\binnt"
     && set "include=%cd%\..\watcom\h\nt;%cd%\..\watcom\h"
-    && mkdir out && cd out
+    && mkdir build && cd build
     && cmake -G "Watcom WMake" %CMAKE_OPTIONS% -Denable_werror=ON -DCFLAGS_EXTRA="%CFLAGS_EXTRA%" ..
     && cmake --build . --config %CMAKE_CONFIG% --verbose )
 - cmd: if %TARGET%==cmake-bcc (
@@ -195,7 +195,7 @@ build_script:
     && set "path=C:\Program Files\CMake\bin;%cd%\..\Bcc55\Bin"
     && echo -I"%cd%\..\Bcc55\Include" > %cd%\..\Bcc55\Bin\bcc32.cfg
     && echo -L"%cd%\..\Bcc55\Lib;%cd%\..\Bcc55\Lib\PSDK" > %cd%\..\Bcc55\Bin\ilink32.cfg
-    && mkdir out && cd out
+    && mkdir build && cd build
     && cmake -G "Borland Makefiles" %CMAKE_OPTIONS% -Denable_werror=ON -DCFLAGS_EXTRA="%CFLAGS_EXTRA%" ..
     && cmake --build . --config %CMAKE_CONFIG% --verbose --parallel )
 
