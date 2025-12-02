@@ -195,8 +195,8 @@ The simplest way to build `gc` library (as well as `cord` library) and run
 the tests using CMake:
 
 ```sh
-mkdir out
-cd out
+mkdir build
+cd build
 cmake ..
 cmake --build .
 ctest
