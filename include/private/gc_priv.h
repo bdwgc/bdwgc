@@ -839,8 +839,17 @@ GC_API_PRIV GC_abort_func GC_on_abort;
   } else                                                              \
     ABORT(msg)
 
-/* Exit process abnormally, but without making a mess (e.g. out of memory). */
-#define EXIT() (GC_on_abort(NULL), exit(1 /* `EXIT_FAILURE` */))
+/*
+ * Exit process abnormally, but without making a mess (e.g. out of memory).
+ * Note: some compilers (e.g. `lcc-e2k`) report a warning if a function with
+ * a `noreturn` attribute (`exit()` in this case) is used in an expression,
+ * thus we use `do { ... } while (0)` instead of `(GC_on_abort(0), exit(1))`.
+ */
+#define EXIT()                    \
+  do {                            \
+    GC_on_abort(NULL);            \
+    exit(1 /* `EXIT_FAILURE` */); \
+  } while (0)
 
 /*
  * Print warning message, e.g. almost out of memory.  The argument (if any)
