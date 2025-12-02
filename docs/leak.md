@@ -135,15 +135,16 @@ other platforms.
 ## Simplified leak detection under Linux
 
 It should be possible to run the collector in the leak detection mode on
-a program a.out under Linux/i686 and Linux/x86_64 as follows:
+a program `a.out` under Linux/i686 and Linux/x86_64 as follows:
 
-  1. If possible, ensure that a.out is a single-threaded executable. On some
-     platforms this does not work at all for the multi-threaded programs.
+  1. If possible, ensure that file `a.out` is a single-threaded executable.
+     On some platforms this does not work at all for the multi-threaded
+     programs.
 
   2. If possible, ensure that the `addr2line` program is installed
      in `/usr/bin`. (It comes with most Linux distributions.)
 
-  3. If possible, compile your program, which we will call `a.out`, with full
+  3. If possible, compile your program, let's call it as `a.out`, with full
      debug information. This will improve the quality of the leak reports.
      With this approach, it is no longer necessary to call `GC_` routines
      explicitly, though that can also improve the quality of the leak reports.
