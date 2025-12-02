@@ -45,8 +45,8 @@ You can also run cmake from a build directory to build outside of the root of
 the source tree - just specify the path to the latter, e.g.:
 
 ```sh
-mkdir out
-cd out
+mkdir build
+cd build
 cmake -G "Visual Studio 9 2008" ..
 cmake --build . --config Release
 ctest --build-config Release -V
@@ -55,8 +55,8 @@ ctest --build-config Release -V
 Here is a sample for Linux (build, test and install, w/o C++ support):
 
 ```sh
-mkdir out
-cd out
+mkdir build
+cd build
 cmake ..
 cmake --build .
 ctest
