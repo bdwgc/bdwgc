@@ -91,12 +91,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - uses: korandoru/setup-zig@v1
       with:
         zig-version: ${{ matrix.zig_version }}
-    - name: Build
+
+    - name: Build and run tests
       run: >
-        zig build -Dtarget=${{ matrix.ttriple }}
+        zig build
+        -Dtarget=${{ matrix.ttriple }}
         -Dlinkage=${{ matrix.linkage }}
         -Dbuild_cord=${{ matrix.build_cord }}
         -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
