@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+
     - name: Show clang-format version
-      run: >
-        clang-format --version
+      run: clang-format --version
+
     - name: Perform checking by clang-format
       run: >
         find . -iname '*.c' -o -iname '*.cc' -o -iname '*.cpp' -o -iname '*.h'

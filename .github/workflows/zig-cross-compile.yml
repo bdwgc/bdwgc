@@ -115,12 +115,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - uses: korandoru/setup-zig@v1
       with:
         zig-version: ${{ matrix.zig_version }}
+
     - name: Build
       run: >
-        zig build -Dtarget=${{ matrix.ttriple }}
+        zig build
+        -Dtarget=${{ matrix.ttriple }}
         -Dlinkage=${{ matrix.linkage }}
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_threads=${{ matrix.enable_threads }}

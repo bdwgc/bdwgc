@@ -1,7 +1,7 @@
 # This workflow is for cmake-based build/test using Cosmo (Cosmopolitan).
 name: cmake cosmo
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   build:
@@ -30,39 +30,31 @@ jobs:
       with:
         version: latest
 
-    - name: Set reusable strings
-      # Turn repeated input strings into step outputs.
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
     - name: Configure CMake targetting Cosmo
       run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        ${{ matrix.cmake_generator_opt }}
-        -DBUILD_SHARED_LIBS=OFF
-        -Denable_single_obj_compilation=${{ matrix.single_obj_compilation }}
-        -DCMAKE_C_COMPILER=cosmocc
-        -DCMAKE_CXX_COMPILER=cosmoc++
+        cmake -B ${{ github.workspace }}/build
+        -S ${{ github.workspace }}
+        -DBUILD_SHARED_LIBS=off
         -DCMAKE_AR=`type -p cosmoar`
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_C_COMPILER=cosmocc
+        -DCMAKE_CXX_COMPILER=cosmoc++
         -Ddisable_gc_debug=${{ matrix.disable_gc_debug }}
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_gc_assertions=${{ matrix.gc_assertions }}
         -Denable_large_config=${{ matrix.large_config }}
         -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
         -Denable_rwlock=${{ matrix.enable_rwlock }}
+        -Denable_single_obj_compilation=${{ matrix.single_obj_compilation }}
         -Denable_threads=${{ matrix.enable_threads }}
-        -Denable_werror=ON
+        -Denable_werror=on
         -Werror=dev
-        -S ${{ github.workspace }}
 
     - name: Build
       run: >
-        cmake --build ${{ steps.strings.outputs.build-output-dir }}
+        cmake --build ${{ github.workspace }}/build
         --config ${{ matrix.build_type }} --verbose --parallel
 
     - name: Test
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      working-directory: ${{ github.workspace }}/build
       run: ctest --build-config ${{ matrix.build_type }} --verbose --parallel 8

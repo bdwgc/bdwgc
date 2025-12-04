@@ -1,7 +1,7 @@
 # This workflow is for CMake-based build/test running on multiple platforms.
 name: cmake build
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   build:
@@ -88,36 +88,30 @@ jobs:
         include:
         - os: windows-latest
           c_compiler: gcc
-          cmake_generator_opt: '-G "Unix Makefiles"'
+          cmake_generator_opt: -G "Unix Makefiles"
         - os: windows-latest
           c_compiler: clang
-          cmake_generator_opt: '-G "Unix Makefiles"'
+          cmake_generator_opt: -G "Unix Makefiles"
         - os: windows-11-arm
           c_compiler: gcc
-          cmake_generator_opt: '-G "Unix Makefiles"'
+          cmake_generator_opt: -G "Unix Makefiles"
         - os: windows-11-arm
           c_compiler: clang
-          cmake_generator_opt: '-G "Unix Makefiles"'
+          cmake_generator_opt: -G "Unix Makefiles"
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set reusable strings
-      # Turn repeated input strings into step outputs.
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory.
+      # Configure CMake in a build subdirectory.
       run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        cmake -B ${{ github.workspace }}/build
+        -S ${{ github.workspace }}
         ${{ matrix.cmake_generator_opt }}
         -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -Ddisable_gc_debug=${{ matrix.disable_gc_debug }}
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_gc_assertions=${{ matrix.gc_assertions }}
@@ -125,17 +119,16 @@ jobs:
         -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
         -Denable_rwlock=${{ matrix.enable_rwlock }}
         -Denable_threads=${{ matrix.enable_threads }}
-        -Denable_werror=ON
+        -Denable_werror=on
         -Werror=dev
-        -S ${{ github.workspace }}
 
     - name: Build
       # Build the code with the given configuration.
       run: >
-        cmake --build ${{ steps.strings.outputs.build-output-dir }}
+        cmake --build ${{ github.workspace }}/build
         --config ${{ matrix.build_type }} --verbose --parallel
 
     - name: Test
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      working-directory: ${{ github.workspace }}/build
       # Execute tests defined by the CMake configuration.
       run: ctest --build-config ${{ matrix.build_type }} --verbose --parallel 8
