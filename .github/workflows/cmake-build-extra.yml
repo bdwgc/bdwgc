@@ -1,0 +1,84 @@
+# This workflow is for CMake-based build/test with extra flags.
+name: cmake build extra
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.c_compiler }} ${{ matrix.build_type }} dll:${{ matrix.shared_libs }} ${{ matrix.cmake_options }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 6
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        include:
+        - os: ubuntu-latest
+          build_type: Debug
+          c_compiler: clang
+          shared_libs: on
+          cmake_options: -Denable_atomic_uncollectable=on -Denable_munmap=off
+        - os: ubuntu-24.04-arm
+          build_type: MinSizeRel
+          c_compiler: clang
+          shared_libs: on
+          cmake_options: -Denable_gc_assertions=on
+        - os: ubuntu-latest
+          build_type: Release
+          c_compiler: clang
+          shared_libs: off
+          cmake_options: -Denable_gc_assertions=on -Denable_large_config=on
+        - os: ubuntu-latest
+          build_type: Debug
+          c_compiler: clang
+          shared_libs: on
+          cmake_options: -Denable_gc_assertions=on -Denable_large_config=on -Denable_redirect_malloc=on -Denable_rwlock=on -DCFLAGS_EXTRA=-DIGNORE_FREE
+        - os: ubuntu-latest
+          build_type: Debug
+          c_compiler: gcc
+          shared_libs: off
+          cmake_options: -Denable_gc_debug=on
+        - os: ubuntu-latest
+          build_type: MinSizeRel
+          c_compiler: gcc
+          shared_libs: on
+          cmake_options: -Denable_large_config=on
+        - os: ubuntu-latest
+          build_type: MinSizeRel
+          c_compiler: gcc
+          shared_libs: off
+          cmake_options: -Denable_threads=off
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      # Configure CMake in a build subdirectory.
+      run: >
+        cmake -B ${{ github.workspace }}/build
+        -S ${{ github.workspace }}
+        -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -Denable_werror=on
+        -Werror=dev
+        ${{ matrix.cmake_options }}
+
+    - name: Build
+      # Build the code with the given configuration.
+      run: >
+        cmake --build ${{ github.workspace }}/build
+        --config ${{ matrix.build_type }} --verbose --parallel
+
+    - name: Test
+      working-directory: ${{ github.workspace }}/build
+      # Execute tests defined by the CMake configuration.
+      run: ctest --build-config ${{ matrix.build_type }} --verbose --parallel 8
+
+    - name: Test enforcing mprotect-based VDB
+      working-directory: ${{ github.workspace }}/build
+      run: >
+        GC_USE_GETWRITEWATCH=0
+        ctest --build-config ${{ matrix.build_type }} --verbose

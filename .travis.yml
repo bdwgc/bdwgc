@@ -120,11 +120,6 @@ jobs:
     - NO_CLONE_LIBATOMIC_OPS=true
     - TESTS_CUSTOM_RUN=true
   - arch: arm64
-    compiler: clang
-    env:
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: arm64
     compiler: gcc
     env:
     - MAKEFILE_NAME=Makefile.direct
@@ -168,12 +163,6 @@ jobs:
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
     - TESTS_CUSTOM_RUN=true
-  - arch: ppc64le
-    compiler: clang
-    env:
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON -Denable_gc_assertions=ON"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
   - arch: ppc64le
     compiler: clang
     env:
@@ -223,11 +212,6 @@ jobs:
     env:
     - CONF_OPTIONS="--enable-gc-assertions --disable-shared"
     - MAKE_NPROC=8
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - os: freebsd
-    env:
-    - CMAKE_BUILD_OPTIONS="--verbose"
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON"
     - NO_CLONE_LIBATOMIC_OPS=true
   - os: freebsd
     env:
@@ -491,55 +475,6 @@ jobs:
     env:
     - CONF_OPTIONS="--disable-static --disable-threads --enable-cplusplus"
     - CFLAGS_EXTRA="-O3 -march=native -fanalyzer -D DONT_PROTECT_PTRFREE -D GC_PREFER_MPROTECT_VDB"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - addons:
-      apt:
-        packages:
-        - libstdc++-14-dev
-    compiler: clang
-    env:
-    - CMAKE_OPTIONS="-Denable_cplusplus=ON -Denable_gc_assertions=ON"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - addons:
-      apt:
-        packages:
-        - libatomic-ops-dev
-        - libstdc++-14-dev
-    compiler: clang
-    env:
-    - CMAKE_OPTIONS="-Denable_atomic_uncollectable=OFF -Denable_cplusplus=ON -Denable_munmap=OFF -Dwith_libatomic_ops=ON"
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - compiler: gcc
-    env:
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON -Denable_large_config=ON"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: gcc
-    env:
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF -Denable_gc_debug=ON -Dwithout_libatomic_ops=ON"
-  - compiler: gcc
-    env:
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Denable_threads=OFF"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - addons:
-      apt:
-        packages:
-        - libstdc++-14-dev
-    compiler: clang
-    env:
-    - CMAKE_BUILD_OPTIONS="--verbose"
-    - CMAKE_OPTIONS="-Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_large_config=ON -Denable_redirect_malloc=ON -Denable_rwlock=ON -DCFLAGS_EXTRA=-DIGNORE_FREE"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - addons:
-      apt:
-        packages:
-        - libstdc++-14-dev
-    compiler: clang
-    env:
-    - CMAKE_BUILD_OPTIONS="--verbose"
-    - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_large_config=ON"
     - NO_CLONE_LIBATOMIC_OPS=true
   - addons:
       apt:
@@ -816,9 +751,6 @@ before_install:
     m4 --version;
     libtool --version || true;
   fi
-- if [[ "$CMAKE_OPTIONS" != "" ]]; then
-    cmake --version;
-  fi
 - if [[ "$CONF_CFLAGS" == "" ]]; then CONF_CFLAGS="-g -O2"; fi
 - if [[ "$MAKEFILE_NAME" == "" ]]; then MAKEFILE_NAME=Makefile; fi
 - if [[ "$MAKEFILE_TARGETS" == "" ]]; then MAKEFILE_TARGETS="check"; fi
@@ -827,29 +759,20 @@ install:
 - if [[ "$NO_CLONE_LIBATOMIC_OPS" != true ]]; then
     git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git;
   fi
-- if [[ "$CMAKE_OPTIONS" == "" ]]; then
-    ./autogen.sh;
-  fi
+- ./autogen.sh
 - if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
 
 script:
-- if [[ "$CSA_CHECK" != true && "$CMAKE_OPTIONS" == ""
-        && "$CPPCHECK_ENABLE" == "" && "$MAKEFILE_NAME" != "Makefile.direct"
+- if [[ "$CSA_CHECK" != true && "$CPPCHECK_ENABLE" == ""
+        && "$MAKEFILE_NAME" != "Makefile.direct"
         && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     CFLAGS="$CONF_CFLAGS" ./configure $CONF_OPTIONS --enable-werror &&
     cat include/config.h;
   fi
-- if [[ "$CSA_CHECK" != true && "$CMAKE_OPTIONS" == ""
-        && "$CPPCHECK_ENABLE" == "" && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+- if [[ "$CSA_CHECK" != true && "$CPPCHECK_ENABLE" == ""
+        && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     make -j$MAKE_NPROC -f $MAKEFILE_NAME $MAKEFILE_TARGETS
          CFLAGS_EXTRA="$CFLAGS_EXTRA" LDFLAGS="$LDFLAGS";
-  fi
-- if [[ "$CMAKE_OPTIONS" != "" ]]; then
-    cmake $CMAKE_OPTIONS -Denable_werror=ON -Werror=dev .
-    && cmake --build . $CMAKE_BUILD_OPTIONS --parallel;
-  fi
-- if [[ "$CMAKE_OPTIONS" != "" ]]; then
-    ctest --verbose --parallel 4;
   fi
 - if [[ "$CC_FOR_CHECK" != "" ]]; then
     make -f $MAKEFILE_NAME $MAKEFILE_TARGETS_CHECK CC=$CC_FOR_CHECK
