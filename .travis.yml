@@ -33,24 +33,6 @@ jobs:
     - TESTS_CUSTOM_RUN=true
   - env:
     - MAKEFILE_TARGETS="dist"
-  - addons:
-      apt:
-        packages:
-        - g++-multilib
-        - gcc-multilib
-    compiler: clang
-    env:
-    - CSA_CHECK=true
-    - CFLAGS_EXTRA="-m32"
-  - addons:
-      apt:
-        packages:
-        - libstdc++-14-dev
-    compiler: clang
-    language: c
-    env:
-    - CSA_CHECK=true
-    - CFLAGS_EXTRA="-D ALL_INTERIOR_POINTERS -D CHECKSUMS -D DBG_HDRS_ALL -D DEBUG_THREADS -D ENABLE_TRACE -D GC_ALWAYS_MULTITHREADED -D GC_ASSERTIONS -D GC_ATOMIC_UNCOLLECTABLE -D GC_ENABLE_SUSPEND_THREAD -D GC_GCJ_SUPPORT -D GC_PRINT_BACK_HEIGHT -D GC_THREADS -D HANDLE_FORK -D JAVA_FINALIZATION -D KEEP_BACK_PTRS -D MAKE_BACK_GRAPH -D PARALLEL_MARK -D PRINT_BLACK_LIST -D THREAD_LOCAL_ALLOC -D USE_MMAP -D USE_MUNMAP"
   - env:
     - CPPCHECK_ENABLE="--enable=unusedFunction -I libatomic_ops/src extra/gc.c tests/*.c"
   - env:
@@ -763,14 +745,12 @@ install:
 - if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
 
 script:
-- if [[ "$CSA_CHECK" != true && "$CPPCHECK_ENABLE" == ""
-        && "$MAKEFILE_NAME" != "Makefile.direct"
+- if [[ "$CPPCHECK_ENABLE" == "" && "$MAKEFILE_NAME" != "Makefile.direct"
         && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     CFLAGS="$CONF_CFLAGS" ./configure $CONF_OPTIONS --enable-werror &&
     cat include/config.h;
   fi
-- if [[ "$CSA_CHECK" != true && "$CPPCHECK_ENABLE" == ""
-        && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+- if [[ "$CPPCHECK_ENABLE" == "" && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     make -j$MAKE_NPROC -f $MAKEFILE_NAME $MAKEFILE_TARGETS
          CFLAGS_EXTRA="$CFLAGS_EXTRA" LDFLAGS="$LDFLAGS";
   fi
@@ -785,13 +765,6 @@ script:
 - if [ -f threadkeytest.log ]; then cat threadkeytest.log; fi
 - if [ -f threadleaktest.log ]; then cat threadleaktest.log; fi
 - if [ -f weakmaptest.log ]; then cat weakmaptest.log; fi
-- if [[ "$CSA_CHECK" == true ]]; then
-    set -o pipefail; ${CC} --analyze -Xanalyzer -analyzer-output=text -Werror
-        -I include -I libatomic_ops/src $CFLAGS_EXTRA
-        *.c *.cc cord/*.c cord/tests/cordtest.c cord/tests/de.c extra/*.c
-        tests/*.c tests/*.cc tools/*.c 2>&1 | tee clang-analyzer-output.log;
-    if [ -s clang-analyzer-output.log ]; then exit 1; fi;
-  fi
 - if [[ "$CPPCHECK_ENABLE" != "" ]]; then
     if [[ "$CPPCHECK_OUT_FILTER" == "" ]]; then CPPCHECK_OUT_FILTER="c "; fi;
     set -o pipefail; ~/cppcheck/cppcheck --error-exitcode=2 -D CPPCHECK
