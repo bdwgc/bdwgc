@@ -1,0 +1,31 @@
+# This workflow is to check C/C++ source with Clang Static Analyzer (CSA).
+name: csa check
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.cflags_extra }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        include:
+        - os: macos-latest
+          cflags_extra: -m32
+        - os: ubuntu-latest
+          cflags_extra: -D ALL_INTERIOR_POINTERS -D CHECKSUMS -D DBG_HDRS_ALL -D DEBUG_THREADS -D ENABLE_TRACE -D GC_ALWAYS_MULTITHREADED -D GC_ASSERTIONS -D GC_ATOMIC_UNCOLLECTABLE -D GC_BUILTIN_ATOMIC -D GC_ENABLE_SUSPEND_THREAD -D GC_GCJ_SUPPORT -D GC_PRINT_BACK_HEIGHT -D GC_THREADS -D HANDLE_FORK -D JAVA_FINALIZATION -D KEEP_BACK_PTRS -D MAKE_BACK_GRAPH -D PARALLEL_MARK -D PRINT_BLACK_LIST -D THREAD_LOCAL_ALLOC -D USE_MMAP -D USE_MUNMAP
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check C/C++ files by CSA
+      run: >
+        set -o pipefail;
+        clang --analyze -Xanalyzer -analyzer-output=text -Werror -I include
+        ${{ matrix.cflags_extra }} `find . -iname '*.c' -o -iname '*.cc'` 2>&1
+        | tee clang-analyzer-output.log;
+        if [ -s clang-analyzer-output.log ]; then exit 1; fi
