@@ -7,7 +7,10 @@
 #include "private/gc_priv.h"
 
 #include <string.h>
-#include <unistd.h>
+
+#if defined(MSWIN32) || defined(MSWINCE) || defined(MSWIN_XBOX1)
+#  include <process.h>
+#endif
 
 #ifdef __cplusplus
 #  define EXECV_ARGV_T char **
