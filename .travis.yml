@@ -101,11 +101,6 @@ jobs:
     - CONF_OPTIONS="--enable-static"
     - NO_CLONE_LIBATOMIC_OPS=true
     - TESTS_CUSTOM_RUN=true
-  - arch: arm64
-    compiler: gcc
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check cord/de"
   - arch: ppc64le
     compiler: clang
     env:
@@ -145,12 +140,6 @@ jobs:
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
     - TESTS_CUSTOM_RUN=true
-  - arch: ppc64le
-    compiler: clang
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check cord/de"
-    - GCTEST_WITH_MPROTECT_VDB=true
   - arch: s390x
     compiler: clang
     env:
@@ -173,12 +162,6 @@ jobs:
     - CONF_OPTIONS="--enable-cplusplus --disable-shared"
     - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: s390x
-    compiler: gcc
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check cord/de"
-    - GCTEST_WITH_MPROTECT_VDB=true
   - os: freebsd
     env:
     - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2"
@@ -195,11 +178,6 @@ jobs:
     - CONF_OPTIONS="--enable-gc-assertions --disable-shared"
     - MAKE_NPROC=8
     - NO_CLONE_LIBATOMIC_OPS=true
-  - os: freebsd
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check cord/de"
-    - MAKE_NPROC=8
   - compiler: gcc
     env:
     - CFLAGS_EXTRA="-O3 -march=native -fanalyzer"
@@ -461,20 +439,6 @@ jobs:
   - addons:
       apt:
         packages:
-        - libstdc++-14-dev
-    compiler: clang
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check cord/de"
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - compiler: gcc
-    env:
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="check cord/de"
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - addons:
-      apt:
-        packages:
         - musl-tools
     compiler: musl-gcc
     language: c
@@ -627,18 +591,6 @@ jobs:
     - MAKEFILE_TARGETS="clean"
     - MAKEFILE_TARGETS_CHECK="check"
     - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: clang
-    env:
-    - CFLAGS_EXTRA="-O3 -Wall -Wextra -Werror -x c++"
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="cords"
-  - compiler: gcc
-    env:
-    - CC_FOR_CHECK=g++
-    - CFLAGS_EXTRA="-O3 -Wall -Wextra -Werror -D TEST_MANUAL_VDB"
-    - MAKEFILE_NAME=Makefile.direct
-    - MAKEFILE_TARGETS="cords"
-    - MAKEFILE_TARGETS_CHECK="cord/de check"
   - addons:
       apt:
         packages:
@@ -734,7 +686,6 @@ before_install:
     libtool --version || true;
   fi
 - if [[ "$CONF_CFLAGS" == "" ]]; then CONF_CFLAGS="-g -O2"; fi
-- if [[ "$MAKEFILE_NAME" == "" ]]; then MAKEFILE_NAME=Makefile; fi
 - if [[ "$MAKEFILE_TARGETS" == "" ]]; then MAKEFILE_TARGETS="check"; fi
 
 install:
@@ -745,18 +696,16 @@ install:
 - if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
 
 script:
-- if [[ "$CPPCHECK_ENABLE" == "" && "$MAKEFILE_NAME" != "Makefile.direct"
-        && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+- if [[ "$CPPCHECK_ENABLE" == "" && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     CFLAGS="$CONF_CFLAGS" ./configure $CONF_OPTIONS --enable-werror &&
     cat include/config.h;
   fi
 - if [[ "$CPPCHECK_ENABLE" == "" && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
-    make -j$MAKE_NPROC -f $MAKEFILE_NAME $MAKEFILE_TARGETS
-         CFLAGS_EXTRA="$CFLAGS_EXTRA" LDFLAGS="$LDFLAGS";
+    make -j$MAKE_NPROC $MAKEFILE_TARGETS CFLAGS_EXTRA="$CFLAGS_EXTRA"
+            LDFLAGS="$LDFLAGS";
   fi
 - if [[ "$CC_FOR_CHECK" != "" ]]; then
-    make -f $MAKEFILE_NAME $MAKEFILE_TARGETS_CHECK CC=$CC_FOR_CHECK
-            CFLAGS_EXTRA="$CFLAGS_EXTRA";
+    make $MAKEFILE_TARGETS_CHECK CC=$CC_FOR_CHECK CFLAGS_EXTRA="$CFLAGS_EXTRA";
   fi
 - if [ -f cordtest.log ]; then cat cordtest.log; fi
 - if [ -f disclaim_bench.log ]; then cat disclaim_bench.log; fi
