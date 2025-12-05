@@ -96,7 +96,16 @@ main(void)
   unsigned ps = GETPAGESIZE();
 #ifndef WASI
   JMP_BUF b;
-#  if (!defined(__cplusplus) || __cplusplus < 201703L /* before c++17 */) \
+#  if GC_GNUC_PREREQ(13, 0) && !defined(__clang__) \
+      && !defined(NO_VOLATILE_X_IN_SETJMP_TEST)
+  /*
+   * Unfortunately w/o `volatile` specifier the latest gcc reports a warning
+   * that `x` might be clobbered by `longjmp()`.  However `volatile` instructs
+   * the compiler not to put the local variable into registers, thus probably
+   * yielding too optimistic test results.
+   */
+  volatile
+#  elif (!defined(__cplusplus) || __cplusplus < 201703L /* before c++17 */) \
       && (!defined(__GNUC__) || defined(__OPTIMIZE__))
   register
 #  endif
