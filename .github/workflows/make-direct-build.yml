@@ -1,0 +1,55 @@
+# This workflow is for build/test using `Makefile.direct`.
+name: make direct build
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} ${{ matrix.c_compiler }} ${{ matrix.cflags_extra }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 6
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        os: [ macos-latest, ubuntu-24.04-arm, ubuntu-latest, windows-latest ]
+        c_compiler: [ clang, gcc ]
+        cxx_compiler: [ clang++, g++ ]
+        cflags_extra: [ '-DGC_THREADS -DPARALLEL_MARK -DTHREAD_LOCAL_ALLOC', '-O3 -Wall -Wextra -Werror' ]
+        exclude:
+        - os: macos-latest
+          c_compiler: gcc
+        - c_compiler: clang
+          cxx_compiler: g++
+        - c_compiler: gcc
+          cxx_compiler: clang++
+        include:
+        - os: windows-latest
+          cflags_target: -D_CRT_SECURE_NO_DEPRECATE -DDONT_USE_USER32_DLL -Wno-deprecated-declarations -Wno-inline-new-delete
+          curses_opt: CURSES="-lgdi32 -luser32"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Fetch libatomic_ops
+      run: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
+
+    - name: Build
+      run: >
+        make -j8 -f Makefile.direct
+        CC=${{ matrix.c_compiler }}
+        CXX=${{ matrix.cxx_compiler }}
+        CFLAGS_EXTRA="${{ matrix.cflags_extra }} ${{ matrix.cflags_target }}"
+
+    - name: Test
+      run: >
+        make -f Makefile.direct check cord/de
+        CC=${{ matrix.c_compiler }}
+        CXX=${{ matrix.cxx_compiler }}
+        CFLAGS_EXTRA="${{ matrix.cflags_extra }} ${{ matrix.cflags_target }}"
+        ${{ matrix.curses_opt }}
+
+    - name: Test enforcing mprotect-based VDB
+      run: sh -c 'GC_USE_GETWRITEWATCH=0 ./gctest'
