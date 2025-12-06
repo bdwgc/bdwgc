@@ -1,0 +1,383 @@
+# This workflow is for Autotools-based build/test with extra flags.
+name: autotools build extra
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} configure ${{ matrix.conf_options }} ${{ matrix.c_compiler == '' && 'clang' || matrix.c_compiler }} ${{ matrix.conf_cflags }} ${{ matrix.cflags_extra }} ${{ matrix.ldflags }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 6
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      # Order items lexicographically (conf_options, cflags_extra, ...).
+      matrix:
+        include:
+        - os: ubuntu-latest
+        - os: ubuntu-24.04-arm
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-atomic-uncollectible --disable-shared --enable-cplusplus --enable-rwlock --enable-static
+        - os: macos-latest
+          cflags_extra: -D TEST_HANDLE_FORK
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-disclaim
+        - os: ubuntu-latest
+          conf_options: --disable-disclaim --enable-cplusplus --enable-gc-assertions --enable-static
+          cflags_extra: -D _FORTIFY_SOURCE=2
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-docs --enable-cplusplus
+          cflags_extra: -D DEBUG_DIRTY_BITS -D GC_NO_SYS_FAULT_H -D NO_BLACK_LISTING -D NO_INCREMENTAL -D PROC_VDB
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-dynamic-loading --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -D DBG_HDRS_ALL -D SHORT_DBG_HDRS -D _FORTIFY_SOURCE=2
+        - os: macos-latest
+          conf_options: --disable-gc-debug --disable-handle-fork --enable-cplusplus --enable-large-config
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-gc-debug --enable-cplusplus
+          c_compiler: gcc
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-gcj-support --enable-cplusplus
+          cflags_extra: -D SIMULATE_LOST_SIGNALS -D TEST_DUMP_REGIONS_AND_FREELIST -D TRACE_BUF -O3
+          c_compiler: gcc
+        - os: macos-latest
+          conf_options: --disable-handle-fork --disable-munmap --disable-threads --enable-checksums --enable-gc-assertions --enable-large-config --enable-static
+        - os: ubuntu-latest
+          conf_options: --disable-handle-fork --enable-cplusplus --without-libatomic-ops
+          cflags_extra: -D DEFAULT_VDB -D TEST_WITH_SYSTEM_MALLOC -D _FORTIFY_SOURCE=2 -march=native
+          fetch_libatomic_ops: true
+        - os: ubuntu-latest
+          conf_options: --disable-munmap --disable-threads --enable-checksums --enable-cplusplus
+          c_compiler: gcc
+        - os: macos-latest
+          conf_options: --disable-munmap --enable-cplusplus --enable-static --without-libatomic-ops
+          cflags_extra: -D AO_DISABLE_GCC_ATOMICS -D _FORTIFY_SOURCE=2 -march=native
+          fetch_libatomic_ops: true
+        - os: ubuntu-latest
+          conf_options: --enable-gc-assertions --enable-gc-debug --enable-threads=pthreads --host=x86_64-w64-mingw32 --without-libatomic-ops
+          c_compiler: x86_64-w64-mingw32-gcc
+          fetch_libatomic_ops: true
+          install_mingw_w64: true
+          skip_tests: true
+        - os: ubuntu-latest
+          conf_options: --disable-munmap --enable-gc-assertions
+          cflags_extra: -D TEST_MANUAL_VDB
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-munmap --enable-large-config
+          cflags_extra: -m32
+          c_compiler: gcc
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --disable-parallel-mark --disable-shared --disable-thread-local-alloc --enable-gc-assertions --without-libatomic-ops
+          cflags_extra: -D NO_INCREMENTAL -D NTHREADS=0 -fno-omit-frame-pointer -fsanitize=thread
+          fetch_libatomic_ops: true
+        - os: ubuntu-latest
+          conf_options: --disable-parallel-mark --enable-gc-assertions --with-libatomic-ops=none
+          c_compiler: musl-gcc
+          install_musl: true
+        - os: ubuntu-latest
+          conf_options: --disable-parallel-mark --enable-gc-assertions
+          cflags_extra: -D TEST_MANUAL_VDB -D _FORTIFY_SOURCE=2
+        - os: ubuntu-latest
+          conf_options: --disable-shared
+          cflags_extra: -fsanitize=memory,undefined -fno-omit-frame-pointer
+          extra_sanitizer_checks: true
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -O3
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-gc-debug
+          cflags_extra: -x c++
+          skip_tests: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus --enable-rwlock
+          cflags_extra: -D MARK_BIT_PER_OBJ
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-shared --disable-threads
+          c_compiler: gcc
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-shared --enable-cplusplus
+          cflags_extra: -D PREFER_MMAP_PROT_NONE -D _FORTIFY_SOURCE=2 -O3 -flto=auto
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_cflags: -D AO_USE_PTHREAD_DEFS -D RANDOM_ONE_CPU_CORE -O3
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-static --with-libatomic-ops=yes
+          install_libatomic_ops: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus --enable-large-config --enable-static
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-single-obj-compilation
+          cflags_extra: -O3 -m32 -std=gnu11
+          c_compiler: gcc
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared --host=x86_64-w64-mingw32 --with-libatomic-ops=none
+          c_compiler: x86_64-w64-mingw32-gcc
+          install_mingw_w64: true
+          skip_tests: true
+        - os: ubuntu-latest
+          conf_options: --disable-thread-local-alloc --enable-cplusplus --enable-static
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-threads
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-threads --enable-cplusplus
+          cflags_extra: -D DONT_PROTECT_PTRFREE -D GC_PREFER_MPROTECT_VDB -O3 -fanalyzer -march=native
+          c_compiler: gcc
+        - os: macos-latest
+          conf_options: --disable-threads --enable-cplusplus --enable-redirect-malloc --enable-static
+          cflags_extra: -O3 -march=native
+        - os: ubuntu-latest
+          conf_options: --disable-threads --enable-gc-assertions
+          cflags_extra: -D GC_NO_SIGSETJMP -D _FORTIFY_SOURCE=2 -std=c11
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-threads --enable-gc-assertions
+          cflags_extra: -D SOFT_VDB -O3
+          c_compiler: musl-gcc
+          install_musl: true
+        - os: ubuntu-latest
+          conf_options: --disable-threads --enable-large-config --enable-redirect-malloc
+          cflags_extra: -O3 -fanalyzer
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-threads --enable-redirect-malloc --enable-static
+          cflags_extra: -m32
+          install_multilib: true
+        - os: macos-latest
+          conf_options: --disable-throw-bad-alloc-library --enable-cplusplus --enable-gc-assertions --enable-handle-fork=manual
+          cflags_extra: -D DBG_HDRS_ALL -D LINT2 -D PRINT_AND_CHECK_INT_LIST -D SHORT_DBG_HDRS -D USE_GETSECTBYNAME -Wno-deprecated-declarations
+        - os: ubuntu-latest
+          conf_options: --disable-throw-bad-alloc-library --enable-cplusplus --enable-gc-assertions --with-libatomic-ops=yes
+          cflags_extra: -D GC_DISABLE_SNPRINTF -D TEST_PAGES_EXECUTABLE -D _FORTIFY_SOURCE=2
+          c_compiler: gcc
+          install_libatomic_ops: true
+        - os: macos-latest
+          conf_options: --enable-cplusplus
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus
+          cflags_extra: -D DEBUG_ADD_DEL_ROOTS -D DEBUG_THREADS -D GC_DEBUG -D GC_LOG_TO_FILE_ALWAYS
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus
+          cflags_extra: -D NO_GETENV -D SMALL_CONFIG
+          c_compiler: gcc
+        - os: ubuntu-24.04-arm
+          conf_options: --enable-cplusplus
+          cflags_extra: -D NO_MPROTECT_VDB -O3
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus
+          cflags_extra: -O3 -fanalyzer -march=native
+          c_compiler: gcc
+        - os: ubuntu-24.04-arm
+          conf_options: --enable-cplusplus --enable-dynamic-pointer-mask --enable-gc-assertions
+          cflags_extra: -D NO_RETRY_SIGNALS -D _FORTIFY_SOURCE=2 -O3 -flto
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -D BSD_TIME -D CPPCHECK -D DEFAULT_STACK_MAYBE_SMALL -D EMPTY_GETENV_RESULTS -D ENABLE_TRACE -D GC_ALWAYS_MULTITHREADED -D GC_NETBSD_THREADS_WORKAROUND
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -D DONT_ADD_BYTE_AT_END -D GC_TIME_LIMIT=3 -D _FORTIFY_SOURCE=2 -funsigned-char
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -D FIND_LEAK -D SKIP_LEAKED_OBJECTS_PRINTING -D _FORTIFY_SOURCE=2
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-gc-debug
+          cflags_extra: -std=c++20
+          c_compiler: g++
+          skip_tests: true
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-gc-debug --enable-redirect-malloc
+          cflags_extra: -D _FORTIFY_SOURCE=2
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-handle-fork=manual
+          cflags_extra: -D NO_CLOCK -D POINTER_MASK=~0xf -D _FORTIFY_SOURCE=2
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-large-config --enable-static
+          cflags_extra: -D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_REUSE_SIG_SUSPEND
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-redirect-malloc --enable-rwlock
+          cflags_extra: -D _FORTIFY_SOURCE=2 -O3
+        - os: ubuntu-24.04-arm
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-static
+          cflags_extra: -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120 -D _FORTIFY_SOURCE=2 -O3
+        - os: ubuntu-24.04-arm
+          conf_options: --enable-cplusplus --enable-gc-assertions --with-libatomic-ops=yes
+          cflags_extra: -D VERY_SMALL_CONFIG
+          c_compiler: gcc
+          install_libatomic_ops: true
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-debug
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-single-obj-compilation --enable-static
+          cflags_extra: -D NTHREADS=10 -O3 -march=native
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-static
+          cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=undefined
+          extra_sanitizer_checks: true
+        - os: ubuntu-latest
+          conf_options: --enable-gc-assertions
+          cflags_extra: -D MARK_BIT_PER_OBJ -D USE_CUSTOM_SPECIFIC -D _FORTIFY_SOURCE=2 -m32
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --enable-gc-assertions --enable-gc-debug
+          cflags_extra: -D GC_DISABLE_INCREMENTAL -D _FORTIFY_SOURCE=2 -m32
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --enable-gc-assertions --enable-large-config
+          cflags_extra: -D _FORTIFY_SOURCE=2 -march=native -mx32
+          c_compiler: gcc
+          install_multilib: true
+          skip_tests: true
+        - os: ubuntu-latest
+          conf_options: --enable-gc-assertions --enable-rwlock
+          cflags_extra: -D GC_NO_DEINIT -D NO_LONGLONG64 -D _FORTIFY_SOURCE=2 -funsigned-char -m32
+          c_compiler: gcc
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --enable-static
+          cflags_extra: -fno-omit-frame-pointer -fsanitize=memory -std=gnu11
+          extra_sanitizer_checks: true
+        - os: ubuntu-latest
+          conf_options: --host=i686-w64-mingw32
+          cflags_extra: -fno-omit-frame-pointer
+          c_compiler: i686-w64-mingw32-gcc
+          fetch_libatomic_ops: true
+          install_mingw_w64: true
+          skip_tests: true
+        - os: ubuntu-24.04-arm
+          conf_cflags: -D AO_USE_PTHREAD_DEFS
+          conf_options: --without-libatomic-ops
+          cflags_extra: -D GC_NO_FINALIZATION
+          c_compiler: gcc
+          fetch_libatomic_ops: true
+        # TODO: Address Sanitizer fake stack is not scanned.
+        #- os: ubuntu-latest
+        #  conf_options: --disable-shared --enable-cplusplus
+        #  cflags_extra: -O0 -fsanitize=address -m32
+        #  extra_sanitizer_checks: true
+        #  install_multilib: true
+        #- os: ubuntu-latest
+        #  conf_options: --enable-cplusplus --enable-gc-assertions --enable-static
+        #  cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=address
+        #  extra_sanitizer_checks: true
+        #- os: ubuntu-latest
+        #  conf_options: --enable-gc-assertions
+        #  cflags_extra: -O0 -fsanitize=address
+        #  c_compiler: gcc
+        #  ldflags: -fuse-ld=gold
+        # FIXME: Inconsistent soft-dirty against mprotect dirty bits
+        #- os: ubuntu-latest
+        #  conf_options: --disable-thread-local-alloc --enable-gc-assertions --enable-static
+        #  cflags_extra: -D CHECK_SOFT_VDB
+        # FIXME: gctest hangs rarely on Linux if compiled with TSan
+        #- os: ubuntu-latest
+        #  conf_options: --enable-gc-assertions --enable-gc-debug --enable-handle-fork=manual --enable-large-config --without-libatomic-ops
+        #  cflags_extra: -D NO_INCREMENTAL -D TEST_FORK_WITHOUT_ATFORK -fno-omit-frame-pointer -fsanitize=thread
+        #  fetch_libatomic_ops: true
+        # FIXME: Assertion violation about length-based descriptor in GC_mark_from.
+        #- os: ubuntu-latest
+        #  conf_options: --enable-gc-assertions
+        #  cflags_extra: -D GC_GCJ_MARK_DESCR_OFFSET=32 -D _FORTIFY_SOURCE=2 -m32
+        #  install_multilib: true
+        # FIXME: Signals delivery fails constantly.
+        #- os: ubuntu-latest
+        #  conf_options: --enable-static
+        #  cflags_extra: -fno-omit-frame-pointer -fsanitize=thread -O3
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Fetch libatomic_ops
+      if: ${{ matrix.fetch_libatomic_ops }}
+      run: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
+
+    - name: Install libatomic-ops-dev (Ubuntu)
+      if: ${{ matrix.install_libatomic_ops }}
+      run: sudo apt install -y libatomic-ops-dev
+
+    - name: Install GNU autotools (OS X)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: brew install autoconf automake libtool
+
+    - name: Generate configure
+      run: ./autogen.sh
+
+    - name: Install gcc-mingw-w64 (Ubuntu)
+      if: ${{ matrix.install_mingw_w64 }}
+      run: sudo apt install -y gcc-mingw-w64
+
+    - name: Install gcc-multilib (Ubuntu)
+      if: ${{ matrix.install_multilib }}
+      run: sudo apt install -y gcc-multilib
+
+    - name: Install musl-tools (Ubuntu)
+      if: ${{ matrix.install_musl }}
+      run: sudo apt install -y musl-tools
+
+    - name: Configure project
+      run: |
+        mkdir build
+        cd build
+        CC=${{ matrix.c_compiler == '' && 'clang' || matrix.c_compiler }} \
+          CXX=${{ matrix.c_compiler == 'gcc' && 'g++' || 'clang++' }} \
+          CFLAGS="${{ matrix.conf_cflags == '' && '-g -O2' || matrix.conf_cflags }}" \
+          ../configure ${{ matrix.conf_options }} --enable-werror
+        echo "Content of config.h:"
+        cat include/config.h
+
+    - name: Build libraries
+      run: >
+        make -j -C build
+        CFLAGS_EXTRA="${{ matrix.cflags_extra }}"
+        LDFLAGS="${{ matrix.ldflags }}"
+
+    - name: Build and run tests
+      if: ${{ !matrix.skip_tests }}
+      run: >
+        make -j -C build check
+        CFLAGS_EXTRA="${{ matrix.cflags_extra }}"
+        LDFLAGS="${{ matrix.ldflags }}"
+      # Print tests output even if some tests have failed.
+      continue-on-error: true
+
+    - name: Print tests output
+      if: ${{ !matrix.skip_tests }}
+      run: |
+        cd build
+        for file in *.log; do
+          if [ "$file" != "config.log" -a "$file" != "test-suite.log" ]; then
+            echo "Content of $file:"
+            cat $file
+          fi
+        done
+
+    - name: Test enforcing mprotect-based VDB
+      if: ${{ !matrix.skip_tests }}
+      run: GC_USE_GETWRITEWATCH=0 build/gctest
+
+    - name: Run tests with Sanitizer runtime options
+      if: ${{ matrix.extra_sanitizer_checks }}
+      run: >
+        ASAN_OPTIONS="detect_leaks=1"
+        UBSAN_OPTIONS="halt_on_error=1"
+        make -C build check-without-test-driver
