@@ -2,6 +2,7 @@
 
 [![Travis-CI build status](https://app.travis-ci.com/bdwgc/bdwgc.svg?branch=master)](https://app.travis-ci.com/github/bdwgc/bdwgc)
 [![AppVeyor CI build status](https://ci.appveyor.com/api/projects/status/github/bdwgc/bdwgc?branch=master&svg=true)](https://ci.appveyor.com/project/bdwgc/bdwgc/branch/master)
+[![GitHub Actions build status (autotools build extra)](https://github.com/bdwgc/bdwgc/actions/workflows/autotools-build-extra.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/autotools-build-extra.yml?query=branch%3Amaster)
 [![GitHub Actions build status (cmake)](https://github.com/bdwgc/bdwgc/actions/workflows/cmake-build.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/cmake-build.yml?query=branch%3Amaster)
 [![GitHub Actions build status (cmake extra)](https://github.com/bdwgc/bdwgc/actions/workflows/cmake-build-extra.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/cmake-build-extra.yml?query=branch%3Amaster)
 [![GitHub Actions build status (cmake cosmo)](https://github.com/bdwgc/bdwgc/actions/workflows/cmake-cosmo.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/cmake-cosmo.yml?query=branch%3Amaster)
