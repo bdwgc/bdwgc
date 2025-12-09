@@ -556,15 +556,6 @@ AC_SUBST(CXXLIBS)
 #
 AC_MSG_CHECKING(whether to build shared libraries)
 AC_ENABLE_SHARED
-
-case "$host" in
- alpha-*-openbsd*)
-     enable_shared=no
-     ;;
- *)
-     ;;
-esac
-
 AC_MSG_RESULT($enable_shared)
 
 # Compile with GC_DLL defined unless building static libraries.
