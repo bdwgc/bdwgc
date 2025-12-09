@@ -10,6 +10,7 @@
 [![GitHub Actions build status (zig cross-compile)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-cross-compile.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-cross-compile.yml?query=branch%3Amaster)
 [![GitHub Actions build status (Makefile.direct)](https://github.com/bdwgc/bdwgc/actions/workflows/make-direct-build.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/make-direct-build.yml?query=branch%3Amaster)
 [![GitHub Actions status (clang-format)](https://github.com/bdwgc/bdwgc/actions/workflows/clang-format-check.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/clang-format-check.yml?query=branch%3Amaster)
+[![GitHub Actions status (zig format)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-format-check.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/zig-format-check.yml?query=branch%3Amaster)
 [![GitHub Actions status (CSA check)](https://github.com/bdwgc/bdwgc/actions/workflows/csa-check.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/csa-check.yml?query=branch%3Amaster)
 [![GitHub Actions status (spell-check)](https://github.com/bdwgc/bdwgc/actions/workflows/spell-check.yml/badge.svg?event=push)](https://github.com/bdwgc/bdwgc/actions/workflows/spell-check.yml?query=branch%3Amaster)
 [![CodeQL](https://github.com/bdwgc/bdwgc/workflows/CodeQL/badge.svg)](https://github.com/bdwgc/bdwgc/actions/workflows/CodeQL.yml?query=branch%3Amaster)
