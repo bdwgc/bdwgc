@@ -17,13 +17,13 @@ jobs:
         os: [ macos-15-intel, macos-latest, ubuntu-24.04-arm, ubuntu-latest, windows-11-arm, windows-latest ]
         c_compiler: [ cl, clang, gcc ]
         cxx_compiler: [ cl, clang++, g++ ]
-        enable_cplusplus: [ off, on ]
         build_type: [ Release ]
-        disable_gc_debug: [ off ]
+        enable_cplusplus: [ off, on ]
+        enable_gc_dump: [ on ]
+        enable_rwlock: [ off, on ]
+        enable_threads: [ off, on ]
         gc_assertions: [ on ]
         large_config: [ on ]
-        enable_threads: [ off, on ]
-        enable_rwlock: [ off, on ]
         redirect_malloc: [ off, on ]
         shared_libs: [ off, on ]
         exclude:
@@ -112,9 +112,9 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }}
-        -Ddisable_gc_debug=${{ matrix.disable_gc_debug }}
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_gc_assertions=${{ matrix.gc_assertions }}
+        -Denable_gc_dump=${{ matrix.enable_gc_dump }}
         -Denable_large_config=${{ matrix.large_config }}
         -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
         -Denable_rwlock=${{ matrix.enable_rwlock }}
