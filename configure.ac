@@ -1248,6 +1248,12 @@ elif test "${enable_handle_fork}" != manual -a x$THREADS = xposix; then
     esac
 fi
 
+# A check to warn when `GC_DLL` macro is not defined but should be.
+if test "${enable_shared}" = yes -a "${enable_static}" = yes; then
+    AC_MSG_WARN(
+        "shared+static libraries simultaneous build is deprecated.")
+fi
+
 dnl Produce the Files
 dnl -----------------
 
