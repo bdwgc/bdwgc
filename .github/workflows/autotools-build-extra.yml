@@ -112,7 +112,7 @@ jobs:
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
           cflags_extra: -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120 -D _FORTIFY_SOURCE=2 -O3
         - os: ubuntu-24.04-arm
-          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-valgrind-tracking
           cflags_extra: -O3
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-gc-debug
