@@ -20,7 +20,7 @@ jobs:
         - os: ubuntu-24.04-arm
           c_compiler: gcc
         - os: ubuntu-latest
-          conf_options: --disable-atomic-uncollectible --disable-shared --enable-cplusplus --enable-rwlock --enable-static
+          conf_options: --disable-atomic-uncollectible --disable-shared --enable-cplusplus --enable-rwlock
         - os: macos-latest
           cflags_extra: -D TEST_HANDLE_FORK
         - os: ubuntu-24.04-arm
@@ -51,13 +51,13 @@ jobs:
           conf_options: --disable-handle-fork --enable-cplusplus --without-libatomic-ops
           cflags_extra: -D DEFAULT_VDB -D TEST_WITH_SYSTEM_MALLOC -D _FORTIFY_SOURCE=2 -march=native
           fetch_libatomic_ops: true
+        - os: macos-latest
+          conf_options: --disable-munmap --disable-shared --enable-cplusplus --without-libatomic-ops
+          cflags_extra: -D AO_DISABLE_GCC_ATOMICS -D _FORTIFY_SOURCE=2 -march=native
+          fetch_libatomic_ops: true
         - os: ubuntu-latest
           conf_options: --disable-munmap --disable-threads --enable-checksums --enable-cplusplus
           c_compiler: gcc
-        - os: macos-latest
-          conf_options: --disable-munmap --enable-cplusplus --enable-static --without-libatomic-ops
-          cflags_extra: -D AO_DISABLE_GCC_ATOMICS -D _FORTIFY_SOURCE=2 -march=native
-          fetch_libatomic_ops: true
         - os: ubuntu-latest
           conf_options: --enable-gc-assertions --enable-gc-debug --enable-threads=pthreads --host=x86_64-w64-mingw32 --without-libatomic-ops
           c_compiler: x86_64-w64-mingw32-gcc
@@ -86,8 +86,31 @@ jobs:
           cflags_extra: -D TEST_MANUAL_VDB -D _FORTIFY_SOURCE=2
         - os: ubuntu-latest
           conf_options: --disable-shared
+          cflags_extra: -fno-omit-frame-pointer -fsanitize=memory -std=gnu11
+          extra_sanitizer_checks: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared
           cflags_extra: -fsanitize=memory,undefined -fno-omit-frame-pointer
           extra_sanitizer_checks: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared --disable-thread-local-alloc --enable-cplusplus
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-shared --disable-threads
+          c_compiler: gcc
+        - os: macos-latest
+          conf_options: --disable-shared --disable-threads --enable-cplusplus --enable-redirect-malloc
+          cflags_extra: -O3 -march=native
+        - os: ubuntu-latest
+          conf_options: --disable-shared --disable-threads --enable-redirect-malloc
+          cflags_extra: -m32
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus
+          cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=undefined
+          extra_sanitizer_checks: true
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120 -D _FORTIFY_SOURCE=2 -O3
         - os: ubuntu-24.04-arm
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
           cflags_extra: -O3
@@ -98,19 +121,23 @@ jobs:
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-cplusplus --enable-rwlock
           cflags_extra: -D MARK_BIT_PER_OBJ
-        - os: ubuntu-24.04-arm
-          conf_options: --disable-shared --disable-threads
-          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus --enable-single-obj-compilation
+          cflags_extra: -D NTHREADS=10 -O3 -march=native
         - os: ubuntu-24.04-arm
           conf_options: --disable-shared --enable-cplusplus
           cflags_extra: -D PREFER_MMAP_PROT_NONE -D _FORTIFY_SOURCE=2 -O3 -flto=auto
+          c_compiler: gcc
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-large-config
+          cflags_extra: -D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_REUSE_SIG_SUSPEND
           c_compiler: gcc
         - os: ubuntu-latest
           conf_cflags: -D AO_USE_PTHREAD_DEFS -D RANDOM_ONE_CPU_CORE -O3
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-static --with-libatomic-ops=yes
           install_libatomic_ops: true
         - os: ubuntu-latest
-          conf_options: --disable-shared --enable-cplusplus --enable-large-config --enable-static
+          conf_options: --disable-shared --enable-cplusplus --enable-large-config
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-single-obj-compilation
           cflags_extra: -O3 -m32 -std=gnu11
@@ -121,8 +148,6 @@ jobs:
           c_compiler: x86_64-w64-mingw32-gcc
           install_mingw_w64: true
           skip_tests: true
-        - os: ubuntu-latest
-          conf_options: --disable-thread-local-alloc --enable-cplusplus --enable-static
         - os: ubuntu-24.04-arm
           conf_options: --disable-threads
           c_compiler: gcc
@@ -130,9 +155,6 @@ jobs:
           conf_options: --disable-threads --enable-cplusplus
           cflags_extra: -D DONT_PROTECT_PTRFREE -D GC_PREFER_MPROTECT_VDB -O3 -fanalyzer -march=native
           c_compiler: gcc
-        - os: macos-latest
-          conf_options: --disable-threads --enable-cplusplus --enable-redirect-malloc --enable-static
-          cflags_extra: -O3 -march=native
         - os: ubuntu-latest
           conf_options: --disable-threads --enable-gc-assertions
           cflags_extra: -D GC_NO_SIGSETJMP -D _FORTIFY_SOURCE=2 -std=c11
@@ -146,10 +168,6 @@ jobs:
           conf_options: --disable-threads --enable-large-config --enable-redirect-malloc
           cflags_extra: -O3 -fanalyzer
           c_compiler: gcc
-        - os: ubuntu-latest
-          conf_options: --disable-threads --enable-redirect-malloc --enable-static
-          cflags_extra: -m32
-          install_multilib: true
         - os: macos-latest
           conf_options: --disable-throw-bad-alloc-library --enable-cplusplus --enable-gc-assertions --enable-handle-fork=manual
           cflags_extra: -D DBG_HDRS_ALL -D LINT2 -D PRINT_AND_CHECK_INT_LIST -D SHORT_DBG_HDRS -D USE_GETSECTBYNAME -Wno-deprecated-declarations
@@ -210,15 +228,8 @@ jobs:
           cflags_extra: -D NO_CLOCK -D POINTER_MASK=~0xf -D _FORTIFY_SOURCE=2
           c_compiler: gcc
         - os: ubuntu-latest
-          conf_options: --enable-cplusplus --enable-gc-assertions --enable-large-config --enable-static
-          cflags_extra: -D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_REUSE_SIG_SUSPEND
-          c_compiler: gcc
-        - os: ubuntu-latest
           conf_options: --enable-cplusplus --enable-gc-assertions --enable-redirect-malloc --enable-rwlock
           cflags_extra: -D _FORTIFY_SOURCE=2 -O3
-        - os: ubuntu-24.04-arm
-          conf_options: --enable-cplusplus --enable-gc-assertions --enable-static
-          cflags_extra: -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120 -D _FORTIFY_SOURCE=2 -O3
         - os: ubuntu-24.04-arm
           conf_options: --enable-cplusplus --enable-gc-assertions --with-libatomic-ops=yes
           cflags_extra: -D VERY_SMALL_CONFIG
@@ -227,13 +238,6 @@ jobs:
         - os: ubuntu-latest
           conf_options: --enable-cplusplus --enable-gc-debug
           c_compiler: gcc
-        - os: ubuntu-latest
-          conf_options: --enable-cplusplus --enable-single-obj-compilation --enable-static
-          cflags_extra: -D NTHREADS=10 -O3 -march=native
-        - os: ubuntu-latest
-          conf_options: --enable-cplusplus --enable-static
-          cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=undefined
-          extra_sanitizer_checks: true
         - os: ubuntu-latest
           conf_options: --enable-gc-assertions
           cflags_extra: -D MARK_BIT_PER_OBJ -D USE_CUSTOM_SPECIFIC -D _FORTIFY_SOURCE=2 -m32
@@ -254,10 +258,6 @@ jobs:
           c_compiler: gcc
           install_multilib: true
         - os: ubuntu-latest
-          conf_options: --enable-static
-          cflags_extra: -fno-omit-frame-pointer -fsanitize=memory -std=gnu11
-          extra_sanitizer_checks: true
-        - os: ubuntu-latest
           conf_options: --host=i686-w64-mingw32
           cflags_extra: -fno-omit-frame-pointer
           c_compiler: i686-w64-mingw32-gcc
@@ -277,7 +277,7 @@ jobs:
         #  extra_sanitizer_checks: true
         #  install_multilib: true
         #- os: ubuntu-latest
-        #  conf_options: --enable-cplusplus --enable-gc-assertions --enable-static
+        #  conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
         #  cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=address
         #  extra_sanitizer_checks: true
         #- os: ubuntu-latest
@@ -287,7 +287,7 @@ jobs:
         #  ldflags: -fuse-ld=gold
         # FIXME: Inconsistent soft-dirty against mprotect dirty bits
         #- os: ubuntu-latest
-        #  conf_options: --disable-thread-local-alloc --enable-gc-assertions --enable-static
+        #  conf_options: --disable-shared --disable-thread-local-alloc --enable-gc-assertions
         #  cflags_extra: -D CHECK_SOFT_VDB
         # FIXME: gctest hangs rarely on Linux if compiled with TSan
         #- os: ubuntu-latest
@@ -301,7 +301,7 @@ jobs:
         #  install_multilib: true
         # FIXME: Signals delivery fails constantly.
         #- os: ubuntu-latest
-        #  conf_options: --enable-static
+        #  conf_options: --disable-shared
         #  cflags_extra: -fno-omit-frame-pointer -fsanitize=thread -O3
 
     steps:
