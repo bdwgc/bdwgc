@@ -31,13 +31,12 @@ const zig_min_required_version = "0.14.0";
 // enabled or not.
 
 comptime {
-    const required_ver = std.SemanticVersion.parse(zig_min_required_version)
-                            catch unreachable;
+    const required_ver = std.SemanticVersion.parse(zig_min_required_version) catch unreachable;
     if (builtin.zig_version.order(required_ver) == .lt) {
-        @compileError(std.fmt.comptimePrint(
-            "Zig version {} does not meet the build requirement of {}",
-            .{ builtin.zig_version, required_ver, }
-        ));
+        @compileError(std.fmt.comptimePrint("Zig version {} does not meet the build requirement of {}", .{
+            builtin.zig_version,
+            required_ver,
+        }));
     }
 }
 
@@ -49,86 +48,41 @@ pub fn build(b: *std.Build) void {
     const default_enable_threads = !t.cpu.arch.isWasm(); // emscripten/wasi
 
     // Customize build by passing "-D<option_name>[=false]" in command line.
-    const enable_cplusplus = b.option(bool, "enable_cplusplus",
-                                      "C++ support") orelse false;
-    const linkage = b.option(std.builtin.LinkMode, "linkage",
-        "Build shared libraries (otherwise static ones)") orelse .dynamic;
-    const build_cord = b.option(bool, "build_cord",
-                                "Build cord library") orelse true;
-    const cflags_extra = b.option([]const u8, "CFLAGS_EXTRA",
-                                  "Extra user-defined cflags") orelse "";
+    const enable_cplusplus = b.option(bool, "enable_cplusplus", "C++ support") orelse false;
+    const linkage = b.option(std.builtin.LinkMode, "linkage", "Build shared libraries (otherwise static ones)") orelse .dynamic;
+    const build_cord = b.option(bool, "build_cord", "Build cord library") orelse true;
+    const cflags_extra = b.option([]const u8, "CFLAGS_EXTRA", "Extra user-defined cflags") orelse "";
     // TODO: support `enable_docs`
-    const enable_threads = b.option(bool, "enable_threads",
-                "Support threads") orelse default_enable_threads;
-    const enable_parallel_mark = b.option(bool, "enable_parallel_mark",
-        "Parallelize marking and free list construction") orelse true;
-    const enable_thread_local_alloc = b.option(bool,
-        "enable_thread_local_alloc",
-        "Turn on thread-local allocation optimization") orelse true;
-    const enable_threads_discovery = b.option(bool,
-        "enable_threads_discovery",
-        "Enable threads discovery in GC") orelse true;
-    const enable_rwlock = b.option(bool, "enable_rwlock",
-        "Enable reader mode of the allocator lock") orelse false;
-    const enable_throw_bad_alloc_library = b.option(bool,
-        "enable_throw_bad_alloc_library",
-        "Turn on C++ gctba library build") orelse true;
-    const enable_gcj_support = b.option(bool, "enable_gcj_support",
-                                        "Support for gcj") orelse true;
-    const enable_sigrt_signals = b.option(bool, "enable_sigrt_signals",
-        "Use SIGRTMIN-based signals for thread suspend/resume") orelse false;
-    const enable_valgrind_tracking = b.option(bool,
-        "enable_valgrind_tracking",
-        "Support tracking GC_malloc and friends for heap profiling tools")
-        orelse false;
-    const enable_gc_debug = b.option(bool, "enable_gc_debug",
-        "Support for pointer back-tracing") orelse false;
-    const disable_gc_debug = b.option(bool, "disable_gc_debug",
-        "Disable debugging like GC_dump and its callees") orelse false;
-    const enable_java_finalization = b.option(bool,
-        "enable_java_finalization",
-        "Support for java finalization") orelse true;
-    const enable_atomic_uncollectable = b.option(bool,
-        "enable_atomic_uncollectable",
-        "Support for atomic uncollectible allocation") orelse true;
-    const enable_redirect_malloc = b.option(bool, "enable_redirect_malloc",
-        "Redirect malloc and friend to GC routines") orelse false;
-    const enable_disclaim = b.option(bool, "enable_disclaim",
-        "Support alternative finalization interface") orelse true;
-    const enable_dynamic_pointer_mask = b.option(bool,
-        "enable_dynamic_pointer_mask",
-        "Support pointer mask/shift set at runtime") orelse false;
-    const enable_large_config = b.option(bool, "enable_large_config",
-        "Optimize for large heap or root set") orelse false;
-    const enable_gc_assertions = b.option(bool, "enable_gc_assertions",
-        "Enable collector-internal assertion checking") orelse false;
-    const enable_mmap = b.option(bool, "enable_mmap",
-        "Use mmap instead of sbrk to expand the heap") orelse false;
-    const enable_munmap = b.option(bool, "enable_munmap",
-        "Return page to the OS if empty for N collections") orelse true;
-    const enable_dynamic_loading = b.option(bool, "enable_dynamic_loading",
-        "Enable tracing of dynamic library data roots") orelse true;
-    const enable_register_main_static_data = b.option(bool,
-        "enable_register_main_static_data",
-        "Perform the initial guess of data root sets") orelse true;
-    const enable_checksums = b.option(bool, "enable_checksums",
-        "Report erroneously cleared dirty bits") orelse false;
-    const enable_werror = b.option(bool, "enable_werror",
-        "Pass -Werror to the C compiler (treat warnings as errors)")
-        orelse false;
-    const enable_single_obj_compilation = b.option(bool,
-        "enable_single_obj_compilation",
-        "Compile all libgc source files into single .o") orelse false;
-    const disable_single_obj_compilation = b.option(bool,
-        "disable_single_obj_compilation",
-        "Compile each libgc source file independently") orelse false;
-    const enable_handle_fork = b.option(bool, "enable_handle_fork",
-        "Attempt to ensure a usable collector after fork()") orelse true;
-    const disable_handle_fork = b.option(bool, "disable_handle_fork",
-        "Prohibit installation of pthread_atfork() handlers") orelse false;
+    const enable_threads = b.option(bool, "enable_threads", "Support threads") orelse default_enable_threads;
+    const enable_parallel_mark = b.option(bool, "enable_parallel_mark", "Parallelize marking and free list construction") orelse true;
+    const enable_thread_local_alloc = b.option(bool, "enable_thread_local_alloc", "Turn on thread-local allocation optimization") orelse true;
+    const enable_threads_discovery = b.option(bool, "enable_threads_discovery", "Enable threads discovery in GC") orelse true;
+    const enable_rwlock = b.option(bool, "enable_rwlock", "Enable reader mode of the allocator lock") orelse false;
+    const enable_throw_bad_alloc_library = b.option(bool, "enable_throw_bad_alloc_library", "Turn on C++ gctba library build") orelse true;
+    const enable_gcj_support = b.option(bool, "enable_gcj_support", "Support for gcj") orelse true;
+    const enable_sigrt_signals = b.option(bool, "enable_sigrt_signals", "Use SIGRTMIN-based signals for thread suspend/resume") orelse false;
+    const enable_valgrind_tracking = b.option(bool, "enable_valgrind_tracking", "Support tracking GC_malloc and friends for heap profiling tools") orelse false;
+    const enable_gc_debug = b.option(bool, "enable_gc_debug", "Support for pointer back-tracing") orelse false;
+    const disable_gc_debug = b.option(bool, "disable_gc_debug", "Disable debugging like GC_dump and its callees") orelse false;
+    const enable_java_finalization = b.option(bool, "enable_java_finalization", "Support for java finalization") orelse true;
+    const enable_atomic_uncollectable = b.option(bool, "enable_atomic_uncollectable", "Support for atomic uncollectible allocation") orelse true;
+    const enable_redirect_malloc = b.option(bool, "enable_redirect_malloc", "Redirect malloc and friend to GC routines") orelse false;
+    const enable_disclaim = b.option(bool, "enable_disclaim", "Support alternative finalization interface") orelse true;
+    const enable_dynamic_pointer_mask = b.option(bool, "enable_dynamic_pointer_mask", "Support pointer mask/shift set at runtime") orelse false;
+    const enable_large_config = b.option(bool, "enable_large_config", "Optimize for large heap or root set") orelse false;
+    const enable_gc_assertions = b.option(bool, "enable_gc_assertions", "Enable collector-internal assertion checking") orelse false;
+    const enable_mmap = b.option(bool, "enable_mmap", "Use mmap instead of sbrk to expand the heap") orelse false;
+    const enable_munmap = b.option(bool, "enable_munmap", "Return page to the OS if empty for N collections") orelse true;
+    const enable_dynamic_loading = b.option(bool, "enable_dynamic_loading", "Enable tracing of dynamic library data roots") orelse true;
+    const enable_register_main_static_data = b.option(bool, "enable_register_main_static_data", "Perform the initial guess of data root sets") orelse true;
+    const enable_checksums = b.option(bool, "enable_checksums", "Report erroneously cleared dirty bits") orelse false;
+    const enable_werror = b.option(bool, "enable_werror", "Pass -Werror to the C compiler (treat warnings as errors)") orelse false;
+    const enable_single_obj_compilation = b.option(bool, "enable_single_obj_compilation", "Compile all libgc source files into single .o") orelse false;
+    const disable_single_obj_compilation = b.option(bool, "disable_single_obj_compilation", "Compile each libgc source file independently") orelse false;
+    const enable_handle_fork = b.option(bool, "enable_handle_fork", "Attempt to ensure a usable collector after fork()") orelse true;
+    const disable_handle_fork = b.option(bool, "disable_handle_fork", "Prohibit installation of pthread_atfork() handlers") orelse false;
     // TODO: support `enable_emscripten_asyncify`
-    const install_headers = b.option(bool, "install_headers",
-        "Install header and pkg-config metadata files") orelse true;
+    const install_headers = b.option(bool, "install_headers", "Install header and pkg-config metadata files") orelse true;
     // TODO: support `with_libatomic_ops`, `without_libatomic_ops`
 
     var source_files: std.ArrayListUnmanaged([]const u8) = .empty;
@@ -149,8 +103,7 @@ pub fn build(b: *std.Build) void {
 
     // Disable MS `crt` security warnings reported e.g. for `getenv`, `strcpy`.
     if (t.abi == .msvc) {
-        flags.append(b.allocator,
-                     "-D _CRT_SECURE_NO_DEPRECATE") catch unreachable;
+        flags.append(b.allocator, "-D _CRT_SECURE_NO_DEPRECATE") catch unreachable;
     }
 
     source_files.appendSlice(b.allocator, &.{
@@ -182,8 +135,7 @@ pub fn build(b: *std.Build) void {
         if (t.os.tag != .windows) { // assume `pthreads`
             // TODO: support cygwin when supported by zig
             // Zig comes with clang which supports GCC atomic intrinsics.
-            flags.append(b.allocator,
-                         "-D GC_BUILTIN_ATOMIC") catch unreachable;
+            flags.append(b.allocator, "-D GC_BUILTIN_ATOMIC") catch unreachable;
             // TODO: define and use `THREADDLLIBS_LIST`
             source_files.appendSlice(b.allocator, &.{
                 "gc_dlopen.c",
@@ -191,18 +143,15 @@ pub fn build(b: *std.Build) void {
                 "pthread_support.c",
             }) catch unreachable;
             if (t.os.tag.isDarwin()) {
-                source_files.append(b.allocator,
-                                    "darwin_stop_world.c") catch unreachable;
+                source_files.append(b.allocator, "darwin_stop_world.c") catch unreachable;
             } else {
-                source_files.append(b.allocator,
-                                    "pthread_stop_world.c") catch unreachable;
+                source_files.append(b.allocator, "pthread_stop_world.c") catch unreachable;
             }
             // Common defines for POSIX platforms.
             flags.append(b.allocator, "-D _REENTRANT") catch unreachable;
             // TODO: some targets might need `_PTHREADS` defined too.
             if (enable_thread_local_alloc) {
-                flags.append(b.allocator,
-                             "-D THREAD_LOCAL_ALLOC") catch unreachable;
+                flags.append(b.allocator, "-D THREAD_LOCAL_ALLOC") catch unreachable;
                 source_files.appendSlice(b.allocator, &.{
                     "specific.c",
                     "thread_local_alloc.c",
@@ -213,23 +162,17 @@ pub fn build(b: *std.Build) void {
                 flags.append(b.allocator, "-D HANDLE_FORK") catch unreachable;
             }
             if (enable_sigrt_signals) {
-                flags.append(b.allocator,
-                             "-D GC_USESIGRT_SIGNALS") catch unreachable;
+                flags.append(b.allocator, "-D GC_USESIGRT_SIGNALS") catch unreachable;
             }
         } else {
             // Assume the GCC atomic intrinsics are supported.
-            flags.append(b.allocator,
-                         "-D GC_BUILTIN_ATOMIC") catch unreachable;
-            if (enable_thread_local_alloc
-                    and (enable_parallel_mark or linkage != .dynamic)) {
+            flags.append(b.allocator, "-D GC_BUILTIN_ATOMIC") catch unreachable;
+            if (enable_thread_local_alloc and (enable_parallel_mark or linkage != .dynamic)) {
                 // Imply `THREAD_LOCAL_ALLOC` unless `GC_DLL`.
-                flags.append(b.allocator,
-                             "-D THREAD_LOCAL_ALLOC") catch unreachable;
-                source_files.append(b.allocator,
-                                    "thread_local_alloc.c") catch unreachable;
+                flags.append(b.allocator, "-D THREAD_LOCAL_ALLOC") catch unreachable;
+                source_files.append(b.allocator, "thread_local_alloc.c") catch unreachable;
             }
-            flags.append(b.allocator,
-                         "-D EMPTY_GETENV_RESULTS") catch unreachable;
+            flags.append(b.allocator, "-D EMPTY_GETENV_RESULTS") catch unreachable;
             source_files.appendSlice(b.allocator, &.{
                 // Add `pthread_start.c` file just in case client defines
                 // `GC_WIN32_PTHREADS` macro.
@@ -250,8 +193,7 @@ pub fn build(b: *std.Build) void {
         flags.append(b.allocator, "-D GC_GCJ_SUPPORT") catch unreachable;
         // TODO: do not define `GC_ENABLE_SUSPEND_THREAD` on kFreeBSD
         // if `enable_thread_local_alloc` (a workaround for some bug).
-        flags.append(b.allocator,
-                     "-D GC_ENABLE_SUSPEND_THREAD") catch unreachable;
+        flags.append(b.allocator, "-D GC_ENABLE_SUSPEND_THREAD") catch unreachable;
         source_files.append(b.allocator, "gcj_mlc.c") catch unreachable;
     }
 
@@ -269,8 +211,7 @@ pub fn build(b: *std.Build) void {
     }
 
     if (enable_atomic_uncollectable) {
-        flags.append(b.allocator,
-                     "-D GC_ATOMIC_UNCOLLECTABLE") catch unreachable;
+        flags.append(b.allocator, "-D GC_ATOMIC_UNCOLLECTABLE") catch unreachable;
     }
 
     if (enable_valgrind_tracking) {
@@ -283,8 +224,7 @@ pub fn build(b: *std.Build) void {
         if (t.os.tag == .linux) {
             flags.append(b.allocator, "-D MAKE_BACK_GRAPH") catch unreachable;
             // TODO: do not define `SAVE_CALL_COUNT` for e2k
-            flags.append(b.allocator,
-                         "-D SAVE_CALL_COUNT=8") catch unreachable;
+            flags.append(b.allocator, "-D SAVE_CALL_COUNT=8") catch unreachable;
             source_files.append(b.allocator, "backgraph.c") catch unreachable;
         }
     }
@@ -298,24 +238,16 @@ pub fn build(b: *std.Build) void {
 
     if (enable_redirect_malloc) {
         if (enable_gc_debug) {
-            flags.append(b.allocator,
-                         "-D REDIRECT_MALLOC=GC_debug_malloc_replacement")
-                catch unreachable;
-            flags.append(b.allocator,
-                         "-D REDIRECT_REALLOC=GC_debug_realloc_replacement")
-                catch unreachable;
-            flags.append(b.allocator,
-                         "-D REDIRECT_FREE=GC_debug_free") catch unreachable;
+            flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_replacement") catch unreachable;
+            flags.append(b.allocator, "-D REDIRECT_REALLOC=GC_debug_realloc_replacement") catch unreachable;
+            flags.append(b.allocator, "-D REDIRECT_FREE=GC_debug_free") catch unreachable;
         } else {
-            flags.append(b.allocator,
-                         "-D REDIRECT_MALLOC=GC_malloc") catch unreachable;
+            flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_malloc") catch unreachable;
         }
         if (t.os.tag == .windows) {
-            flags.append(b.allocator,
-                         "-D REDIRECT_MALLOC_IN_HEADER") catch unreachable;
+            flags.append(b.allocator, "-D REDIRECT_MALLOC_IN_HEADER") catch unreachable;
         } else {
-            flags.append(b.allocator,
-                         "-D GC_USE_DLOPEN_WRAP") catch unreachable;
+            flags.append(b.allocator, "-D GC_USE_DLOPEN_WRAP") catch unreachable;
         }
     }
 
@@ -328,13 +260,11 @@ pub fn build(b: *std.Build) void {
     }
 
     if (!enable_dynamic_loading) {
-        flags.append(b.allocator,
-                     "-D IGNORE_DDYNAMIC_LOADING") catch unreachable;
+        flags.append(b.allocator, "-D IGNORE_DDYNAMIC_LOADING") catch unreachable;
     }
 
     if (!enable_register_main_static_data) {
-        flags.append(b.allocator,
-                     "-D GC_DONT_REGISTER_MAIN_STATIC_DATA") catch unreachable;
+        flags.append(b.allocator, "-D GC_DONT_REGISTER_MAIN_STATIC_DATA") catch unreachable;
     }
 
     if (enable_large_config) {
@@ -346,8 +276,7 @@ pub fn build(b: *std.Build) void {
     }
 
     if (!enable_threads_discovery) {
-        flags.append(b.allocator,
-                     "-D GC_NO_THREADS_DISCOVERY") catch unreachable;
+        flags.append(b.allocator, "-D GC_NO_THREADS_DISCOVERY") catch unreachable;
     }
 
     if (enable_rwlock) {
@@ -366,15 +295,12 @@ pub fn build(b: *std.Build) void {
         flags.append(b.allocator, "-Werror") catch unreachable;
     }
 
-    if (enable_single_obj_compilation
-            or (linkage == .dynamic and !disable_single_obj_compilation)) {
+    if (enable_single_obj_compilation or (linkage == .dynamic and !disable_single_obj_compilation)) {
         source_files.clearAndFree(b.allocator);
         source_files.append(b.allocator, "extra/gc.c") catch unreachable;
         if (enable_threads and !t.os.tag.isDarwin() and t.os.tag != .windows) {
-            flags.append(b.allocator,
-                         "-D GC_PTHREAD_START_STANDALONE") catch unreachable;
-            source_files.append(b.allocator,
-                                "pthread_start.c") catch unreachable;
+            flags.append(b.allocator, "-D GC_PTHREAD_START_STANDALONE") catch unreachable;
+            source_files.append(b.allocator, "pthread_start.c") catch unreachable;
         }
     }
 
@@ -397,17 +323,14 @@ pub fn build(b: *std.Build) void {
         flags.append(b.allocator, "-D GC_DLL") catch unreachable;
         if (t.abi != .msvc) {
             // `zig cc` supports these flags.
-            flags.append(b.allocator,
-                         "-D GC_VISIBILITY_HIDDEN_SET") catch unreachable;
-            flags.append(b.allocator,
-                         "-fvisibility=hidden") catch unreachable;
+            flags.append(b.allocator, "-D GC_VISIBILITY_HIDDEN_SET") catch unreachable;
+            flags.append(b.allocator, "-fvisibility=hidden") catch unreachable;
         }
     } else {
         flags.append(b.allocator, "-D GC_NOT_DLL") catch unreachable;
         if (t.os.tag == .windows) {
             // Do not require the clients to link with `user32` system library.
-            flags.append(b.allocator,
-                         "-D DONT_USE_USER32_DLL") catch unreachable;
+            flags.append(b.allocator, "-D DONT_USE_USER32_DLL") catch unreachable;
         }
     }
 
@@ -436,8 +359,7 @@ pub fn build(b: *std.Build) void {
         flags.append(b.allocator, "-D HAVE_DL_ITERATE_PHDR") catch unreachable;
         if (enable_threads) {
             // `pthread_sigmask` and `sigset_t` are available and needed.
-            flags.append(b.allocator,
-                         "-D HAVE_PTHREAD_SIGMASK") catch unreachable;
+            flags.append(b.allocator, "-D HAVE_PTHREAD_SIGMASK") catch unreachable;
         }
     }
 
@@ -446,11 +368,9 @@ pub fn build(b: *std.Build) void {
 
     // `pthread_setname_np`, if available, may have 1, 2 or 3 arguments.
     if (t.os.tag.isDarwin()) {
-        flags.append(b.allocator, "-D HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID")
-                catch unreachable;
+        flags.append(b.allocator, "-D HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID") catch unreachable;
     } else if (t.os.tag == .linux) {
-        flags.append(b.allocator,
-                     "-D HAVE_PTHREAD_SETNAME_NP_WITH_TID") catch unreachable;
+        flags.append(b.allocator, "-D HAVE_PTHREAD_SETNAME_NP_WITH_TID") catch unreachable;
     } else {
         // TODO: support `HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG`
         // and `HAVE_PTHREAD_SET_NAME_NP` targets.
@@ -464,25 +384,21 @@ pub fn build(b: *std.Build) void {
     // TODO: as of zig 0.14, exception.h and getsect.h are not provided
     // by zig itself for Darwin target.
     if (t.os.tag.isDarwin() and !target.query.isNative()) {
-        flags.append(b.allocator,
-                     "-D MISSING_MACH_O_GETSECT_H") catch unreachable;
-        flags.append(b.allocator,
-                     "-D NO_MPROTECT_VDB") catch unreachable;
+        flags.append(b.allocator, "-D MISSING_MACH_O_GETSECT_H") catch unreachable;
+        flags.append(b.allocator, "-D NO_MPROTECT_VDB") catch unreachable;
     }
 
     if (enable_cplusplus and enable_werror) {
         if (linkage == .dynamic and t.os.tag == .windows or t.abi == .msvc) {
             // Avoid "replacement operator new[] cannot be declared inline"
             // warnings.
-            flags.append(b.allocator,
-                         "-Wno-inline-new-delete") catch unreachable;
+            flags.append(b.allocator, "-Wno-inline-new-delete") catch unreachable;
         }
         if (t.abi == .msvc) {
             // TODO: as of zig 0.14,
             // "argument unused during compilation: -nostdinc++" warning is
             // reported if using MS compiler.
-            flags.append(b.allocator, "-Wno-unused-command-line-argument")
-                catch unreachable;
+            flags.append(b.allocator, "-Wno-unused-command-line-argument") catch unreachable;
         }
     }
 
@@ -511,7 +427,7 @@ pub fn build(b: *std.Build) void {
     gc.addIncludePath(b.path("include"));
     gc.linkLibC();
     if (linkage == .dynamic and t.abi == .msvc) {
-      gc.linkSystemLibrary("user32");
+        gc.linkSystemLibrary("user32");
     }
 
     var gccpp: *std.Build.Step.Compile = undefined;
@@ -634,8 +550,7 @@ pub fn build(b: *std.Build) void {
     // Note: the tests are built only if `test` step is requested.
     const test_step = b.step("test", "Run tests");
     addTest(b, gc, test_step, flags, "gctest", "tests/gctest.c");
-    if (build_cord
-        and !(linkage == .dynamic and t.abi == .msvc)) {
+    if (build_cord and !(linkage == .dynamic and t.abi == .msvc)) {
         // On Windows, the client code which uses `cord.dll` file
         // (like `cordtest.exe`) should not link the static C library
         // (`libcmt.lib` file), otherwise `FILE`-related functions
@@ -644,16 +559,17 @@ pub fn build(b: *std.Build) void {
         // impossible to pass `FILE` pointer from `.exe` to `.dll` code).
         // TODO: as of zig 0.15.2, it is not possible to force linking
         // `msvcrt.lib` instead of `libcmt.lib` file.
-        addTestExt(b, gc, test_step, flags,
-                   "cordtest", "cord/tests/cordtest.c", .{ .lib2 = cord, });
+        addTestExt(b, gc, test_step, flags, "cordtest", "cord/tests/cordtest.c", .{
+            .lib2 = cord,
+        });
         if (t.os.tag == .windows) {
             addTestExt(b, gc, test_step, flags, "de", "cord/tests/de.c", .{
-                           .filename2 = "cord/tests/de_win.c",
-                           .rc_filename = "cord/tests/de_win.rc",
-                           .lib2 = cord,
-                           .sysLibName = "gdi32",
-                           .sysLibName2 = "user32",
-                       });
+                .filename2 = "cord/tests/de_win.c",
+                .rc_filename = "cord/tests/de_win.rc",
+                .lib2 = cord,
+                .sysLibName = "gdi32",
+                .sysLibName2 = "user32",
+            });
         }
     }
     addTest(b, gc, test_step, flags, "hugetest", "tests/huge.c");
@@ -662,37 +578,33 @@ pub fn build(b: *std.Build) void {
     addTest(b, gc, test_step, flags, "realloctest", "tests/realloc.c");
     addTest(b, gc, test_step, flags, "smashtest", "tests/smash.c");
     // TODO: build `staticrootstest` with `-D STATICROOTSLIB2`.
-    addTestExt(b, gc, test_step, flags, "staticrootstest",
-               "tests/staticroots.c", .{
-                   .filename2 = "tests/staticroots_lib.c",
-               });
+    addTestExt(b, gc, test_step, flags, "staticrootstest", "tests/staticroots.c", .{
+        .filename2 = "tests/staticroots_lib.c",
+    });
     if (enable_gc_debug) {
         addTest(b, gc, test_step, flags, "tracetest", "tests/trace.c");
     }
     if (enable_threads) {
         addTest(b, gc, test_step, flags, "atomicopstest", "tests/atomicops.c");
-        addTest(b, gc, test_step, flags,
-                "initfromthreadtest", "tests/initfromthread.c");
-        addTest(b, gc, test_step, flags,
-                "subthreadcreatetest", "tests/subthreadcreate.c");
-        addTest(b, gc, test_step, flags,
-                "threadleaktest", "tests/threadleak.c");
+        addTest(b, gc, test_step, flags, "initfromthreadtest", "tests/initfromthread.c");
+        addTest(b, gc, test_step, flags, "subthreadcreatetest", "tests/subthreadcreate.c");
+        addTest(b, gc, test_step, flags, "threadleaktest", "tests/threadleak.c");
         if (t.os.tag != .windows) {
-            addTest(b, gc, test_step, flags,
-                    "threadkeytest", "tests/threadkey.c");
+            addTest(b, gc, test_step, flags, "threadkeytest", "tests/threadkey.c");
         }
     }
     if (enable_cplusplus) {
-        addTestExt(b, gc, test_step, flags, "cpptest", "tests/cpp.cc",
-                   .{ .lib2 = gccpp, });
+        addTestExt(b, gc, test_step, flags, "cpptest", "tests/cpp.cc", .{
+            .lib2 = gccpp,
+        });
         if (enable_throw_bad_alloc_library) {
-            addTestExt(b, gc, test_step, flags, "treetest", "tests/tree.cc",
-                       .{ .lib2 = gctba, });
+            addTestExt(b, gc, test_step, flags, "treetest", "tests/tree.cc", .{
+                .lib2 = gctba,
+            });
         }
     }
     if (enable_disclaim) {
-        addTest(b, gc, test_step, flags,
-                "disclaim_bench", "tests/disclaim_bench.c");
+        addTest(b, gc, test_step, flags, "disclaim_bench", "tests/disclaim_bench.c");
         addTest(b, gc, test_step, flags, "disclaimtest", "tests/disclaim.c");
         addTest(b, gc, test_step, flags, "weakmaptest", "tests/weakmap.c");
     }
@@ -709,24 +621,17 @@ fn linkLibCpp(lib: *std.Build.Step.Compile) void {
     }
 }
 
-fn addTest(b: *std.Build, gc: *std.Build.Step.Compile,
-           test_step: *std.Build.Step,
-           flags: std.ArrayListUnmanaged([]const u8), testname: []const u8,
-           filename: []const u8) void {
+fn addTest(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.Step, flags: std.ArrayListUnmanaged([]const u8), testname: []const u8, filename: []const u8) void {
     addTestExt(b, gc, test_step, flags, testname, filename, .{});
 }
 
-fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
-              test_step: *std.Build.Step,
-              flags: std.ArrayListUnmanaged([]const u8),
-              testname: []const u8, filename: []const u8,
-              ext_args: struct {
-                  filename2: ?[]const u8 = null,
-                  rc_filename: ?[]const u8 = null,
-                  lib2: ?*std.Build.Step.Compile = null,
-                  sysLibName: ?[]const u8 = null,
-                  sysLibName2: ?[]const u8 = null,
-              }) void {
+fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.Step, flags: std.ArrayListUnmanaged([]const u8), testname: []const u8, filename: []const u8, ext_args: struct {
+    filename2: ?[]const u8 = null,
+    rc_filename: ?[]const u8 = null,
+    lib2: ?*std.Build.Step.Compile = null,
+    sysLibName: ?[]const u8 = null,
+    sysLibName2: ?[]const u8 = null,
+}) void {
     const test_exe = b.addExecutable(.{
         .name = testname,
         .root_module = b.createModule(.{
@@ -745,8 +650,9 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
         });
     }
     if (ext_args.rc_filename != null) {
-        test_exe.addWin32ResourceFile(
-            .{ .file = b.path(ext_args.rc_filename.?), });
+        test_exe.addWin32ResourceFile(.{
+            .file = b.path(ext_args.rc_filename.?),
+        });
     }
     test_exe.addIncludePath(b.path("include"));
     test_exe.linkLibrary(gc);
@@ -765,8 +671,10 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile,
     test_step.dependOn(&run_test_exe.step);
 }
 
-fn installHeader(b: *std.Build, lib: *std.Build.Step.Compile,
-                 hfile: []const u8) void {
-   const src_path = b.pathJoin(&.{ "include", hfile, });
-   lib.installHeader(b.path(src_path), hfile);
+fn installHeader(b: *std.Build, lib: *std.Build.Step.Compile, hfile: []const u8) void {
+    const src_path = b.pathJoin(&.{
+        "include",
+        hfile,
+    });
+    lib.installHeader(b.path(src_path), hfile);
 }
