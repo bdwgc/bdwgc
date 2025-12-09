@@ -364,6 +364,9 @@ AM_CONDITIONAL(PTHREADS, test x$THREADS = xposix)
 AM_CONDITIONAL(DARWIN_THREADS, test x$darwin_threads = xtrue)
 AM_CONDITIONAL(WIN32_THREADS, test x$win32_threads = xtrue)
 
+AC_ARG_ENABLE(gc-dump,
+    [AS_HELP_STRING([--disable-gc-dump],
+                    [disable GC_dump and similar debugging facility])])
 compiler_suncc=no
 pthread_start_standalone=no
 case "$host" in
@@ -382,7 +385,7 @@ case "$host" in
     fi
     ;;
   *-*-wince*)
-    if test "$enable_gc_debug" != "no"; then
+    if test "$enable_gc_dump" != "no"; then
       AC_DEFINE([GC_READ_ENV_FILE], 1,
                 [Read environment variables from the GC 'env' file.])
     fi
@@ -751,7 +754,7 @@ AC_ARG_ENABLE(valgrind-tracking,
 UNWINDLIBS=
 AC_ARG_ENABLE(gc-debug,
               [AS_HELP_STRING([--enable-gc-debug],
-                    [include full support for pointer backtracing etc.])],
+                    [include full support for pointer backtracing, etc.])],
  [if test "$enable_gc_debug" = "yes"; then
     AC_MSG_WARN("Should define GC_DEBUG and use debug alloc in clients.")
     AC_DEFINE([KEEP_BACK_PTRS], 1,
@@ -997,7 +1000,7 @@ if test -n "${with_cross_host}"; then
              [Define to tune the collector for small heap sizes.])
 fi
 
-if test "$enable_gc_debug" = "no"; then
+if test "$enable_gc_dump" = "no"; then
    AC_DEFINE([NO_DEBUGGING], 1,
              [Disable debugging, like `GC_dump` and its callees.])
 fi
