@@ -63,7 +63,7 @@ pub fn build(b: *std.Build) void {
     const enable_sigrt_signals = b.option(bool, "enable_sigrt_signals", "Use SIGRTMIN-based signals for thread suspend/resume") orelse false;
     const enable_valgrind_tracking = b.option(bool, "enable_valgrind_tracking", "Support tracking GC_malloc and friends for heap profiling tools") orelse false;
     const enable_gc_debug = b.option(bool, "enable_gc_debug", "Support for pointer back-tracing") orelse false;
-    const disable_gc_debug = b.option(bool, "disable_gc_debug", "Disable debugging like GC_dump and its callees") orelse false;
+    const enable_gc_dump = b.option(bool, "enable_gc_dump", "Enable GC_dump and similar debugging facility") orelse true;
     const enable_java_finalization = b.option(bool, "enable_java_finalization", "Support for java finalization") orelse true;
     const enable_atomic_uncollectable = b.option(bool, "enable_atomic_uncollectable", "Support for atomic uncollectible allocation") orelse true;
     const enable_redirect_malloc = b.option(bool, "enable_redirect_malloc", "Redirect malloc and friend to GC routines") orelse false;
@@ -229,7 +229,7 @@ pub fn build(b: *std.Build) void {
         }
     }
 
-    if (disable_gc_debug) {
+    if (!enable_gc_dump) {
         flags.append(b.allocator, "-D NO_DEBUGGING") catch unreachable;
     }
     if (optimize != .Debug) {
