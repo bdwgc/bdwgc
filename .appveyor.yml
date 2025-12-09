@@ -20,7 +20,7 @@ environment:
   - TARGET: cmake
     CFLAGS_EXTRA: -DNO_MPROTECT_VDB -DGC_READ_ENV_FILE
     CMAKE_CONFIG: Release
-    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON -Denable_large_config=ON -Ddisable_gc_debug=ON -Denable_dynamic_pointer_mask=ON -Denable_rwlock=ON
+    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Release -Denable_cplusplus=ON -Denable_dynamic_pointer_mask=ON -Denable_gc_dump=OFF -Denable_large_config=ON -Denable_rwlock=ON
   - TARGET: cmake
     CFLAGS_EXTRA: -DNO_FIND_LEAK
     CMAKE_CONFIG: Release
