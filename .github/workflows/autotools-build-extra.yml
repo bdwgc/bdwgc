@@ -305,7 +305,7 @@ jobs:
         #  cflags_extra: -fno-omit-frame-pointer -fsanitize=thread -O3
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Fetch libatomic_ops
       if: ${{ matrix.fetch_libatomic_ops }}

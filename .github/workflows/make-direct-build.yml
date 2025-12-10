@@ -31,7 +31,7 @@ jobs:
           curses_opt: CURSES="-lgdi32 -luser32"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Fetch libatomic_ops
       run: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
