@@ -79,12 +79,6 @@ jobs:
         - os: windows-11-arm
           c_compiler: gcc
           enable_cplusplus: off
-        - os: windows-latest # TODO: support dependency on libatomic_ops
-          c_compiler: cl
-          enable_threads: on
-        - os: windows-11-arm
-          c_compiler: cl
-          enable_threads: on
         include:
         - os: windows-latest
           c_compiler: gcc
@@ -101,6 +95,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+
+    - name: Checkout libatomic_ops repository
+      # Only if the compiler does not support GCC atomic intrinsics.
+      if: ${{ matrix.c_compiler == 'cl' && matrix.enable_threads == 'on' }}
+      uses: actions/checkout@v6
+      with:
+        repository: bdwgc/libatomic_ops
+        path: libatomic_ops
 
     - name: Configure CMake
       # Configure CMake in a build subdirectory.
