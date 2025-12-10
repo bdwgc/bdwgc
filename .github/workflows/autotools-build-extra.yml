@@ -307,9 +307,12 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Fetch libatomic_ops
+    - name: Checkout libatomic_ops repository
       if: ${{ matrix.fetch_libatomic_ops }}
-      run: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
+      uses: actions/checkout@v6
+      with:
+        repository: bdwgc/libatomic_ops
+        path: libatomic_ops
 
     - name: Install libatomic-ops-dev (Ubuntu)
       if: ${{ matrix.install_libatomic_ops }}
