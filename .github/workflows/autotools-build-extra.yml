@@ -7,7 +7,7 @@ jobs:
   build:
     name: ${{ matrix.os }} configure ${{ matrix.conf_options }} ${{ matrix.c_compiler == '' && 'clang' || matrix.c_compiler }} ${{ matrix.conf_cflags }} ${{ matrix.cflags_extra }} ${{ matrix.ldflags }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 6
+    timeout-minutes: 10
 
     strategy:
       # Deliver the feedback for all matrix combinations.
@@ -314,10 +314,6 @@ jobs:
         repository: bdwgc/libatomic_ops
         path: libatomic_ops
 
-    - name: Install libatomic-ops-dev (Ubuntu)
-      if: ${{ matrix.install_libatomic_ops }}
-      run: sudo apt install -y libatomic-ops-dev
-
     - name: Install GNU autotools (OS X)
       if: ${{ matrix.os == 'macos-latest' }}
       uses: tecolicom/actions-use-homebrew-tools@v1
@@ -327,17 +323,29 @@ jobs:
     - name: Generate configure
       run: ./autogen.sh
 
+    - name: Install libatomic-ops-dev (Ubuntu)
+      if: ${{ matrix.install_libatomic_ops }}
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: libatomic-ops-dev
+        version: 1.0
+
+    - name: Install musl-tools (Ubuntu)
+      if: ${{ matrix.install_musl }}
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: musl-tools
+        version: 1.0
+
     - name: Install gcc-mingw-w64 (Ubuntu)
       if: ${{ matrix.install_mingw_w64 }}
+      # Note: cache-apt-pkgs-action fails sometimes.
       run: sudo apt install -y gcc-mingw-w64
 
     - name: Install gcc-multilib (Ubuntu)
       if: ${{ matrix.install_multilib }}
+      # Note: cache-apt-pkgs-action fails sometimes.
       run: sudo apt install -y gcc-multilib
-
-    - name: Install musl-tools (Ubuntu)
-      if: ${{ matrix.install_musl }}
-      run: sudo apt install -y musl-tools
 
     - name: Configure project
       run: |
