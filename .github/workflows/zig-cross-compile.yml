@@ -116,9 +116,9 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - uses: korandoru/setup-zig@v1
+    - uses: mlugg/setup-zig@v2
       with:
-        zig-version: ${{ matrix.zig_version }}
+        version: ${{ matrix.zig_version }}
 
     - name: Build
       run: >

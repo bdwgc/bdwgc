@@ -8,16 +8,10 @@ jobs:
     name: Check format of Zig files
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        zig_version: [ "0.15.2" ]
-
     steps:
     - uses: actions/checkout@v6
 
-    - uses: korandoru/setup-zig@v1
-      with:
-        zig-version: ${{ matrix.zig_version }}
+    - uses: mlugg/setup-zig@v2
 
     - name: Run zig fmt (dry run)
       run: zig fmt --check build.zig build.zig.zon
