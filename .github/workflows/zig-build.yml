@@ -90,7 +90,7 @@ jobs:
           redirect_malloc: false
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - uses: korandoru/setup-zig@v1
       with:

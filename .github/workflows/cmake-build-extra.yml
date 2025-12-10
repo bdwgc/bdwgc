@@ -52,7 +52,7 @@ jobs:
           cmake_options: -Denable_threads=off
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Configure CMake
       # Configure CMake in a build subdirectory.

@@ -13,7 +13,7 @@ jobs:
         zig_version: [ "0.15.2" ]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - uses: korandoru/setup-zig@v1
       with:

@@ -25,7 +25,8 @@ jobs:
         single_obj_compilation: [ off, on ]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+
     - uses: bjia56/setup-cosmocc@main
       with:
         version: latest
