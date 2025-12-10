@@ -31,7 +31,7 @@ jobs:
           cmake_generator_opt: '-G "Unix Makefiles"'
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set reusable strings
       # Turn repeated input strings into step outputs.
