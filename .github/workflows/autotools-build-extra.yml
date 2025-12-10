@@ -320,7 +320,9 @@ jobs:
 
     - name: Install GNU autotools (OS X)
       if: ${{ matrix.os == 'macos-latest' }}
-      run: brew install autoconf automake libtool
+      uses: tecolicom/actions-use-homebrew-tools@v1
+      with:
+        tools: autoconf automake libtool
 
     - name: Generate configure
       run: ./autogen.sh
