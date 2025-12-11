@@ -59,9 +59,9 @@ jobs:
       run: >
         cmake -B ${{ github.workspace }}/build
         -S ${{ github.workspace }}
-        -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DGC_BUILD_SHARED_LIBS=${{ matrix.shared_libs }}
         -Denable_werror=on
         -Werror=dev
         ${{ matrix.cmake_options }}
