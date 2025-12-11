@@ -35,11 +35,11 @@ jobs:
       run: >
         cmake -B ${{ github.workspace }}/build
         -S ${{ github.workspace }}
-        -DBUILD_SHARED_LIBS=off
         -DCMAKE_AR=`type -p cosmoar`
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DCMAKE_C_COMPILER=cosmocc
         -DCMAKE_CXX_COMPILER=cosmoc++
+        -DCMAKE_C_COMPILER=cosmocc
+        -DGC_BUILD_SHARED_LIBS=off
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_gc_assertions=${{ matrix.gc_assertions }}
         -Denable_gc_dump=${{ matrix.enable_gc_dump }}
