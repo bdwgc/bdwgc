@@ -14,7 +14,7 @@ environment:
   TEST_TARGET: check
   matrix:
   - TARGET: cmake
-    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Werror=deprecated -Dwithout_libatomic_ops=ON
+    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Debug -DGC_BUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Werror=deprecated -Dwithout_libatomic_ops=ON
   - TARGET: cmake
     CMAKE_OPTIONS: -Denable_cplusplus=ON -Denable_throw_bad_alloc_library=OFF -Denable_gc_assertions=ON -Denable_gc_debug=ON -Denable_threads=OFF
   - TARGET: cmake
@@ -40,16 +40,16 @@ environment:
     CMAKE_OPTIONS: -Denable_cplusplus=ON -Denable_gc_assertions=ON
   - TARGET: cmake-bcc
     CFLAGS_EXTRA: -DCONSOLE_LOG -DNO_GWW_VDB
-    CMAKE_OPTIONS: -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_gc_debug=ON -Denable_large_config=ON -Denable_threads=OFF
+    CMAKE_OPTIONS: -DGC_BUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_gc_debug=ON -Denable_large_config=ON -Denable_threads=OFF
   - TARGET: cmake-bcc
     CFLAGS_EXTRA: -DCONSOLE_LOG
     CMAKE_CONFIG: Release
-    CMAKE_OPTIONS: -DBUILD_SHARED_LIBS=OFF
+    CMAKE_OPTIONS: -DGC_BUILD_SHARED_LIBS=OFF
   - TARGET: cmake-mingw
-    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON
+    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Release -DGC_BUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON
   - TARGET: cmake-msys
     CMAKE_CONFIG: Release
-    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Dinstall_headers=OFF -Denable_rwlock=ON
+    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Debug -DGC_BUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Dinstall_headers=OFF -Denable_rwlock=ON
   - TARGET: cmake-msys
     CMAKE_OPTIONS: -Denable_cplusplus=ON -Denable_docs=OFF
   - TARGET: cmake-msys
@@ -59,11 +59,11 @@ environment:
     CMAKE_CONFIG: Release
     CMAKE_OPTIONS: -Denable_cplusplus=ON -Denable_threads=OFF
   - TARGET: cmake-wcc-nt
-    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF -Denable_checksums=ON -Denable_dynamic_loading=OFF -Denable_large_config=ON -Denable_munmap=OFF -Denable_threads=OFF
+    CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=MinSizeRel -DGC_BUILD_SHARED_LIBS=OFF -Denable_checksums=ON -Denable_dynamic_loading=OFF -Denable_large_config=ON -Denable_munmap=OFF -Denable_threads=OFF
   - TARGET: cmake-wcc-nt
     CFLAGS_EXTRA: -DCONSOLE_LOG
     CMAKE_CONFIG: Release
-    CMAKE_OPTIONS: -DBUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON
+    CMAKE_OPTIONS: -DGC_BUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON
   - TARGET: cmake-wcc-nt
     CFLAGS_EXTRA: -DCONSOLE_LOG
     CMAKE_OPTIONS: -DCMAKE_BUILD_TYPE=Debug -Denable_cplusplus=ON -Denable_gc_assertions=ON
