@@ -431,7 +431,7 @@ backing_store_base_from_proc(void)
   if (!GC_enclosing_writable_mapping(GC_save_regs_in_stack(), &my_start,
                                      &my_end)) {
     GC_COND_LOG_PRINTF("Failed to find backing store base from /proc\n");
-    return 0;
+    return NULL;
   }
   return my_start;
 }
@@ -606,7 +606,7 @@ GC_skip_hole_openbsd(ptr_t p, ptr_t bound)
     }
   }
 
-  sigaction(SIGSEGV, &old_segv_act, 0);
+  sigaction(SIGSEGV, &old_segv_act, NULL);
   return result;
 }
 #endif /* OPENBSD */
@@ -737,8 +737,8 @@ GC_get_writable_length(ptr_t p, ptr_t *base)
   result = VirtualQuery(p, &buf, sizeof(buf));
   if (result != sizeof(buf))
     ABORT("Weird VirtualQuery result");
-  if (base != 0)
-    *base = (ptr_t)(buf.AllocationBase);
+  if (base != NULL)
+    *base = (ptr_t)buf.AllocationBase;
   protect = buf.Protect & ~(word)(PAGE_GUARD | PAGE_NOCACHE);
   if (!is_writable(protect) || buf.State != MEM_COMMIT)
     return 0;
@@ -993,8 +993,8 @@ GC_set_and_save_fault_handler(GC_fault_handler_t h)
    * Older versions have a bug related to retrieving and setting
    * a handler at the same time.
    */
-  (void)sigaction(SIGSEGV, 0, &old_segv_act);
-  (void)sigaction(SIGSEGV, &act, 0);
+  (void)sigaction(SIGSEGV, NULL, &old_segv_act);
+  (void)sigaction(SIGSEGV, &act, NULL);
 #    else
   (void)sigaction(SIGSEGV, &act, &old_segv_act);
 #      ifdef USE_BUS_SIGACT
@@ -1044,9 +1044,9 @@ GC_INNER void
 GC_reset_fault_handler(void)
 {
 #  ifdef USE_SEGV_SIGACT
-  (void)sigaction(SIGSEGV, &old_segv_act, 0);
+  (void)sigaction(SIGSEGV, &old_segv_act, NULL);
 #    ifdef USE_BUS_SIGACT
-  (void)sigaction(SIGBUS, &old_bus_act, 0);
+  (void)sigaction(SIGBUS, &old_bus_act, NULL);
 #    endif
 #  else
   (void)signal(SIGSEGV, old_segv_hand);
@@ -1192,7 +1192,7 @@ GC_get_register_stack_base(void)
   }
 #  endif
   result = backing_store_base_from_proc();
-  if (0 == result) {
+  if (NULL == result) {
     /* This works better than a constant displacement heuristic. */
     result = (ptr_t)GC_find_limit(GC_save_regs_in_stack(), FALSE);
   }
@@ -1919,7 +1919,7 @@ GC_least_described_address(ptr_t start)
       break;
 
     result = VirtualQuery((LPVOID)q, &buf, sizeof(buf));
-    if (result != sizeof(buf) || 0 == buf.AllocationBase)
+    if (result != sizeof(buf) || NULL == buf.AllocationBase)
       break;
     p = (ptr_t)buf.AllocationBase;
   }
@@ -1941,7 +1941,7 @@ GC_register_root_section(ptr_t static_root)
     MEMORY_BASIC_INFORMATION buf;
     size_t result = VirtualQuery((LPVOID)p, &buf, sizeof(buf));
 
-    if (result != sizeof(buf) || 0 == buf.AllocationBase
+    if (result != sizeof(buf) || NULL == buf.AllocationBase
         || GC_is_heap_base(buf.AllocationBase))
       break;
     if (ADDR(p) > GC_WORD_MAX - buf.RegionSize) {
@@ -2730,7 +2730,7 @@ GC_get_mem(size_t bytes)
      * There are also unconfirmed rumors of other problems, so we
      * dodge the issue.
      */
-    result = GlobalAlloc(0, SIZET_SAT_ADD(bytes, HBLKSIZE));
+    result = GlobalAlloc(0 /* flags */, SIZET_SAT_ADD(bytes, HBLKSIZE));
     /* Align it at `HBLKSIZE` boundary (`NULL` value remains unchanged). */
     result = PTR_ALIGN_UP((ptr_t)result, HBLKSIZE);
   } else
@@ -3729,8 +3729,8 @@ GC_dirty_init(void)
 #    else
   /* `act.sa_restorer` is deprecated and should not be initialized. */
 #      if defined(IRIX5) && defined(THREADS)
-  sigaction(SIGSEGV, 0, &oldact);
-  sigaction(SIGSEGV, &act, 0);
+  sigaction(SIGSEGV, NULL, &oldact);
+  sigaction(SIGSEGV, &act, NULL);
 #      else
   {
     int res = sigaction(SIGSEGV, &act, &oldact);
@@ -4969,7 +4969,7 @@ GC_mprotect_thread(void *arg)
   mach_msg_id_t id;
 
   if (ADDR(arg) == GC_WORD_MAX)
-    return 0; /*< to prevent a compiler warning */
+    return NULL; /*< to prevent a compiler warning */
 #  if defined(CPPCHECK)
   reply.data[0] = 0; /*< to prevent "field unused" warnings */
   msg.data[0] = 0;

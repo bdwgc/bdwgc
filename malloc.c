@@ -451,7 +451,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
     op = *opp;
     if (LIKELY(op != NULL)) {
       *opp = obj_link(op);
-      obj_link(op) = 0;
+      obj_link(op) = NULL;
       GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
       /*
        * Mark bit was already set on free list.  It will be cleared only
@@ -485,7 +485,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
        * This is not guaranteed in the multi-threaded case because the
        * counter could be updated before locking.
        */
-      GC_ASSERT(hhdr->hb_n_marks == 0);
+      GC_ASSERT(0 == hhdr->hb_n_marks);
 #endif
       hhdr->hb_n_marks = 1;
       UNLOCK();

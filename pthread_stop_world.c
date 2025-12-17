@@ -660,7 +660,7 @@ GC_brief_async_signal_safe_sleep(void)
 #      else
   tv.tv_usec = 1000 * 15 / 2;
 #      endif
-  (void)select(0, 0, 0, 0, &tv);
+  (void)select(0, NULL, NULL, NULL, &tv);
 }
 
 GC_INNER void
@@ -1134,7 +1134,7 @@ GC_stop_world(void)
 #  ifdef PARALLEL_MARK
   if (GC_parallel) {
     GC_acquire_mark_lock();
-    GC_ASSERT(GC_fl_builder_count == 0);
+    GC_ASSERT(0 == GC_fl_builder_count);
     /* We should have previously waited for it to become zero. */
   }
 #  endif /* PARALLEL_MARK */
@@ -1321,7 +1321,7 @@ GC_nacl_initialize_gc_thread(GC_thread me)
   }
   GC_ASSERT(GC_nacl_num_gc_threads <= MAX_NACL_GC_THREADS);
   for (i = 0; i < MAX_NACL_GC_THREADS; i++) {
-    if (GC_nacl_thread_used[i] == 0) {
+    if (0 == GC_nacl_thread_used[i]) {
       GC_nacl_thread_used[i] = 1;
       GC_nacl_thread_idx = i;
       GC_nacl_num_gc_threads++;

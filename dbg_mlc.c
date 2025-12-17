@@ -247,7 +247,7 @@ GC_store_debug_info_inner(void *base, size_t sz, const char *string,
   ((oh *)base)->oh_back_ptr = HIDE_BACK_PTR(NOT_MARKED);
 #endif
 #ifdef MAKE_BACK_GRAPH
-  ((oh *)base)->oh_bg_ptr = HIDE_BACK_PTR((ptr_t)0);
+  ((oh *)base)->oh_bg_ptr = HIDE_BACK_PTR((ptr_t)NULL);
 #endif
   ((oh *)base)->oh_string = string;
   ((oh *)base)->oh_int = linenum;
@@ -345,9 +345,9 @@ GC_print_obj(ptr_t base)
      * This should preclude free-list objects except with thread-local
      * allocation.
      */
-    buffer[GC_TYPE_DESCR_LEN] = 0;
+    buffer[GC_TYPE_DESCR_LEN] = '\0';
     (*GC_describe_type_fns[kind])(q, buffer);
-    GC_ASSERT(buffer[GC_TYPE_DESCR_LEN] == 0);
+    GC_ASSERT(buffer[GC_TYPE_DESCR_LEN] == '\0');
     kind_str = buffer;
   } else {
     switch (kind) {
@@ -709,7 +709,7 @@ GC_API void GC_CALL
 GC_debug_free(void *p)
 {
   ptr_t base;
-  if (0 == p)
+  if (NULL == p)
     return;
 
   base = (ptr_t)GC_base(p);

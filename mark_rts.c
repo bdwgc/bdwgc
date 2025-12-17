@@ -216,7 +216,7 @@ GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp)
   GC_static_roots[n_root_sets].r_end = (ptr_t)e;
   GC_static_roots[n_root_sets].r_tmp = tmp;
 #ifndef ANY_MSWIN
-  GC_static_roots[n_root_sets].r_next = 0;
+  GC_static_roots[n_root_sets].r_next = NULL;
   add_roots_to_index(GC_static_roots + n_root_sets);
 #endif
   GC_root_size += (word)(e - b);

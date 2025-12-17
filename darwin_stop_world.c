@@ -198,7 +198,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
     size_t size;
     static cpu_type_t cputype = 0;
 
-    if (cputype == 0) {
+    if (0 == cputype) {
       sysctlbyname("hw.cputype", &cputype, &size, NULL, 0);
     }
     if (cputype == CPU_TYPE_ARM64
@@ -614,7 +614,7 @@ GC_stop_world(void)
   if (GC_parallel) {
     GC_acquire_mark_lock();
     /* We should have previously waited for it to become zero. */
-    GC_ASSERT(GC_fl_builder_count == 0);
+    GC_ASSERT(0 == GC_fl_builder_count);
   }
 #  endif /* PARALLEL_MARK */
 

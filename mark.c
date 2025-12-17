@@ -1441,7 +1441,7 @@ alloc_mark_stack(size_t n)
 
   GC_mark_stack_too_small = FALSE;
   if (GC_mark_stack != NULL) {
-    if (new_stack != 0) {
+    if (new_stack != NULL) {
 #ifdef GWW_VDB
       if (recycle_old)
 #endif
@@ -1701,7 +1701,7 @@ GC_INNER void
 GC_mark_and_push_stack(ptr_t p, ptr_t source)
 #else
 GC_mark_and_push_stack(ptr_t p)
-#  define source ((ptr_t)0)
+#  define source ((ptr_t)NULL)
 #endif
 {
   hdr *hhdr;

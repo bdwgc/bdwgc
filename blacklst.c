@@ -51,7 +51,7 @@ GC_print_blacklisted_ptr(ptr_t p, ptr_t source, const char *kind_str)
 {
   ptr_t base = (ptr_t)GC_base(source);
 
-  if (0 == base) {
+  if (NULL == base) {
     GC_err_printf("Black listing (%s) %p referenced from %p in %s\n", kind_str,
                   (void *)p, (void *)source,
                   NULL != source ? "root set" : "register");
@@ -236,8 +236,8 @@ GC_is_black_listed(struct GC_hblk_s *h, size_t len)
 
   nblocks = divHBLKSZ(len);
   for (i = 0;;) {
-    if (GC_old_stack_bl[divWORDSZ(index)] == 0
-        && GC_incomplete_stack_bl[divWORDSZ(index)] == 0) {
+    if (0 == GC_old_stack_bl[divWORDSZ(index)]
+        && 0 == GC_incomplete_stack_bl[divWORDSZ(index)]) {
       /* An easy case. */
       i += CPP_WORDSZ - modWORDSZ(index);
     } else {
