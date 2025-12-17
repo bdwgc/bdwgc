@@ -437,8 +437,9 @@ GC_start_debugging_inner(void)
 /*
  * Check the allocation is successful, store debugging info into `base`,
  * start the debugging mode (if not yet), and return displaced pointer.
+ * Inline to minimize the number of callers saved.
  */
-static void *
+GC_INLINE void *
 store_debug_info(void *base, size_t lb, const char *fn, GC_EXTRA_PARAMS)
 {
   void *result;
