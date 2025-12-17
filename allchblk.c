@@ -58,7 +58,7 @@ int GC_use_entire_heap = FALSE;
 #ifndef GC_GCJ_SUPPORT
 STATIC
 #endif
-struct hblk *GC_hblkfreelist[N_HBLK_FLS + 1] = { 0 };
+struct hblk *GC_hblkfreelist[N_HBLK_FLS + 1] = { NULL };
 
 GC_API void GC_CALL
 GC_iterate_free_hblks(GC_walk_free_blk_fn fn, void *client_data)
@@ -430,7 +430,7 @@ STATIC void
 GC_remove_from_fl_at(hdr *hhdr, size_t index)
 {
   GC_ASSERT(modHBLKSZ(hhdr->hb_sz) == 0);
-  if (hhdr->hb_prev == 0) {
+  if (NULL == hhdr->hb_prev) {
     GC_ASSERT(HDR(GC_hblkfreelist[index]) == hhdr);
     GC_hblkfreelist[index] = hhdr->hb_next;
   } else {
@@ -494,7 +494,7 @@ GC_free_block_ending_at(struct hblk *h)
       return p;
     }
   }
-  return 0;
+  return NULL;
 }
 
 /*

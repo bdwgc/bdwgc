@@ -78,7 +78,7 @@ GC_INNER unsigned GC_n_mark_procs = GC_RESERVED_MARK_PROCS;
 
 GC_INNER unsigned GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
 
-ptr_t GC_stackbottom = 0;
+ptr_t GC_stackbottom = NULL;
 
 int GC_dont_gc = FALSE;
 
@@ -475,7 +475,7 @@ GC_is_heap_ptr(const void *p)
 
   GC_ASSERT(GC_is_initialized);
   GET_BI(p, bi);
-  return HDR_FROM_BI(bi, p) != 0;
+  return HDR_FROM_BI(bi, p) != NULL;
 }
 
 GC_API size_t GC_CALL

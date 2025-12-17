@@ -711,9 +711,10 @@ GC_register_dynamic_libraries_dl_iterate_phdr(void)
 #        endif
 #        ifdef DATAEND_IS_FUNC
     {
-      static ptr_t dataend_cached = 0;
+      static ptr_t dataend_cached = NULL;
+
       /* Evaluate `DATAEND` only once. */
-      if (dataend_cached == 0) {
+      if (NULL == dataend_cached) {
         dataend_cached = DATAEND;
       }
       dataend = dataend_cached;
@@ -1015,7 +1016,7 @@ GC_register_dynamic_libraries(void)
      * but it has been reported to discard relevant segments under Irix 6.5.
      */
 #    ifndef IRIX6
-    if (addr_map[i].pr_off == 0 && strncmp(start, ELFMAG, 4) == 0) {
+    if (0 == addr_map[i].pr_off && strncmp(start, ELFMAG, 4) == 0) {
       /*
        * Discard text segments, i.e. zero-offset mappings against
        * executable files that appear to have ELF headers.

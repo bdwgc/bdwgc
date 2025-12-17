@@ -349,11 +349,11 @@ GC_check_tls(void)
         || (defined(IA64)                                            \
             && (defined(HAVE_PTHREAD_ATTR_GET_NP)                    \
                 || defined(HAVE_PTHREAD_GETATTR_NP)))
-GC_INNER_WIN32THREAD ptr_t GC_marker_sp[MAX_MARKERS - 1] = { 0 };
+GC_INNER_WIN32THREAD ptr_t GC_marker_sp[MAX_MARKERS - 1] = { NULL };
 #    endif /* GC_WIN32_THREADS || USE_PROC_FOR_LIBRARIES */
 
 #    if defined(IA64) && defined(USE_PROC_FOR_LIBRARIES)
-static ptr_t marker_bsp[MAX_MARKERS - 1] = { 0 };
+static ptr_t marker_bsp[MAX_MARKERS - 1] = { NULL };
 #    endif
 
 #    if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY)
@@ -676,7 +676,7 @@ GC_start_mark_threads_inner(void)
 
 #  endif /* GC_PTHREADS_PARAMARK */
 
-GC_INNER GC_thread GC_threads[THREAD_TABLE_SZ] = { 0 };
+GC_INNER GC_thread GC_threads[THREAD_TABLE_SZ] = { NULL };
 
 /*
  * It may not be safe to allocate when we register the first thread.

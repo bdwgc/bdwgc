@@ -161,7 +161,7 @@ GC_register_disappearing_link(void **link)
   ptr_t base;
 
   base = (ptr_t)GC_base(link);
-  if (base == 0)
+  if (NULL == base)
     ABORT("Bad arg to GC_register_disappearing_link");
   return GC_general_register_disappearing_link(link, base);
 }
@@ -208,7 +208,7 @@ GC_register_disappearing_link_inner(struct dl_hashtbl_s *dl_hashtbl,
     UNLOCK();
     new_dl = (struct disappearing_link *)(*oom_fn)(
         sizeof(struct disappearing_link));
-    if (0 == new_dl) {
+    if (NULL == new_dl) {
       return GC_NO_MEMORY;
     }
     /* It is not likely we will make it here, but... */
@@ -216,7 +216,7 @@ GC_register_disappearing_link_inner(struct dl_hashtbl_s *dl_hashtbl,
     /* Recalculate `index` since the table may grow. */
     index = HASH2(link, dl_hashtbl->log_size);
     /* Check again that our disappearing link not in the table. */
-    for (curr_dl = dl_hashtbl->head[index]; curr_dl != 0;
+    for (curr_dl = dl_hashtbl->head[index]; curr_dl != NULL;
          curr_dl = dl_next(curr_dl)) {
       if (curr_dl->dl_hidden_link == GC_HIDE_POINTER(link)) {
         curr_dl->dl_hidden_obj = GC_HIDE_POINTER(obj);
@@ -748,7 +748,7 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
 {
   struct finalizable_object *curr_fo;
   size_t index;
-  struct finalizable_object *new_fo = 0;
+  struct finalizable_object *new_fo = NULL;
   const hdr *hhdr = NULL; /*< initialized to prevent warning */
 
   GC_ASSERT(GC_is_initialized);
@@ -786,13 +786,13 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
         if (ofn)
           *ofn = curr_fo->fo_fn;
         /* Delete the structure for `obj`. */
-        if (prev_fo == 0) {
+        if (NULL == prev_fo) {
           GC_fnlz_roots.fo_head[index] = fo_next(curr_fo);
         } else {
           fo_set_next(prev_fo, fo_next(curr_fo));
           GC_dirty(prev_fo);
         }
-        if (fn == 0) {
+        if (0 == fn) {
           GC_fo_entries--;
           /*
            * May not happen if we get a signal.  But a high estimate will
@@ -810,7 +810,7 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
            * Reinsert it.  We deleted it first to maintain consistency in
            * the event of a signal.
            */
-          if (prev_fo == 0) {
+          if (NULL == prev_fo) {
             GC_fnlz_roots.fo_head[index] = curr_fo;
           } else {
             fo_set_next(prev_fo, curr_fo);
@@ -829,7 +829,7 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
       prev_fo = curr_fo;
       curr_fo = fo_next(curr_fo);
     }
-    if (UNLIKELY(new_fo != 0)) {
+    if (UNLIKELY(new_fo != NULL)) {
       /* `new_fo` is returned by `GC_oom_fn()`. */
       GC_ASSERT(fn != 0);
 #  ifdef LINT2
@@ -838,9 +838,9 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
 #  endif
       break;
     }
-    if (fn == 0) {
+    if (0 == fn) {
       if (ocd)
-        *ocd = 0;
+        *ocd = NULL;
       if (ofn)
         *ofn = 0;
       UNLOCK();
@@ -850,7 +850,7 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
     if (UNLIKELY(NULL == hhdr)) {
       /* We will not collect it, hence finalizer would not be run. */
       if (ocd)
-        *ocd = 0;
+        *ocd = NULL;
       if (ofn)
         *ofn = 0;
       UNLOCK();
@@ -858,13 +858,13 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
     }
     new_fo = (struct finalizable_object *)GC_INTERNAL_MALLOC(
         sizeof(struct finalizable_object), NORMAL);
-    if (LIKELY(new_fo != 0))
+    if (LIKELY(new_fo != NULL))
       break;
     oom_fn = GC_oom_fn;
     UNLOCK();
     new_fo = (struct finalizable_object *)(*oom_fn)(
         sizeof(struct finalizable_object));
-    if (0 == new_fo) {
+    if (NULL == new_fo) {
       /* No enough memory.  `*ocd` and `*ofn` remain unchanged. */
       return;
     }
@@ -877,7 +877,7 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
   }
   GC_ASSERT(GC_size(new_fo) >= sizeof(struct finalizable_object));
   if (ocd)
-    *ocd = 0;
+    *ocd = NULL;
   if (ofn)
     *ofn = 0;
   new_fo->fo_hidden_base = GC_HIDE_POINTER(obj);
@@ -941,7 +941,7 @@ GC_dump_finalization_links(const struct dl_hashtbl_s *dl_hashtbl)
   for (i = 0; i < dl_size; i++) {
     struct disappearing_link *curr_dl;
 
-    for (curr_dl = dl_hashtbl->head[i]; curr_dl != 0;
+    for (curr_dl = dl_hashtbl->head[i]; curr_dl != NULL;
          curr_dl = dl_next(curr_dl)) {
       ptr_t real_ptr = (ptr_t)GC_REVEAL_POINTER(curr_dl->dl_hidden_obj);
       ptr_t real_link = (ptr_t)GC_REVEAL_POINTER(curr_dl->dl_hidden_link);
@@ -1379,7 +1379,7 @@ invoke_finalizers_internal(GC_bool all)
 #  endif
     SET_FINALIZE_NOW(fo_next(curr_fo));
     UNLOCK();
-    fo_set_next(curr_fo, 0);
+    fo_set_next(curr_fo, NULL);
     real_ptr = (ptr_t)curr_fo->fo_hidden_base; /*< revealed */
     curr_fo->fo_fn(real_ptr, curr_fo->fo_client_data);
     curr_fo->fo_client_data = NULL;

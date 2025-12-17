@@ -218,7 +218,7 @@ GC_malloc_kind(size_t lb, int kind)
   GC_FAST_MALLOC_GRANS(result, lg, ((GC_tlfs)tsd)->_freelists[kind],
                        DIRECT_GRANULES, kind, GC_malloc_kind_global(lb, kind),
                        (void)(kind == PTRFREE ? MALLOC_KIND_PTRFREE_INIT
-                                              : (obj_link(result) = 0)));
+                                              : (obj_link(result) = NULL)));
 #  ifdef LOG_ALLOCS
   GC_log_printf("GC_malloc_kind(%lu, %d) returned %p, recent GC #%lu\n",
                 (unsigned long)lb, kind, result, (unsigned long)GC_gc_no);

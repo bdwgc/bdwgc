@@ -60,7 +60,7 @@ GC_header_cache_miss(ptr_t p, hdr_cache_entry *hce)
         ptr_t current = (ptr_t)GC_find_starting_hblk(HBLKPTR(p), &hhdr);
 
         if (hhdr->hb_flags & IGNORE_OFF_PAGE)
-          return 0;
+          return NULL;
         if (HBLK_IS_FREE(hhdr) || p - current >= (GC_signed_word)hhdr->hb_sz) {
           GC_ADD_TO_BLACK_LIST_NORMAL(p, source);
           /* The pointer is past the end of the block. */
@@ -250,7 +250,7 @@ get_index(word addr)
   prev = &GC_all_bottom_indices; /*< pointer to `p` */
 
   pi = NULL; /*< `bottom_index` preceding `p` */
-  while ((p = *prev) != 0 && p->key < hi) {
+  while ((p = *prev) != NULL && p->key < hi) {
     pi = p;
     prev = &p->asc_link;
   }
@@ -317,7 +317,7 @@ GC_remove_header(struct hblk *h)
   hdr **ha;
   GET_HDR_ADDR(h, ha);
   free_hdr(*ha);
-  *ha = 0;
+  *ha = NULL;
 }
 
 GC_INNER void

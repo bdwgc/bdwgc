@@ -106,7 +106,7 @@ GC_update_check_page(struct hblk *h, int index)
   page_entry *pe = &GC_sums[index];
   hdr *hhdr = HDR(h);
 
-  if (pe->block != 0 && pe->block != h + OFFSET)
+  if (pe->block != NULL && pe->block != h + OFFSET)
     ABORT("goofed");
   pe->old_sum = pe->new_sum;
   pe->new_sum = GC_checksum(h);

@@ -82,7 +82,7 @@ GC_print_all_smashed_proc(void)
   unsigned i;
 
   GC_ASSERT(I_DONT_HOLD_LOCK());
-  if (GC_n_smashed == 0)
+  if (0 == GC_n_smashed)
     return;
   GC_err_printf("GC_check_heap_block: found %u smashed heap objects:\n",
                 GC_n_smashed);

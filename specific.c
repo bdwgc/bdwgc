@@ -23,7 +23,7 @@
  * A thread-specific data entry which will never appear valid to a reader.
  * Used to fill in empty cache entries to avoid a check for 0.
  */
-static const tse invalid_tse = { INVALID_QTID, 0, 0, INVALID_THREADID };
+static const tse invalid_tse = { INVALID_QTID, 0, NULL, INVALID_THREADID };
 
 GC_INNER int
 GC_key_create_inner(tsd **key_ptr)

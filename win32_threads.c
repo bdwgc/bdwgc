@@ -744,7 +744,7 @@ GC_start_world(void)
  * A cache holding the results of the recent `VirtualQuery()` call.
  * Protected by the allocator lock.
  */
-static ptr_t last_address = 0;
+static ptr_t last_address = NULL;
 static MEMORY_BASIC_INFORMATION last_info;
 
 /*
@@ -1161,7 +1161,7 @@ GC_push_all_stacks(void)
 }
 
 #  ifdef PARALLEL_MARK
-GC_INNER ptr_t GC_marker_last_stack_min[MAX_MARKERS - 1] = { 0 };
+GC_INNER ptr_t GC_marker_last_stack_min[MAX_MARKERS - 1] = { NULL };
 #  endif
 
 GC_INNER void
