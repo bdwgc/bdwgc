@@ -804,7 +804,7 @@ EXTERN_C_BEGIN
     && !GC_GNUC_PREREQ(11, 0) /*< broken at least in 11.2.0 on cygwin64 */ \
     && !defined(__INTEL_COMPILER) && !defined(__PATHCC__)                  \
     && !defined(__FUJITSU)                    /*< for FX10 system */       \
-    && !(defined(POWERPC) && defined(DARWIN)) /*< for MacOS X 10.3.9 */    \
+    && !(defined(POWERPC) && defined(DARWIN)) /*< for macOS 10.3.9 */      \
     && !defined(E2K) && !defined(RTEMS)                                    \
     && !defined(__ARMCC_VERSION) /*< does not exist in armcc gnu emu */    \
     && !(defined(__clang__)                                                \

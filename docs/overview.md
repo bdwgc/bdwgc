@@ -66,13 +66,12 @@ with `GC_realloc` calls, and removing `free` calls. Exceptions are discussed
 
 The collector is not completely portable, but the distribution includes ports
 to most standard PC and UNIX/Linux platforms. The collector should work
-on Linux, Android, BSD variants, OS/2, Windows (Win32 and Win64), MacOS X,
+on Linux, Android, BSD variants, OS/2, Windows (Win32 and Win64), macOS,
 iOS, HP/UX, Solaris, Tru64 (OSF/1), Irix, Symbian and other operating systems.
 Some platforms are more polished (better supported) than others.
 
 Irix `pthreads`, Linux threads, Windows threads, Solaris threads (`pthreads`
-only), HP/UX 11 `pthreads`, Tru64 `pthreads`, and MacOS X threads are
-supported.
+only), HP/UX 11 `pthreads`, Tru64 `pthreads` and Darwin threads are supported.
 
 See also [here](porting.md) for the instructions on how to port the library to
 new platforms.

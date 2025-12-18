@@ -1652,7 +1652,7 @@ fork_child_proc(void)
    * parent process was attempting to lock the mutex while being held
    * in `fork_child_prepare()`, the mutex will be left in
    * an inconsistent state in the child process after the `UNLOCK()`.
-   * This is the case, at least, in Mac OS X and leads to an unusable
+   * This is the case of macOS, at least, and it leads to an unusable
    * collector in the child process which will block when attempting
    * to perform any GC operation that acquires the allocator lock.
    */

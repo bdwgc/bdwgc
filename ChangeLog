@@ -56,7 +56,7 @@
 * Allow to build with forced WRAP_MARK_SOME
 * Allow to call GC_dump_regions and GC_print_free_list by gctest
 * Allow to compile tests with custom NTHREADS set to zero
-* Allow to cross-compile for MacOS X with missing mach-o/getsect.h
+* Allow to cross-compile for macOS with missing mach-o/getsect.h
 * Allow to omit operator new/delete definitions in gc_cpp
 * Allow to randomly choose a CPU core if AO ops are emulated with locks
 * Allow to skip heap expansion in GC_init
@@ -203,7 +203,7 @@
 * Disallow explicit unregister of non-main thread if registered by DllMain
 * Discard sections with pseudo-paths except heap in register_map_entries
 * Discontinue OpenBSD uthreads (GC_OPENBSD_UTHREADS) support
-* Discontinue support of Amiga, Encore Multimax, ancient MacOS, Xerox PCR
+* Discontinue support of ancient Amiga, Encore Multimax, Macintosh, Xerox PCR
 * Do incremental mark some in GC_collect_a_little even if GC is disabled
 * Do not add extra byte to large ignore-off-page and uncollectible objects
 * Do not check INV_SZ_COMPUTATION_CHECK macro (refactoring)
