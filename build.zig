@@ -161,9 +161,6 @@ pub fn build(b: *std.Build) void {
             if (enable_handle_fork and !disable_handle_fork) {
                 flags.append(b.allocator, "-D HANDLE_FORK") catch unreachable;
             }
-            if (enable_sigrt_signals) {
-                flags.append(b.allocator, "-D GC_USESIGRT_SIGNALS") catch unreachable;
-            }
         } else {
             // Assume the GCC atomic intrinsics are supported.
             flags.append(b.allocator, "-D GC_BUILTIN_ATOMIC") catch unreachable;
@@ -186,6 +183,7 @@ pub fn build(b: *std.Build) void {
     // TODO: define/use `NEED_LIB_RT`
 
     if (disable_handle_fork) {
+        // Ignore `enable_handle_fork` as its default value is true.
         flags.append(b.allocator, "-D NO_HANDLE_FORK") catch unreachable;
     }
 
@@ -279,7 +277,19 @@ pub fn build(b: *std.Build) void {
         flags.append(b.allocator, "-D GC_NO_THREADS_DISCOVERY") catch unreachable;
     }
 
+    if (enable_sigrt_signals) {
+        if (!enable_threads) {
+            @panic("SIGRTMIN-based signals assumes multi-threading support");
+        }
+        if (t.os.tag != .windows) {
+            flags.append(b.allocator, "-D GC_USESIGRT_SIGNALS") catch unreachable;
+        }
+    }
+
     if (enable_rwlock) {
+        if (!enable_threads) {
+            @panic("Lock with reader mode assumes multi-threading support");
+        }
         flags.append(b.allocator, "-D USE_RWLOCK") catch unreachable;
     }
 
@@ -296,6 +306,9 @@ pub fn build(b: *std.Build) void {
     }
 
     if (enable_single_obj_compilation or (linkage == .dynamic and !disable_single_obj_compilation)) {
+        if (disable_single_obj_compilation) {
+            @panic("disable/enable_single_obj_compilation are mutually exclusive");
+        }
         source_files.clearAndFree(b.allocator);
         source_files.append(b.allocator, "extra/gc.c") catch unreachable;
         if (enable_threads and !t.os.tag.isDarwin() and t.os.tag != .windows) {

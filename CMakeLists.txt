@@ -186,15 +186,16 @@ set(_HOST ${CMAKE_SYSTEM_PROCESSOR}-unknown-${CMAKE_SYSTEM})
 string(TOLOWER ${_HOST} HOST)
 message(STATUS "TARGET = ${HOST}")
 
+if (with_libatomic_ops AND without_libatomic_ops)
+  message(FATAL_ERROR
+    "with_libatomic_ops and without_libatomic_ops are mutually exclusive")
+endif()
+
 if (enable_threads)
   find_package(Threads REQUIRED)
   message(STATUS "Thread library: ${CMAKE_THREAD_LIBS_INIT}")
   include_directories(${Threads_INCLUDE_DIR})
   if (with_libatomic_ops)
-    if (without_libatomic_ops)
-      message(FATAL_ERROR
-        "with_libatomic_ops and without_libatomic_ops are mutually exclusive")
-    endif()
     set(ATOMIC_OPS_LIBS "-latomic_ops")
     find_package(Atomic_ops CONFIG)
     if (Atomic_ops_FOUND)
@@ -273,9 +274,6 @@ if (enable_threads)
     elseif (enable_handle_fork AND NOT disable_handle_fork)
       add_definitions("-DHANDLE_FORK")
     endif()
-    if (enable_sigrt_signals)
-      add_definitions("-DGC_USESIGRT_SIGNALS")
-    endif()
   elseif (CMAKE_USE_WIN32_THREADS_INIT)
     add_definitions("-DGC_THREADS")
     if (enable_parallel_mark)
@@ -320,6 +318,7 @@ if (NEED_LIB_RT)
 endif(NEED_LIB_RT)
 
 if (disable_handle_fork)
+  # Ignore `enable_handle_fork` as its default value is ON.
   add_definitions("-DNO_HANDLE_FORK")
 endif()
 
@@ -417,7 +416,21 @@ if (NOT enable_threads_discovery)
   add_definitions("-DGC_NO_THREADS_DISCOVERY")
 endif()
 
+if (enable_sigrt_signals)
+  if (NOT enable_threads)
+    message(FATAL_ERROR
+            "SIGRTMIN-based signals assumes multi-threading support")
+  endif()
+  if (CMAKE_USE_PTHREADS_INIT)
+    add_definitions("-DGC_USESIGRT_SIGNALS")
+  endif()
+endif()
+
 if (enable_rwlock)
+  if (NOT enable_threads)
+    message(FATAL_ERROR
+            "Lock with reader mode assumes multi-threading support")
+  endif()
   # Use `rwlock` for the allocator lock instead of mutex.
   add_definitions("-DUSE_RWLOCK")
 endif()
@@ -446,6 +459,10 @@ if (enable_werror)
 endif(enable_werror)
 
 if (enable_single_obj_compilation OR (GC_BUILD_SHARED_LIBS AND NOT disable_single_obj_compilation))
+  if (disable_single_obj_compilation)
+    message(FATAL_ERROR
+            "disable/enable_single_obj_compilation are mutually exclusive")
+  endif()
   set(SRC extra/gc.c) # override `SRC`
   if (enable_threads AND CMAKE_USE_PTHREADS_INIT AND NOT (APPLE OR CYGWIN OR WIN32))
     add_definitions("-DGC_PTHREAD_START_STANDALONE")
