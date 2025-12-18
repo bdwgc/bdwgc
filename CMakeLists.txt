@@ -233,7 +233,7 @@ if (enable_threads)
   else()
     set(THREADDLLIBS_LIST ${THREADDLLIBS_LIST} ${CMAKE_DL_LIBS})
   endif()
-  # Thread support detection.
+  # Multi-threading support detection.
   if (CMAKE_USE_PTHREADS_INIT)
     set(SRC ${SRC} gc_dlopen.c pthread_start.c pthread_support.c)
     if (CYGWIN OR WIN32)

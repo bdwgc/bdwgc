@@ -47,7 +47,7 @@ GC_INNER pthread_mutex_t GC_allocate_ml;
 #  else
 /*
  * For other platforms with threads, the allocator lock and, possibly,
- * `GC_lock_holder` are defined in the thread support code.
+ * `GC_lock_holder` are defined in the code for multi-threading support.
  */
 #  endif
 #endif /* THREADS */

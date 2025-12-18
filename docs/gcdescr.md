@@ -26,7 +26,7 @@ Table of Contents
   * [Finalization](#finalization)
   * [Generational Collection and Dirty Bits](#generational-collection-and-dirty-bits)
   * [Black-listing](#black-listing)
-  * [Thread support](#thread-support)
+  * [Multi-threading support](#multi-threading-support)
   * [Thread-local allocation](#thread-local-allocation)
 
 ## Introduction
@@ -459,9 +459,9 @@ long large-block free lists containing only unusable blocks. This would
 otherwise become an issue if there is low demand for small pointer-free
 objects.
 
-## Thread support
+## Multi-threading support
 
-We support several different threading models. Unfortunately pthreads, the
+We support several multi-threading models. Unfortunately pthreads, the
 only reasonably well standardized thread model, supports too narrow
 an interface for conservative garbage collection. There appears to be no
 completely portable way to allow the collector to coexist with various

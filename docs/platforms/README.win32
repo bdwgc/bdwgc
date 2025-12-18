@@ -40,7 +40,7 @@ Microsoft Tools
 For Microsoft development tools, type
 "nmake -f NT_MAKEFILE cpu=i386 disable_threads=1 enable_static=1 nodebug=1"
 to build the release variant of the collector as a static library without
-threads support.
+multi-threading support.
 
 In order to use the C++ interface, the client code should include gc_cpp.h
 and/or gc_allocator.h.

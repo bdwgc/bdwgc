@@ -6,7 +6,7 @@
 # - `cpu=i386` to target x86;
 # - `enable_static=1` to build it as a static library;
 # - `nodebug=1` to produce the release variant of the library;
-# - `disable_threads=1` to build the library without threads support.
+# - `disable_threads=1` to build the library without multi-threading support.
 
 cc = cl
 link = link

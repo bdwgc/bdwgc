@@ -98,7 +98,7 @@ main(void)
   GC_INIT();
 #endif
 
-  /* Linking fails if no thread support. */
+  /* Linking fails if no multi-threading support. */
   (void)GC_get_suspend_signal();
 
   if (GC_get_find_leak())

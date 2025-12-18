@@ -47,7 +47,7 @@ strong preference of the would-be maintainer of those project files.)
 
 ### Threads
 
-If you do not need thread support, configure the collector with
+If you do not need multi-threading support, configure the collector with
 `--disable-threads` option.
 
 Alternatively, if your target is a real old-fashioned uniprocessor (no

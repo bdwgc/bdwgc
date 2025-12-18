@@ -1999,7 +1999,7 @@ GC_API void *GC_CALL GC_call_with_stack_base(GC_stack_base_func /* fn */,
 /** Means was already registered. */
 #define GC_DUPLICATE 1
 
-/* Deprecated.  No thread support in the collector. */
+/* Deprecated.  No multi-threading support in the collector. */
 #define GC_NO_THREADS 2
 
 /** Not yet implemented on this platform. */

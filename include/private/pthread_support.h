@@ -16,7 +16,7 @@
  * modified is included with the above copyright notice.
  */
 
-/* Private declarations for thread support. */
+/* Private declarations for multi-threading support. */
 
 #ifndef GC_PTHREAD_SUPPORT_H
 #define GC_PTHREAD_SUPPORT_H

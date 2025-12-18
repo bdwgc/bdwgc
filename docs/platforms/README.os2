@@ -10,8 +10,8 @@ libraries, clients currently need to link against a long list of executables.
 
 Notes:
 * adding dynamic linking support seems easy, but was not done;
-* adding thread support may be nontrivial, since we have not yet figured out
-  how to look at another thread's registers;
+* adding multi-threading support may be nontrivial, since we have not yet
+  figured out how to look at other thread's registers;
 * memory unmapping to the operating system is not supported;
 * incremental collection is not supported yet;
 * setjmp_test may yield overly optimistic results when compiled without
