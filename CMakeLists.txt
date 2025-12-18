@@ -1033,7 +1033,6 @@ if (enable_docs)
           DESTINATION "${CMAKE_INSTALL_DOCDIR}/docs")
   install(FILES
             docs/platforms/README.aix
-            docs/platforms/README.arm_cross
             docs/platforms/README.darwin
             docs/platforms/README.dgux386
             docs/platforms/README.emscripten

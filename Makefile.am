@@ -227,7 +227,6 @@ dist_docdocs_DATA = \
 docdocsplatformsdir = $(docdocsdir)/platforms
 dist_docdocsplatforms_DATA = \
     docs/platforms/README.aix \
-    docs/platforms/README.arm_cross \
     docs/platforms/README.darwin \
     docs/platforms/README.dgux386 \
     docs/platforms/README.emscripten \
