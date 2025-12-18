@@ -156,14 +156,6 @@ if test "${enable_threads_discovery}" = no; then
               [Disable threads discovery in the collector.])
 fi
 
-AC_ARG_ENABLE(rwlock,
-    [AS_HELP_STRING([--enable-rwlock],
-                    [enable reader mode of the allocator lock])])
-if test "${enable_rwlock}" = yes; then
-    AC_DEFINE([USE_RWLOCK], 1,
-              [Use `rwlock` for the allocator lock instead of mutex.])
-fi
-
 AC_ARG_ENABLE(cplusplus,
     [AS_HELP_STRING([--enable-cplusplus], [install C++ support])])
 
@@ -363,6 +355,17 @@ AM_CONDITIONAL(THREADS, test x$THREADS != xnone)
 AM_CONDITIONAL(PTHREADS, test x$THREADS = xposix)
 AM_CONDITIONAL(DARWIN_THREADS, test x$darwin_threads = xtrue)
 AM_CONDITIONAL(WIN32_THREADS, test x$win32_threads = xtrue)
+
+AC_ARG_ENABLE(rwlock,
+    [AS_HELP_STRING([--enable-rwlock],
+                    [enable reader mode of the allocator lock])])
+if test x"${enable_rwlock}" = xyes; then
+    if test x$THREADS = xnone; then
+        AC_MSG_ERROR([Lock with reader mode assumes multi-threading support])
+    fi
+    AC_DEFINE([USE_RWLOCK], 1,
+              [Use `rwlock` for the allocator lock instead of mutex.])
+fi
 
 AC_ARG_ENABLE(gc-dump,
     [AS_HELP_STRING([--disable-gc-dump],
@@ -717,6 +720,9 @@ AC_ARG_ENABLE(sigrt-signals,
     [AS_HELP_STRING([--enable-sigrt-signals],
         [force GC to use SIGRTMIN-based signals for thread suspend/resume])])
 if test x"${enable_sigrt_signals}" = xyes; then
+    if test x$THREADS = xnone; then
+        AC_MSG_ERROR([SIGRTMIN-based signals assumes multi-threading support])
+    fi
     AC_DEFINE([GC_USESIGRT_SIGNALS], 1,
               [Force the GC to use signals based on `SIGRTMIN+k`.])
 fi
