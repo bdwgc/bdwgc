@@ -15,7 +15,7 @@
  * Included indirectly from a thread-library-specific file.
  * This is the interface for thread-local allocation, whose implementation
  * is mostly thread-library-independent.  Here we describe only the interface
- * that needs to be known and invoked from the thread support layer;
+ * that needs to be known and invoked from the multi-threading support layer;
  * the actual implementation also exports `GC_malloc` and friends, which are
  * declared in `gc.h` file.
  */
@@ -197,8 +197,8 @@ GC_INNER void GC_init_thread_local(GC_tlfs p);
 GC_INNER void GC_destroy_thread_local(GC_tlfs p);
 
 /*
- * The thread support layer must arrange to mark thread-local free lists
- * explicitly, since the link field is often invisible to the marker.
+ * The multi-threading support layer must arrange to mark thread-local free
+ * lists explicitly, since the link field is often invisible to the marker.
  * It knows how to find all threads; we take care of an individual thread
  * free-list structure.
  */
@@ -217,8 +217,8 @@ void GC_check_tsd_marks(tsd *key);
 #  endif
 
 /*
- * This is set up by `GC_init_thread_local()`.  No need for cleanup
- * on thread exit.  But the thread support layer makes sure that
+ * This is set up by `GC_init_thread_local()`.  No need for cleanup on
+ * thread exit.  But the multi-threading support layer makes sure that
  * `GC_thread_key` is traced, if necessary.
  */
 extern

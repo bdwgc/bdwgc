@@ -67,7 +67,7 @@ CFLAGS?= -O
 CFLAGS+= -I$(srcdir)/include -I$(AO_SRC_DIR)/src \
   $(CFLAGS_DEFAULT_MACROS) $(CFLAGS_FOR_PIC) $(CFLAGS_EXTRA)
 
-# To build the collector with threads support, add to `CFLAGS_EXTRA`:
+# To build the collector with multi-threading support, add to `CFLAGS_EXTRA`:
 # `-DGC_THREADS -DPARALLEL_MARK -DTHREAD_LOCAL_ALLOC`
 #
 # To build the preload library that intercepts `malloc`, add:
@@ -83,7 +83,8 @@ CFLAGS+= -I$(srcdir)/include -I$(AO_SRC_DIR)/src \
 # `HOSTCC` and `HOSTCFLAGS` are used to build executables that will be run as
 # part of the build process, i.e. on the build machine.  These will usually
 # be the same as `CC` and `CFLAGS`, except in a cross-compilation environment.
-# Note `HOSTCFLAGS` should include any `-D` flags that affect thread support.
+# Note `HOSTCFLAGS` should include any `-D` flags that affect multi-threading
+# support.
 HOSTCC= $(CC)
 HOSTCFLAGS= $(CFLAGS)
 

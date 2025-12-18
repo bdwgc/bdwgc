@@ -1,7 +1,7 @@
 Instructions for Symbian:
 1. Build: use libgc.mmp (the sample for s60v3 is provided below)
 2. Limitations
-2.1. No multi-threaded support yet
+2.1. No multi-threading support yet
 2.2. Be careful with limitation that emulator introduces: Static roots are not
 dynamically accessible (there are Symbian APIs for this purpose but are just
 stubs, returning irrelevant values).

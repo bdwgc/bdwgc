@@ -58,8 +58,8 @@ useful in this context, and are not fully supported. Their use will usually
 generate additional bogus leak reports, since the collector itself drops some
 associated objects.
 
-The same is generally true of thread support. However, the correct leak
-reports should be generated with LinuxThreads, at least.
+The same is generally true of multi-threading support. However, the correct
+leak reports should be generated with LinuxThreads, at least.
 
 On a few platforms (currently Linux/i686, Linux/x86_64 and SPARC), `GC_MALLOC`
 also causes some more information about its call stack to be saved in the
@@ -151,8 +151,8 @@ a program `a.out` under Linux/i686 and Linux/x86_64 as follows:
 
   4. Build the collector and install it in directory _foo_ as follows (it may
      be safe to omit the `--disable-threads` option on Linux, but the
-     combination of thread support and `malloc` replacement is not yet rock
-     solid):
+     combination of multi-threading support and `malloc` replacement is not
+     rock solid yet):
 
        - `./configure --prefix=_foo_ --enable-gc-debug --enable-redirect-malloc --disable-threads`
        - `make`

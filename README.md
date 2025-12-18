@@ -70,8 +70,8 @@ discussed in
 Unlike the collector described in the second reference, this collector
 operates either with the mutator stopped during the entire collection
 (default) or incrementally during allocations.  (The latter is supported
-on fewer machines.)  On the most common platforms, it can be built
-with or without thread support.  On some platforms, it can take advantage
+on fewer machines.)  On the most common platforms, it can be built with or
+without multi-threading support.  On some platforms, it can take advantage
 of a multiprocessor to speed up garbage collection.
 
 Many of the ideas underlying the collector have previously been explored
@@ -288,8 +288,8 @@ E.g., this could be convenient for a debugging purpose.
 The library can be configured more precisely during the build by defining
 the macros listed in [macros.md](docs/macros.md) file.
 
-The library is built with threads support enabled (i.e. for thread-safe
-operation) by default, unless explicitly disabled by:
+The library is built with multi-threading support enabled (i.e. for
+thread-safe operation) by default, unless explicitly disabled by:
 
   * `-Denable_threads=false` option passed to `cmake` or `zig build`
   * `--disable-threads` option passed to `./configure`

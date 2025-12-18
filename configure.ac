@@ -108,7 +108,7 @@ dnl Extra user-defined flags to pass both to C and C++ compilers.
 AC_SUBST([CFLAGS_EXTRA])
 
 AC_ARG_ENABLE(threads,
-  [AS_HELP_STRING([--enable-threads=TYPE], [choose threading package])],
+  [AS_HELP_STRING([--enable-threads=TYPE], [choose multi-threading package])],
   THREADS=$enableval,
    [AC_MSG_CHECKING([for thread model used by GCC])
     THREADS=`$CC -v 2>&1 | sed -n 's/^Thread model: //p'`
@@ -1112,8 +1112,8 @@ AM_CONDITIONAL(ENABLE_SHARED, test x$enable_shared = xyes)
 # if it is found.
 AC_ARG_WITH([libatomic-ops],
     [AS_HELP_STRING([--with-libatomic-ops[=yes|no|check|none]],
-                    [use an external libatomic_ops? (default: check;
-                     none: use compiler intrinsics or no thread support)])],
+        [use an external libatomic_ops? (default: check; none: use compiler
+         intrinsics or no multi-threading support)])],
     [], [AS_IF([test x"$THREADS" != xnone],
                [with_libatomic_ops=check], [with_libatomic_ops=none])])
 

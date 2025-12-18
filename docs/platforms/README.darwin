@@ -44,12 +44,12 @@ necessary data structures in the GC to store this data.
 
 == Implementation Information ==
 
-Darwin/MacOSX support is nearly complete. Thread support is reliable on
-Darwin 6.x (MacOSX 10.2) and there have been reports of success on older
-Darwin versions (MacOSX 10.1). Shared library support had also been
-added and the gc can be run from a shared library.
+Darwin/MacOSX support is nearly complete. Multi-threading support is reliable
+on Darwin 6.x (MacOSX 10.2) and there have been reports of success on older
+Darwin versions (MacOSX 10.1). Shared library support had also been added and
+the gc can be run from a shared library.
 
-Thread support is implemented in terms of mach thread_suspend and
+Multi-threading support is implemented in terms of mach thread_suspend and
 thread_resume calls. These provide a very clean interface to thread
 suspension. This implementation doesn't rely on pthread_kill so the
 code works on Darwin < 6.0 (MacOSX 10.1). All the code to stop and

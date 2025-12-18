@@ -10,9 +10,9 @@ correctly.
 
 Incremental collection support was added recently, and should now work.
 
-In spite of past claims, pthread support under HP/UX 11 should now work.
-Define GC_THREADS macro for the build.  Incremental collection still does not
-work in combination with it.
+In spite of past claims, multi-threading support under HP/UX 11 should now
+work.  Define GC_THREADS macro for the build.  Incremental collection still
+does not work in combination with it.
 
 The stack finding code can be confused by putenv calls before collector
 initialization.  Call GC_malloc() or GC_INIT() before any putenv() calls.

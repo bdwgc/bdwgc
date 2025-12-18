@@ -2577,7 +2577,7 @@ void *emmalloc_memalign(size_t align, size_t lb);
 #    define DATASTART ((ptr_t)ALIGNMENT)
 #    define DATAEND ((ptr_t)ALIGNMENT)
 #    if defined(GC_THREADS) && !defined(CPPCHECK)
-#      error No thread support yet
+#      error No multi-threading support yet
 #    endif
 #  endif
 #  ifdef WASI
@@ -2593,7 +2593,7 @@ extern char __global_base, __heap_base;
 #      define NO_CLOCK 1 /*< no support of `clock()` */
 #    endif
 #    if defined(GC_THREADS) && !defined(CPPCHECK)
-#      error No thread support yet
+#      error No multi-threading support yet
 #    endif
 #  endif
 #endif /* WEBASSEMBLY */

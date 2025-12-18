@@ -218,7 +218,7 @@
 * Do not define GC_pthread_start/exit for Orbis and Sony PSP (refactoring)
 * Do not define GETPAGESIZE on Win32 (refactoring)
 * Do not define SIG_HNDLR_PTR on Darwin unless really used
-* Do not define THREAD_SANITIZER if GC is built w/o threads support
+* Do not define THREAD_SANITIZER if GC is built w/o multi-threading support
 * Do not define _WINDOWS macro in digimars.mak (refactoring)
 * Do not define next_page as volatile in GC_SysVGetDataStart
 * Do not do unnecessary GC_read_dirty() from GC_enable_incremental

@@ -24,8 +24,8 @@ There are two strategies for dealing with this:
 
 As of now, gctest almost passes, except for the tests that involve a_get().
 
-No thread support for now. No idea how to stop other threads (perhaps we need
-support from JS side).
+No multi-threading support for now. There is no idea how to stop other threads
+(perhaps we need some support from JS side).
 
 How to build (LDFLAGS could be omitted depending on the strategy):
 

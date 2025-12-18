@@ -5,5 +5,5 @@ it appears to work under 3.X.  HEURISTIC2 seems to work under 4.1, but
 involves a substantial performance penalty, and will fail if there is
 no limit on stack size.
 
-There is no thread support.  (I assume recent versions of AIX provide
+There is no multi-threading support.  (I assume recent versions of AIX provide
 pthreads?  I no longer have access to a machine ...)

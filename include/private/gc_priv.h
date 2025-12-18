@@ -4423,9 +4423,9 @@ GC_EXTERN GC_bool GC_dump_regularly;
 #endif
 
 /*
- * We need additional synchronization facilities from the thread support.
- * We believe these are less performance critical than the allocator lock;
- * standard `pthreads`-based implementations should be sufficient.
+ * We need additional synchronization facilities from the multi-threading
+ * support.  We believe these are less performance critical than the allocator
+ * lock; standard `pthreads`-based implementations should be sufficient.
  */
 #ifdef PARALLEL_MARK
 

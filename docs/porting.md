@@ -26,8 +26,8 @@ duplication.)
 
 ## Adding platforms to gcconfig.h
 
-If neither thread support, nor tracing of dynamic library data is required,
-these are often the only changes you will need to make.
+If neither multi-threading support, nor tracing of dynamic library data is
+required, these are often the only changes you will need to make.
 
 The `include/private/gcconfig.h` file consists of three sections:
 
@@ -125,11 +125,11 @@ operating system:
   * `STACKBOTTOM` - Defined to be the cold end of the stack, which is usually
     (i.e. when the stacks grow down) the highest address in the stack.
     It must bound the region of the stack that contains pointers into the
-    collector heap. With thread support, this must be the cold end of the main
-    stack, which typically cannot be found in the same way as the other
-    thread stacks. If this is not defined and none of the following three
-    macros (`SPECIFIC_MAIN_STACKBOTTOM`, `HEURISTIC1`, `HEURISTIC2`) is
-    defined, client code must explicitly set `GC_stackbottom` to
+    collector heap. With multi-threading support, this must be the cold end
+    of the main stack, which typically cannot be found in the same way as the
+    other thread stacks. If this is not defined and none of the following
+    three macros (`SPECIFIC_MAIN_STACKBOTTOM`, `HEURISTIC1`, `HEURISTIC2`)
+    is defined, client code must explicitly set `GC_stackbottom` to
     an appropriate value before calling `GC_INIT` or any other `GC_` routine.
 
   * `SPECIFIC_MAIN_STACKBOTTOM` - May be defined instead of `STACKBOTTOM`.
@@ -195,16 +195,16 @@ avoided.
 
 Most commonly `os_dep.c` file will not require attention, but see below.
 
-## Thread support
+## Multi-threading support
 
 Supporting threads requires that the collector be able to find and suspend all
 threads potentially accessing the garbage-collected heap, and locate any state
 associated with each thread that must be traced.
 
-The functionality needed for thread support is generally implemented in one or
-more files specific to the particular thread interface. For example, somewhat
-portable `pthreads` support is implemented in `pthread_support.c` and
-`pthread_stop_world.c` files. The essential functionality consists of:
+The functionality needed for multi-threading support is generally implemented
+in one or more files specific to the particular thread interface. E.g.,
+somewhat portable support of `pthreads` is implemented in `pthread_support.c`
+and `pthread_stop_world.c` files. The essential functionality consists of:
 
   * `GC_stop_world` - Stops all threads which may access the garbage-collected
   heap, other than the caller;
