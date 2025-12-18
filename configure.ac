@@ -945,15 +945,25 @@ fi
 AC_ARG_ENABLE(redirect-malloc,
     [AS_HELP_STRING([--enable-redirect-malloc],
                     [redirect malloc and friends to GC routines])])
+AC_ARG_ENABLE(uncollectable-redirection,
+    [AS_HELP_STRING([--enable-uncollectable-redirection],
+        [redirect to uncollectible malloc instead of garbage-collected one])])
 
 if test "${enable_redirect_malloc}" = yes; then
     if test "${enable_gc_debug}" = yes; then
-        AC_DEFINE([REDIRECT_MALLOC], GC_debug_malloc_replacement,
-                  [If defined, redirect `malloc` to this function.])
+        if test "${enable_uncollectable_redirection}" != yes; then
+            AC_DEFINE([REDIRECT_MALLOC], GC_debug_malloc_replacement,
+                      [If defined, redirect `malloc` to this function.])
+        else
+            AC_MSG_ERROR(
+                [No uncollectible variant of GC_debug_malloc_replacement])
+        fi
         AC_DEFINE([REDIRECT_REALLOC], GC_debug_realloc_replacement,
                   [If defined, redirect `realloc` to this function.])
         AC_DEFINE([REDIRECT_FREE], GC_debug_free,
                   [If defined, redirect `free` to this function.])
+    elif test "${enable_uncollectable_redirection}" = yes; then
+        AC_DEFINE(REDIRECT_MALLOC, GC_malloc_uncollectable)
     else
         AC_DEFINE(REDIRECT_MALLOC, GC_malloc)
     fi
@@ -961,6 +971,8 @@ if test "${enable_redirect_malloc}" = yes; then
               [Define to cause the collector to redefine `malloc` and
                intercepted `pthreads` routines with their real names while
                using `dlsym` to refer to the original routines.])
+elif test "${enable_uncollectable_redirection}" = yes; then
+    AC_MSG_ERROR([Redirection of malloc is not enabled explicitly])
 fi
 
 AC_ARG_ENABLE(disclaim,

@@ -67,6 +67,7 @@ pub fn build(b: *std.Build) void {
     const enable_java_finalization = b.option(bool, "enable_java_finalization", "Support for java finalization") orelse true;
     const enable_atomic_uncollectable = b.option(bool, "enable_atomic_uncollectable", "Support for atomic uncollectible allocation") orelse true;
     const enable_redirect_malloc = b.option(bool, "enable_redirect_malloc", "Redirect malloc and friend to GC routines") orelse false;
+    const enable_uncollectable_redirection = b.option(bool, "enable_uncollectable_redirection", "Redirect to uncollectible malloc instead of garbage-collected one") orelse false;
     const enable_disclaim = b.option(bool, "enable_disclaim", "Support alternative finalization interface") orelse true;
     const enable_dynamic_pointer_mask = b.option(bool, "enable_dynamic_pointer_mask", "Support pointer mask/shift set at runtime") orelse false;
     const enable_large_config = b.option(bool, "enable_large_config", "Optimize for large heap or root set") orelse false;
@@ -236,9 +237,15 @@ pub fn build(b: *std.Build) void {
 
     if (enable_redirect_malloc) {
         if (enable_gc_debug) {
-            flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_replacement") catch unreachable;
+            if (!enable_uncollectable_redirection) {
+                flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_replacement") catch unreachable;
+            } else {
+                @panic("No uncollectible variant of GC_debug_malloc_replacement");
+            }
             flags.append(b.allocator, "-D REDIRECT_REALLOC=GC_debug_realloc_replacement") catch unreachable;
             flags.append(b.allocator, "-D REDIRECT_FREE=GC_debug_free") catch unreachable;
+        } else if (enable_uncollectable_redirection) {
+            flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_malloc_uncollectable") catch unreachable;
         } else {
             flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_malloc") catch unreachable;
         }
@@ -247,6 +254,8 @@ pub fn build(b: *std.Build) void {
         } else {
             flags.append(b.allocator, "-D GC_USE_DLOPEN_WRAP") catch unreachable;
         }
+    } else if (enable_uncollectable_redirection) {
+        @panic("Redirection of malloc is not enabled explicitly");
     }
 
     if (enable_mmap or enable_munmap) {
