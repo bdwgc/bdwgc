@@ -1164,6 +1164,12 @@ GC_debug_malloc_replacement(size_t lb)
   return GC_debug_malloc(lb, GC_DBG_EXTRAS);
 }
 
+GC_API GC_ATTR_MALLOC void *GC_CALL
+GC_debug_malloc_uncollectable_replacement(size_t lb)
+{
+  return GC_debug_malloc_uncollectable(lb, GC_DBG_EXTRAS);
+}
+
 GC_API void *GC_CALL
 GC_debug_realloc_replacement(void *p, size_t lb)
 {
