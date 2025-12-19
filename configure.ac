@@ -138,7 +138,7 @@ AC_ARG_ENABLE(parallel-mark,
 
 AC_ARG_ENABLE(thread-local-alloc,
     [AS_HELP_STRING([--disable-thread-local-alloc],
-        [turn off thread-local allocation optimization])],
+                    [turn off thread-local allocation optimization])],
     [case "$THREADS" in
       no | none | single)
         if test "${enable_thread_local_alloc}" = yes; then
@@ -177,7 +177,7 @@ AH_TEMPLATE([_PTHREADS], [Indicates the use of `pthreads` (NetBSD).])
 
 dnl Win32-specific API usage controls.
 AH_TEMPLATE([UNICODE],
-        [Use Unicode (W) variant of Win32 API instead of ASCII (A) one.])
+        [Use Unicode (`W`) variant of Win32 API instead of ASCII (`A`) one.])
 
 dnl GC API symbols export control.
 AH_TEMPLATE([GC_DLL],
@@ -476,7 +476,7 @@ AM_CONDITIONAL(AVOID_CPP_LIB,test $avoid_cpp_lib = yes)
 
 # Check for various headers.
 AC_CHECK_HEADER([execinfo.h], [],
-    [AC_DEFINE([GC_MISSING_EXECINFO_H], [1], [Missing execinfo.h header.])])
+    [AC_DEFINE([GC_MISSING_EXECINFO_H], [1], [Missing `execinfo.h` header.])])
 
 # extra `LD` flags which are required for targets.
 case "${host}" in
@@ -572,7 +572,7 @@ else
     *-*-cygwin* | *-*-mingw* | *-*-msys*)
       # Do not require the clients to link with `user32` system library.
       AC_DEFINE([DONT_USE_USER32_DLL], 1,
-                [Do not use user32.dll import library (Win32).])
+                [Do not use `user32.dll` import library (Win32).])
       # Use inline variant of GC operators `new` and `delete` in `cpptest`
       # otherwise the system ones might be used instead because of arbitrary
       # ordering of object files when linking.
@@ -603,7 +603,7 @@ case "$host" in
     machdep="sparc_mach_dep.lo"
     compile_asm=true
     AC_DEFINE(SUNOS53_SHARED_LIB, 1,
-              [Define to work around a Solaris 5.3 bug (see dyn_load.c).])
+        [Define to work around a Solaris 5.3 bug (see `dyn_load.c` file).])
     ;;
   sparc*-sun-solaris*)
     machdep="sparc_mach_dep.lo"
@@ -724,7 +724,7 @@ if test x"${enable_sigrt_signals}" = xyes; then
         AC_MSG_ERROR([SIGRTMIN-based signals assumes multi-threading support])
     fi
     AC_DEFINE([GC_USESIGRT_SIGNALS], 1,
-              [Force the GC to use signals based on `SIGRTMIN+k`.])
+              [Force the collector to use signals based on `SIGRTMIN+k`.])
 fi
 
 
@@ -987,7 +987,7 @@ AM_CONDITIONAL(ENABLE_DISCLAIM,
 
 AC_ARG_ENABLE(dynamic-pointer-mask,
     [AS_HELP_STRING([--enable-dynamic-pointer-mask],
-        [support pointer mask/shift set at runtime])])
+                    [support pointer mask/shift set at runtime])])
 if test "${enable_dynamic_pointer_mask}" = yes; then
     AC_DEFINE(DYNAMIC_POINTER_MASK, 1,
               [Define to support pointer mask/shift set at runtime.])
@@ -995,7 +995,7 @@ fi
 
 AC_ARG_ENABLE(large-config,
     [AS_HELP_STRING([--enable-large-config],
-        [optimize for large (> 100 MB) heap or root set])])
+                    [optimize for large (> 100 MB) heap or root set])])
 if test "${enable_large_config}" = yes; then
     AC_DEFINE(LARGE_CONFIG, 1,
               [Define to optimize for large heaps or root sets.])
@@ -1020,7 +1020,7 @@ AC_SUBST(UNWINDLIBS)
 
 AC_ARG_ENABLE(gc-assertions,
     [AS_HELP_STRING([--enable-gc-assertions],
-        [collector-internal assertion checking])])
+                    [collector-internal assertion checking])])
 if test "${enable_gc_assertions}" = yes; then
     AC_DEFINE([GC_ASSERTIONS], 1,
               [Define to enable internal debug assertions.])
@@ -1033,8 +1033,8 @@ AC_ARG_ENABLE(mmap,
 
 AC_ARG_ENABLE(munmap,
     [AS_HELP_STRING([--enable-munmap=N],
-                    [return page to the OS if page is marked as
-                     empty during N collections (default: 7)])],
+                    [return page to the OS if page is marked as empty during
+                     N collections (default: 7)])],
     MUNMAP_THRESHOLD=$enableval)
 if test x$enable_munmap != xno; then
     AC_DEFINE([USE_MMAP], 1,
@@ -1059,8 +1059,8 @@ fi
 
 AC_ARG_ENABLE(dynamic-loading,
     [AS_HELP_STRING([--disable-dynamic-loading],
-                    [build the collector with disabled tracing
-                     of dynamic library data roots])])
+                    [build the collector with disabled tracing of dynamic
+                     library data roots])])
 if test "${enable_dynamic_loading}" = "no"; then
   AC_DEFINE([IGNORE_DYNAMIC_LOADING], 1,
             [Do not define `DYNAMIC_LOADING` even if supported (i.e., build
@@ -1078,9 +1078,8 @@ fi
 
 AC_ARG_ENABLE(checksums,
     [AS_HELP_STRING([--enable-checksums],
-                    [report on erroneously cleared dirty bits at
-                     substantial performance cost; use only for
-                     debugging of the incremental collector])])
+        [report on erroneously cleared dirty bits at substantial performance
+         cost; use only for debugging of the incremental collector])])
 if test x$enable_checksums = xyes; then
     if test x$enable_munmap != xno -o x$THREADS != xnone; then
         AC_MSG_ERROR([CHECKSUMS not compatible with USE_MUNMAP or threads])
@@ -1244,10 +1243,9 @@ AM_CONDITIONAL(THREAD_LOCAL_ALLOC, test x$use_thread_local_alloc != xno)
 
 AC_ARG_ENABLE(handle-fork,
     [AS_HELP_STRING([--enable-handle-fork[=yes|no|auto|manual]],
-                    [attempt to ensure a usable collector after fork()
-                     in multi-threaded programs (default: auto;
-                     manual: GC_atfork_prepare/parent/child should be
-                     called by the client)])])
+        [attempt to ensure a usable collector after fork() in multi-threaded
+         programs (default: auto; manual: GC_atfork_prepare/parent/child
+         should be called by the client)])])
 if test "${enable_handle_fork}" = yes; then
     AC_DEFINE(HANDLE_FORK, 1,
               [Define to install `pthread_atfork` handlers by default.])
