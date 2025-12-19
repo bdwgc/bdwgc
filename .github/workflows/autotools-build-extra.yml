@@ -164,6 +164,8 @@ jobs:
           cflags_extra: -D SOFT_VDB -O3
           c_compiler: musl-gcc
           install_musl: true
+        - os: ubuntu-24.04-arm
+          conf_options: --disable-threads --enable-gc-debug --enable-redirect-malloc --enable-uncollectable-redirection
         - os: ubuntu-latest
           conf_options: --disable-threads --enable-large-config --enable-redirect-malloc
           cflags_extra: -O3 -fanalyzer
@@ -228,7 +230,7 @@ jobs:
           cflags_extra: -D NO_CLOCK -D POINTER_MASK=~0xf -D _FORTIFY_SOURCE=2
           c_compiler: gcc
         - os: ubuntu-latest
-          conf_options: --enable-cplusplus --enable-gc-assertions --enable-redirect-malloc --enable-rwlock
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-redirect-malloc --enable-rwlock --enable-uncollectable-redirection
           cflags_extra: -D _FORTIFY_SOURCE=2 -O3
         - os: ubuntu-24.04-arm
           conf_options: --enable-cplusplus --enable-gc-assertions --with-libatomic-ops=yes
