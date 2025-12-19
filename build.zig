@@ -240,7 +240,7 @@ pub fn build(b: *std.Build) void {
             if (!enable_uncollectable_redirection) {
                 flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_replacement") catch unreachable;
             } else {
-                @panic("No uncollectible variant of GC_debug_malloc_replacement");
+                flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_uncollectable_replacement") catch unreachable;
             }
             flags.append(b.allocator, "-D REDIRECT_REALLOC=GC_debug_realloc_replacement") catch unreachable;
             flags.append(b.allocator, "-D REDIRECT_FREE=GC_debug_free") catch unreachable;

@@ -45,9 +45,10 @@ defined in `boehmgc` namespace.
 `GC_NAMESPACE_ALLOCATOR` - Tested by `gc_allocator.h` file.  Causes
 `gc_allocator<T>` and similar symbols to be defined in `boehmgc` namespace.
 
-`GC_DEBUG_REPLACEMENT` - Tested by `gc.h` file.  Causes
-`GC_MALLOC`/`GC_REALLOC` to be defined as
-`GC_debug_malloc_replacement`/`GC_debug_realloc_replacement`.
+`GC_DEBUG_REPLACEMENT` - Tested by `gc.h` file.  Causes `GC_MALLOC`,
+`GC_MALLOC_UNCOLLECTABLE`, `GC_REALLOC` to be defined as
+`GC_debug_malloc_replacement`, `GC_debug_malloc_uncollectable_replacement`,
+`GC_debug_realloc_replacement`, respectively.
 
 `GC_NO_THREAD_REDIRECTS` - Tested by `gc.h` file.  Prevents redirection of
 thread creation routines and friends to the `GC_` variants.  Requires the
@@ -211,18 +212,20 @@ permission is required, portable clients should call
 Unless the following macros are defined, `realloc()` is also redirected
 to `GC_realloc()`, and `free()` is redirected to `GC_free()`; `calloc()`,
 `strdup()` and `strndup()` are redefined in terms of the new `malloc`.
-`X` should be either `GC_malloc` or `GC_malloc_uncollectable`, or
-`GC_debug_malloc_replacement`.  (The latter invokes `GC_debug_malloc`
-with dummy source location information, but still results in properly
-remembered call stacks on Linux/i686, Linux/x86_64 and Solaris/SPARC.
-It requires that `REDIRECT_REALLOC` and `REDIRECT_FREE` macros also be used.
-The former is occasionally useful to workaround leaks in code
-you do not want to (or cannot) look at.  It may not work for
-existing code, but it often does.  Neither works on all platforms,
-since some ports use `malloc` or `calloc` to obtain system memory.  Probably
-works for UNIX and Win32.)  If you build the collector with `DBG_HDRS_ALL`
-macro defined, you should only use `GC_debug_malloc_replacement` as a `malloc`
-replacement.
+`X` should be either `GC_malloc`, `GC_malloc_uncollectable`,
+`GC_debug_malloc_replacement` or `GC_debug_malloc_uncollectable_replacement`.
+(The latter two ones invokes `GC_debug_malloc` or
+`GC_debug_malloc_uncollectable`, respectively, with dummy source location
+information, but still results in properly remembered call stacks on
+Linux/i686, Linux/x86_64 and Solaris/SPARC.  These require that
+`REDIRECT_REALLOC` and `REDIRECT_FREE` macros also be used.  The former is
+occasionally useful to workaround leaks in code you do not want to (or cannot)
+look at.  It may not work for existing code, but it often does.  Neither works
+on all platforms, since some ports use `malloc` or `calloc` to obtain system
+memory.  Probably works for UNIX and Win32.)  If you build the collector with
+`DBG_HDRS_ALL` macro defined, you should only use
+`GC_debug_malloc_replacement` or `GC_debug_malloc_uncollectable_replacement`
+as a `malloc` replacement.
 
 `REDIRECT_REALLOC=<X>` - Causes `realloc()` to be redirected to `X`.  The
 canonical use is `REDIRECT_REALLOC=GC_debug_realloc_replacement`, together

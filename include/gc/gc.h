@@ -1339,6 +1339,8 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
  */
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
     GC_debug_malloc_replacement(size_t /* `size_in_bytes` */);
+GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
+    GC_debug_malloc_uncollectable_replacement(size_t /* `size_in_bytes` */);
 GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
     GC_debug_realloc_replacement(void * /* `obj` */,
                                  size_t /* `size_in_bytes` */);
@@ -1373,12 +1375,17 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
  */
 #ifdef GC_DEBUG_REPLACEMENT
 #  define GC_MALLOC(sz) GC_debug_malloc_replacement(sz)
+#  define GC_MALLOC_UNCOLLECTABLE(sz) \
+    GC_debug_malloc_uncollectable_replacement(sz)
 #  define GC_REALLOC(old, sz) GC_debug_realloc_replacement(old, sz)
 #elif defined(GC_DEBUG)
 #  define GC_MALLOC(sz) GC_debug_malloc(sz, GC_EXTRAS)
+#  define GC_MALLOC_UNCOLLECTABLE(sz) \
+    GC_debug_malloc_uncollectable(sz, GC_EXTRAS)
 #  define GC_REALLOC(old, sz) GC_debug_realloc(old, sz, GC_EXTRAS)
 #else
 #  define GC_MALLOC(sz) GC_malloc(sz)
+#  define GC_MALLOC_UNCOLLECTABLE(sz) GC_malloc_uncollectable(sz)
 #  define GC_REALLOC(old, sz) GC_realloc(old, sz)
 #endif /* !GC_DEBUG_REPLACEMENT && !GC_DEBUG */
 #ifdef GC_DEBUG
@@ -1387,8 +1394,6 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 #  define GC_STRNDUP(s, sz) GC_debug_strndup(s, sz, GC_EXTRAS)
 #  define GC_MALLOC_ATOMIC_UNCOLLECTABLE(sz) \
     GC_debug_malloc_atomic_uncollectable(sz, GC_EXTRAS)
-#  define GC_MALLOC_UNCOLLECTABLE(sz) \
-    GC_debug_malloc_uncollectable(sz, GC_EXTRAS)
 #  define GC_MALLOC_IGNORE_OFF_PAGE(sz) \
     GC_debug_malloc_ignore_off_page(sz, GC_EXTRAS)
 #  define GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE(sz) \
@@ -1398,7 +1403,6 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 #  define GC_STRDUP(s) GC_strdup(s)
 #  define GC_STRNDUP(s, sz) GC_strndup(s, sz)
 #  define GC_MALLOC_ATOMIC_UNCOLLECTABLE(sz) GC_malloc_atomic_uncollectable(sz)
-#  define GC_MALLOC_UNCOLLECTABLE(sz) GC_malloc_uncollectable(sz)
 #  define GC_MALLOC_IGNORE_OFF_PAGE(sz) GC_malloc_ignore_off_page(sz)
 #  define GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE(sz) \
     GC_malloc_atomic_ignore_off_page(sz)

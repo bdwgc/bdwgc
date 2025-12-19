@@ -375,8 +375,8 @@ if (enable_redirect_malloc)
     if (NOT enable_uncollectable_redirection)
       add_definitions("-DREDIRECT_MALLOC=GC_debug_malloc_replacement")
     else()
-      message(FATAL_ERROR
-              "No uncollectible variant of GC_debug_malloc_replacement")
+      add_definitions(
+        "-DREDIRECT_MALLOC=GC_debug_malloc_uncollectable_replacement")
     endif()
     add_definitions("-DREDIRECT_REALLOC=GC_debug_realloc_replacement")
     add_definitions("-DREDIRECT_FREE=GC_debug_free")

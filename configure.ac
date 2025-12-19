@@ -955,8 +955,8 @@ if test "${enable_redirect_malloc}" = yes; then
             AC_DEFINE([REDIRECT_MALLOC], GC_debug_malloc_replacement,
                       [If defined, redirect `malloc` to this function.])
         else
-            AC_MSG_ERROR(
-                [No uncollectible variant of GC_debug_malloc_replacement])
+            AC_DEFINE(REDIRECT_MALLOC,
+                      GC_debug_malloc_uncollectable_replacement)
         fi
         AC_DEFINE([REDIRECT_REALLOC], GC_debug_realloc_replacement,
                   [If defined, redirect `realloc` to this function.])
