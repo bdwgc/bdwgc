@@ -150,10 +150,10 @@ AC_ARG_ENABLE(thread-local-alloc,
 
 AC_ARG_ENABLE(threads-discovery,
     [AS_HELP_STRING([--disable-threads-discovery],
-                    [disable threads discovery in GC])])
+                    [disable support for threads discovery])])
 if test "${enable_threads_discovery}" = no; then
     AC_DEFINE([GC_NO_THREADS_DISCOVERY], 1,
-              [Disable threads discovery in the collector.])
+              [Disable threads discovery support in the collector.])
 fi
 
 AC_ARG_ENABLE(cplusplus,
@@ -944,7 +944,7 @@ fi
 
 AC_ARG_ENABLE(redirect-malloc,
     [AS_HELP_STRING([--enable-redirect-malloc],
-                    [redirect malloc and friends to GC routines])])
+                    [redirect malloc and friends to collector routines])])
 AC_ARG_ENABLE(uncollectable-redirection,
     [AS_HELP_STRING([--enable-uncollectable-redirection],
         [redirect to uncollectible malloc instead of garbage-collected one])])
