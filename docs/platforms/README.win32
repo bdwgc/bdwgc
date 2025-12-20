@@ -187,7 +187,7 @@ additional threads are created.
 Threads are also supported in static library builds with Microsoft tools
 (e.g., NT_MAKEFILE), as well as with the CMake and GNU tools.  The collector
 must be built with GC_THREADS defined (this is the default in NT_MAKEFILE,
-CMakeLists.txt and configure).
+CMakeLists.txt, build.zig and configure).
 
 For the normal, non-dll-based thread tracking to work properly,
 threads should be created with GC_CreateThread or GC_beginthreadex,
