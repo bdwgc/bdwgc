@@ -52,7 +52,7 @@ jobs:
           cflags_extra: -D DEFAULT_VDB -D TEST_WITH_SYSTEM_MALLOC -D _FORTIFY_SOURCE=2 -march=native
           fetch_libatomic_ops: true
         - os: macos-latest
-          conf_options: --disable-munmap --disable-shared --enable-cplusplus --without-libatomic-ops
+          conf_options: --disable-munmap --disable-shared --disable-threads-discovery --enable-cplusplus --without-libatomic-ops
           cflags_extra: -D AO_DISABLE_GCC_ATOMICS -D _FORTIFY_SOURCE=2 -march=native
           fetch_libatomic_ops: true
         - os: ubuntu-latest
