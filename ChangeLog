@@ -7583,7 +7583,7 @@ library is loaded with LD_PRELOAD, e.g. for leak detection.
 * If the GC_find_leak environment variable is set, do a
 atexit(GC_gcollect) to give us at least one chance to detect leaks.
 This may report some very benign leaks, but ...
-* Addeded REDIRECT_FREE.  It's necessary if we want leak detection with
+* Added REDIRECT_FREE.  It's necessary if we want leak detection with
 LD_PRELOAD.
 * Defer printing of leaked objects, as for smashed objects.
 * Fixed process and descriptor leak in GC_print_callers.  Try for
