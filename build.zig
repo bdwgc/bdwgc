@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
     const enable_threads = b.option(bool, "enable_threads", "Support threads") orelse default_enable_threads;
     const enable_parallel_mark = b.option(bool, "enable_parallel_mark", "Parallelize marking and free list construction") orelse true;
     const enable_thread_local_alloc = b.option(bool, "enable_thread_local_alloc", "Turn on thread-local allocation optimization") orelse true;
-    const enable_threads_discovery = b.option(bool, "enable_threads_discovery", "Enable threads discovery in GC") orelse true;
+    const enable_threads_discovery = b.option(bool, "enable_threads_discovery", "Support for threads discovery") orelse true;
     const enable_rwlock = b.option(bool, "enable_rwlock", "Enable reader mode of the allocator lock") orelse false;
     const enable_throw_bad_alloc_library = b.option(bool, "enable_throw_bad_alloc_library", "Turn on C++ gctba library build") orelse true;
     const enable_gcj_support = b.option(bool, "enable_gcj_support", "Support for gcj") orelse true;
@@ -66,7 +66,7 @@ pub fn build(b: *std.Build) void {
     const enable_gc_dump = b.option(bool, "enable_gc_dump", "Enable GC_dump and similar debugging facility") orelse true;
     const enable_java_finalization = b.option(bool, "enable_java_finalization", "Support for java finalization") orelse true;
     const enable_atomic_uncollectable = b.option(bool, "enable_atomic_uncollectable", "Support for atomic uncollectible allocation") orelse true;
-    const enable_redirect_malloc = b.option(bool, "enable_redirect_malloc", "Redirect malloc and friend to GC routines") orelse false;
+    const enable_redirect_malloc = b.option(bool, "enable_redirect_malloc", "Redirect malloc and friends to collector routines") orelse false;
     const enable_uncollectable_redirection = b.option(bool, "enable_uncollectable_redirection", "Redirect to uncollectible malloc instead of garbage-collected one") orelse false;
     const enable_disclaim = b.option(bool, "enable_disclaim", "Support alternative finalization interface") orelse true;
     const enable_dynamic_pointer_mask = b.option(bool, "enable_dynamic_pointer_mask", "Support pointer mask/shift set at runtime") orelse false;
