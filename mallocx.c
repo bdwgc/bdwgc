@@ -191,26 +191,24 @@ GC_realloc(void *p, size_t lb)
 #undef cleared_p
 }
 
-#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_REALLOC)
-#  define REDIRECT_REALLOC GC_realloc
-#endif
-
-#ifdef REDIRECT_REALLOC
-
+#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
+#  ifdef REDIRECT_MALLOC_DEBUG
+#    define REDIRECT_REALLOC_F GC_debug_realloc_replacement
 /* As with `malloc`, avoid two levels of extra calls here. */
-#  define GC_debug_realloc_replacement(p, lb) \
-    GC_debug_realloc(p, lb, GC_DBG_EXTRAS)
+#    define GC_debug_realloc_replacement(p, lb) \
+      GC_debug_realloc(p, lb, GC_DBG_EXTRAS)
+#  else
+#    define REDIRECT_REALLOC_F GC_realloc
+#  endif
 
-#  if !defined(REDIRECT_MALLOC_IN_HEADER)
 void *
 realloc(void *p, size_t lb)
 {
-  return REDIRECT_REALLOC(p, lb);
+  return REDIRECT_REALLOC_F(p, lb);
 }
-#  endif
 
 #  undef GC_debug_realloc_replacement
-#endif /* REDIRECT_REALLOC */
+#endif
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_generic_malloc_ignore_off_page(size_t lb, int kind)

@@ -518,19 +518,25 @@ GC_malloc_atomic_uncollectable(size_t lb)
 #    include <errno.h>
 #  endif
 
+#  ifdef REDIRECT_MALLOC_DEBUG
+#    ifndef REDIRECT_MALLOC_UNCOLLECTABLE
+#      define REDIRECT_MALLOC_F GC_debug_malloc_replacement
 /*
  * Avoid unnecessary nested procedure calls here, by `#define` some `malloc`
  * replacements.  Otherwise we end up saving a meaningless return address in
  * the object.  It also speeds things up, but it is admittedly quite ugly.
  */
-#  define GC_debug_malloc_replacement(lb) GC_debug_malloc(lb, GC_DBG_EXTRAS)
-#  define GC_debug_malloc_uncollectable_replacement(lb) \
-    GC_debug_malloc_uncollectable(lb, GC_DBG_EXTRAS)
-
-#  if defined(CPPCHECK)
-#    define REDIRECT_MALLOC_F GC_malloc /*< e.g. */
+#      define GC_debug_malloc_replacement(lb) \
+        GC_debug_malloc(lb, GC_DBG_EXTRAS)
+#    else
+#      define REDIRECT_MALLOC_F GC_debug_malloc_uncollectable_replacement
+#      define GC_debug_malloc_uncollectable_replacement(lb) \
+        GC_debug_malloc_uncollectable(lb, GC_DBG_EXTRAS)
+#    endif
+#  elif defined(REDIRECT_MALLOC_UNCOLLECTABLE)
+#    define REDIRECT_MALLOC_F GC_malloc_uncollectable
 #  else
-#    define REDIRECT_MALLOC_F REDIRECT_MALLOC
+#    define REDIRECT_MALLOC_F GC_malloc
 #  endif
 
 void *
@@ -763,16 +769,11 @@ GC_free_inner(void *p)
 }
 #endif /* THREADS */
 
-#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_FREE)
-#  define REDIRECT_FREE GC_free
-#endif
-
-#if defined(REDIRECT_FREE) && !defined(REDIRECT_MALLOC_IN_HEADER)
-
-#  if defined(CPPCHECK)
-#    define REDIRECT_FREE_F GC_free /*< e.g. */
+#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
+#  ifdef REDIRECT_MALLOC_DEBUG
+#    define REDIRECT_FREE_F GC_debug_free
 #  else
-#    define REDIRECT_FREE_F REDIRECT_FREE
+#    define REDIRECT_FREE_F GC_free
 #  endif
 
 void
@@ -806,4 +807,4 @@ free(void *p)
   REDIRECT_FREE_F(p);
 #  endif
 }
-#endif /* REDIRECT_FREE */
+#endif /* REDIRECT_MALLOC && !REDIRECT_MALLOC_IN_HEADER */

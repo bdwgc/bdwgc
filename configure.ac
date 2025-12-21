@@ -950,22 +950,18 @@ AC_ARG_ENABLE(uncollectable-redirection,
         [redirect to uncollectible malloc instead of garbage-collected one])])
 
 if test "${enable_redirect_malloc}" = yes; then
+    AC_DEFINE([REDIRECT_MALLOC], 1,
+              [Define to redirect `malloc`, `realloc` and `free` routines.])
     if test "${enable_gc_debug}" = yes; then
-        if test "${enable_uncollectable_redirection}" != yes; then
-            AC_DEFINE([REDIRECT_MALLOC], GC_debug_malloc_replacement,
-                      [If defined, redirect `malloc` to this function.])
-        else
-            AC_DEFINE(REDIRECT_MALLOC,
-                      GC_debug_malloc_uncollectable_replacement)
-        fi
-        AC_DEFINE([REDIRECT_REALLOC], GC_debug_realloc_replacement,
-                  [If defined, redirect `realloc` to this function.])
-        AC_DEFINE([REDIRECT_FREE], GC_debug_free,
-                  [If defined, redirect `free` to this function.])
-    elif test "${enable_uncollectable_redirection}" = yes; then
-        AC_DEFINE(REDIRECT_MALLOC, GC_malloc_uncollectable)
-    else
-        AC_DEFINE(REDIRECT_MALLOC, GC_malloc)
+        AC_DEFINE([REDIRECT_MALLOC_DEBUG], 1,
+            [Define to instruct the collector to redefine `malloc`, `realloc`
+             and `free` to the debug variant of the corresponding collector
+             routines.])
+    fi
+    if test "${enable_uncollectable_redirection}" = yes; then
+        AC_DEFINE([REDIRECT_MALLOC_UNCOLLECTABLE], 1,
+            [Define to instruct the collector to redefine `malloc` to the
+             relevant uncollectible variant of `GC_malloc` routine.])
     fi
     AC_DEFINE([GC_USE_DLOPEN_WRAP], 1,
               [Define to cause the collector to redefine `malloc` and

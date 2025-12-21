@@ -15,7 +15,7 @@ any library routine."  This doesn't make a lot of sense to me, since there
 seems to be no documentation as to which routines can transitively call malloc.
 Nonetheless, under Solaris, the collector now allocates memory using mmap by
 default.  (It defines USE_MMAP in gcconfig.h.)
-You may want to reverse this decisions if you use "-D REDIRECT_MALLOC=...".
+You may want to reverse this decisions if you use "-D REDIRECT_MALLOC".
 
 Note:
 Before you run "make check", you need to set your LD_LIBRARY_PATH correctly

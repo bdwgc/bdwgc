@@ -729,7 +729,7 @@ GC_debug_free(void *p)
     ABORT_ARG1("Invalid pointer passed to free()", ": %p", p);
   }
   if ((word)((ptr_t)p - base) != sizeof(oh)) {
-#if defined(REDIRECT_FREE) && defined(USE_PROC_FOR_LIBRARIES)
+#if defined(REDIRECT_MALLOC) && defined(USE_PROC_FOR_LIBRARIES)
     /*
      * TODO: Suppress the warning if `free()` caller is in `libpthread`
      * or `libdl`.

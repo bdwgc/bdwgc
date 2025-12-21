@@ -247,8 +247,8 @@ down the problem:
 
   7. If the following works on your platform (i.e. if `gctest` still works
      if you do this), try building the collector with
-     `-D REDIRECT_MALLOC=GC_malloc_uncollectable`. This will cause the
-     collector to scan memory allocated with `malloc`.
+     `-D REDIRECT_MALLOC_UNCOLLECTABLE`. This will cause the collector to scan
+     memory allocated with `malloc`.
 
 If all else fails, you will have to attack this with a debugger. The suggested
 steps are:
