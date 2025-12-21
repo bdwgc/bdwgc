@@ -16,7 +16,10 @@ const std = @import("std");
 // The Zig version here should match that in file `build.zig.zon`.
 const zig_min_required_version = "0.14.0";
 
-// TODO: specify `PACKAGE_VERSION` and `LIB*_VER_INFO`.
+// TODO: specify `PACKAGE_VERSION`.
+const LIBCORD_VER_INFO: std.SemanticVersion = .{ .major = 6, .minor = 1, .patch = 5 };
+const LIBGC_VER_INFO: std.SemanticVersion = .{ .major = 6, .minor = 3, .patch = 5 };
+const LIBGCCPP_VER_INFO: std.SemanticVersion = .{ .major = 6, .minor = 0, .patch = 5 };
 
 // Compared to the `cmake` script, some definitions and compiler options are
 // hard-coded here, which is natural because `build.zig` is only built with
@@ -419,6 +422,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         }),
+        .version = LIBGC_VER_INFO,
     });
     gc.addCSourceFiles(.{
         .files = source_files.items,
@@ -440,6 +444,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
             }),
+            .version = LIBGCCPP_VER_INFO,
         });
         gccpp.addCSourceFiles(.{
             .files = &.{
@@ -460,6 +465,7 @@ pub fn build(b: *std.Build) void {
                     .target = target,
                     .optimize = optimize,
                 }),
+                .version = LIBGCCPP_VER_INFO,
             });
             gctba.addCSourceFiles(.{
                 .files = &.{
@@ -482,6 +488,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
             }),
+            .version = LIBCORD_VER_INFO,
         });
         cord.addCSourceFiles(.{
             .files = &.{
