@@ -38,7 +38,6 @@
 #  undef FIXUP_POINTER
 #  undef POINTER_MASK
 #  undef POINTER_SHIFT
-#  undef REDIRECT_REALLOC
 #  undef _MAX_PATH
 #endif
 
@@ -77,6 +76,12 @@ EXTERN_C_BEGIN
 #else
 #  define GC_CLANG_PREREQ(major, minor) 0 /*< `FALSE` */
 #  define GC_CLANG_PREREQ_FULL(major, minor, patchlevel) 0
+#endif
+
+#if !defined(REDIRECT_MALLOC)          \
+    && (defined(REDIRECT_MALLOC_DEBUG) \
+        || defined(REDIRECT_MALLOC_UNCOLLECTABLE))
+#  define REDIRECT_MALLOC 1
 #endif
 
 /*
@@ -3627,6 +3632,11 @@ extern ptr_t GC_data_start;
 
 #if defined(MAKE_BACK_GRAPH) && !defined(DBG_HDRS_ALL)
 #  define DBG_HDRS_ALL 1
+#endif
+
+#if defined(DBG_HDRS_ALL) && defined(REDIRECT_MALLOC) \
+    && !defined(REDIRECT_MALLOC_DEBUG) && !defined(CPPCHECK)
+#  error Debug variant of malloc replacement should be used if DBG_HDRS_ALL
 #endif
 
 #if defined(POINTER_MASK) && !defined(POINTER_SHIFT)

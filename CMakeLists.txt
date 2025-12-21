@@ -371,19 +371,16 @@ elseif (WINCE)
 endif()
 
 if (enable_redirect_malloc)
+  add_definitions("-DREDIRECT_MALLOC")
   if (enable_gc_debug)
-    if (NOT enable_uncollectable_redirection)
-      add_definitions("-DREDIRECT_MALLOC=GC_debug_malloc_replacement")
-    else()
-      add_definitions(
-        "-DREDIRECT_MALLOC=GC_debug_malloc_uncollectable_replacement")
-    endif()
-    add_definitions("-DREDIRECT_REALLOC=GC_debug_realloc_replacement")
-    add_definitions("-DREDIRECT_FREE=GC_debug_free")
-  elseif (enable_uncollectable_redirection)
-    add_definitions("-DREDIRECT_MALLOC=GC_malloc_uncollectable")
-  else()
-    add_definitions("-DREDIRECT_MALLOC=GC_malloc")
+    # Instruct the collector to redefine `malloc`, `realloc` and `free` to
+    # the debug variant of the corresponding collector routines.
+    add_definitions("-DREDIRECT_MALLOC_DEBUG")
+  endif()
+  if (enable_uncollectable_redirection)
+    # Instruct the collector to redefine `malloc` to the relevant
+    # uncollectible variant of `GC_malloc` routine.
+    add_definitions("-DREDIRECT_MALLOC_UNCOLLECTABLE")
   endif()
   if (WIN32)
     add_definitions("-DREDIRECT_MALLOC_IN_HEADER")

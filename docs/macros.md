@@ -208,36 +208,36 @@ cache synchronization.  Instead of relying on this macro, if the execute
 permission is required, portable clients should call
 `GC_set_pages_executable(1)` at runtime, before the collector initialization.
 
-`REDIRECT_MALLOC=<X>` - Causes malloc() to be defined as alias for `X`.
-Unless the following macros are defined, `realloc()` is also redirected
-to `GC_realloc()`, and `free()` is redirected to `GC_free()`; `calloc()`,
-`strdup()` and `strndup()` are redefined in terms of the new `malloc`.
-`X` should be either `GC_malloc`, `GC_malloc_uncollectable`,
+`REDIRECT_MALLOC` - Causes `malloc` to be redirected to
+either `GC_malloc`, `GC_malloc_uncollectable`,
 `GC_debug_malloc_replacement` or `GC_debug_malloc_uncollectable_replacement`.
-(The latter two ones invokes `GC_debug_malloc` or
-`GC_debug_malloc_uncollectable`, respectively, with dummy source location
-information, but still results in properly remembered call stacks on
-Linux/i686, Linux/x86_64 and Solaris/SPARC.  These require that
-`REDIRECT_REALLOC` and `REDIRECT_FREE` macros also be used.  The former is
-occasionally useful to workaround leaks in code you do not want to (or cannot)
-look at.  It may not work for existing code, but it often does.  Neither works
-on all platforms, since some ports use `malloc` or `calloc` to obtain system
-memory.  Probably works for UNIX and Win32.)  If you build the collector with
-`DBG_HDRS_ALL` macro defined, you should only use
-`GC_debug_malloc_replacement` or `GC_debug_malloc_uncollectable_replacement`
-as a `malloc` replacement.
+Also causes `realloc` to be redirected to either `GC_realloc` or
+`GC_debug_realloc_replacement`, and causes `free` to be redirected to either
+`GC_free` or `GC_debug_free`.  `calloc()`, `strdup()` and `strndup()` are
+redefined in terms of the new `malloc` definition.  See also
+`REDIRECT_MALLOC_UNCOLLECTABLE` and `REDIRECT_MALLOC_DEBUG` macros.  Might not
+be supported properly on some platforms, e.g. where `malloc` or `calloc` is
+used to obtain system memory.  If you build the collector with `DBG_HDRS_ALL`
+macro defined, then you should also define `REDIRECT_MALLOC_DEBUG` macro.
 
-`REDIRECT_REALLOC=<X>` - Causes `realloc()` to be redirected to `X`.  The
-canonical use is `REDIRECT_REALLOC=GC_debug_realloc_replacement`, together
-with `REDIRECT_MALLOC=GC_debug_malloc_replacement` to generate leak reports
-with call stacks for both `malloc()` and `realloc()`.  This also requires
-`REDIRECT_FREE` macro defined.
+`REDIRECT_MALLOC_UNCOLLECTABLE` - Causes `malloc` to be redirected to
+`GC_debug_malloc_uncollectable_replacement` or `GC_malloc_uncollectable`,
+depending on `REDIRECT_MALLOC_DEBUG` macro.  Ensures `REDIRECT_MALLOC` macro
+is defined.
 
-`REDIRECT_FREE=<X>` - Causes `free()` to be redirected to `X`.  The canonical
-use is `REDIRECT_FREE=GC_debug_free`.
+`REDIRECT_MALLOC_DEBUG` - Causes `malloc` to be redirected to
+`GC_debug_malloc_uncollectable_replacement` or `GC_debug_malloc_replacement`,
+depending on `REDIRECT_MALLOC_UNCOLLECTABLE` macro.  Also causes `realloc` and
+`free` to be redirected to `GC_debug_realloc_replacement` and `GC_debug_free`,
+respectively.  This is to generate leak reports with call stacks for both
+`malloc` and `realloc`.  Ensures `REDIRECT_MALLOC` macro is defined.
+The `replacement` variant of the above functions invokes the `debug` variant
+of the corresponding GC routine with dummy source location information, but
+still results in properly remembered call stacks on Linux/i686, Linux/x86_64
+and Solaris/SPARC.
 
 `IGNORE_FREE` - Turns calls to `free()` into a no-op.  Only useful with
-`REDIRECT_MALLOC` macro defined.
+`REDIRECT_MALLOC` macro (or friends) defined.
 
 `NO_DEBUGGING` - Prevents providing of `GC_count_set_marks_in_hblk`,
 `GC_dump`, `GC_dump_named`, `GC_dump_finalization`, `GC_dump_regions`,

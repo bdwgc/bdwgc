@@ -243,18 +243,17 @@ pub fn build(b: *std.Build) void {
     }
 
     if (enable_redirect_malloc) {
+        flags.append(b.allocator, "-D REDIRECT_MALLOC") catch unreachable;
         if (enable_gc_debug) {
-            if (!enable_uncollectable_redirection) {
-                flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_replacement") catch unreachable;
-            } else {
-                flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_debug_malloc_uncollectable_replacement") catch unreachable;
-            }
-            flags.append(b.allocator, "-D REDIRECT_REALLOC=GC_debug_realloc_replacement") catch unreachable;
-            flags.append(b.allocator, "-D REDIRECT_FREE=GC_debug_free") catch unreachable;
-        } else if (enable_uncollectable_redirection) {
-            flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_malloc_uncollectable") catch unreachable;
-        } else {
-            flags.append(b.allocator, "-D REDIRECT_MALLOC=GC_malloc") catch unreachable;
+            // Instruct the collector to redefine `malloc`, `realloc` and
+            // `free` to the debug variant of the corresponding collector
+            // routines.
+            flags.append(b.allocator, "-D REDIRECT_MALLOC_DEBUG") catch unreachable;
+        }
+        if (enable_uncollectable_redirection) {
+            // Instruct the collector to redefine `malloc` to the relevant
+            // uncollectible variant of `GC_malloc` routine.
+            flags.append(b.allocator, "-D REDIRECT_MALLOC_UNCOLLECTABLE") catch unreachable;
         }
         if (t.os.tag == .windows) {
             flags.append(b.allocator, "-D REDIRECT_MALLOC_IN_HEADER") catch unreachable;

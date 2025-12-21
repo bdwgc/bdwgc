@@ -4,7 +4,7 @@ Performance of the incremental collector can be greatly enhanced with
 The collector should run with all of the -32, -n32 and -64 ABIs.  Remember to
 define the AS macro in the Makefile.direct to be "as -64", or "as -n32".
 
-If you use "-D REDIRECT_MALLOC=GC_malloc" with C++ code, your code should make
+If you use "-D REDIRECT_MALLOC" with C++ code, your code should make
 at least one explicit call to malloc instead of new to ensure that the proper
 version of malloc is linked in.
 
@@ -34,6 +34,6 @@ The garbage collector uses signals to stop threads.)
 initiated.  Applications with many such threads may not exhibit acceptable
 performance with the collector.  (Increasing the heap size may help.)
 
-6) The collector should not be compiled with "-D REDIRECT_MALLOC=...".
+6) The collector should not be compiled with "-D REDIRECT_MALLOC".
 This confuses some library calls made by the pthreads implementation, which
 expect the standard malloc.

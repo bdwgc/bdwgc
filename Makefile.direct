@@ -71,7 +71,7 @@ CFLAGS+= -I$(srcdir)/include -I$(AO_SRC_DIR)/src \
 # `-DGC_THREADS -DPARALLEL_MARK -DTHREAD_LOCAL_ALLOC`
 #
 # To build the preload library that intercepts `malloc`, add:
-# `-DGC_USE_DLOPEN_WRAP -DREDIRECT_MALLOC=GC_malloc -fpic`
+# `-DGC_USE_DLOPEN_WRAP -DREDIRECT_MALLOC -fpic`
 
 # To build the collector with `fork` support by default, add to the above:
 # `-DHANDLE_FORK`
