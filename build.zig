@@ -445,17 +445,17 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
+            .link_libc = true,
         }),
         .version = libtoolVerInfoToSemver(LIBGC_VER_INFO),
     });
-    gc.addCSourceFiles(.{
+    gc.root_module.addCSourceFiles(.{
         .files = source_files.items,
         .flags = flags.items,
     });
-    gc.addIncludePath(b.path("include"));
-    gc.linkLibC();
+    gc.root_module.addIncludePath(b.path("include"));
     if (linkage == .dynamic and t.abi == .msvc) {
-        gc.linkSystemLibrary("user32");
+        gc.root_module.linkSystemLibrary("user32", .{});
     }
 
     var gccpp: *std.Build.Step.Compile = undefined;
@@ -471,15 +471,15 @@ pub fn build(b: *std.Build) void {
             }),
             .version = gccpp_version,
         });
-        gccpp.addCSourceFiles(.{
+        gccpp.root_module.addCSourceFiles(.{
             .files = &.{
                 "gc_badalc.cc",
                 "gc_cpp.cc",
             },
             .flags = flags.items,
         });
-        gccpp.addIncludePath(b.path("include"));
-        gccpp.linkLibrary(gc);
+        gccpp.root_module.addIncludePath(b.path("include"));
+        gccpp.root_module.linkLibrary(gc);
         linkLibCpp(gccpp);
         if (enable_throw_bad_alloc_library) {
             // The same as `gccpp` but contains only `gc_badalc`.
@@ -492,14 +492,14 @@ pub fn build(b: *std.Build) void {
                 }),
                 .version = gccpp_version,
             });
-            gctba.addCSourceFiles(.{
+            gctba.root_module.addCSourceFiles(.{
                 .files = &.{
                     "gc_badalc.cc",
                 },
                 .flags = flags.items,
             });
-            gctba.addIncludePath(b.path("include"));
-            gctba.linkLibrary(gc);
+            gctba.root_module.addIncludePath(b.path("include"));
+            gctba.root_module.linkLibrary(gc);
             linkLibCpp(gctba);
         }
     }
@@ -512,10 +512,11 @@ pub fn build(b: *std.Build) void {
             .root_module = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
+                .link_libc = true,
             }),
             .version = libtoolVerInfoToSemver(LIBCORD_VER_INFO),
         });
-        cord.addCSourceFiles(.{
+        cord.root_module.addCSourceFiles(.{
             .files = &.{
                 "cord/cordbscs.c",
                 "cord/cordprnt.c",
@@ -523,9 +524,8 @@ pub fn build(b: *std.Build) void {
             },
             .flags = flags.items,
         });
-        cord.addIncludePath(b.path("include"));
-        cord.linkLibrary(gc);
-        cord.linkLibC();
+        cord.root_module.addIncludePath(b.path("include"));
+        cord.root_module.linkLibrary(gc);
     }
 
     if (install_headers) {
@@ -664,9 +664,9 @@ fn linkLibCpp(lib: *std.Build.Step.Compile) void {
     if (t.abi == .msvc) {
         // TODO: as of zig 0.14, "unable to build libcxxabi" warning is
         // reported if linking C++ code using MS compiler.
-        lib.linkLibC();
+        lib.root_module.link_libc = true;
     } else {
-        lib.linkLibCpp();
+        lib.root_module.link_libcpp = true;
     }
 }
 
@@ -686,34 +686,34 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.
         .root_module = b.createModule(.{
             .optimize = gc.root_module.optimize.?,
             .target = gc.root_module.resolved_target.?,
+            .link_libc = true,
         }),
     });
-    test_exe.addCSourceFile(.{
+    test_exe.root_module.addCSourceFile(.{
         .file = b.path(filename),
         .flags = flags.items,
     });
     if (ext_args.filename2 != null) {
-        test_exe.addCSourceFile(.{
+        test_exe.root_module.addCSourceFile(.{
             .file = b.path(ext_args.filename2.?),
             .flags = flags.items,
         });
     }
     if (ext_args.rc_filename != null) {
-        test_exe.addWin32ResourceFile(.{
+        test_exe.root_module.addWin32ResourceFile(.{
             .file = b.path(ext_args.rc_filename.?),
         });
     }
-    test_exe.addIncludePath(b.path("include"));
-    test_exe.linkLibrary(gc);
+    test_exe.root_module.addIncludePath(b.path("include"));
+    test_exe.root_module.linkLibrary(gc);
     if (ext_args.lib2 != null) {
-        test_exe.linkLibrary(ext_args.lib2.?);
+        test_exe.root_module.linkLibrary(ext_args.lib2.?);
     }
-    test_exe.linkLibC();
     if (ext_args.sysLibName != null) {
-        test_exe.linkSystemLibrary(ext_args.sysLibName.?);
+        test_exe.root_module.linkSystemLibrary(ext_args.sysLibName.?, .{});
     }
     if (ext_args.sysLibName2 != null) {
-        test_exe.linkSystemLibrary(ext_args.sysLibName2.?);
+        test_exe.root_module.linkSystemLibrary(ext_args.sysLibName2.?, .{});
     }
     const run_test_exe = b.addRunArtifact(test_exe);
     run_test_exe.setEnvironmentVariable("GC_PROMPT_DISABLED", "1");
