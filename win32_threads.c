@@ -289,6 +289,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
   ((volatile struct GC_Thread_Rep *)me)->id = self_id;
 #  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
+    me->dll_thread_detached = FALSE;
     if (GC_please_stop) {
       AO_store(&GC_attached_thread, TRUE);
       AO_nop_full(); /*< later updates must become visible after this */
@@ -430,10 +431,6 @@ GC_suspend(GC_thread t)
 #  endif
 
   GC_ASSERT(I_HOLD_LOCK());
-#  ifndef GC_NO_THREADS_DISCOVERY
-  if (NULL == GC_cptr_load_acquire(&t->handle))
-    return;
-#  endif
 #  if defined(DEBUG_THREADS) && !defined(MSWINCE) \
       && (!defined(MSWIN32) || defined(CONSOLE_LOG))
   GC_log_printf("Suspending 0x%x\n", (int)t->id);
@@ -493,50 +490,12 @@ GC_suspend(GC_thread t)
       }
 
       /* Resume the thread, try to suspend it in a better location. */
-      if (ResumeThread(t->handle) == (DWORD)-1) {
-#    ifndef GC_NO_THREADS_DISCOVERY
-        if (NULL == GC_cptr_load_acquire(&t->handle)) {
-          /*
-           * It might be the scenario like this:
-           *   1. `GC_suspend` calls `SuspendThread` on a valid handle;
-           *   2. Within the `SuspendThread` call a context switch
-           *      occurs to `DllMain` (before the thread has actually
-           *      been suspended);
-           *   3. `DllMain` sets `t->handle` to `NULL`, but does not
-           *      yet close the handle;
-           *   4. A context switch occurs returning to `SuspendThread`
-           *      which completes on the handle that was originally
-           *      passed into it;
-           *   5. Then `ResumeThread` attempts to run on `t->handle`
-           *      which is now `NULL`.
-           */
-          GC_release_dirty_lock();
-          /*
-           * FIXME: The thread seems to be suspended forever (causing
-           * a resource leak).
-           */
-          WARN("ResumeThread failed (async CloseHandle by DllMain)\n", 0);
-          return;
-        }
-#    endif
+      if (ResumeThread(t->handle) == (DWORD)-1)
         ABORT("ResumeThread failed in suspend loop");
-      }
-    } else {
-#    ifndef GC_NO_THREADS_DISCOVERY
-      if (NULL == GC_cptr_load_acquire(&t->handle)) {
-        /* The thread handle is closed asynchronously by `GC_DllMain`. */
-        GC_release_dirty_lock();
-        return;
-      }
-#    endif
     }
     if (retry_cnt > 1) {
       GC_release_dirty_lock();
       Sleep(0); /*< yield */
-#    ifndef GC_NO_THREADS_DISCOVERY
-      if (NULL == GC_cptr_load_acquire(&t->handle))
-        return;
-#    endif
       GC_acquire_dirty_lock();
     }
     if (++retry_cnt >= MAX_SUSPEND_THREAD_RETRIES) {
@@ -555,15 +514,8 @@ GC_suspend(GC_thread t)
 #    endif
     return;
   }
-  if (SuspendThread(t->handle) == (DWORD)-1) {
-#    ifndef GC_NO_THREADS_DISCOVERY
-    if (NULL == GC_cptr_load_acquire(&t->handle)) {
-      GC_release_dirty_lock();
-      return;
-    }
-#    endif
+  if (SuspendThread(t->handle) == (DWORD)-1)
     ABORT("SuspendThread failed");
-  }
 #  endif
   t->flags |= IS_SUSPENDED;
   GC_release_dirty_lock();
@@ -624,6 +576,11 @@ GC_stop_world(void)
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
 
+      if (AO_load(&p->dll_thread_detached)) {
+        GC_delete_thread(p);
+        continue;
+      }
+
       if (p->crtn->stack_end != NULL && (p->flags & DO_BLOCKING) == 0
           && p->id != self_id) {
         GC_suspend(p);
@@ -677,14 +634,8 @@ GC_start_world(void)
         GC_ASSERT(p->id != self_id);
         GC_ASSERT(*(ptr_t *)CAST_AWAY_VOLATILE_PVOID(&p->crtn->stack_end)
                   != NULL);
-        if (ResumeThread(p->handle) == (DWORD)-1) {
-          if (NULL == GC_cptr_load_acquire(&p->handle)) {
-            /* FIXME: See the same issue in `GC_suspend`. */
-            WARN("ResumeThread failed (async CloseHandle by DllMain)\n", 0);
-          } else {
-            ABORT("ResumeThread failed");
-          }
-        }
+        if (ResumeThread(p->handle) == (DWORD)-1)
+          ABORT("ResumeThread failed");
         p->flags &= (unsigned char)~IS_SUSPENDED;
         if (GC_on_thread_event)
           GC_on_thread_event(GC_EVENT_THREAD_UNSUSPENDED, p->handle);
@@ -2039,7 +1990,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
       GC_thread t = GC_win32_dll_lookup_thread(GetCurrentThreadId());
 
       if (LIKELY(t != NULL))
-        GC_delete_thread(t);
+        AO_store(&t->dll_thread_detached, TRUE);
     }
     break;
 
