@@ -2990,7 +2990,7 @@ GC_INNER void GC_thr_init(void)
 #   define GC_DllMain DllMain
 # endif
   BOOL WINAPI GC_DllMain(HINSTANCE inst GC_ATTR_UNUSED, ULONG reason,
-                         LPVOID reserved GC_ATTR_UNUSED)
+                         LPVOID reserved)
   {
       DWORD thread_id;
 
@@ -3029,7 +3029,9 @@ GC_INNER void GC_thr_init(void)
         break;
 
        case DLL_PROCESS_DETACH:
-        if (GC_win32_dll_threads) {
+        /* Do nothing on process exit, all handles will be closed   */
+        /* automatically.                                           */
+        if (GC_win32_dll_threads && NULL == reserved) {
           int i;
           int my_max = (int)GC_get_max_thread_index();
 
