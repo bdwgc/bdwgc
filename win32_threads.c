@@ -1991,7 +1991,6 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
   thread_id_t self_id;
 
   UNUSED_ARG(inst);
-  UNUSED_ARG(reserved);
   /*
    * Note that `GC_use_threads_discovery` should be called by the client
    * application at start-up to activate automatic thread registration
@@ -2044,7 +2043,8 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
     break;
 
   case DLL_PROCESS_DETACH:
-    if (GC_win32_dll_threads) {
+    /* Do nothing on process exit, all handles will be closed automatically. */
+    if (GC_win32_dll_threads && NULL == reserved) {
       int i;
       int my_max = (int)GC_get_max_thread_index();
 
