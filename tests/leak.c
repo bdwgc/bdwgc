@@ -55,8 +55,9 @@ main(void)
   }
   CHECK_LEAKS();
   for (i = 3; i < N_TESTS / 2; ++i) {
-    p[i] = (char *)((i & 1) != 0 ? reallocarray(p[i], i, 43)
-                                 : realloc(p[i], i * 16 + 1));
+    p[i] = (char *)((i & 1) != 0   ? reallocarray(p[i], i, 43)
+                    : (i & 2) != 0 ? realloc(p[i], i * 16 + 1)
+                                   : reallocf(p[i], i * 32 + 1));
     CHECK_OUT_OF_MEMORY(p[i]);
   }
   CHECK_LEAKS();

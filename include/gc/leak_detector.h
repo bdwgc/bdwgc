@@ -45,6 +45,9 @@
 #undef reallocarray
 #define reallocarray(p, m, n) GC_REALLOC(p, (m) * (n))
 
+#undef reallocf /*< available in macOS, Solaris, xBSD */
+#define reallocf(p, n) GC_REALLOCF(p, n)
+
 #undef strdup
 #define strdup(s) GC_STRDUP(s)
 #undef strndup

@@ -940,7 +940,7 @@ reverse_test_inner(void *data)
   /* Check that `realloc` updates object descriptors correctly. */
   f = (sexpr *)checkOOM(GC_MALLOC(4 * sizeof(sexpr)));
   AO_fetch_and_add1(&collectable_count);
-  f = (sexpr *)checkOOM(GC_REALLOC(f, 6 * sizeof(sexpr)));
+  f = (sexpr *)checkOOM(GC_REALLOCF(f, 6 * sizeof(sexpr)));
   AO_fetch_and_add1(&realloc_count);
   GC_PTR_STORE_AND_DIRTY(f + 5, ints(1, 17));
   g = (sexpr *)checkOOM(GC_MALLOC(513 * sizeof(sexpr)));

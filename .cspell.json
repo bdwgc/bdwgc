@@ -337,6 +337,8 @@
     "Ravenbrook",
     "rchr",
     "reallocarray",
+    "REALLOCF",
+    "reallocf",
     "REFD",
     "REFIID",
     "RELRO",

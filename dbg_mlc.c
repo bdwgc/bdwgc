@@ -865,6 +865,7 @@ GC_debug_realloc(void *p, size_t lb, GC_EXTRA_PARAMS)
       = GC_debug_generic_or_special_malloc(lb, hhdr->hb_obj_kind, OPT_RA s, i);
   if (result != NULL) {
     size_t old_sz;
+
 #ifdef SHORT_DBG_HDRS
     old_sz = GC_size(base) - sizeof(oh);
 #else
@@ -874,6 +875,16 @@ GC_debug_realloc(void *p, size_t lb, GC_EXTRA_PARAMS)
       BCOPY(p, result, old_sz < lb ? old_sz : lb);
     GC_debug_free(p);
   }
+  return result;
+}
+
+GC_API void *GC_CALL
+GC_debug_reallocf(void *p, size_t lb, GC_EXTRA_PARAMS)
+{
+  void *result = GC_debug_realloc(p, lb, OPT_RA s, i);
+
+  if (NULL == result)
+    GC_debug_free(p);
   return result;
 }
 
@@ -1174,6 +1185,12 @@ GC_API void *GC_CALL
 GC_debug_realloc_replacement(void *p, size_t lb)
 {
   return GC_debug_realloc(p, lb, GC_DBG_EXTRAS);
+}
+
+GC_API void *GC_CALL
+GC_debug_reallocf_replacement(void *p, size_t lb)
+{
+  return GC_debug_reallocf(p, lb, GC_DBG_EXTRAS);
 }
 
 #ifdef GC_GCJ_SUPPORT

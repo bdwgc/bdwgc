@@ -386,12 +386,13 @@ many others.
      faster if large character arrays, etc. are allocated with
      `GC_malloc_atomic` than if they are statically allocated.)
 
-  3. `GC_realloc(object, new_bytes)` - Change the size of object to be of
-     a given size.  Returns a pointer to the new object, which may, or may
-     not, be the same as the pointer to the old object.  The new object is
-     taken to be atomic if and only if the old one was.  If the new object
-     is composite and larger than the original object then the newly added
-     bytes are cleared. This is very likely to allocate a new object.
+  3. `GC_realloc(object, new_bytes)` and `GC_reallocf(object, new_bytes)` -
+     Change the size of object to be of a given size.  Returns a pointer to
+     the new object, which may, or may not, be the same as the pointer to the
+     old object.  The new object is taken to be atomic if and only if the old
+     one was.  If the new object is composite and larger than the original
+     object, then the newly added bytes are cleared. This is very likely to
+     allocate a new object.
 
   4. `GC_free(object)` - Explicitly deallocate an object returned by
      `GC_malloc` or `GC_malloc_atomic`, or friends.  Not necessary, but can
@@ -513,11 +514,11 @@ designed to run meaningfully in `FIND_LEAK` mode.
 ## Debugging Facilities
 
 The routines `GC_debug_malloc`, `GC_debug_malloc_atomic`, `GC_debug_realloc`,
-and `GC_debug_free` provide an alternate interface to the collector, which
-provides some help with memory overwrite errors, and the like.
-Objects allocated in this way are annotated with additional
-information.  Some of this information is checked during garbage
-collections, and detected inconsistencies are reported to `stderr`.
+`GC_debug_reallocf` and `GC_debug_free` provide an alternate interface to the
+collector, which provides some help with memory overwrite errors, and the
+like.  Objects allocated in this way are annotated with additional
+information.  Some of this information is checked during garbage collections,
+and detected inconsistencies are reported to `stderr`.
 
 Simple cases of writing past the end of an allocated object should
 be caught if the object is explicitly deallocated, or if the
@@ -533,18 +534,20 @@ slowdown during collections.  If frequent heap checks are desired,
 this can be achieved by explicitly invoking `GC_gcollect`, e.g. from
 the debugger.
 
-`GC_debug_malloc` allocated objects should not be passed to `GC_realloc`
-or `GC_free`, and conversely.  It is however acceptable to allocate only
-some objects with `GC_debug_malloc`, and to use `GC_malloc` for other objects,
-provided the two pools are kept distinct.  In this case, there is a very
-low probability that `GC_malloc` allocated objects may be misidentified as
-having been overwritten.  This should happen with probability at most
-one in 2**32.  This probability is zero if `GC_debug_malloc` is never called.
+`GC_debug_malloc` allocated objects should not be passed to `GC_realloc`,
+`GC_reallocf` or `GC_free`, and conversely.  It is however acceptable to
+allocate only some objects with `GC_debug_malloc`, and to use `GC_malloc` for
+other objects, provided the two pools are kept distinct.  In this case, there
+is a very low probability that `GC_malloc`-allocated objects may be
+misidentified as having been overwritten.  This should happen with probability
+at most one in 2**32.  This probability is zero if `GC_debug_malloc` is never
+called.
 
-`GC_debug_malloc`, `GC_debug_malloc_atomic`, and `GC_debug_realloc` take two
-additional trailing arguments, a string and an integer.  These are not
-interpreted by the allocator.  They are stored in the object (the string is
-not copied).  If an error involving the object is detected, they are printed.
+`GC_debug_malloc`, `GC_debug_malloc_atomic`, `GC_debug_realloc` and
+`GC_debug_reallocf` take two additional trailing arguments, a string and
+an integer.  These are not interpreted by the allocator.  They are stored in
+the object (the string is not copied).  If an error involving the object is
+detected, they are printed.
 
 The macros `GC_MALLOC`, `GC_MALLOC_ATOMIC`, `GC_REALLOC`, `GC_FREE`,
 `GC_REGISTER_FINALIZER` and friends are also provided.  These require the same
