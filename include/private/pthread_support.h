@@ -256,7 +256,8 @@ struct GC_Thread_Rep {
 #  endif
 #  ifndef GC_NO_THREADS_DISCOVERY
   /*
-   * Thread was detached by dllmain and is pending deletion by the main GC thread.
+   * Thread was detached by dllmain and is pending deletion by the main GC
+   * thread.
    */
   volatile AO_t dll_thread_detached;
 #  endif
