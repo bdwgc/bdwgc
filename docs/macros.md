@@ -46,9 +46,9 @@ defined in `boehmgc` namespace.
 `gc_allocator<T>` and similar symbols to be defined in `boehmgc` namespace.
 
 `GC_DEBUG_REPLACEMENT` - Tested by `gc.h` file.  Causes `GC_MALLOC`,
-`GC_MALLOC_UNCOLLECTABLE`, `GC_REALLOC` to be defined as
+`GC_MALLOC_UNCOLLECTABLE`, `GC_REALLOC`, `GC_REALLOCF` to be defined as
 `GC_debug_malloc_replacement`, `GC_debug_malloc_uncollectable_replacement`,
-`GC_debug_realloc_replacement`, respectively.
+`GC_debug_realloc_replacement`, `GC_debug_reallocf_replacement`, respectively.
 
 `GC_NO_THREAD_REDIRECTS` - Tested by `gc.h` file.  Prevents redirection of
 thread creation routines and friends to the `GC_` variants.  Requires the
@@ -211,10 +211,10 @@ permission is required, portable clients should call
 `REDIRECT_MALLOC` - Causes `malloc` to be redirected to
 either `GC_malloc`, `GC_malloc_uncollectable`,
 `GC_debug_malloc_replacement` or `GC_debug_malloc_uncollectable_replacement`.
-Also causes `realloc` to be redirected to either `GC_realloc` or
-`GC_debug_realloc_replacement`, and causes `free` to be redirected to either
-`GC_free` or `GC_debug_free`.  `calloc()`, `strdup()` and `strndup()` are
-redefined in terms of the new `malloc` definition.  See also
+Also causes `realloc` (and `reallocf` similarly) to be redirected to either
+`GC_realloc` or `GC_debug_realloc_replacement`, and causes `free` to be
+redirected to either `GC_free` or `GC_debug_free`.  `calloc()`, `strdup()` and
+`strndup()` are redefined in terms of the new `malloc` definition.  See also
 `REDIRECT_MALLOC_UNCOLLECTABLE` and `REDIRECT_MALLOC_DEBUG` macros.  Might not
 be supported properly on some platforms, e.g. where `malloc` or `calloc` is
 used to obtain system memory.  If you build the collector with `DBG_HDRS_ALL`
@@ -227,14 +227,15 @@ is defined.
 
 `REDIRECT_MALLOC_DEBUG` - Causes `malloc` to be redirected to
 `GC_debug_malloc_uncollectable_replacement` or `GC_debug_malloc_replacement`,
-depending on `REDIRECT_MALLOC_UNCOLLECTABLE` macro.  Also causes `realloc` and
-`free` to be redirected to `GC_debug_realloc_replacement` and `GC_debug_free`,
-respectively.  This is to generate leak reports with call stacks for both
-`malloc` and `realloc`.  Ensures `REDIRECT_MALLOC` macro is defined.
-The `replacement` variant of the above functions invokes the `debug` variant
-of the corresponding GC routine with dummy source location information, but
-still results in properly remembered call stacks on Linux/i686, Linux/x86_64
-and Solaris/SPARC.
+depending on `REDIRECT_MALLOC_UNCOLLECTABLE` macro.  Also causes `realloc`
+(and `reallocf` similarly) and `free` to be redirected to
+`GC_debug_realloc_replacement` and `GC_debug_free`, respectively.  This is to
+generate leak reports with call stacks for both `malloc` and `realloc` (and
+`reallocf`).  Ensures `REDIRECT_MALLOC` macro is defined.  The `replacement`
+variant of the above functions invokes the `debug` variant of the
+corresponding GC routine with dummy source location information, but still
+results in properly remembered call stacks on Linux/i686, Linux/x86_64 and
+Solaris/SPARC.
 
 `IGNORE_FREE` - Turns calls to `free()` into a no-op.  Only useful with
 `REDIRECT_MALLOC` macro (or friends) defined.

@@ -1,25 +1,27 @@
-.TH BDWGC 3 "26 Jul 2025"
+.TH BDWGC 3 "24 Dec 2025"
 .SH NAME
-GC_malloc, GC_malloc_atomic, GC_free, GC_realloc, GC_enable_incremental,
-GC_register_finalizer, GC_malloc_ignore_off_page,
+GC_malloc, GC_malloc_atomic, GC_free, GC_realloc, GC_reallocf,
+GC_enable_incremental, GC_register_finalizer, GC_malloc_ignore_off_page,
 GC_malloc_atomic_ignore_off_page, GC_set_warn_proc \- Garbage collecting
 malloc replacement
 .SH SYNOPSIS
 #include <gc/gc.h>
 .br
-void * GC_malloc(size_t size);
+void *GC_malloc(size_t size);
 .br
-void * GC_malloc_atomic(size_t size);
+void *GC_malloc_atomic(size_t size);
 .br
 void GC_free(void *ptr);
 .br
-void * GC_realloc(void *ptr, size_t size);
+void *GC_realloc(void *ptr, size_t size);
+.br
+void *GC_reallocf(void *ptr, size_t size);
 .br
 void GC_enable_incremental(void);
 .br
-void * GC_malloc_ignore_off_page(size_t size);
+void *GC_malloc_ignore_off_page(size_t size);
 .br
-void * GC_malloc_atomic_ignore_off_page(size_t size);
+void *GC_malloc_atomic_ignore_off_page(size_t size);
 .br
 void GC_set_warn_proc(void (*proc)(const char *, GC_uintptr_t));
 .br
@@ -73,6 +75,9 @@ discouraged.
 .I
 GC_realloc
 has the standard realloc semantics.  It preserves pointer-free-ness.
+.I
+GC_reallocf
+has the reallocf semantics.  It preserves pointer-free-ness.
 .I
 GC_register_finalizer
 allows for registration of functions that are invoked when an object becomes

@@ -104,10 +104,10 @@ GC_make_descriptor(const GC_word * /* `GC_bitmap` `bm` */,
 
 /**
  * Allocate an object whose layout is described by `d`.  The size
- * (`size_in_bytes`) may *not* be less than the number of meaningful
- * bits in the bitmap of `d` multiplied by the size of a pointer.
- * The returned object is cleared.  The returned object may *not* be
- * passed to `GC_realloc()`.
+ * (`size_in_bytes`) may *not* be less than the number of meaningful bits in
+ * the bitmap of `d` multiplied by the size of a pointer.  The returned object
+ * is cleared; the returned object may *not* be passed to `GC_realloc()` and
+ * `GC_reallocf()`.
  */
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
     GC_malloc_explicitly_typed(size_t /* `size_in_bytes` */,

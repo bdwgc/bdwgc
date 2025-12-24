@@ -191,14 +191,30 @@ GC_realloc(void *p, size_t lb)
 #undef cleared_p
 }
 
+GC_API void *GC_CALL
+GC_reallocf(void *p, size_t lb)
+{
+  void *result = GC_realloc(p, lb);
+
+#ifndef IGNORE_FREE
+  if (UNLIKELY(NULL == result))
+    GC_free(p);
+#endif
+  return result;
+}
+
 #if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
 #  ifdef REDIRECT_MALLOC_DEBUG
 #    define REDIRECT_REALLOC_F GC_debug_realloc_replacement
+#    define REDIRECT_REALLOCF_F GC_debug_reallocf_replacement
 /* As with `malloc`, avoid two levels of extra calls here. */
 #    define GC_debug_realloc_replacement(p, lb) \
       GC_debug_realloc(p, lb, GC_DBG_EXTRAS)
+#    define GC_debug_reallocf_replacement(p, lb) \
+      GC_debug_reallocf(p, lb, GC_DBG_EXTRAS)
 #  else
 #    define REDIRECT_REALLOC_F GC_realloc
+#    define REDIRECT_REALLOCF_F GC_reallocf
 #  endif
 
 void *
@@ -207,7 +223,14 @@ realloc(void *p, size_t lb)
   return REDIRECT_REALLOC_F(p, lb);
 }
 
+void *
+reallocf(void *p, size_t lb)
+{
+  return REDIRECT_REALLOCF_F(p, lb);
+}
+
 #  undef GC_debug_realloc_replacement
+#  undef GC_debug_reallocf_replacement
 #endif
 
 GC_API GC_ATTR_MALLOC void *GC_CALL

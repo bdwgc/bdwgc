@@ -59,7 +59,8 @@ ANY USE IS AT YOUR OWN RISK.**
 
 Empirically, this collector works with most unmodified C programs, simply
 by replacing `malloc` and `calloc` with `GC_malloc` calls, replacing `realloc`
-with `GC_realloc` calls, and removing `free` calls. Exceptions are discussed
+with `GC_realloc` calls (and `reallocf` with `GC_reallocf`), and removing
+`free` calls. Exceptions are discussed
 [here](http://www.hboehm.info/gc/issues.html).
 
 ## Platforms

@@ -20,7 +20,7 @@
 /*
  * Note that this defines a large number of tuning hooks, which can
  * safely be ignored in nearly all cases.  For normal use it suffices
- * to call only `GC_MALLOC` and, perhaps, `GC_REALLOC`.
+ * to call only `GC_MALLOC` and, perhaps, `GC_REALLOC` (or `GC_REALLOCF`).
  * For better performance, also look at `GC_MALLOC_ATOMIC`, and
  * `GC_enable_incremental`.  If you need an action to be performed
  * immediately before an object is collected, look at `GC_register_finalizer`.
@@ -802,25 +802,33 @@ GC_API size_t GC_CALL GC_size(const void * /* `obj` */);
  * case of object size growth is initialized to zero (not guaranteed for
  * atomic object type).  The function follows ANSI conventions for `NULL`
  * `old_object` (i.e., equivalent to `GC_malloc` regardless of
- * `new_size_in_bytes`).  If `new_size_in_bytes` is zero (and
- * `old_object` is non-`NULL`), then the call is equivalent to
- * `GC_free` (and `NULL` is returned).  If `old_object` is non-`NULL`,
- * it must have been returned by an earlier call to `GC_realloc`,
- * `GC_malloc` or friends.  In case of the allocation failure, the
- * memory pointed by `old_object` is untouched (and not freed).  If the
- * returned pointer is not the same as `old_object` and both of them
- * are non-`NULL`, then `old_object` is freed.  Returns either `NULL`
- * (in case of the allocation failure or zero `new_size_in_bytes`) or
- * pointer to the allocated memory.  For a nonzero `new_size_in_bytes`,
- * the function (including its debug variant) is guaranteed never to
- * return `NULL` unless `GC_oom_fn()` returns `NULL`.
+ * `new_size_in_bytes`).  If `new_size_in_bytes` is zero (and `old_object`
+ * is non-`NULL`), then the call is equivalent to `GC_free` (and `NULL` is
+ * returned).  If `old_object` is non-`NULL`, it must have been returned by
+ * an earlier call to `GC_realloc`, `GC_malloc` or friends.  In case of the
+ * allocation failure, `GC_realloc` (and its debug variant) does not touch
+ * and does not free memory pointed by `old_object`.  The logic of
+ * `GC_reallocf` and its debug variant is different - they free memory
+ * pointed by `old_object` if the allocation has failed.  If the returned
+ * pointer is not the same as `old_object` and both of them are non-`NULL`,
+ * then `old_object` is freed.  Returns either `NULL` (in case of the
+ * allocation failure or zero `new_size_in_bytes`) or pointer to the
+ * allocated memory.  For a nonzero `new_size_in_bytes`, the functions
+ * are guaranteed never to return `NULL` unless `GC_oom_fn()` returns `NULL`.
  */
 GC_API void *GC_CALL GC_realloc(void * /* `old_object` */,
                                 size_t /* `new_size_in_bytes` */)
     /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2);
+GC_API void *GC_CALL GC_reallocf(void * /* `old_object` */,
+                                 size_t /* `new_size_in_bytes` */)
+    /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2);
 GC_API void *GC_CALL GC_debug_realloc(void * /* `old_object` */,
                                       size_t /* `new_size_in_bytes` */,
                                       GC_EXTRA_PARAMS)
+    /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2);
+GC_API void *GC_CALL GC_debug_reallocf(void * /* `old_object` */,
+                                       size_t /* `new_size_in_bytes` */,
+                                       GC_EXTRA_PARAMS)
     /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2);
 
 /**
@@ -1322,7 +1330,7 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
 /**
  * The functions that allocate objects with debug information (like the
  * above), but just fill in dummy file and line number information.
- * Thus they can serve as drop-in `malloc`/`realloc` replacements.
+ * Thus they can serve as drop-in `malloc`/`realloc`/`reallocf` replacements.
  * This can be useful for two reasons:
  *   1. It allows the collector to be built with `DBG_HDRS_ALL` macro
  *      defined even if some allocation calls come from 3rd-party
@@ -1331,11 +1339,11 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
  *      since it can be reconstructed from a stack trace.  On such
  *      platforms it may be more convenient not to recompile, e.g. for
  *      leak detection.  This can be accomplished by instructing the
- *      linker to replace `malloc`/`realloc` with these.
+ *      linker to replace `malloc`/`realloc`/`reallocf` with these.
  *
- * Note that these functions (for a nonzero new size in case of
- * `realloc`) are guaranteed never to return `NULL` unless
- * `GC_oom_fn()` returns `NULL`.
+ * Note that these functions (for a nonzero new size in case of `realloc`
+ * and `reallocf`) are guaranteed never to return `NULL` unless `GC_oom_fn()`
+ * returns `NULL`.
  */
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
     GC_debug_malloc_replacement(size_t /* `size_in_bytes` */);
@@ -1344,6 +1352,9 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
 GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
     GC_debug_realloc_replacement(void * /* `obj` */,
                                  size_t /* `size_in_bytes` */);
+GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
+    GC_debug_reallocf_replacement(void * /* `obj` */,
+                                  size_t /* `size_in_bytes` */);
 
 #ifdef __cplusplus
 #  define GC_CAST_AWAY_CONST_PVOID(p) \
@@ -1366,27 +1377,30 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 
 /*
  * Convenient macros over debug and non-debug allocation functions.
- * All these macros (`GC_MALLOC`, `GC_REALLOC`, `GC_MALLOC_ATOMIC`,
- * `GC_STRDUP`, `GC_STRNDUP`, `GC_MALLOC_ATOMIC_UNCOLLECTABLE`,
- * `GC_MALLOC_UNCOLLECTABLE`, `GC_MALLOC_IGNORE_OFF_PAGE`,
- * `GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE`) are guaranteed never to return
- * `NULL` (for a nonzero new size in case of `GC_REALLOC`) unless
- * `GC_oom_fn()` returns `NULL`.
+ * All these macros (`GC_MALLOC`, `GC_REALLOC`, `GC_REALLOCF`,
+ * `GC_MALLOC_ATOMIC`, `GC_STRDUP`, `GC_STRNDUP`,
+ * `GC_MALLOC_ATOMIC_UNCOLLECTABLE`, `GC_MALLOC_UNCOLLECTABLE`,
+ * `GC_MALLOC_IGNORE_OFF_PAGE`, `GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE`) are
+ * guaranteed never to return `NULL` (for a nonzero new size in case of
+ * `GC_REALLOC` and `GC_REALLOCF`) unless `GC_oom_fn()` returns `NULL`.
  */
 #ifdef GC_DEBUG_REPLACEMENT
 #  define GC_MALLOC(sz) GC_debug_malloc_replacement(sz)
 #  define GC_MALLOC_UNCOLLECTABLE(sz) \
     GC_debug_malloc_uncollectable_replacement(sz)
 #  define GC_REALLOC(old, sz) GC_debug_realloc_replacement(old, sz)
+#  define GC_REALLOCF(old, sz) GC_debug_reallocf_replacement(old, sz)
 #elif defined(GC_DEBUG)
 #  define GC_MALLOC(sz) GC_debug_malloc(sz, GC_EXTRAS)
 #  define GC_MALLOC_UNCOLLECTABLE(sz) \
     GC_debug_malloc_uncollectable(sz, GC_EXTRAS)
 #  define GC_REALLOC(old, sz) GC_debug_realloc(old, sz, GC_EXTRAS)
+#  define GC_REALLOCF(old, sz) GC_debug_reallocf(old, sz, GC_EXTRAS)
 #else
 #  define GC_MALLOC(sz) GC_malloc(sz)
 #  define GC_MALLOC_UNCOLLECTABLE(sz) GC_malloc_uncollectable(sz)
 #  define GC_REALLOC(old, sz) GC_realloc(old, sz)
+#  define GC_REALLOCF(old, sz) GC_reallocf(old, sz)
 #endif /* !GC_DEBUG_REPLACEMENT && !GC_DEBUG */
 #ifdef GC_DEBUG
 #  define GC_MALLOC_ATOMIC(sz) GC_debug_malloc_atomic(sz, GC_EXTRAS)

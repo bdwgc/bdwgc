@@ -31,7 +31,7 @@ pointed to by thread-local variables should also be pointed to by a globally
 visible data area, e.g. thread's stack. (This behavior is viewed as a bug, but
 as one that is exceedingly hard to fix without some `libc` hooks.)
 
-`void * GC_MALLOC(size_t _bytes_)` - Allocates and clears _bytes_
+`void *GC_MALLOC(size_t _bytes_)` - Allocates and clears _bytes_
 of storage. Requires (amortized) time proportional to _bytes_. The resulting
 object will be automatically deallocated when unreferenced. References from
 objects allocated with the system malloc are usually not considered by the
@@ -41,7 +41,7 @@ with `-D REDIRECT_MALLOC_UNCOLLECTABLE` is often a way around this.)
 is defined before `gc.h` file is included, a debugging variant that checks
 occasionally for overwrite errors, and the like.
 
-`void * GC_MALLOC_ATOMIC(size_t _bytes_)` - Allocates _bytes_
+`void *GC_MALLOC_ATOMIC(size_t _bytes_)` - Allocates _bytes_
 of storage. Requires (amortized) time proportional to _bytes_. The resulting
 object will be automatically deallocated when unreferenced. The client
 promises that the resulting object will never contain any pointers. The memory
@@ -49,25 +49,29 @@ is not cleared. This is the preferred way to allocate strings, floating point
 arrays, bitmaps, etc. More precise information about pointer locations can be
 communicated to the collector using the interface in `gc_typed.h` file.
 
-`void * GC_MALLOC_UNCOLLECTABLE(size_t _bytes_)` - Identical
+`void *GC_MALLOC_UNCOLLECTABLE(size_t _bytes_)` - Identical
 to `GC_MALLOC`, except that the resulting object is not automatically
 deallocated. Unlike the system-provided `malloc`, the collector does scan the
 object for pointers to garbage-collectible memory, even if the block itself
 does not appear to be reachable. (Objects allocated in this way are
 effectively treated as roots by the collector.)
 
-`void * GC_REALLOC(void * _old_object_, size_t _new_bytes_)` - Allocates
+`void *GC_REALLOC(void * _old_object_, size_t _new_bytes_)` - Allocates
 a new object of the indicated size and copy the old object's content into the
 new object. The old object is reused in place if convenient. If the original
 object was allocated with `GC_MALLOC_ATOMIC`, the new object is subject to the
 same constraints. If it was allocated as an uncollectible object, then the new
 object is uncollectible, and the old object (if different) is deallocated.
 
+`void *GC_REALLOCF(void * _old_object_, size_t _new_bytes_)` - Same as
+`GC_REALLOC()` but `_old_object_` is also deallocated in case of the
+allocation failure.
+
 `void GC_FREE(void * _object_)` - Explicitly deallocates an _object_.
 Typically not useful for small collectible objects.
 
-`void * GC_MALLOC_IGNORE_OFF_PAGE(size_t _bytes_)` and
-`void * GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE(size_t _bytes_)` - Analogous
+`void *GC_MALLOC_IGNORE_OFF_PAGE(size_t _bytes_)` and
+`void *GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE(size_t _bytes_)` - Analogous
 to `GC_MALLOC` and `GC_MALLOC_ATOMIC`, respectively, except that the client
 guarantees that as long as the resulting object is of use, a pointer
 is maintained to someplace inside the first heap block (`hblk`) of the object.
