@@ -646,7 +646,9 @@ strdup(const char *s)
   char *result = (char *)REDIRECT_MALLOC_F(lb);
 
   if (UNLIKELY(NULL == result)) {
+#    ifndef MSWINCE
     errno = ENOMEM;
+#    endif
     return NULL;
   }
   BCOPY(s, result, lb);
@@ -671,7 +673,9 @@ strndup(const char *str, size_t size)
     len = size;
   copy = (char *)REDIRECT_MALLOC_F(len + 1);
   if (UNLIKELY(NULL == copy)) {
+#    ifndef MSWINCE
     errno = ENOMEM;
+#    endif
     return NULL;
   }
   if (LIKELY(len > 0))
