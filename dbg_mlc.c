@@ -710,6 +710,7 @@ GC_API void GC_CALL
 GC_debug_free(void *p)
 {
   ptr_t base;
+
   if (NULL == p)
     return;
 
@@ -770,24 +771,22 @@ GC_debug_free(void *p)
       && ((word)((ptr_t)p - base) != sizeof(oh) || !GC_findleak_delay_free)
 #  endif
   ) {
-    GC_free(base);
+    LOCK();
+    GC_free_internal(base, HDR(p));
+    UNLOCK();
   } else
 #endif
   /* else */ {
     const hdr *hhdr;
 
     LOCK();
-#ifdef LOG_ALLOCS
-    GC_log_printf("GC_debug_free(%p) after GC #%lu\n", p,
-                  (unsigned long)GC_gc_no);
-#endif
     hhdr = HDR(p);
     if (hhdr->hb_obj_kind == UNCOLLECTABLE
 #ifdef GC_ATOMIC_UNCOLLECTABLE
         || hhdr->hb_obj_kind == AUNCOLLECTABLE
 #endif
     ) {
-      GC_free_inner(base);
+      GC_free_internal(base, hhdr);
       UNLOCK();
     } else {
       size_t sz = hhdr->hb_sz;
@@ -816,6 +815,7 @@ GC_INNER void
 GC_debug_free_inner(void *p)
 {
   ptr_t base = (ptr_t)GC_base(p);
+  const hdr *hhdr;
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT((word)((ptr_t)p - base) == sizeof(oh));
@@ -823,11 +823,12 @@ GC_debug_free_inner(void *p)
   if (!base)
     ABORT("Invalid GC_debug_free_inner argument");
 #  endif
+  hhdr = HDR(base);
 #  ifndef SHORT_DBG_HDRS
   /* Invalidate the size. */
-  ((oh *)base)->oh_sz = (GC_uintptr_t)GC_size(base);
+  ((oh *)base)->oh_sz = (GC_uintptr_t)hhdr->hb_sz;
 #  endif
-  GC_free_inner(base);
+  GC_free_internal(base, hhdr);
 }
 #endif
 

@@ -684,92 +684,6 @@ strndup(const char *str, size_t size)
 #  undef GC_debug_malloc_replacement
 #  undef GC_debug_malloc_uncollectable_replacement
 
-#endif /* REDIRECT_MALLOC */
-
-/* Explicitly deallocate the object.  `hhdr` should correspond to `p`. */
-static void
-free_internal(void *p, const hdr *hhdr)
-{
-  size_t lb = hhdr->hb_sz;           /*< size in bytes */
-  size_t lg = BYTES_TO_GRANULES(lb); /*< size in granules */
-  int kind = hhdr->hb_obj_kind;
-
-  GC_bytes_freed += lb;
-  if (IS_UNCOLLECTABLE(kind))
-    GC_non_gc_bytes -= lb;
-  if (LIKELY(lg <= MAXOBJGRANULES)) {
-    struct obj_kind *ok = &GC_obj_kinds[kind];
-    void **flh;
-
-    /*
-     * It is unnecessary to clear the mark bit.  If the object is
-     * reallocated, it does not matter.  Otherwise, the collector will
-     * do it, since it is on a free list.
-     */
-    if (ok->ok_init && LIKELY(lb > sizeof(ptr_t))) {
-      BZERO((ptr_t *)p + 1, lb - sizeof(ptr_t));
-    }
-
-    flh = &ok->ok_freelist[lg];
-    obj_link(p) = *flh;
-    *flh = (ptr_t)p;
-  } else {
-    if (lb > HBLKSIZE) {
-      GC_large_allocd_bytes -= HBLKSIZE * OBJ_SZ_TO_BLOCKS(lb);
-    }
-    GC_ASSERT(ADDR(HBLKPTR(p)) == ADDR(hhdr->hb_block));
-    GC_freehblk(hhdr->hb_block);
-  }
-}
-
-GC_API void GC_CALL
-GC_free(void *p)
-{
-  const hdr *hhdr;
-
-  if (p /* `!= NULL` */) {
-    /* CPPCHECK */
-  } else {
-    /* Required by ANSI.  It is not my fault... */
-    return;
-  }
-
-  LOCK();
-#ifdef LOG_ALLOCS
-  GC_log_printf("GC_free(%p) after GC #%lu\n", p, (unsigned long)GC_gc_no);
-#endif
-  hhdr = HDR(p);
-#if defined(REDIRECT_MALLOC)                                           \
-    && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
-        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
-        || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
-  /*
-   * This might be called indirectly by `GC_print_callers` to free the
-   * result of `backtrace_symbols()`.  For Solaris, we have to redirect
-   * `malloc` calls during initialization.  For the others, this seems
-   * to happen implicitly.  Do not try to deallocate that memory.
-   */
-  if (UNLIKELY(NULL == hhdr)) {
-    UNLOCK();
-    return;
-  }
-#endif
-  GC_ASSERT(GC_base(p) == p);
-  free_internal(p, hhdr);
-  FREE_PROFILER_HOOK(p);
-  UNLOCK();
-}
-
-#ifdef THREADS
-GC_INNER void
-GC_free_inner(void *p)
-{
-  GC_ASSERT(I_HOLD_LOCK());
-  free_internal(p, HDR(p));
-}
-#endif /* THREADS */
-
-#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
 #  ifdef REDIRECT_MALLOC_DEBUG
 #    define REDIRECT_FREE_F GC_debug_free
 #  else
@@ -807,4 +721,80 @@ free(void *p)
   REDIRECT_FREE_F(p);
 #  endif
 }
+
 #endif /* REDIRECT_MALLOC && !REDIRECT_MALLOC_IN_HEADER */
+
+GC_INNER void
+GC_free_internal(void *base, const hdr *hhdr)
+{
+  size_t lb = hhdr->hb_sz;           /*< size in bytes */
+  size_t lg = BYTES_TO_GRANULES(lb); /*< size in granules */
+  int kind = hhdr->hb_obj_kind;
+
+  GC_ASSERT(I_HOLD_LOCK());
+#ifdef LOG_ALLOCS
+  GC_log_printf("Free %p after GC #%lu\n", base, (unsigned long)GC_gc_no);
+#endif
+  GC_bytes_freed += lb;
+  if (IS_UNCOLLECTABLE(kind))
+    GC_non_gc_bytes -= lb;
+  if (LIKELY(lg <= MAXOBJGRANULES)) {
+    struct obj_kind *ok = &GC_obj_kinds[kind];
+    void **flh;
+
+    if (ok->ok_init && LIKELY(lb > sizeof(ptr_t))) {
+      BZERO((ptr_t *)base + 1, lb - sizeof(ptr_t));
+    }
+
+    /*
+     * It is unnecessary to clear the mark bit.  If the object is reallocated,
+     * it does not matter.  Otherwise, the collector will do it, since it is
+     * on a free list.
+     */
+
+    flh = &ok->ok_freelist[lg];
+    obj_link(base) = *flh;
+    *flh = (ptr_t)base;
+  } else {
+    if (lb > HBLKSIZE) {
+      GC_large_allocd_bytes -= HBLKSIZE * OBJ_SZ_TO_BLOCKS(lb);
+    }
+    GC_ASSERT(ADDR(HBLKPTR(base)) == ADDR(hhdr->hb_block));
+    GC_freehblk(hhdr->hb_block);
+  }
+  FREE_PROFILER_HOOK(base);
+}
+
+GC_API void GC_CALL
+GC_free(void *p)
+{
+  const hdr *hhdr;
+
+  if (p /* `!= NULL` */) {
+    /* CPPCHECK */
+  } else {
+    /* Required by ANSI.  It is not my fault... */
+    return;
+  }
+
+  LOCK();
+  hhdr = HDR(p);
+#if defined(REDIRECT_MALLOC)                                           \
+    && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
+        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
+        || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
+  /*
+   * This might be called indirectly by `GC_print_callers` to free the
+   * result of `backtrace_symbols()`.  For Solaris, we have to redirect
+   * `malloc` calls during initialization.  For the others, this seems
+   * to happen implicitly.  Do not try to deallocate that memory.
+   */
+  if (UNLIKELY(NULL == hhdr)) {
+    UNLOCK();
+    return;
+  }
+#endif
+  GC_ASSERT(GC_base(p) == p);
+  GC_free_internal(p, hhdr);
+  UNLOCK();
+}
