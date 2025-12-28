@@ -2,6 +2,9 @@ dist: xenial
 language: cpp
 os: linux
 
+git:
+  depth: 1
+
 jobs:
   include:
   - compiler: clang
@@ -312,7 +315,7 @@ jobs:
 before_install:
 - if [[ "$CPPCHECK_ENABLE" != "" ]]; then
     CPPCHECK_VER=1.85;
-    git clone --depth=3 https://github.com/danmar/cppcheck.git
+    git clone --depth=1 https://github.com/danmar/cppcheck.git
             ~/cppcheck -b $CPPCHECK_VER;
     make --directory ~/cppcheck -j8 CXXFLAGS="-O3 -march=native -D NDEBUG";
   fi
@@ -359,8 +362,8 @@ before_install:
 
 install:
 - if [[ "$NO_CLONE_LIBATOMIC_OPS" != true ]]; then
-    git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
-              -b release-7_6;
+    git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git
+            -b release-7_6;
   fi
 - "./autogen.sh"
 - if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
