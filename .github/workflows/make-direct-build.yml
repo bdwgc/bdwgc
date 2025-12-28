@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v6
 
     - name: Fetch libatomic_ops
-      run: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
+      run: git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git
 
     - name: Build
       run: >
