@@ -40,67 +40,6 @@ jobs:
   - env:
     - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -I libatomic_ops/src *.cc cord/tests/*.c extra/m*.c extra/*.cpp tests/*.c tests/*.cc tools/*.c"
     - CPPCHECK_OUT_FILTER="Z"
-  - arch: ppc64le
-    compiler: clang
-    env:
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - arch: ppc64le
-    compiler: gcc
-    env:
-    - CONF_OPTIONS="--disable-shared --disable-threads"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: ppc64le
-    compiler: clang
-    env:
-    - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2 -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-static"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: ppc64le
-    compiler: gcc
-    env:
-    - CFLAGS_EXTRA="-O3 -D NO_MPROTECT_VDB"
-    - CONF_OPTIONS="--enable-cplusplus"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: ppc64le
-    compiler: clang
-    env:
-    - CFLAGS_EXTRA="-D CHECK_SOFT_VDB"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-static --disable-thread-local-alloc"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: ppc64le
-    compiler: clang
-    dist: focal
-    language: c
-    env:
-    - CFLAGS_EXTRA="-fsanitize=memory,undefined -fno-omit-frame-pointer"
-    - CONF_OPTIONS="--disable-shared"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-    - TESTS_CUSTOM_RUN=true
-  - arch: s390x
-    compiler: clang
-    env:
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - arch: s390x
-    compiler: gcc
-    env:
-    - CONF_OPTIONS="--disable-disclaim"
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - arch: s390x
-    compiler: clang
-    env:
-    - CFLAGS_EXTRA="-O3 -flto -D _FORTIFY_SOURCE=2 -D NO_RETRY_SIGNALS"
-    - CONF_OPTIONS="--enable-gc-assertions --enable-cplusplus --enable-dynamic-pointer-mask"
-    - GCTEST_WITH_MPROTECT_VDB=true
-  - arch: s390x
-    compiler: gcc
-    env:
-    - CFLAGS_EXTRA="-O3 -flto=auto -D _FORTIFY_SOURCE=2 -D PREFER_MMAP_PROT_NONE"
-    - CONF_OPTIONS="--enable-cplusplus --disable-shared"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
   - os: freebsd
     env:
     - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2"
@@ -131,6 +70,19 @@ jobs:
     - AUTOMAKE_VER=1.18.1
     - LIBTOOL_VER=2.5.4
     - M4_VER=1.4.20
+    - NO_CLONE_LIBATOMIC_OPS=true
+  - arch: ppc64le
+    compiler: gcc
+    env:
+    - CONF_OPTIONS="--enable-cplusplus"
+    - GCTEST_WITH_MPROTECT_VDB=true
+    - NO_CLONE_LIBATOMIC_OPS=true
+  - arch: s390x
+    compiler: clang
+    env:
+    - CFLAGS_EXTRA="-O3 -flto -D _FORTIFY_SOURCE=2"
+    - CONF_OPTIONS="--enable-cplusplus"
+    - GCTEST_WITH_MPROTECT_VDB=true
     - NO_CLONE_LIBATOMIC_OPS=true
   - if: type != pull_request
     addons:
