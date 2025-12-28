@@ -408,7 +408,9 @@ void * calloc(size_t n, size_t lb)
     size_t lb = strlen(s) + 1;
     char *result = (char *)REDIRECT_MALLOC(lb);
     if (result == 0) {
-      errno = ENOMEM;
+#     ifndef MSWINCE
+        errno = ENOMEM;
+#     endif
       return 0;
     }
     BCOPY(s, result, lb);
@@ -429,7 +431,9 @@ void * calloc(size_t n, size_t lb)
       len = size;
     copy = (char *)REDIRECT_MALLOC(len + 1);
     if (copy == NULL) {
-      errno = ENOMEM;
+#     ifndef MSWINCE
+        errno = ENOMEM;
+#     endif
       return NULL;
     }
     BCOPY(str, copy, len);
