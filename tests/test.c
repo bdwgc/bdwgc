@@ -2368,10 +2368,6 @@ void * thr_run_one_test(void * arg GC_ATTR_UNUSED)
     return(0);
 }
 
-#ifdef GC_DEBUG
-#  define GC_free GC_debug_free
-#endif
-
 int main(void)
 {
 #   if NTHREADS > 0
