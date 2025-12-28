@@ -2,6 +2,9 @@ dist: xenial
 language: cpp
 os: linux
 
+git:
+  depth: 1
+
 jobs:
   include:
   - compiler: clang
@@ -105,7 +108,7 @@ before_install:
 install:
 - if [[ "$NO_CLONE_LIBATOMIC_OPS" != true ]]; then
     if [[ "$AO_SRC_VER" == "" ]]; then AO_SRC_VER="release-7_2"; fi;
-    git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
+    git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git
               -b $AO_SRC_VER;
   fi
 - if [[ "$WORKAROUND_ACLOCAL_MISSING" == true ]]; then
