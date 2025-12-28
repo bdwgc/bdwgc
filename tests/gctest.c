@@ -2678,10 +2678,6 @@ has_static_roots(const char *dlpi_name, void *section_start,
   return 1;
 }
 
-#  ifdef GC_DEBUG
-#    define GC_free GC_debug_free
-#  endif
-
 int
 main(void)
 {
