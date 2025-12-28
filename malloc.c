@@ -523,7 +523,9 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
       size_t lb = strlen(s) + 1;
       char *result = (char *)REDIRECT_MALLOC_F(lb);
       if (result == 0) {
-        errno = ENOMEM;
+#       ifndef MSWINCE
+          errno = ENOMEM;
+#       endif
         return 0;
       }
       BCOPY(s, result, lb);
@@ -544,7 +546,9 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
         len = size;
       copy = (char *)REDIRECT_MALLOC_F(len + 1);
       if (copy == NULL) {
-        errno = ENOMEM;
+#       ifndef MSWINCE
+          errno = ENOMEM;
+#       endif
         return NULL;
       }
       if (EXPECT(len > 0, TRUE))
