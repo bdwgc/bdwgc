@@ -2730,7 +2730,7 @@ GC_get_mem(size_t bytes)
      * There are also unconfirmed rumors of other problems, so we
      * dodge the issue.
      */
-    result = GlobalAlloc(0 /* flags */, SIZET_SAT_ADD(bytes, HBLKSIZE));
+    result = GlobalAlloc(0 /* `flags` */, SIZET_SAT_ADD(bytes, HBLKSIZE));
     /* Align it at `HBLKSIZE` boundary (`NULL` value remains unchanged). */
     result = PTR_ALIGN_UP((ptr_t)result, HBLKSIZE);
   } else
