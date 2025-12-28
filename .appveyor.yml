@@ -35,10 +35,10 @@ environment:
   - TARGET: mingw-w64
     CFLAGS_EXTRA: -Werror -Wall -Wextra -Wpedantic -D GC_THREADS -D THREAD_LOCAL_ALLOC -D PARALLEL_MARK -D GC_ASSERTIONS -D GC_GCJ_SUPPORT
 
-clone_depth: 50
+clone_depth: 1
 
 install:
-- cmd: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git -b release-7_6
+- cmd: git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git -b release-7_6
 
 build_script:
 - cmd: if [%TARGET%]==[cmake] (
