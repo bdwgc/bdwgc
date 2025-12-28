@@ -3,10 +3,10 @@ version: 7.6.x-{build}
 image:
 - Visual Studio 2015
 
-clone_depth: 50
+clone_depth: 1
 
 build_script:
-  - git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git -b release-7_6
+  - git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git -b release-7_6
   - cmake -Denable_gcj_support=ON .
   - cmake --build . --config Debug
 
