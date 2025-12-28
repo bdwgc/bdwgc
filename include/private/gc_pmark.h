@@ -283,7 +283,7 @@ GC_push_contents_hdr(ptr_t current, mse *mark_stack_top, mse *mark_stack_limit,
           size_t obj_displ;
 
 #ifdef MARK_BIT_PER_OBJ
-          /* Accurate enough if `HBLKSIZE` is not greater than 2**15. */
+          /* Accurate enough if `HBLKSIZE` is not greater than `2**15`. */
           GC_STATIC_ASSERT(HBLKSIZE <= (1 << 15));
           obj_displ = (((low_prod >> 16) + 1) * hhdr->hb_sz) >> 16;
 #else

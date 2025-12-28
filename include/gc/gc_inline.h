@@ -188,7 +188,7 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
         if ((GC_signed_word)(GC_uintptr_t)my_entry                       \
                     - (GC_signed_word)(num_direct)                       \
                 <= 0 /*< `(GC_uintptr_t)my_entry <= num_direct` */       \
-            && my_entry != 0 /* NULL */) {                               \
+            && my_entry != 0 /* `NULL` */) {                             \
           /* Small counter value, not `NULL`. */                         \
           GC_FAST_M_AO_STORE(my_fl, (char *)my_entry + (lg) + 1);        \
           result = (default_expr);                                       \

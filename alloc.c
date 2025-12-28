@@ -2023,7 +2023,7 @@ GC_allocobj(size_t lg, int kind)
       continue;
     }
 #endif
-    if (UNLIKELY(!GC_collect_or_expand(1, 0 /* flags */, retry_cnt > 0)))
+    if (UNLIKELY(!GC_collect_or_expand(1, 0 /* `flags` */, retry_cnt > 0)))
       return NULL;
     retry_cnt++;
   }
