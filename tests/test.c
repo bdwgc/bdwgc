@@ -1703,10 +1703,6 @@ void * thr_run_one_test(void * arg)
     return(0);
 }
 
-#ifdef GC_DEBUG
-#  define GC_free GC_debug_free
-#endif
-
 int main(void)
 {
     pthread_t th[NTHREADS];
