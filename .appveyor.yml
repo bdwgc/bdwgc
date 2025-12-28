@@ -129,10 +129,10 @@ environment:
     CFLAGS_EXTRA: -Wno-array-bounds
     CONF_OPTIONS: --enable-cplusplus --enable-gc-debug
 
-clone_depth: 50
+clone_depth: 1
 
 install:
-- cmd: git clone --depth=50 https://github.com/bdwgc/libatomic_ops.git
+- cmd: git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git
 
 build_script:
 - cmd: if %TARGET%==cmake (
