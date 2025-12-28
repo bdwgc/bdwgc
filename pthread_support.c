@@ -1457,7 +1457,7 @@ GC_remove_all_threads_but_me(void)
 #    ifdef DARWIN
   /*
    * Update thread id after process fork (it is OK to call
-   * `GC_destroy_thread_local()` and `GC_free_inner()` before update).
+   * `GC_destroy_thread_local()` and `GC_free_internal()` before update).
    */
   me->mach_thread = mach_thread_self();
 #    endif
@@ -1476,7 +1476,7 @@ GC_remove_all_threads_but_me(void)
    * Some TLS implementations (e.g., in Cygwin) might be not `fork`-friendly,
    * so we re-assign thread-local pointer to `tlfs` for safety instead of the
    * assertion check (again, it is OK to call `GC_destroy_thread_local()` and
-   * `GC_free_inner()` before).
+   * `GC_free_internal()` before).
    */
   {
     int res = GC_setspecific(GC_thread_key, &me->tlfs);

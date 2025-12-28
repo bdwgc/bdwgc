@@ -3696,14 +3696,10 @@ void GC_print_back_graph_stats(void);
 #endif
 
 /*
- * Explicitly deallocate the object when we already hold the allocator lock.
- * Assumes the argument points to the beginning (base) of the object.
+ * Explicitly deallocate the object.  `hhdr` should correspond to `base`.
+ * Assumes the allocator lock is held.
  */
-#ifdef THREADS
-GC_INNER void GC_free_inner(void *p);
-#else
-#  define GC_free_inner(p) GC_free(p)
-#endif
+GC_INNER void GC_free_internal(void *base, const hdr *hhdr);
 
 #ifdef VALGRIND_TRACKING
 #  define FREE_PROFILER_HOOK(p) GC_free_profiler_hook(p)
@@ -3732,15 +3728,18 @@ GC_INNER void *GC_debug_generic_malloc_inner(size_t lb, int kind,
 /* Used internally; we assume it is called correctly. */
 GC_INNER void GC_debug_free_inner(void *p);
 
-#    define GC_INTERNAL_FREE GC_debug_free_inner
+#    define GC_INTERNAL_FREE(p) GC_debug_free_inner(p)
 #  else
-#    define GC_INTERNAL_FREE GC_debug_free
+#    define GC_INTERNAL_FREE(p) GC_debug_free(p)
 #  endif
+
 #else
 #  define GC_INTERNAL_MALLOC(lb, k) GC_generic_malloc_inner(lb, k, 0)
 #  define GC_INTERNAL_MALLOC_IGNORE_OFF_PAGE(lb, k) \
     GC_generic_malloc_inner(lb, k, IGNORE_OFF_PAGE)
-#  define GC_INTERNAL_FREE GC_free_inner
+
+/* Note: the argument should have no side effects. */
+#  define GC_INTERNAL_FREE(p) GC_free_internal(p, HDR(p))
 #endif /* !DBG_HDRS_ALL */
 
 /* Memory unmapping routines. */
