@@ -63,13 +63,18 @@
 #  define wcsdup(s) GC_WCSDUP(s)
 #endif
 
+/* These are available on Solaris and xBSD, at least. */
+#undef freezero
+#define freezero(p, n) GC_FREEZERO(p, n)
+#undef freezeroall
+#define freezeroall(p) GC_FREEZEROALL(p)
+
 /*
  * The following routines for the aligned objects allocation
  * (`aligned_alloc`, `valloc`, etc.) do not have their debugging
  * counterparts.  Note that `free()` called for such objects may output
  * a warning that the pointer has no debugging info.
  */
-
 #undef aligned_alloc
 #define aligned_alloc(a, n) GC_memalign(a, n) /*< identical to `memalign` */
 #undef memalign

@@ -216,7 +216,7 @@ it may happen for reasons like the following:
 
   4. Incorrect use of `GC_malloc_atomic` or typed allocation.
 
-  5. An incorrect `GC_free` call.
+  5. An incorrect `GC_free` (or friends) call.
 
   6. The client program overwrote an internal garbage collector data
      structure.

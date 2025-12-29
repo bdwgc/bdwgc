@@ -690,8 +690,10 @@ strndup(const char *str, size_t size)
 
 #  ifdef REDIRECT_MALLOC_DEBUG
 #    define REDIRECT_FREE_F GC_debug_free
+#    define REDIRECT_FREEZERO_F GC_debug_freezero
 #  else
 #    define REDIRECT_FREE_F GC_free
+#    define REDIRECT_FREEZERO_F GC_freezero
 #  endif
 
 void
@@ -726,10 +728,48 @@ free(void *p)
 #  endif
 }
 
+void
+freezero(void *p, size_t clear_lb)
+{
+  /* We do not expect the caller is in `libdl` or `libpthread`. */
+#  ifdef IGNORE_FREE
+  if (UNLIKELY(NULL == p) || UNLIKELY(0 == clear_lb))
+    return;
+
+  LOCK();
+  {
+    size_t lb;
+#    ifdef REDIRECT_MALLOC_DEBUG
+    ptr_t base = (ptr_t)GC_base(p);
+
+    GC_ASSERT(base != NULL);
+    lb = HDR(p)->hb_sz - (size_t)((ptr_t)p - base); /*< `sizeof(oh)` */
+#    else
+    GC_ASSERT(GC_base(p) == p);
+    lb = HDR(p)->hb_sz;
+#    endif
+    if (LIKELY(clear_lb > lb))
+      clear_lb = lb;
+  }
+  /* Skip deallocation but clear the object. */
+  UNLOCK();
+  BZERO(p, clear_lb);
+#  else
+  REDIRECT_FREEZERO_F(p, clear_lb);
+#  endif
+}
+
+void
+freezeroall(void *p)
+{
+  freezero(p, GC_SIZE_MAX);
+}
+
 #endif /* REDIRECT_MALLOC && !REDIRECT_MALLOC_IN_HEADER */
 
 GC_INNER void
-GC_free_internal(void *base, const hdr *hhdr)
+GC_free_internal(void *base, const hdr *hhdr, size_t clear_ofs,
+                 size_t clear_lb)
 {
   size_t lb = hhdr->hb_sz;           /*< size in bytes */
   size_t lg = BYTES_TO_GRANULES(lb); /*< size in granules */
@@ -742,13 +782,27 @@ GC_free_internal(void *base, const hdr *hhdr)
   GC_bytes_freed += lb;
   if (IS_UNCOLLECTABLE(kind))
     GC_non_gc_bytes -= lb;
+
+  /*
+   * Ensure the part of object to clear does not overrun the object.
+   * Note: `SIZET_SAT_ADD(clear_ofs, clear_lb) > lb` cannot be used instead as
+   * otherwise "memset specified bound exceeds maximum object size" warning
+   * (a false positive) is reported by gcc-13.
+   */
+  if (UNLIKELY(clear_ofs >= GC_SIZE_MAX - clear_lb)
+      || UNLIKELY(clear_ofs + clear_lb > lb))
+    clear_lb = lb > clear_ofs ? lb - clear_ofs : 0;
+
   if (LIKELY(lg <= MAXOBJGRANULES)) {
     struct obj_kind *ok = &GC_obj_kinds[kind];
     void **flh;
 
     if (ok->ok_init && LIKELY(lb > sizeof(ptr_t))) {
-      BZERO((ptr_t *)base + 1, lb - sizeof(ptr_t));
+      clear_ofs = sizeof(ptr_t);
+      clear_lb = lb - sizeof(ptr_t);
     }
+    if (clear_lb > 0)
+      BZERO((ptr_t)base + clear_ofs, clear_lb);
 
     /*
      * It is unnecessary to clear the mark bit.  If the object is reallocated,
@@ -760,6 +814,8 @@ GC_free_internal(void *base, const hdr *hhdr)
     obj_link(base) = *flh;
     *flh = (ptr_t)base;
   } else {
+    if (clear_lb > 0)
+      BZERO((ptr_t)base + clear_ofs, clear_lb);
     if (lb > HBLKSIZE) {
       GC_large_allocd_bytes -= HBLKSIZE * OBJ_SZ_TO_BLOCKS(lb);
     }
@@ -799,6 +855,18 @@ GC_free(void *p)
   }
 #endif
   GC_ASSERT(GC_base(p) == p);
-  GC_free_internal(p, hhdr);
+  GC_free_internal(p, hhdr, 0 /* `clear_ofs` */, 0 /* `clear_lb` */);
+  UNLOCK();
+}
+
+GC_API void GC_CALL
+GC_freezero(void *p, size_t clear_lb)
+{
+  if (UNLIKELY(NULL == p))
+    return;
+
+  LOCK();
+  GC_ASSERT(GC_base(p) == p);
+  GC_free_internal(p, HDR(p), 0 /* `clear_ofs` */, clear_lb);
   UNLOCK();
 }
