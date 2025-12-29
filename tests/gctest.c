@@ -847,7 +847,7 @@ test_generic_malloc_or_special(const void *p)
         "GC_generic_or_special_malloc: unexpected kind of returned object\n");
     FAIL;
   }
-  GC_FREE(p2);
+  GC_FREEZEROALL(p2);
   GC_FREE(checkOOM(GC_GENERIC_MALLOC(21, kind)));
 }
 
@@ -1611,7 +1611,7 @@ run_one_test(void)
 #endif
   struct thr_handle_sb_s thr_handle_sb;
 
-  GC_FREE(0);
+  GC_FREEZEROALL(NULL);
 #ifdef THREADS
   if (!GC_thread_is_registered() && GC_is_init_called()) {
     GC_printf("Current thread is not registered with GC\n");
@@ -1733,7 +1733,7 @@ run_one_test(void)
         FAIL;
       }
       if (i >= (size_t)GC_GRANULE_BYTES && i <= HBLKSIZE)
-        GC_free(p);
+        GC_freezero(p, i);
     }
     if (GC_posix_memalign(&p, 64, 1) != 0) {
       GC_printf("Out of memory in GC_posix_memalign\n");
@@ -1843,13 +1843,15 @@ run_one_test(void)
   /* Test zero-sized allocation a bit more. */
   {
     size_t i;
+
+    GC_FREEZERO(NULL, 20);
     for (i = 0; i < 10000; ++i) {
       (void)checkOOM(GC_MALLOC(0));
       AO_fetch_and_add1(&collectable_count);
-      GC_FREE(checkOOM(GC_MALLOC(0)));
+      GC_FREEZERO(checkOOM(GC_MALLOC(0)), 32);
       (void)checkOOM(GC_MALLOC_ATOMIC(0));
       AO_fetch_and_add1(&atomic_count);
-      GC_FREE(checkOOM(GC_MALLOC_ATOMIC(0)));
+      GC_FREEZERO(checkOOM(GC_MALLOC_ATOMIC(0)), 0);
       test_generic_malloc_or_special(checkOOM(GC_malloc_atomic(1)));
       AO_fetch_and_add1(&atomic_count);
       GC_FREE(checkOOM(GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE(1)));
@@ -1875,7 +1877,7 @@ run_one_test(void)
   GC_free(checkOOM(GC_malloc(0)));
   GC_free(checkOOM(GC_malloc_atomic(0)));
   GC_free(checkOOM(GC_malloc(0)));
-  GC_free(checkOOM(GC_malloc_atomic(0)));
+  GC_freezero(checkOOM(GC_malloc_atomic(0)), GC_SIZE_MAX);
 #ifndef NO_TEST_HANDLE_FORK
   GC_atfork_prepare();
   pid = fork();

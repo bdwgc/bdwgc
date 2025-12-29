@@ -394,11 +394,12 @@ many others.
      object, then the newly added bytes are cleared. This is very likely to
      allocate a new object.
 
-  4. `GC_free(object)` - Explicitly deallocate an object returned by
-     `GC_malloc` or `GC_malloc_atomic`, or friends.  Not necessary, but can
-     be used to minimize collections if performance is critical.  Probably
-     a performance loss could occur for very small objects (not greater than
-     8 bytes).
+  4. `GC_free(object)`, `GC_freezero(object, bytes_to_clear)` - Explicitly
+     deallocate an object returned by `GC_malloc` or `GC_malloc_atomic`,
+     or friends.  Not necessary, but can be used to minimize collections if
+     performance is critical.  Probably a performance loss could occur for
+     very small objects (not greater than 8 bytes).  `GC_freezero` ensures
+     the object is zero-filled before its deallocation.
 
   5. `GC_expand_hp(bytes)` - Explicitly increase the heap size.  (This is
      normally done automatically if a garbage collection failed to reclaim
@@ -534,14 +535,14 @@ slowdown during collections.  If frequent heap checks are desired,
 this can be achieved by explicitly invoking `GC_gcollect`, e.g. from
 the debugger.
 
-`GC_debug_malloc` allocated objects should not be passed to `GC_realloc`,
-`GC_reallocf` or `GC_free`, and conversely.  It is however acceptable to
-allocate only some objects with `GC_debug_malloc`, and to use `GC_malloc` for
-other objects, provided the two pools are kept distinct.  In this case, there
-is a very low probability that `GC_malloc`-allocated objects may be
-misidentified as having been overwritten.  This should happen with probability
-at most one in 2**32.  This probability is zero if `GC_debug_malloc` is never
-called.
+`GC_debug_malloc`-allocated objects should not be passed to `GC_realloc`,
+`GC_reallocf`, `GC_free`, `GC_freezero`, and conversely.  It is however
+acceptable to allocate only some objects with `GC_debug_malloc`, and to use
+`GC_malloc` for other objects, provided the two pools are kept distinct.
+In this case, there is a very low probability that `GC_malloc`-allocated
+objects may be misidentified as having been overwritten.  This should happen
+with probability at most one in `2**32`.  This probability is zero if
+`GC_debug_malloc` is never called.
 
 `GC_debug_malloc`, `GC_debug_malloc_atomic`, `GC_debug_realloc` and
 `GC_debug_reallocf` take two additional trailing arguments, a string and

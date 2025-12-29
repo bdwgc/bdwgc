@@ -706,8 +706,8 @@ GC_debug_malloc_atomic_uncollectable(size_t lb, GC_EXTRA_PARAMS)
 #  include "private/gc_alloc_ptrs.h"
 #endif
 
-GC_API void GC_CALL
-GC_debug_free(void *p)
+static void
+debug_free_zero(void *p, size_t clear_lb)
 {
   ptr_t base;
 
@@ -772,7 +772,7 @@ GC_debug_free(void *p)
 #  endif
   ) {
     LOCK();
-    GC_free_internal(base, HDR(p));
+    GC_free_internal(base, HDR(p), (size_t)((ptr_t)p - base), clear_lb);
     UNLOCK();
   } else
 #endif
@@ -786,7 +786,7 @@ GC_debug_free(void *p)
         || hhdr->hb_obj_kind == AUNCOLLECTABLE
 #endif
     ) {
-      GC_free_internal(base, hhdr);
+      GC_free_internal(base, hhdr, sizeof(oh), clear_lb);
       UNLOCK();
     } else {
       size_t sz = hhdr->hb_sz;
@@ -810,6 +810,18 @@ GC_debug_free(void *p)
   }
 }
 
+GC_API void GC_CALL
+GC_debug_free(void *p)
+{
+  debug_free_zero(p, 0 /* `clear_lb` */);
+}
+
+GC_API void GC_CALL
+GC_debug_freezero(void *p, size_t clear_lb)
+{
+  debug_free_zero(p, clear_lb);
+}
+
 #if defined(THREADS) && defined(DBG_HDRS_ALL)
 GC_INNER void
 GC_debug_free_inner(void *p)
@@ -828,7 +840,7 @@ GC_debug_free_inner(void *p)
   /* Invalidate the size. */
   ((oh *)base)->oh_sz = (GC_uintptr_t)hhdr->hb_sz;
 #  endif
-  GC_free_internal(base, hhdr);
+  GC_free_internal(base, hhdr, 0 /* `clear_ofs` */, 0 /* `clear_lb` */);
 }
 #endif
 

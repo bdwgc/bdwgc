@@ -3697,9 +3697,11 @@ void GC_print_back_graph_stats(void);
 
 /*
  * Explicitly deallocate the object.  `hhdr` should correspond to `base`.
- * Assumes the allocator lock is held.
+ * Optionally clears (does zero-filling) whole or part of the object before
+ * the deallocation.  Assumes the allocator lock is held.
  */
-GC_INNER void GC_free_internal(void *base, const hdr *hhdr);
+GC_INNER void GC_free_internal(void *base, const hdr *hhdr, size_t clear_ofs,
+                               size_t clear_lb);
 
 #ifdef VALGRIND_TRACKING
 #  define FREE_PROFILER_HOOK(p) GC_free_profiler_hook(p)
@@ -3739,7 +3741,7 @@ GC_INNER void GC_debug_free_inner(void *p);
     GC_generic_malloc_inner(lb, k, IGNORE_OFF_PAGE)
 
 /* Note: the argument should have no side effects. */
-#  define GC_INTERNAL_FREE(p) GC_free_internal(p, HDR(p))
+#  define GC_INTERNAL_FREE(p) GC_free_internal(p, HDR(p), 0, 0)
 #endif /* !DBG_HDRS_ALL */
 
 /* Memory unmapping routines. */

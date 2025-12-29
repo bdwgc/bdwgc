@@ -36,16 +36,16 @@ GC_API void GC_CALL GC_init_finalized_malloc(void);
 typedef int(GC_CALLBACK *GC_disclaim_proc)(void * /* `obj` */);
 
 /**
- * Register `proc` to be called on each object (of given `kind`) ready
- * to be reclaimed.  If `proc()` returns a nonzero value, the
- * collector will not reclaim the object on this collection cycle
- * (`proc()` should not try to resurrect the object otherwise); objects
- * reachable from `proc()` (including the referred closure object) will
- * be protected from collection if `mark_from_all` is nonzero, but at
- * the expense that long chains of objects will take many cycles to
- * reclaim.  Any call to `GC_free()` deallocates the object (pointed by
- * the argument) without inquiring `proc()`.  Acquires the allocator lock.
- * No-op in the find-leak mode.
+ * Register `proc` to be called on each object (of given `kind`) ready to be
+ * reclaimed.  If `proc()` returns a nonzero value, the collector will not
+ * reclaim the object on this collection cycle (`proc()` should not try to
+ * resurrect the object otherwise); objects reachable from `proc()`
+ * (including the referred closure object) will be protected from collection
+ * if `mark_from_all` is nonzero, but at the expense that long chains of
+ * objects will take many cycles to reclaim.  Any call to `GC_free()`
+ * (or friends) deallocates the object (pointed by the argument) without
+ * inquiring `proc()`.  Acquires the allocator lock.  No-op in the find-leak
+ * mode.
  */
 GC_API void GC_CALL GC_register_disclaim_proc(int /* `kind` */,
                                               GC_disclaim_proc /* `proc` */,

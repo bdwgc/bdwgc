@@ -62,7 +62,13 @@ main(void)
   }
   CHECK_LEAKS();
   for (i = 2; i < N_TESTS; ++i) {
-    free(p[i]);
+    if ((i & 1) != 0) {
+      free(p[i]);
+    } else if ((i & 2) != 0) {
+      freezero(p[i], i);
+    } else if ((i & 0x4) != 0) {
+      freezeroall(p[i]);
+    }
   }
   for (i = 0; i < N_TESTS / 8; ++i) {
     p[i] = i < 3 || i > 6 ? (char *)malloc(sizeof(int) + i)

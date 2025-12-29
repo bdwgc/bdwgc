@@ -207,9 +207,9 @@ GC_API GC_on_thread_event_proc GC_CALL GC_get_on_thread_event(void);
 #endif
 
 /**
- * Turn on the find-leak mode (do not actually garbage collect, but
- * simply report inaccessible memory that was not deallocated with
- * `GC_FREE()`).  Initial value is determined by `FIND_LEAK` macro.
+ * Turn on the find-leak mode (do not actually garbage collect, but simply
+ * report inaccessible memory that was not deallocated with `GC_FREE()`
+ * or friends).  Initial value is determined by `FIND_LEAK` macro.
  * The value should not typically be modified after the collector
  * initialization (and, thus, it does not use or need synchronization).
  * The mode is supported only if the library has been compiled without
@@ -346,11 +346,12 @@ GC_API int GC_CALL GC_get_full_freq(void);
 
 /**
  * Bytes not considered candidates for collection.  Used only to control
- * scheduling of collections.  Updated by `GC_malloc_uncollectable()` and
- * `GC_free()`.  Wizards only.  The setter and the getter are unsynchronized,
- * so `GC_call_with_alloc_lock()` (`GC_call_with_reader_lock()` in case of
- * the getter) is required to avoid data race (if the value is modified
- * after the collector is put into the multi-threaded mode).
+ * scheduling of collections.  Updated by `GC_malloc_uncollectable()`,
+ * `GC_free()` and friends.  Wizards only.  The setter and the getter are
+ * unsynchronized, so `GC_call_with_alloc_lock()`
+ * (`GC_call_with_reader_lock()` in case of the getter) is required to avoid
+ * data race (if the value is modified after the collector is put into the
+ * multi-threaded mode).
  */
 GC_API GC_ATTR_DEPRECATED GC_word GC_non_gc_bytes;
 GC_API void GC_CALL GC_set_non_gc_bytes(GC_word);
@@ -627,16 +628,16 @@ GC_API void GC_CALL GC_deinit(void);
 
 /**
  * General-purpose allocation functions, with roughly `malloc` calling
- * conventions.  The atomic variants promise that no relevant pointers
- * are contained in the object.  The non-atomic variants guarantee that
- * the new object is cleared.  `GC_malloc_uncollectable()` allocates
- * an object that is scanned for pointers to collectible objects, but
- * is not itself collectible.  The object is scanned even if it does
- * not appear to be reachable.  `GC_malloc_uncollectable()` and `GC_free()`
+ * conventions.  The atomic variants promise that no relevant pointers are
+ * contained in the object.  The non-atomic variants guarantee that the new
+ * object is cleared.  `GC_malloc_uncollectable()` allocates an object that
+ * is scanned for pointers to collectible objects, but is not itself
+ * collectible.  The object is scanned even if it does not appear to be
+ * reachable.  `GC_malloc_uncollectable()`, `GC_free()` (and `GC_freezero()`)
  * called on the resulting object implicitly update `GC_non_gc_bytes`
  * appropriately.  All these functions (`GC_malloc`, `GC_malloc_atomic`,
- * `GC_strdup`, `GC_strndup`, `GC_malloc_uncollectable`) are guaranteed
- * never to return `NULL` unless `GC_oom_fn()` returns `NULL`.
+ * `GC_strdup`, `GC_strndup`, `GC_malloc_uncollectable`) are guaranteed never
+ * to return `NULL` unless `GC_oom_fn()` returns `NULL`.
  */
 GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
     GC_malloc(size_t /* `size_in_bytes` */);
@@ -692,6 +693,15 @@ GC_API GC_ATTR_MALLOC GC_ATTR_ALLOC_SIZE(1) void *GC_CALL
  */
 GC_API void GC_CALL GC_free(void *);
 GC_API void GC_CALL GC_debug_free(void *);
+
+/**
+ * Similar to `GC_free` but also clears the object before deallocation.
+ * Guaranteed to clear the specified amount of bytes from the beginning of
+ * the deallocated object.  It is safe to pass a value larger than the size
+ * of the object, e.g. `~0` could be passed to clear the entire object.
+ */
+GC_API void GC_CALL GC_freezero(void *, size_t /* `lb` */);
+GC_API void GC_CALL GC_debug_freezero(void *, size_t /* `lb` */);
 
 /**
  * A symbol to be intercepted by heap profilers so that they can
@@ -769,7 +779,7 @@ GC_API void GC_CALL GC_debug_end_stubborn_change(const void *)
  * Return `NULL` if `displaced_pointer` does not point to within
  * a valid object.  Note that a deallocated object in the garbage
  * collected heap may be considered valid, even if it has been
- * deallocated with `GC_free()`.
+ * deallocated with `GC_free()` or friends.
  */
 GC_API void *GC_CALL GC_base(void * /* `displaced_pointer` */);
 
@@ -1424,6 +1434,8 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 
 #ifdef GC_DEBUG
 #  define GC_FREE(p) GC_debug_free(p)
+#  define GC_FREEZERO(p, sz) GC_debug_freezero(p, sz)
+#  define GC_FREEZEROALL(p) GC_debug_freezero(p, ~(size_t)0)
 #  define GC_REGISTER_FINALIZER(p, f, d, of, od) \
     GC_debug_register_finalizer(p, f, d, of, od)
 #  define GC_REGISTER_FINALIZER_IGNORE_SELF(p, f, d, of, od) \
@@ -1442,6 +1454,8 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 #  define GC_REGISTER_DISPLACEMENT(n) GC_debug_register_displacement(n)
 #else
 #  define GC_FREE(p) GC_free(p)
+#  define GC_FREEZERO(p, sz) GC_freezero(p, sz)
+#  define GC_FREEZEROALL(p) GC_freezero(p, ~(size_t)0)
 #  define GC_REGISTER_FINALIZER(p, f, d, of, od) \
     GC_register_finalizer(p, f, d, of, od)
 #  define GC_REGISTER_FINALIZER_IGNORE_SELF(p, f, d, of, od) \
