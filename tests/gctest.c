@@ -168,12 +168,12 @@ static CRITICAL_SECTION incr_cs;
 #  define INIT_PAGES_EXECUTABLE (void)0
 #endif
 
-#define CHECK_GC_LIB_VERSION                                 \
+#define CHECK_PACKAGE_VERSION                                \
   do {                                                       \
     if (GC_get_version()                                     \
         != (((GC_VERSION_VAL_T)GC_VERSION_MAJOR << 16)       \
             | (GC_VERSION_MINOR << 8) | GC_VERSION_MICRO)) { \
-      GC_printf("libgc version mismatch\n");                 \
+      GC_printf("GC version mismatch\n");                    \
       exit(1);                                               \
     }                                                        \
   } while (0)
@@ -205,7 +205,7 @@ static CRITICAL_SECTION incr_cs;
   INIT_MANUAL_VDB_ALLOWED; \
   INIT_PAGES_EXECUTABLE;   \
   GC_OPT_INIT;             \
-  CHECK_GC_LIB_VERSION;    \
+  CHECK_PACKAGE_VERSION;   \
   INIT_PRINT_STATS;        \
   INIT_FIND_LEAK;          \
   INIT_PERF_MEASUREMENT
