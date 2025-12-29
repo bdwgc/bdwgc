@@ -20,6 +20,13 @@ dnl The version format is `[0-9]+[.][0-9]+[.][0-9]+`.
 dnl This version could be obtained at runtime using `GC_get_version()`.
 AC_INIT(gc,8.3.0,https://github.com/bdwgc/bdwgc/issues)
 
+# The version of the shared libraries.  These numbers should be updated at
+# most once just before the release, and, optionally, at most once during
+# the development (after the release).
+LIBCORD_SHARED_VERSION=1.5.1
+LIBGC_SHARED_VERSION=1.5.3
+LIBGCCPP_SHARED_VERSION=1.5.0
+
 AC_CONFIG_SRCDIR(gcj_mlc.c)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
@@ -82,6 +89,27 @@ case "${host}" in
     gc_cflags="${gc_cflags} -G 0"
     ;;
 esac
+
+dnl Convert SemVer string to Libtool version-info.
+AC_DEFUN([CALC_LIBTOOL_VER_INFO], [
+    dnl Split the version string into `major`, `minor` and `patch`.
+    SEMV_MAJOR=`echo $1 | cut -d'.' -f1`
+    SEMV_MINOR=`echo $1 | cut -d'.' -f2`
+    SEMV_PATCH=`echo $1 | cut -d'.' -f3`
+    dnl Calculate Libtool version-info values.
+    VER_INFO_CURRENT=`expr $SEMV_MAJOR + $SEMV_MINOR`
+    VER_INFO_REVISION=$SEMV_PATCH
+    VER_INFO_AGE=$SEMV_MINOR
+    dnl Set variable to the version-info (`current:revision:age`).
+    $2="$VER_INFO_CURRENT:$VER_INFO_REVISION:$VER_INFO_AGE"
+    AC_SUBST([$2])
+])
+# Calculate Libtool version-info for `libcord.so` file.
+CALC_LIBTOOL_VER_INFO($LIBCORD_SHARED_VERSION, [LIBCORD_VER_INFO])
+# Calculate Libtool version-info for `libgc.so` file.
+CALC_LIBTOOL_VER_INFO($LIBGC_SHARED_VERSION, [LIBGC_VER_INFO])
+# Calculate Libtool version-info for `libgccpp.so` and `libgctba.so` files.
+CALC_LIBTOOL_VER_INFO($LIBGCCPP_SHARED_VERSION, [LIBGCCPP_VER_INFO])
 
 # Set `GC_VERSION_MAJOR`, `GC_VERSION_MINOR`, `GC_VERSION_MICRO` macros
 # based on the contents of `PACKAGE_VERSION`.

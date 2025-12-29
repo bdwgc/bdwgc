@@ -23,11 +23,11 @@ cmake_minimum_required(VERSION 3.10)
 # be obtained at runtime using `GC_get_version()`.
 set(PACKAGE_VERSION 8.3.0)
 
-# Info (`current:revision:age`) for the Libtool versioning system.
-# These values should match those in `cord/cord.am` and `Makefile.am` files.
-set(LIBCORD_VER_INFO    6:1:5)
-set(LIBGC_VER_INFO      6:3:5)
-set(LIBGCCPP_VER_INFO   6:0:5)
+# The version of the shared libraries.  These values should match the ones
+# in `configure.ac` file.
+set(LIBCORD_SHARED_VERSION 1.5.1)
+set(LIBGC_SHARED_VERSION 1.5.3)
+set(LIBGCCPP_SHARED_VERSION 1.5.0)
 
 option(enable_cplusplus "C++ support" OFF)
 if (enable_cplusplus)
@@ -106,29 +106,6 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
                STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
-endif()
-
-# Convert `VER_INFO` values to `VERSION`, `SOVERSION` ones.
-if (GC_BUILD_SHARED_LIBS)
-  # `cord`:
-  string(REGEX REPLACE "(.+):.+:.+"  "\\1" cord_cur ${LIBCORD_VER_INFO})
-  string(REGEX REPLACE ".+:(.+):.+"  "\\1" cord_rev ${LIBCORD_VER_INFO})
-  string(REGEX REPLACE ".+:.+:(.+)$" "\\1" cord_age ${LIBCORD_VER_INFO})
-  math(EXPR LIBCORD_SOVERSION "${cord_cur} - ${cord_age}")
-  set(LIBCORD_SHARED_VERSION "${LIBCORD_SOVERSION}.${cord_age}.${cord_rev}")
-  # `gc`:
-  string(REGEX REPLACE "(.+):.+:.+"  "\\1" gc_cur ${LIBGC_VER_INFO})
-  string(REGEX REPLACE ".+:(.+):.+"  "\\1" gc_rev ${LIBGC_VER_INFO})
-  string(REGEX REPLACE ".+:.+:(.+)$" "\\1" gc_age ${LIBGC_VER_INFO})
-  math(EXPR LIBGC_SOVERSION "${gc_cur} - ${gc_age}")
-  set(LIBGC_SHARED_VERSION "${LIBGC_SOVERSION}.${gc_age}.${gc_rev}")
-  # `gccpp` and `gctba`:
-  string(REGEX REPLACE "(.+):.+:.+"  "\\1" gccpp_cur ${LIBGCCPP_VER_INFO})
-  string(REGEX REPLACE ".+:(.+):.+"  "\\1" gccpp_rev ${LIBGCCPP_VER_INFO})
-  string(REGEX REPLACE ".+:.+:(.+)$" "\\1" gccpp_age ${LIBGCCPP_VER_INFO})
-  math(EXPR LIBGCCPP_SOVERSION "${gccpp_cur} - ${gccpp_age}")
-  set(LIBGCCPP_SHARED_VERSION
-      "${LIBGCCPP_SOVERSION}.${gccpp_age}.${gccpp_rev}")
 endif()
 
 add_definitions("-DALL_INTERIOR_POINTERS")
@@ -754,10 +731,10 @@ if (build_cord)
   target_include_directories(cord INTERFACE
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>")
-  if (GC_BUILD_SHARED_LIBS)
-    set_property(TARGET cord PROPERTY SOVERSION ${LIBCORD_SOVERSION})
-    set_property(TARGET cord PROPERTY VERSION ${LIBCORD_SHARED_VERSION})
-  endif()
+  string(REGEX REPLACE "([^.]+).+" "\\1" LIBCORD_SOVERSION
+         ${LIBCORD_SHARED_VERSION})
+  set_property(TARGET cord PROPERTY SOVERSION ${LIBCORD_SOVERSION})
+  set_property(TARGET cord PROPERTY VERSION ${LIBCORD_SHARED_VERSION})
   install(TARGETS cord EXPORT BDWgcTargets
           LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
           ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -792,10 +769,9 @@ if (GC_BUILD_SHARED_LIBS AND HAVE_FLAG_WL_NO_UNDEFINED)
   endif()
 endif()
 
-if (GC_BUILD_SHARED_LIBS)
-  set_property(TARGET gc PROPERTY SOVERSION ${LIBGC_SOVERSION})
-  set_property(TARGET gc PROPERTY VERSION ${LIBGC_SHARED_VERSION})
-endif()
+string(REGEX REPLACE "([^.]+).+" "\\1" LIBGC_SOVERSION ${LIBGC_SHARED_VERSION})
+set_property(TARGET gc PROPERTY SOVERSION ${LIBGC_SOVERSION})
+set_property(TARGET gc PROPERTY VERSION ${LIBGC_SHARED_VERSION})
 install(TARGETS gc EXPORT BDWgcTargets
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -803,20 +779,18 @@ install(TARGETS gc EXPORT BDWgcTargets
         INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 if (enable_cplusplus)
-  if (GC_BUILD_SHARED_LIBS)
-    set_property(TARGET gccpp PROPERTY SOVERSION ${LIBGCCPP_SOVERSION})
-    set_property(TARGET gccpp PROPERTY VERSION ${LIBGCCPP_SHARED_VERSION})
-  endif()
+  string(REGEX REPLACE "([^.]+).+" "\\1" LIBGCCPP_SOVERSION
+         ${LIBGCCPP_SHARED_VERSION})
+  set_property(TARGET gccpp PROPERTY SOVERSION ${LIBGCCPP_SOVERSION})
+  set_property(TARGET gccpp PROPERTY VERSION ${LIBGCCPP_SHARED_VERSION})
   install(TARGETS gccpp EXPORT BDWgcTargets
           LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
           ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
           RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
           INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
   if (enable_throw_bad_alloc_library)
-    if (GC_BUILD_SHARED_LIBS)
-      set_property(TARGET gctba PROPERTY SOVERSION ${LIBGCCPP_SOVERSION})
-      set_property(TARGET gctba PROPERTY VERSION ${LIBGCCPP_SHARED_VERSION})
-    endif()
+    set_property(TARGET gctba PROPERTY SOVERSION ${LIBGCCPP_SOVERSION})
+    set_property(TARGET gctba PROPERTY VERSION ${LIBGCCPP_SHARED_VERSION})
     install(TARGETS gctba EXPORT BDWgcTargets
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
