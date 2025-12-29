@@ -17,6 +17,32 @@ dnl Initialization.
 AC_INIT(gc,8.3.0,https://github.com/bdwgc/bdwgc/issues)
 dnl Version must conform to: [0-9]+[.][0-9]+[.][0-9]+
 
+m4_define([CORD_VERSION_PROP], [1.5.1])
+m4_define([GC_VERSION_PROP], [1.5.3])
+m4_define([GCCPP_VERSION_PROP], [1.5.0])
+
+dnl Macro to convert SemVer to Libtool version-info
+AC_DEFUN([CALC_LT_VERSION], [
+    # Split the version string into Major, Minor, and Patch
+    m4_define([V_MAJ], m4_bpatsubst([$1], [\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)], [\1]))
+    m4_define([V_MIN], m4_bpatsubst([$1], [\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)], [\2]))
+    m4_define([V_PAT], m4_bpatsubst([$1], [\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)], [\3]))
+
+    # Calculate Libtool values
+    # Current = Major + Minor, Revision = Patch, Age = Minor
+    LIBTOOL_CURRENT=m4_eval(V_MAJ + V_MIN)
+    LIBTOOL_REVISION=V_PAT
+    LIBTOOL_AGE=V_MIN
+    
+    # Set the output variable
+    $2="$LIBTOOL_CURRENT:$LIBTOOL_REVISION:$LIBTOOL_AGE"
+    AC_SUBST([$2])
+])
+
+CALC_LT_VERSION(CORD_VERSION_PROP, [LIBCORD_VER_INFO])
+CALC_LT_VERSION(GC_VERSION_PROP, [LIBGC_VER_INFO])
+CALC_LT_VERSION(GCCPP_VERSION_PROP, [LIBGCCPP_VER_INFO])
+
 AC_CONFIG_SRCDIR(gcj_mlc.c)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET

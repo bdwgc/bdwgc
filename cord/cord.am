@@ -3,7 +3,7 @@
 # Info (`current:revision:age`) for the Libtool versioning system.
 # These numbers should be updated at most once just before the release,
 # and, optionally, at most once during the development (after the release).
-LIBCORD_VER_INFO = 6:1:5
+LIBCORD_VER_INFO = @LIBCORD_VER_INFO@
 
 lib_LTLIBRARIES += libcord.la
 
