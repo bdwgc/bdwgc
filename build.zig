@@ -18,12 +18,11 @@ const zig_min_required_version = "0.14.0";
 
 // TODO: specify `PACKAGE_VERSION`.
 
-// Info (`current:revision:age`) for the Libtool versioning system.
-// These values should match those in `cord/cord.am`, `Makefile.am`
+// These values should match those in `configure.am`
 // and `CMakeLists.txt` files.
-const LIBCORD_VER_INFO = "6:1:5";
-const LIBGC_VER_INFO = "6:3:5";
-const LIBGCCPP_VER_INFO = "6:0:5";
+const CORD_VERSION_PROP = "1.5.1";
+const GC_VERSION_PROP = "1.5.3";
+const GCCPP_VERSION_PROP = "1.5.0";
 
 // Compared to the `cmake` script, some definitions and compiler options are
 // hard-coded here, which is natural because `build.zig` is only built with
@@ -446,7 +445,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         }),
-        .version = libtoolVerInfoToSemver(LIBGC_VER_INFO),
+        .version = std.SemanticVersion.parse(GC_VERSION_PROP) catch unreachable,
     });
     gc.addCSourceFiles(.{
         .files = source_files.items,
@@ -461,7 +460,7 @@ pub fn build(b: *std.Build) void {
     var gccpp: *std.Build.Step.Compile = undefined;
     var gctba: *std.Build.Step.Compile = undefined;
     if (enable_cplusplus) {
-        const gccpp_version = libtoolVerInfoToSemver(LIBGCCPP_VER_INFO);
+        const gccpp_version = std.SemanticVersion.parse(GCCPP_VERSION_PROP) catch unreachable;
         gccpp = b.addLibrary(.{
             .linkage = linkage,
             .name = "gccpp",
@@ -513,7 +512,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
             }),
-            .version = libtoolVerInfoToSemver(LIBCORD_VER_INFO),
+            .version = std.SemanticVersion.parse(CORD_VERSION_PROP) catch unreachable,
         });
         cord.addCSourceFiles(.{
             .files = &.{
@@ -640,23 +639,6 @@ pub fn build(b: *std.Build) void {
         addTest(b, gc, test_step, flags, "disclaimtest", "tests/disclaim.c");
         addTest(b, gc, test_step, flags, "weakmaptest", "tests/weakmap.c");
     }
-}
-
-// A function to parse `LIB*_VER_INFO` values.
-fn libtoolVerInfoToSemver(ver_info: []const u8) std.SemanticVersion {
-    var iter = std.mem.splitScalar(u8, ver_info, ':');
-    const cur_str = iter.next() orelse unreachable;
-    const rev_str = iter.next() orelse unreachable;
-    const age_str = iter.next() orelse unreachable;
-    const current = std.fmt.parseUnsigned(u32, cur_str, 10) catch unreachable;
-    const revision = std.fmt.parseUnsigned(u32, rev_str, 10) catch unreachable;
-    const age = std.fmt.parseUnsigned(u32, age_str, 10) catch unreachable;
-    const sem_ver: std.SemanticVersion = .{
-        .major = current - age,
-        .minor = age,
-        .patch = revision,
-    };
-    return sem_ver;
 }
 
 fn linkLibCpp(lib: *std.Build.Step.Compile) void {
