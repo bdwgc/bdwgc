@@ -11,12 +11,6 @@
 
 ## Process this file with `automake` to produce `Makefile.in` file.
 
-# Info (`current:revision:age`) for the Libtool versioning system.
-# These numbers should be updated at most once just before the release,
-# and, optionally, at most once during the development (after the release).
-LIBGC_VER_INFO = 6:3:5
-LIBGCCPP_VER_INFO = 6:0:5
-
 # We currently use the source files directly from `libatomic_ops` directory,
 # if we use the internal variant.  (Thus there seems to be no real reason to
 # recursively build in the `libatomic_ops` directory.)
@@ -115,7 +109,7 @@ endif
 # LinuxThreads semaphore (and `clock_gettime`) functions get linked:
 libgc_la_LIBADD = @addobjs@ $(THREADDLLIBS) $(UNWINDLIBS) $(ATOMIC_OPS_LIBS)
 libgc_la_DEPENDENCIES = @addobjs@
-libgc_la_LDFLAGS = $(extra_ldflags_libgc) -version-info $(LIBGC_VER_INFO) \
+libgc_la_LDFLAGS = $(extra_ldflags_libgc) -version-info @LIBGC_VER_INFO@ \
     -no-undefined
 
 EXTRA_libgc_la_SOURCES = ia64_save_regs_in_stack.s sparc_mach_dep.S \
@@ -127,14 +121,14 @@ if CPLUSPLUS
 lib_LTLIBRARIES += libgccpp.la
 libgccpp_la_SOURCES = gc_badalc.cc gc_cpp.cc
 libgccpp_la_LIBADD = libgc.la
-libgccpp_la_LDFLAGS = -version-info $(LIBGCCPP_VER_INFO) -no-undefined
+libgccpp_la_LDFLAGS = -version-info @LIBGCCPP_VER_INFO@ -no-undefined
 if GC_TBA_LIBRARY
 # The same as `libgccpp` but contains only `gc_badalc.o` file.
 lib_LTLIBRARIES += libgctba.la
 libgctba_la_SOURCES = gc_badalc.cc
 libgctba_la_LIBADD = libgc.la
 # Set the same version as for `libgccpp`.
-libgctba_la_LDFLAGS = -version-info $(LIBGCCPP_VER_INFO) -no-undefined
+libgctba_la_LDFLAGS = -version-info @LIBGCCPP_VER_INFO@ -no-undefined
 endif
 endif
 
