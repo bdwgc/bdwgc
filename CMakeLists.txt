@@ -21,11 +21,10 @@ set(PACKAGE_VERSION 8.3.0)
 # Version must match that in `AC_INIT` of `configure.ac` file and in README.
 # Version must conform to: [0-9]+[.][0-9]+[.][0-9]+
 
-# Info (`current:revision:age`) for the Libtool versioning system.
-# These values should match those in `cord/cord.am` and `Makefile.am` files.
-set(LIBCORD_VER_INFO    6:1:5)
-set(LIBGC_VER_INFO      6:3:5)
-set(LIBGCCPP_VER_INFO   6:0:5)
+# These values should match those in `configure.ac` file.
+set(CORD_VERSION_PROP 1.5.1)
+set(GC_VERSION_PROP 1.5.3)
+set(GCCPP_VERSION_PROP 1.5.0)
 
 option(enable_cplusplus "C++ support" OFF)
 if (enable_cplusplus)
@@ -106,28 +105,15 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
                STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
-# Convert `VER_INFO` values to `VERSION`, `SOVERSION` ones.
 if (GC_BUILD_SHARED_LIBS)
   # `cord`:
-  string(REGEX REPLACE "(.+):.+:.+"  "\\1" cord_cur ${LIBCORD_VER_INFO})
-  string(REGEX REPLACE ".+:(.+):.+"  "\\1" cord_rev ${LIBCORD_VER_INFO})
-  string(REGEX REPLACE ".+:.+:(.+)$" "\\1" cord_age ${LIBCORD_VER_INFO})
-  math(EXPR CORD_SOVERSION "${cord_cur} - ${cord_age}")
-  set(CORD_VERSION_PROP "${CORD_SOVERSION}.${cord_age}.${cord_rev}")
+  string(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+$"  "\\1" CORD_SOVERSION ${CORD_VERSION_PROP})
   message(STATUS "CORD_VERSION_PROP = ${CORD_VERSION_PROP}")
   # `gc`:
-  string(REGEX REPLACE "(.+):.+:.+"  "\\1" gc_cur ${LIBGC_VER_INFO})
-  string(REGEX REPLACE ".+:(.+):.+"  "\\1" gc_rev ${LIBGC_VER_INFO})
-  string(REGEX REPLACE ".+:.+:(.+)$" "\\1" gc_age ${LIBGC_VER_INFO})
-  math(EXPR GC_SOVERSION "${gc_cur} - ${gc_age}")
-  set(GC_VERSION_PROP "${GC_SOVERSION}.${gc_age}.${gc_rev}")
+  string(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+$"  "\\1" GC_SOVERSION ${GC_VERSION_PROP})
   message(STATUS "GC_VERSION_PROP = ${GC_VERSION_PROP}")
   # `gccpp` and `gctba`:
-  string(REGEX REPLACE "(.+):.+:.+"  "\\1" gccpp_cur ${LIBGCCPP_VER_INFO})
-  string(REGEX REPLACE ".+:(.+):.+"  "\\1" gccpp_rev ${LIBGCCPP_VER_INFO})
-  string(REGEX REPLACE ".+:.+:(.+)$" "\\1" gccpp_age ${LIBGCCPP_VER_INFO})
-  math(EXPR GCCPP_SOVERSION "${gccpp_cur} - ${gccpp_age}")
-  set(GCCPP_VERSION_PROP "${GCCPP_SOVERSION}.${gccpp_age}.${gccpp_rev}")
+  string(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+$"  "\\1" GCCPP_SOVERSION ${GCCPP_VERSION_PROP})
   message(STATUS "GCCPP_VERSION_PROP = ${GCCPP_VERSION_PROP}")
 endif()
 
