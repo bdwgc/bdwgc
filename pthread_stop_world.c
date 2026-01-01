@@ -232,7 +232,7 @@ STATIC void GC_suspend_handler_inner(ptr_t sig_arg,
   IF_CANCEL(int cancel_state;)
   AO_t my_stop_count = AO_load_acquire(&GC_stop_count);
                         /* After the barrier, this thread should see    */
-                        /* the actual content of GC_threads.            */
+                        /* the actual contents of GC_threads.           */
 
   if ((signed_word)sig_arg != GC_sig_suspend) {
 #   if defined(GC_FREEBSD_THREADS)
