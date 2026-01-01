@@ -114,23 +114,21 @@ if (GC_BUILD_SHARED_LIBS)
   string(REGEX REPLACE "(.+):.+:.+"  "\\1" cord_cur ${LIBCORD_VER_INFO})
   string(REGEX REPLACE ".+:(.+):.+"  "\\1" cord_rev ${LIBCORD_VER_INFO})
   string(REGEX REPLACE ".+:.+:(.+)$" "\\1" cord_age ${LIBCORD_VER_INFO})
-  math(EXPR CORD_SOVERSION "${cord_cur} - ${cord_age}")
-  set(CORD_VERSION_PROP "${CORD_SOVERSION}.${cord_age}.${cord_rev}")
-  message(STATUS "CORD_VERSION_PROP = ${CORD_VERSION_PROP}")
+  math(EXPR LIBCORD_SOVERSION "${cord_cur} - ${cord_age}")
+  set(LIBCORD_SHARED_VERSION "${LIBCORD_SOVERSION}.${cord_age}.${cord_rev}")
   # `gc`:
   string(REGEX REPLACE "(.+):.+:.+"  "\\1" gc_cur ${LIBGC_VER_INFO})
   string(REGEX REPLACE ".+:(.+):.+"  "\\1" gc_rev ${LIBGC_VER_INFO})
   string(REGEX REPLACE ".+:.+:(.+)$" "\\1" gc_age ${LIBGC_VER_INFO})
-  math(EXPR GC_SOVERSION "${gc_cur} - ${gc_age}")
-  set(GC_VERSION_PROP "${GC_SOVERSION}.${gc_age}.${gc_rev}")
-  message(STATUS "GC_VERSION_PROP = ${GC_VERSION_PROP}")
+  math(EXPR LIBGC_SOVERSION "${gc_cur} - ${gc_age}")
+  set(LIBGC_SHARED_VERSION "${LIBGC_SOVERSION}.${gc_age}.${gc_rev}")
   # `gccpp` and `gctba`:
   string(REGEX REPLACE "(.+):.+:.+"  "\\1" gccpp_cur ${LIBGCCPP_VER_INFO})
   string(REGEX REPLACE ".+:(.+):.+"  "\\1" gccpp_rev ${LIBGCCPP_VER_INFO})
   string(REGEX REPLACE ".+:.+:(.+)$" "\\1" gccpp_age ${LIBGCCPP_VER_INFO})
-  math(EXPR GCCPP_SOVERSION "${gccpp_cur} - ${gccpp_age}")
-  set(GCCPP_VERSION_PROP "${GCCPP_SOVERSION}.${gccpp_age}.${gccpp_rev}")
-  message(STATUS "GCCPP_VERSION_PROP = ${GCCPP_VERSION_PROP}")
+  math(EXPR LIBGCCPP_SOVERSION "${gccpp_cur} - ${gccpp_age}")
+  set(LIBGCCPP_SHARED_VERSION
+      "${LIBGCCPP_SOVERSION}.${gccpp_age}.${gccpp_rev}")
 endif()
 
 add_definitions("-DALL_INTERIOR_POINTERS")
@@ -757,8 +755,8 @@ if (build_cord)
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>")
   if (GC_BUILD_SHARED_LIBS)
-    set_property(TARGET cord PROPERTY VERSION ${CORD_VERSION_PROP})
-    set_property(TARGET cord PROPERTY SOVERSION ${CORD_SOVERSION})
+    set_property(TARGET cord PROPERTY SOVERSION ${LIBCORD_SOVERSION})
+    set_property(TARGET cord PROPERTY VERSION ${LIBCORD_SHARED_VERSION})
   endif()
   install(TARGETS cord EXPORT BDWgcTargets
           LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -795,8 +793,8 @@ if (GC_BUILD_SHARED_LIBS AND HAVE_FLAG_WL_NO_UNDEFINED)
 endif()
 
 if (GC_BUILD_SHARED_LIBS)
-  set_property(TARGET gc PROPERTY VERSION ${GC_VERSION_PROP})
-  set_property(TARGET gc PROPERTY SOVERSION ${GC_SOVERSION})
+  set_property(TARGET gc PROPERTY SOVERSION ${LIBGC_SOVERSION})
+  set_property(TARGET gc PROPERTY VERSION ${LIBGC_SHARED_VERSION})
 endif()
 install(TARGETS gc EXPORT BDWgcTargets
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -806,8 +804,8 @@ install(TARGETS gc EXPORT BDWgcTargets
 
 if (enable_cplusplus)
   if (GC_BUILD_SHARED_LIBS)
-    set_property(TARGET gccpp PROPERTY VERSION ${GCCPP_VERSION_PROP})
-    set_property(TARGET gccpp PROPERTY SOVERSION ${GCCPP_SOVERSION})
+    set_property(TARGET gccpp PROPERTY SOVERSION ${LIBGCCPP_SOVERSION})
+    set_property(TARGET gccpp PROPERTY VERSION ${LIBGCCPP_SHARED_VERSION})
   endif()
   install(TARGETS gccpp EXPORT BDWgcTargets
           LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -816,8 +814,8 @@ if (enable_cplusplus)
           INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
   if (enable_throw_bad_alloc_library)
     if (GC_BUILD_SHARED_LIBS)
-      set_property(TARGET gctba PROPERTY VERSION ${GCCPP_VERSION_PROP})
-      set_property(TARGET gctba PROPERTY SOVERSION ${GCCPP_SOVERSION})
+      set_property(TARGET gctba PROPERTY SOVERSION ${LIBGCCPP_SOVERSION})
+      set_property(TARGET gctba PROPERTY VERSION ${LIBGCCPP_SHARED_VERSION})
     endif()
     install(TARGETS gctba EXPORT BDWgcTargets
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
