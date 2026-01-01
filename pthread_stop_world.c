@@ -247,7 +247,7 @@ STATIC void GC_suspend_handler_inner(ptr_t dummy GC_ATTR_UNUSED,
 # endif
   AO_t my_stop_count = AO_load_acquire(&GC_stop_count);
                         /* After the barrier, this thread should see    */
-                        /* the actual content of GC_threads.            */
+                        /* the actual contents of GC_threads.           */
 
   DISABLE_CANCEL(cancel_state);
       /* pthread_setcancelstate is not defined to be async-signal-safe. */
