@@ -357,7 +357,7 @@ jobs:
           CXX=${{ matrix.c_compiler == 'gcc' && 'g++' || 'clang++' }} \
           CFLAGS="${{ matrix.conf_cflags == '' && '-g -O2' || matrix.conf_cflags }}" \
           ../configure ${{ matrix.conf_options }} --enable-werror
-        echo "Content of config.h:"
+        echo "Contents of config.h:"
         cat include/config.h
 
     - name: Build libraries
@@ -381,7 +381,7 @@ jobs:
         cd build
         for file in *.log; do
           if [ "$file" != "config.log" -a "$file" != "test-suite.log" ]; then
-            echo "Content of $file:"
+            echo "Contents of $file:"
             cat $file
           fi
         done
