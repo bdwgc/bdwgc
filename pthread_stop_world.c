@@ -355,7 +355,7 @@ GC_suspend_handler_inner(ptr_t dummy, void *context)
 #    endif
   AO_t my_stop_count = ao_load_acquire_async(&GC_stop_count);
   /*
-   * After the barrier, this thread should see the actual content of
+   * After the barrier, this thread should see the actual contents of
    * `GC_threads`.
    */
 

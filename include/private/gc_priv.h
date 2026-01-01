@@ -2388,7 +2388,7 @@ struct _GC_arrays {
 
 #ifdef GC_READ_ENV_FILE
   /*
-   * The content of the `.gc.env` file with CR and LF replaced to '\0'.
+   * The contents of the `.gc.env` file with CR and LF replaced to '\0'.
    * `NULL` if the file is missing or empty.  Otherwise, always ends
    * with '\0' (designating the end of the file).
    */
@@ -4351,7 +4351,7 @@ GC_INNER GC_bool GC_enclosing_writable_mapping(ptr_t addr, ptr_t *startp,
 #  endif
 
 /*
- * Copy the content of `/proc/self/maps` file to a buffer in our
+ * Copy the contents of `/proc/self/maps` file to a buffer in our
  * address space.  Return the address of the buffer.
  */
 GC_INNER const char *GC_get_maps(void);

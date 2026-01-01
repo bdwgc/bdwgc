@@ -807,8 +807,8 @@ GC_API size_t GC_CALL GC_size(const void * /* `obj` */);
  * Probably, it should not have been invented, but now we are stuck.
  * The resulting object has the same kind as the original one.
  * It is an error to have changes enabled for the original object.
- * It does not change the content of the object from its beginning to
- * the minimum of old size and `new_size_in_bytes`; the content above in
+ * It does not change the contents of the object from its beginning to
+ * the minimum of old size and `new_size_in_bytes`; the contents above in
  * case of object size growth is initialized to zero (not guaranteed for
  * atomic object type).  The function follows ANSI conventions for `NULL`
  * `old_object` (i.e., equivalent to `GC_malloc` regardless of
@@ -1680,8 +1680,8 @@ GC_API int GC_CALL GC_general_register_disappearing_link(
 /**
  * Moves a `link` previously registered via
  * `GC_general_register_disappearing_link` (or
- * `GC_register_disappearing_link`).  Does not change the target object
- * of the weak reference.  Does not change `*new_link` content.  May be
+ * `GC_register_disappearing_link`).  Does not change the target object of
+ * the weak reference.  Does not change contents of `*new_link`.  May be
  * called with `new_link` equal to `link` (to check whether `link` has
  * been registered).  Returns `GC_SUCCESS` on success, `GC_DUPLICATE`
  * if there is already another disappearing link at the new location

@@ -1866,7 +1866,7 @@ Also, includes 7.6.18 changes
 * New API function (GC_dump_named) to produce named dumps
 * New API function (GC_is_incremental_mode)
 * New API function (get_expl_freed_bytes_since_gc)
-* New API function (get_size_map_at) to get content of size_map table
+* New API function (get_size_map_at) to get element of size_map table
 * New API to stop and start the GC world externally
 * New API to turn on manual VDB at runtime
 * New field (expl_freed_bytes_since_gc) in public prof_stats_s
