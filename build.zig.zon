@@ -1,6 +1,7 @@
 // Zig package definition for bdwgc.
 .{
     .name = .bdwgc,
+    // This is `PACKAGE_VERSION`, the version of the garbage collector.
     .version = "8.3.0",
     .paths = .{""},
     .minimum_zig_version = "0.14.0",

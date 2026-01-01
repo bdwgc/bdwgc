@@ -22,19 +22,19 @@
 #if defined(GC_H)
 
 /*
+ * This is the version of the garbage collector.  It should match
+ * `PACKAGE_VERSION` in files `CMakeLists.txt`, `build.zig.zon` and
+ * `configure.ac`.
+ *
  * The policy regarding version numbers: development code has odd
  * `minor` number (and `micro` part is 0); when development is finished
  * and a release is prepared, `minor` number is incremented (keeping
  * `micro` number still zero), whenever a defect is fixed a new release
  * is prepared incrementing `micro` part to odd value (the most stable
  * release has the biggest `micro` number).
- */
-
-/*
- * The version here should match that in files `CMakeLists.txt`,
- * `build.zig.zon` and `configure.ac`.  Eventually this one may become
- * unnecessary.  For now we need it to keep the old-style build process
- * working.
+ *
+ * Note: eventually `GC_TMP_VERSION_MAJOR` and friends may become unnecessary,
+ * but for now we need them to keep the old-style build process working.
  */
 #  define GC_TMP_VERSION_MAJOR 8
 #  define GC_TMP_VERSION_MINOR 3

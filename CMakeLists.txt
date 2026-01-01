@@ -17,9 +17,11 @@
 
 cmake_minimum_required(VERSION 3.10)
 
+# This is the version of the garbage collector.  It should match that
+# in `AC_INIT` of `configure.ac` file and in `README.md` file.
+# The version format is `[0-9]+[.][0-9]+[.][0-9]+`.  This version could
+# be obtained at runtime using `GC_get_version()`.
 set(PACKAGE_VERSION 8.3.0)
-# Version must match that in `AC_INIT` of `configure.ac` file and in README.
-# Version must conform to: [0-9]+[.][0-9]+[.][0-9]+
 
 # Info (`current:revision:age`) for the Libtool versioning system.
 # These values should match those in `cord/cord.am` and `Makefile.am` files.
