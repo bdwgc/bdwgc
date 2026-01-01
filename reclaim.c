@@ -379,7 +379,7 @@ GC_check_leaked(ptr_t base)
       GC_has_other_debug_info(base) >= 0)
     return TRUE; /*< object has leaked */
 
-  /* Validate freed object's content. */
+  /* Validate freed object's contents. */
   p = (ptr_t *)(base + sizeof(oh));
   lpw = BYTES_TO_PTRS(HDR(base)->hb_sz - sizeof(oh));
   for (i = 0; i < lpw; ++i)

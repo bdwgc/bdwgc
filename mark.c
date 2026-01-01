@@ -981,7 +981,7 @@ GC_mark_from(mse *mark_stack_top, mse *mark_stack, mse *mark_stack_limit)
         PREFETCH(current_p + PREF_DIST * CACHE_LINE_SIZE);
         if (ADDR_LT(least_ha, q) && ADDR_LT(q, greatest_ha)) {
           /*
-           * Prefetch the content of the object we just pushed.
+           * Prefetch the contents of the object we just pushed.
            * It is likely we will need them soon.
            */
           PREFETCH(q);

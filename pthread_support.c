@@ -1248,13 +1248,13 @@ GC_get_nprocs_present(void)
    * but we do not need to handle it (just silently ignore).
    */
   if (len < 2 || stat_buf[0] != '0' || stat_buf[len - 1] != '\n') {
-    /* A read error or an unrecognized content. */
+    /* A read error or an unrecognized contents. */
     return 0;
   } else if (len == 2) {
     /* An uniprocessor. */
     return 1;
   } else if (stat_buf[1] != '-') {
-    /* An unrecognized content. */
+    /* An unrecognized contents. */
     return 0;
   }
 

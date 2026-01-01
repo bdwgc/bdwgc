@@ -716,7 +716,7 @@ GC_envfile_init(void)
   len = (size_t)GetFileSize(hFile, NULL);
   if (len <= 1 || len >= GC_ENVFILE_MAXLEN) {
     CloseHandle(hFile);
-    /* Invalid file length - ignoring the file content. */
+    /* Invalid file length - ignoring the file contents. */
     return;
   }
   /*
@@ -742,8 +742,8 @@ GC_envfile_init(void)
   }
   CloseHandle(hFile);
   if (ofs != len || nBytesRead != 0) {
-    /* TODO: Recycle content. */
-    /* Read operation has failed - ignoring the file content. */
+    /* TODO: Recycle `content`. */
+    /* Read operation has failed - ignoring the file contents. */
     return;
   }
   content[ofs] = '\0';
