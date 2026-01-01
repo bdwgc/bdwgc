@@ -24,7 +24,6 @@ AC_CONFIG_SRCDIR(gcj_mlc.c)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 AC_PREREQ(2.61)
-GC_SET_VERSION
 AM_INIT_AUTOMAKE([foreign nostdinc subdir-objects])
 AC_CONFIG_HEADERS([include/config.h])
 AM_MAINTAINER_MODE
@@ -83,6 +82,25 @@ case "${host}" in
     gc_cflags="${gc_cflags} -G 0"
     ;;
 esac
+
+# Set `GC_VERSION_MAJOR`, `GC_VERSION_MINOR`, `GC_VERSION_MICRO` macros
+# based on the contents of `PACKAGE_VERSION`.
+AC_MSG_CHECKING(GC version numbers)
+GC_VERSION_MAJOR=`echo $PACKAGE_VERSION | cut -d'.' -f1`
+GC_VERSION_MINOR=`echo $PACKAGE_VERSION | cut -d'.' -f2`
+GC_VERSION_MICRO=`echo $PACKAGE_VERSION | cut -d'.' -f3`
+if test x$GC_VERSION_MAJOR = x -o x$GC_VERSION_MINOR = x \
+        -o x$GC_VERSION_MICRO = x; then
+  AC_MSG_RESULT(invalid)
+  AC_MSG_ERROR([nonconforming PACKAGE_VERSION='$PACKAGE_VERSION'])
+fi
+AC_DEFINE_UNQUOTED([GC_VERSION_MAJOR], $GC_VERSION_MAJOR,
+                   [The major version number of this GC release.])
+AC_DEFINE_UNQUOTED([GC_VERSION_MINOR], $GC_VERSION_MINOR,
+                   [The minor version number of this GC release.])
+AC_DEFINE_UNQUOTED([GC_VERSION_MICRO], $GC_VERSION_MICRO,
+                   [The micro version number of this GC release.])
+AC_MSG_RESULT($GC_VERSION_MAJOR.$GC_VERSION_MINOR.$GC_VERSION_MICRO)
 
 AC_MSG_CHECKING([for emscripten])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
