@@ -1034,11 +1034,11 @@ STATIC void GC_remove_all_threads_but_me(void)
     /* The file might probably contain a comma-separated list   */
     /* but we do not need to handle it (just silently ignore).  */
     if (len < 2 || stat_buf[0] != '0' || stat_buf[len - 1] != '\n') {
-      return 0; /* read error or unrecognized content */
+      return 0; /* read error or unrecognized contents */
     } else if (len == 2) {
       return 1; /* an uniprocessor */
     } else if (stat_buf[1] != '-') {
-      return 0; /* unrecognized content */
+      return 0; /* unrecognized contents */
     }
 
     stat_buf[len - 1] = '\0'; /* terminate the string */
