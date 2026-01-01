@@ -14,8 +14,11 @@
 dnl Process this file with `autoconf` to produce `configure` file.
 
 dnl Initialization.
+dnl `PACKAGE_VERSION` is the version of the garbage collector.
+dnl It should match that in `README.md` file.
+dnl The version format is `[0-9]+[.][0-9]+[.][0-9]+`.
+dnl This version could be obtained at runtime using `GC_get_version()`.
 AC_INIT(gc,8.3.0,https://github.com/bdwgc/bdwgc/issues)
-dnl Version must conform to: [0-9]+[.][0-9]+[.][0-9]+
 
 AC_CONFIG_SRCDIR(gcj_mlc.c)
 AC_CONFIG_MACRO_DIR([m4])

@@ -8,11 +8,9 @@
 # provided the above notices are retained, and a notice that the code was
 # modified is included with the above copyright notice.
 
-# GC_SET_VERSION
-# sets and AC_DEFINEs GC_VERSION_MAJOR, GC_VERSION_MINOR and GC_VERSION_MICRO
-# based on the contents of PACKAGE_VERSION; PACKAGE_VERSION must conform to
-# [0-9]+[.][0-9]+[.][0-9]+
-#
+# Set `GC_VERSION_MAJOR`, `GC_VERSION_MINOR`, `GC_VERSION_MICRO` variables
+# using `AC_DEFINE` based on the contents of `PACKAGE_VERSION`.  The latter
+# must conform to `[0-9]+[.][0-9]+[.][0-9]+`.
 AC_DEFUN([GC_SET_VERSION], [
   AC_MSG_CHECKING(GC version numbers)
   GC_VERSION_MAJOR=`echo $PACKAGE_VERSION | sed 's/^\([[0-9]][[0-9]]*\)[[.]].*$/\1/g'`
