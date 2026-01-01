@@ -1009,7 +1009,7 @@ GC_INNER GC_bool GC_check_leaked(ptr_t base)
       GC_has_other_debug_info(base) >= 0)
     return TRUE; /* object has leaked */
 
-  /* Validate freed object's content. */
+  /* Validate freed object's contents. */
   p = (word *)(base + sizeof(oh));
   obj_sz = BYTES_TO_WORDS(HDR(base)->hb_sz - sizeof(oh));
   for (i = 0; i < obj_sz; ++i)

@@ -656,9 +656,9 @@ GC_API void GC_CALL GC_get_heap_usage_safe(GC_word *pheap_size,
 #ifdef GC_READ_ENV_FILE
   /* This works for Win32/WinCE for now.  Really useful only for WinCE. */
   STATIC char *GC_envfile_content = NULL;
-                        /* The content of the GC "env" file with CR and */
-                        /* LF replaced to '\0'.  NULL if the file is    */
-                        /* missing or empty.  Otherwise, always ends    */
+                        /* The contents of the GC "env" file with CR    */
+                        /* and LF replaced to '\0'.  NULL if the file   */
+                        /* is missing or empty.  Otherwise, always ends */
                         /* with '\0'.                                   */
   STATIC unsigned GC_envfile_length = 0;
                         /* Length of GC_envfile_content (if non-NULL).  */
@@ -697,7 +697,7 @@ GC_API void GC_CALL GC_get_heap_usage_safe(GC_word *pheap_size,
       len = (unsigned)GetFileSize(hFile, NULL);
       if (len <= 1 || len >= GC_ENVFILE_MAXLEN) {
         CloseHandle(hFile);
-        return; /* invalid file length - ignoring the file content */
+        return; /* invalid file length - ignoring the file contents */
       }
       /* At this execution point, GC_setpagesize() and GC_init_win32()  */
       /* must already be called (for GET_MEM() to work correctly).      */
@@ -719,8 +719,8 @@ GC_API void GC_CALL GC_get_heap_usage_safe(GC_word *pheap_size,
       }
       CloseHandle(hFile);
       if (ofs != len || nBytesRead != 0) {
-        /* TODO: recycle content */
-        return; /* read operation is failed - ignoring the file content */
+        /* TODO: recycle `content` */
+        return; /* read operation is failed - ignoring the file contents */
       }
       content[ofs] = '\0';
       while (ofs-- > 0) {

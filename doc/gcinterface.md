@@ -57,7 +57,7 @@ does not appear to be reachable. (Objects allocated in this way are
 effectively treated as roots by the collector.)
 
 `void * GC_REALLOC(void * _old_object_, size_t _new_bytes_)` - Allocates
-a new object of the indicated size and copy the old object's content into the
+a new object of the indicated size and copy the old object's contents into the
 new object. The old object is reused in place if convenient. If the original
 object was allocated with `GC_MALLOC_ATOMIC`, the new object is subject to the
 same constraints. If it was allocated as an uncollectible object, then the new
