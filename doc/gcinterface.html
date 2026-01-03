@@ -79,7 +79,7 @@ block itself does not appear to be reachable.  (Objects allocated in this way
 are effectively treated as roots by the collector.)
 <DT> <B> void * GC_REALLOC(void *<I>old</i>, size_t <I>new_size</i>) </b>
 <DD>
-Allocates a new object of the indicated size and copy (a prefix of) the
+Allocates a new object of the indicated size and copies (a prefix of) the
 old object into the new object.  The old object is reused in place if
 convenient.  If the original object was allocated with
 <TT>GC_MALLOC_ATOMIC</tt>,
