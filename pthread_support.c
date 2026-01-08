@@ -841,12 +841,12 @@ GC_new_thread(thread_id_t self_id)
 GC_INNER_WIN32THREAD void
 GC_delete_thread(GC_thread t)
 {
+#  if defined(GC_WIN32_THREADS) && !defined(MSWINCE)
+  CloseHandle(t->handle);
+  GC_cptr_store_release(&t->handle, NULL);
+#  endif
 #  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
   if (GC_win32_dll_threads) {
-    HANDLE handle = t->handle;
-
-    GC_cptr_store_release(&t->handle, NULL);
-    CloseHandle(handle);
     /*
      * This is intended to be lock-free.  It is either called synchronously
      * from the thread being deleted, or by the joining thread.  In this
@@ -858,6 +858,7 @@ GC_delete_thread(GC_thread t)
     t->id = 0;
     /* The thread is not suspended. */
     t->flags = 0;
+    t->dll_thread_detached = FALSE;
 #    ifdef RETRY_GET_THREAD_CONTEXT
     t->context_sp = NULL;
 #    endif
@@ -875,9 +876,6 @@ GC_delete_thread(GC_thread t)
       && (!defined(MSWIN32) || defined(CONSOLE_LOG))
     GC_log_printf("Deleting thread %p, n_threads= %d\n", THREAD_ID_TO_VPTR(id),
                   GC_count_threads());
-#  endif
-#  if defined(GC_WIN32_THREADS) && !defined(MSWINCE)
-    CloseHandle(t->handle);
 #  endif
     for (p = GC_threads[hv]; p != t; p = p->tm.next) {
       prev = p;
