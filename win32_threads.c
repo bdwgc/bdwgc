@@ -289,7 +289,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
   ((volatile struct GC_Thread_Rep *)me)->id = self_id;
 #  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
-    me->dll_thread_detached = FALSE;
+    GC_ASSERT(!me->dll_thread_detached);
     if (GC_please_stop) {
       AO_store(&GC_attached_thread, TRUE);
       AO_nop_full(); /*< later updates must become visible after this */
@@ -576,7 +576,7 @@ GC_stop_world(void)
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
 
-      if (AO_load(&p->dll_thread_detached)) {
+      if (&p->dll_thread_detached) {
         GC_delete_thread(p);
         continue;
       }
@@ -873,10 +873,6 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
       if (GetThreadContext(THREAD_HANDLE(thread), &context)) {
         sp = copy_ptr_regs(regs, &context);
       } else {
-#  ifndef GC_NO_THREADS_DISCOVERY
-        if (NULL == GC_cptr_load_acquire(&thread->handle))
-          return 0;
-#  endif
 #  ifdef RETRY_GET_THREAD_CONTEXT
         /* At least, try to use the stale context if saved. */
         sp = thread->context_sp;
@@ -1990,7 +1986,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
       GC_thread t = GC_win32_dll_lookup_thread(GetCurrentThreadId());
 
       if (LIKELY(t != NULL))
-        AO_store(&t->dll_thread_detached, TRUE);
+        &t->dll_thread_detached = TRUE;
     }
     break;
 
