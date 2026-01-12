@@ -461,7 +461,7 @@ GC_INNER void GC_win32_cache_self_pthread(thread_id_t);
  * Delete a thread from `GC_threads`.  We assume it is there.
  * (The code intentionally traps if it was not.)  It is also safe to delete
  * the main thread.  If `GC_win32_dll_threads`, it should be called only
- * from the thread intiating garbage collection (except for
+ * from the thread initiating garbage collection (except for
  * `DLL_PROCESS_DETACH` case). If a thread has been joined, but we have not yet
  * been notified, then there may be more than one thread in the table with the
  * same thread id - this is OK because we delete a specific one.

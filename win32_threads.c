@@ -576,7 +576,7 @@ GC_stop_world(void)
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
 
-      if (&p->dll_thread_detached) {
+      if (p->dll_thread_detached) {
         GC_delete_thread(p);
         continue;
       }
@@ -1986,7 +1986,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
       GC_thread t = GC_win32_dll_lookup_thread(GetCurrentThreadId());
 
       if (LIKELY(t != NULL))
-        &t->dll_thread_detached = TRUE;
+        t->dll_thread_detached = TRUE;
     }
     break;
 
