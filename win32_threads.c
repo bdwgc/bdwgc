@@ -264,7 +264,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
 #  ifndef MSWINCE
   /* `GetCurrentThread()` returns a pseudohandle (a constant value). */
   if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
-                       GetCurrentProcess(), (HANDLE *)&me->handle,
+                       GetCurrentProcess(), &me->handle,
                        0 /* `dwDesiredAccess` */, FALSE /* `bInheritHandle` */,
                        DUPLICATE_SAME_ACCESS)) {
     ABORT_ARG1("DuplicateHandle failed", ": errcode= 0x%X",
