@@ -15,7 +15,7 @@ jobs:
       matrix:
         zig_version: [ "0.15.2" ]
         os: [ macos-latest, ubuntu-latest, windows-latest ]
-        ttriple: [ native, native-native-msvc ]
+        ttriple: [ native, native-native-msvc, x86-windows-gnu ]
         enable_cplusplus: [ true ]
         gc_assertions: [ true ]
         large_config: [ false ]
@@ -32,8 +32,12 @@ jobs:
         exclude:
         - os: macos-latest
           ttriple: native-native-msvc
+        - os: macos-latest
+          ttriple: x86-windows-gnu
         - os: ubuntu-latest
           ttriple: native-native-msvc
+        - os: ubuntu-latest
+          ttriple: x86-windows-gnu
         - os: windows-latest
           disable_handle_fork: true
         - enable_threads: false
@@ -84,6 +88,19 @@ jobs:
           enable_threads: true
           parallel_mark: false
           redirect_malloc: false
+        - ttriple: x86-windows-gnu
+          enable_gc_debug: true
+          enable_munmap: false
+        - ttriple: x86-windows-gnu
+          enable_munmap: false
+          parallel_mark: false
+        - ttriple: x86-windows-gnu
+          enable_rwlock: false
+          enable_threads: true
+          redirect_malloc: true
+        - ttriple: x86-windows-gnu
+          enable_rwlock: true
+          parallel_mark: false
 
     steps:
     - uses: actions/checkout@v6
