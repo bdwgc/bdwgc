@@ -28,7 +28,7 @@ jobs:
         parallel_mark: [ false, true ]
         thread_local_alloc: [ false, true ]
         linkage: [ static, dynamic ]
-        build_cord: [ false, true ]
+        build_cord: [ true ]
         exclude:
         - os: macos-latest
           ttriple: native-native-msvc
@@ -49,10 +49,6 @@ jobs:
           enable_gc_debug: true
           enable_rwlock: true
         # The following ones just to reduce amount of jobs.
-        - build_cord: false
-          linkage: static
-        - build_cord: false
-          ttriple: native
         - enable_munmap: false
           linkage: dynamic
         - enable_munmap: true
