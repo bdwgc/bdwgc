@@ -430,10 +430,6 @@ GC_suspend(GC_thread t)
 #  endif
 
   GC_ASSERT(I_HOLD_LOCK());
-#  ifndef GC_NO_THREADS_DISCOVERY
-  if (NULL == GC_cptr_load_acquire(&t->handle))
-    return;
-#  endif
 #  if defined(DEBUG_THREADS) && !defined(MSWINCE) \
       && (!defined(MSWIN32) || defined(CONSOLE_LOG))
   GC_log_printf("Suspending 0x%x\n", (int)t->id);
@@ -495,22 +491,10 @@ GC_suspend(GC_thread t)
       /* Resume the thread, try to suspend it in a better location. */
       if (ResumeThread(t->handle) == (DWORD)-1)
         ABORT("ResumeThread failed in suspend loop");
-    } else {
-#    ifndef GC_NO_THREADS_DISCOVERY
-      if (NULL == GC_cptr_load_acquire(&t->handle)) {
-        /* The thread handle is closed asynchronously by `GC_DllMain`. */
-        GC_release_dirty_lock();
-        return;
-      }
-#    endif
     }
     if (retry_cnt > 1) {
       GC_release_dirty_lock();
       Sleep(0); /*< yield */
-#    ifndef GC_NO_THREADS_DISCOVERY
-      if (NULL == GC_cptr_load_acquire(&t->handle))
-        return;
-#    endif
       GC_acquire_dirty_lock();
     }
     if (++retry_cnt >= MAX_SUSPEND_THREAD_RETRIES) {
@@ -529,15 +513,8 @@ GC_suspend(GC_thread t)
 #    endif
     return;
   }
-  if (SuspendThread(t->handle) == (DWORD)-1) {
-#    ifndef GC_NO_THREADS_DISCOVERY
-    if (NULL == GC_cptr_load_acquire(&t->handle)) {
-      GC_release_dirty_lock();
-      return;
-    }
-#    endif
+  if (SuspendThread(t->handle) == (DWORD)-1)
     ABORT("SuspendThread failed");
-  }
 #  endif
   t->flags |= IS_SUSPENDED;
   GC_release_dirty_lock();
