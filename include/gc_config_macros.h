@@ -192,9 +192,9 @@
 #   endif
 
 # elif defined(__MINGW32__)
-#   if defined(__cplusplus) && defined(GC_BUILD)
+#   if defined(GC_BUILD)
 #     define GC_API extern __declspec(dllexport)
-#   elif defined(GC_BUILD) || defined(__MINGW32_DELAY_LOAD__)
+#   elif defined(__MINGW32_DELAY_LOAD__)
 #     define GC_API __declspec(dllexport)
 #   else
 #     define GC_API extern __declspec(dllimport)
