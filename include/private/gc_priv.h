@@ -1281,6 +1281,11 @@ struct _GC_arrays {
 # endif
 # define GC_noop_sink GC_arrays._noop_sink
   volatile word _noop_sink;
+# if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#   define GC_dll_main_detach_thread_lock \
+            GC_arrays._dll_main_detach_thread_lock
+    volatile AO_TS_t _dll_main_detach_thread_lock;
+# endif
   GC_mark_proc _mark_procs[MAX_MARK_PROCS];
         /* Table of user-defined mark procedures.  There is     */
         /* a small number of these, which can be referenced     */
