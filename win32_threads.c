@@ -127,6 +127,26 @@ GC_use_threads_discovery(void)
 STATIC volatile AO_t GC_attached_thread = FALSE;
 
 /*
+ * A short "critical section" to avoid a race between `CloseHandle` (when
+ * a thread is detached by `GC_DllMain()`) and `SuspendThread`/`ResumeThread`.
+ * Specifically, it is used to update and check several variables
+ * consistently: `GC_please_stop`, `GC_has_pending_delete_threads`,
+ * `t->pending_delete_thread` and `t->crtn->stack_end`.
+ * Note: do not use it while any thread is suspended!
+ */
+#    define DETACH_THREAD_LOCK()                                            \
+      do {                                                                  \
+        if (LIKELY(AO_test_and_set_acquire(&GC_dll_main_detach_thread_lock) \
+                   == AO_TS_CLEAR))                                         \
+          break;                                                            \
+        Sleep(0); /*< yield */                                              \
+      } while (TRUE)
+#    define DETACH_THREAD_UNLOCK() AO_CLEAR(&GC_dll_main_detach_thread_lock)
+
+/* An indicator that some threads have `pending_delete_thread` set. */
+STATIC GC_bool GC_has_pending_delete_threads = FALSE;
+
+/*
  * We assume that `volatile` implies memory ordering, at least among
  * `volatile` variables.  This code should consistently use `libatomic_ops`
  * package or gcc atomic intrinsics.
@@ -252,6 +272,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
     }
     me = (GC_thread)(dll_thread_table + i);
     me->crtn = &dll_crtn_table[i];
+    GC_ASSERT(!me->pending_delete_thread);
   } else
 #  endif
   /* else */ {
@@ -444,8 +465,11 @@ GC_suspend(GC_thread t)
     Sleep(10); /*< in millis */
     GC_acquire_dirty_lock();
   }
-#  elif defined(RETRY_GET_THREAD_CONTEXT)
-  for (retry_cnt = 0;;) {
+#  else
+#    ifdef RETRY_GET_THREAD_CONTEXT
+  for (retry_cnt = 0;;)
+#    endif
+  {
     /*
      * Apparently the Windows 95 `GetOpenFileName()` creates a thread
      * that does not properly get cleaned up, and `SuspendThread()` on
@@ -457,16 +481,30 @@ GC_suspend(GC_thread t)
 #    ifdef GC_PTHREADS
       /* Prevent stack from being pushed. */
       t->crtn->stack_end = NULL;
-#    else
       /*
-       * This breaks `pthread_join` on Cygwin, which is guaranteed to
-       * only see user threads.
+       * `GC_delete_thread()` call here would break `pthread_join` on Cygwin,
+       * as `pthread_join` is guaranteed to only see user threads.
        */
+#    elif !defined(GC_NO_THREADS_DISCOVERY)
+      /*
+       * `pending_delete_thread` might already be set (or be about to)
+       * by `GC_DllMain()`.  And, `DETACH_THREAD_LOCK()` cannot be used here.
+       * Thus, we ensure `pending_delete_thread` is set instead of deleting
+       * the thread now.  It is OK if there is a race with `GC_DllMain()`
+       * in setting the flags.
+       */
+      GC_has_pending_delete_threads = TRUE;
+      t->pending_delete_thread = TRUE;
+#    else
       GC_delete_thread(t);
 #    endif
       return;
     }
 
+#    ifndef RETRY_GET_THREAD_CONTEXT
+    if (SuspendThread(t->handle) == (DWORD)-1)
+      ABORT("SuspendThread failed");
+#    else
     if (SuspendThread(t->handle) != (DWORD)-1) {
       CONTEXT context;
 
@@ -492,6 +530,7 @@ GC_suspend(GC_thread t)
       if (ResumeThread(t->handle) == (DWORD)-1)
         ABORT("ResumeThread failed in suspend loop");
     }
+
     if (retry_cnt > 1) {
       GC_release_dirty_lock();
       Sleep(0); /*< yield */
@@ -501,20 +540,8 @@ GC_suspend(GC_thread t)
       /* Something must be wrong. */
       ABORT("SuspendThread loop failed");
     }
-  }
-#  else
-  if (GetExitCodeThread(t->handle, &exitCode) && exitCode != STILL_ACTIVE) {
-    GC_release_dirty_lock();
-#    ifdef GC_PTHREADS
-    /* Prevent stack from being pushed. */
-    t->crtn->stack_end = NULL;
-#    else
-    GC_delete_thread(t);
 #    endif
-    return;
   }
-  if (SuspendThread(t->handle) == (DWORD)-1)
-    ABORT("SuspendThread failed");
 #  endif
   t->flags |= IS_SUSPENDED;
   GC_release_dirty_lock();
@@ -544,9 +571,6 @@ GC_stop_world(void)
   }
 #  endif /* PARALLEL_MARK */
 
-#  if !defined(GC_NO_THREADS_DISCOVERY) || defined(GC_ASSERTIONS)
-  GC_please_stop = TRUE;
-#  endif
 #  if (defined(MSWIN32) && !defined(CONSOLE_LOG)) || defined(MSWINCE)
   GC_ASSERT(!GC_write_disabled);
   EnterCriticalSection(&GC_write_cs);
@@ -560,10 +584,15 @@ GC_stop_world(void)
   GC_write_disabled = TRUE;
 #    endif
 #  endif
+
 #  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i;
     int my_max;
+
+    DETACH_THREAD_LOCK();
+    GC_please_stop = TRUE;
+    DETACH_THREAD_UNLOCK();
 
     /*
      * Any threads being created during this loop will end up setting
@@ -571,12 +600,20 @@ GC_stop_world(void)
      * to restart.  This is not ideal, but hopefully correct.
      */
     AO_store(&GC_attached_thread, FALSE);
+
     my_max = (int)GC_get_max_thread_index();
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
 
       if (p->crtn->stack_end != NULL && (p->flags & DO_BLOCKING) == 0
           && p->id != self_id) {
+        /*
+         * A race with `GC_DllMain()` in accessing `pending_delete_thread`
+         * is fine.
+         */
+        if (UNLIKELY(*(volatile GC_bool *)&p->pending_delete_thread))
+          continue;
+
         GC_suspend(p);
       }
     }
@@ -586,6 +623,9 @@ GC_stop_world(void)
     GC_thread p;
     int i;
 
+#  ifdef GC_ASSERTIONS
+    GC_please_stop = TRUE;
+#  endif
     for (i = 0; i < THREAD_TABLE_SZ; i++) {
       for (p = GC_threads[i]; p != NULL; p = p->tm.next)
         if (p->crtn->stack_end != NULL && p->id != self_id
@@ -613,30 +653,51 @@ GC_start_world(void)
 #  endif
 
   GC_ASSERT(I_HOLD_LOCK());
+#  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     LONG my_max = GC_get_max_thread_index();
     int i;
+    GC_bool pending_delete;
 
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
 
       if ((p->flags & IS_SUSPENDED) != 0) {
-#  ifdef DEBUG_THREADS
+#    ifdef DEBUG_THREADS
         GC_log_printf("Resuming 0x%x\n", (int)p->id);
-#  endif
+#    endif
         GC_ASSERT(p->id != self_id);
         GC_ASSERT(*(ptr_t *)CAST_AWAY_VOLATILE_PVOID(&p->crtn->stack_end)
                   != NULL);
-        if (ResumeThread(THREAD_HANDLE(p)) == (DWORD)-1)
+        if (ResumeThread(p->handle) == (DWORD)-1)
           ABORT("ResumeThread failed");
         p->flags &= (unsigned char)~IS_SUSPENDED;
         if (GC_on_thread_event)
-          GC_on_thread_event(GC_EVENT_THREAD_UNSUSPENDED, THREAD_HANDLE(p));
+          GC_on_thread_event(GC_EVENT_THREAD_UNSUSPENDED, p->handle);
       } else {
         /* The thread is unregistered or not suspended. */
       }
     }
-  } else {
+
+    DETACH_THREAD_LOCK();
+    GC_please_stop = FALSE;
+    pending_delete = GC_has_pending_delete_threads;
+    DETACH_THREAD_UNLOCK();
+    if (UNLIKELY(pending_delete)) {
+      GC_has_pending_delete_threads = FALSE;
+      my_max = GC_get_max_thread_index(); /*< a reload */
+      for (i = 0; i <= my_max; i++) {
+        GC_thread p = (/* no volatile */ GC_thread)(dll_thread_table + i);
+
+        if (p->pending_delete_thread) {
+          p->pending_delete_thread = FALSE;
+          GC_delete_thread(p);
+        }
+      }
+    }
+  } else
+#  endif
+  /* else */ {
     GC_thread p;
     int i;
 
@@ -661,10 +722,10 @@ GC_start_world(void)
         }
       }
     }
-  }
-#  if !defined(GC_NO_THREADS_DISCOVERY) || defined(GC_ASSERTIONS)
-  GC_please_stop = FALSE;
+#  ifdef GC_ASSERTIONS
+    GC_please_stop = FALSE;
 #  endif
+  }
 }
 
 #  ifdef MSWINCE
@@ -832,6 +893,14 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
   GC_ASSERT(I_HOLD_LOCK());
   if (UNLIKELY(NULL == stack_end))
     return 0;
+#  ifndef GC_NO_THREADS_DISCOVERY
+  /*
+   * If the thread is scheduled for deletion, do not scan its stack.
+   * A race with `GC_DllMain()` in accessing `pending_delete_thread` is fine.
+   */
+  if (UNLIKELY(*(volatile GC_bool *)&thread->pending_delete_thread))
+    return 0;
+#  endif
 
   if (thread->id == self_id) {
     GC_ASSERT((thread->flags & DO_BLOCKING) == 0);
@@ -1975,8 +2044,24 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
     if (GC_win32_dll_threads) {
       GC_thread t = GC_win32_dll_lookup_thread(GetCurrentThreadId());
 
-      if (LIKELY(t != NULL))
-        GC_delete_thread(t);
+      if (LIKELY(t != NULL)) {
+        DETACH_THREAD_LOCK();
+        if (UNLIKELY(GC_please_stop)) {
+          GC_has_pending_delete_threads = TRUE;
+          t->pending_delete_thread = TRUE;
+          t = NULL;
+        } else {
+          /* Indicate (before unlocking) that the thread is under deletion. */
+          t->crtn->stack_end = NULL;
+        }
+        /*
+         * It should be fine even in case of the current thread is suspended
+         * while holding the lock.
+         */
+        DETACH_THREAD_UNLOCK();
+        if (LIKELY(t != NULL))
+          GC_delete_thread(t);
+      }
     }
     break;
 

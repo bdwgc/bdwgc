@@ -1888,6 +1888,11 @@ struct _GC_arrays {
 #    define GC_fault_handler_lock GC_arrays._fault_handler_lock
   volatile AO_TS_t _fault_handler_lock;
 #  endif
+#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#    define GC_dll_main_detach_thread_lock \
+      GC_arrays._dll_main_detach_thread_lock
+  volatile AO_TS_t _dll_main_detach_thread_lock;
+#  endif
 #  if !(defined(GC_ALWAYS_MULTITHREADED) \
         && (defined(USE_PTHREAD_LOCKS) || defined(USE_SPIN_LOCK)))
 #    define GC_need_to_lock GC_arrays._need_to_lock
