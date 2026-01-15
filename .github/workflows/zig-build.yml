@@ -5,7 +5,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    name: ${{ matrix.os }} ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }} rwlock:${{ matrix.enable_rwlock }} redir:${{ matrix.redirect_malloc }} gcdeb:${{ matrix.enable_gc_debug }} munmap:${{ matrix.enable_munmap }} paramark:${{ matrix.parallel_mark }} thrlocal:${{ matrix.thread_local_alloc }}
+    name: ${{ matrix.os }} ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }} rwlock:${{ matrix.enable_rwlock }} redir:${{ matrix.redirect_malloc }} gcdeb:${{ matrix.enable_gc_debug }} munmap:${{ matrix.enable_munmap }} paramark:${{ matrix.parallel_mark }} thrlocal:${{ matrix.thread_local_alloc }} multi-obj:${{ matrix.disable_single_obj_compilation }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 7
 
@@ -28,6 +28,7 @@ jobs:
         parallel_mark: [ false, true ]
         thread_local_alloc: [ false, true ]
         linkage: [ static, dynamic ]
+        disable_single_obj_compilation: [ false, true ]
         build_cord: [ true ]
         exclude:
         - os: macos-latest
@@ -40,6 +41,8 @@ jobs:
           ttriple: x86-windows-gnu
         - os: windows-latest
           disable_handle_fork: true
+        - disable_single_obj_compilation: true
+          linkage: static
         - enable_threads: false
           disable_handle_fork: true
         - enable_threads: false
@@ -53,6 +56,14 @@ jobs:
           enable_gc_debug: true
           enable_rwlock: true
         # The following ones just to reduce amount of jobs.
+        - disable_single_obj_compilation: true
+          enable_gc_debug: true
+        - disable_single_obj_compilation: true
+          enable_munmap: false
+        - disable_single_obj_compilation: true
+          parallel_mark: false
+        - disable_single_obj_compilation: true
+          ttriple: native
         - enable_munmap: false
           linkage: dynamic
         - enable_munmap: true
@@ -116,6 +127,7 @@ jobs:
         -Dlinkage=${{ matrix.linkage }}
         -Dbuild_cord=${{ matrix.build_cord }}
         -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
+        -Ddisable_single_obj_compilation=${{ matrix.disable_single_obj_compilation }}
         -Denable_cplusplus=${{ matrix.enable_cplusplus }}
         -Denable_gc_assertions=${{ matrix.gc_assertions }}
         -Denable_gc_debug=${{ matrix.enable_gc_debug }}
