@@ -847,11 +847,10 @@ GC_delete_thread(GC_thread t)
 #  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
   if (GC_win32_dll_threads) {
     /*
-     * This is intended to be lock-free.  It is either called synchronously
-     * from the thread being deleted, or by the joining thread.  In this
-     * branch asynchronous changes to `*t` are possible.  Note that it is
-     * not allowed to call `GC_printf` (and the friends) here, see
-     * `GC_stop_world()` in `win32_threads.c` file for the information.
+     * This is intended to be lock-free.  In this branch asynchronous changes
+     * to `*t` are possible.  Note that it is not allowed to call `GC_printf`
+     * (and the friends) here, see `GC_stop_world()` in `win32_threads.c` file
+     * for the information.
      */
     t->crtn->stack_end = NULL;
     t->id = 0;

@@ -255,6 +255,15 @@ struct GC_Thread_Rep {
 #    define IS_SUSPENDED 0x40
 #  endif
 
+#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+  /*
+   * Thread should be deleted by `GC_start_world()`.  It is OK not to scan
+   * the stack of the thread.  Could be set to `TRUE` only when holding
+   * `GC_dll_main_detach_thread_lock`.
+   */
+  GC_bool pending_delete_thread;
+#  endif
+
 #  ifdef SIGNAL_BASED_STOP_WORLD
   /*
    * The value of `GC_stop_count` when the thread last successfully
