@@ -270,6 +270,13 @@ struct GC_Thread_Rep {
 #   define KNOWN_FINISHED(t) 0
 # endif
 
+# ifndef GC_NO_THREADS_DISCOVERY
+    /* Thread should be deleted by GC_start_world().  It is OK not to   */
+    /* scan the stack of the thread.  Could be set to TRUE only when    */
+    /* holding GC_dll_main_detach_thread_lock.                          */
+    GC_bool pending_delete_thread;
+# endif
+
 # ifdef THREAD_LOCAL_ALLOC
     struct thread_local_freelists tlfs;
 # endif
@@ -287,6 +294,25 @@ typedef struct GC_Thread_Rep * GC_thread;
 typedef volatile struct GC_Thread_Rep * GC_vthread;
 
 #ifndef GC_NO_THREADS_DISCOVERY
+  /* A short "critical section" to avoid a race between CloseHandle     */
+  /* (when a thread is detached by GC_DllMain()) and                    */
+  /* SuspendThread/ResumeThread.  Specifically, it is used to update    */
+  /* and check several variables consistently: GC_please_stop,          */
+  /* GC_has_pending_delete_threads, t->pending_delete_thread and        */
+  /* t->stack_base.  Note: do not use it while any thread is suspended! */
+# define DETACH_THREAD_LOCK() \
+      do { \
+        if (EXPECT(AO_test_and_set_acquire(&GC_dll_main_detach_thread_lock) \
+                   == AO_TS_CLEAR, TRUE)) \
+          break; \
+        Sleep(0); /* yield */ \
+      } while (TRUE)
+# define DETACH_THREAD_UNLOCK() AO_CLEAR(&GC_dll_main_detach_thread_lock)
+  STATIC volatile AO_TS_t GC_dll_main_detach_thread_lock = AO_TS_CLEAR;
+
+  /* An indicator that some threads have pending_delete_thread set.     */
+  STATIC GC_bool GC_has_pending_delete_threads = FALSE;
+
   /* We assumed that volatile ==> memory ordering, at least among       */
   /* volatiles.  This code should consistently use atomic_ops.          */
   STATIC volatile GC_bool GC_please_stop = FALSE;
@@ -471,6 +497,7 @@ STATIC GC_thread GC_register_my_thread_inner(const struct GC_stack_base *sb,
         GC_max_thread_index = MAX_THREADS - 1;
       }
       me = dll_thread_table + i;
+      GC_ASSERT(!(me -> pending_delete_thread));
     } else
 # endif
   /* else */ /* Not using DllMain */ {
@@ -671,8 +698,6 @@ STATIC void GC_delete_gc_thread_no_free(GC_vthread t)
 # ifndef GC_NO_THREADS_DISCOVERY
     if (GC_win32_dll_threads) {
       /* This is intended to be lock-free.                              */
-      /* It is either called synchronously from the thread being        */
-      /* deleted, or by the joining thread.                             */
       /* In this branch asynchronous changes to (*t) are possible.      */
       /* It's not allowed to call GC_printf (and the friends) here,     */
       /* see GC_stop_world() for the information.                       */
@@ -1224,8 +1249,11 @@ STATIC void GC_suspend(GC_thread t)
       Sleep(10); /* in millis */
       GC_acquire_dirty_lock();
     }
-# elif defined(RETRY_GET_THREAD_CONTEXT)
-    for (;;) {
+# else
+#   ifdef RETRY_GET_THREAD_CONTEXT
+      for (;;)
+#   endif
+    {
       /* Apparently the Windows 95 GetOpenFileName call creates         */
       /* a thread that does not properly get cleaned up, and            */
       /* SuspendThread on its descriptor may provoke a crash.           */
@@ -1236,52 +1264,58 @@ STATIC void GC_suspend(GC_thread t)
         GC_release_dirty_lock();
 #       ifdef GC_PTHREADS
           t -> stack_base = 0; /* prevent stack from being pushed */
-#       else
-          /* This breaks pthread_join on Cygwin, which is guaranteed to */
+          /* GC_delete_gc_thread_no_free() call here would break        */
+          /* pthread_join on Cygwin, as pthread_join is guaranteed to   */
           /* only see user threads.                                     */
-          GC_ASSERT(GC_win32_dll_threads);
-          GC_delete_gc_thread_no_free(t);
+#       else
+#         ifndef GC_NO_THREADS_DISCOVERY
+            if (GC_win32_dll_threads) {
+              /* pending_delete_thread might already be set (or be      */
+              /* about to) by GC_DllMain().  And, DETACH_THREAD_LOCK()  */
+              /* cannot be used here.  Thus, we ensure                  */
+              /* pending_delete_thread is set instead of deleting the   */
+              /* thread now.  It is OK if there is a race with          */
+              /* GC_DllMain() in setting the flags.                     */
+              GC_has_pending_delete_threads = TRUE;
+              t -> pending_delete_thread = TRUE;
+            } else
+#         endif
+          /* else */ {
+            GC_delete_gc_thread_no_free(t);
+          }
 #       endif
         return;
       }
 
-      if (SuspendThread(t->handle) != (DWORD)-1) {
-        CONTEXT context;
+#     ifndef RETRY_GET_THREAD_CONTEXT
+        if (SuspendThread(t -> handle) == (DWORD)-1)
+          ABORT("SuspendThread failed");
+#     else
+        if (SuspendThread(t->handle) != (DWORD)-1) {
+          CONTEXT context;
 
-        context.ContextFlags = GET_THREAD_CONTEXT_FLAGS;
-        if (GetThreadContext(t->handle, &context)) {
-          /* TODO: WoW64 extra workaround: if CONTEXT_EXCEPTION_ACTIVE  */
-          /* then Sleep(1) and retry.                                   */
-          t->context_sp = copy_ptr_regs(t->context_regs, &context);
-          break; /* success; the context pointer registers are saved */
+          context.ContextFlags = GET_THREAD_CONTEXT_FLAGS;
+          if (GetThreadContext(t->handle, &context)) {
+            /* TODO: WoW64 extra workaround: if CONTEXT_EXCEPTION_ACTIVE  */
+            /* then Sleep(1) and retry.                                   */
+            t->context_sp = copy_ptr_regs(t->context_regs, &context);
+            break; /* success; the context pointer registers are saved */
+          }
+
+          /* Resume the thread, try to suspend it in a better location. */
+          if (ResumeThread(t->handle) == (DWORD)-1)
+            ABORT("ResumeThread failed in suspend loop");
         }
 
-        /* Resume the thread, try to suspend it in a better location.   */
-        if (ResumeThread(t->handle) == (DWORD)-1)
-          ABORT("ResumeThread failed in suspend loop");
-      }
-      if (retry_cnt > 1) {
-        GC_release_dirty_lock();
-        Sleep(0); /* yield */
-        GC_acquire_dirty_lock();
-      }
-      if (++retry_cnt >= MAX_SUSPEND_THREAD_RETRIES)
-        ABORT("SuspendThread loop failed"); /* something must be wrong */
-    }
-# else
-    if (GetExitCodeThread(t -> handle, &exitCode)
-        && exitCode != STILL_ACTIVE) {
-      GC_release_dirty_lock();
-#     ifdef GC_PTHREADS
-        t -> stack_base = 0; /* prevent stack from being pushed */
-#     else
-        GC_ASSERT(GC_win32_dll_threads);
-        GC_delete_gc_thread_no_free(t);
+        if (retry_cnt > 1) {
+          GC_release_dirty_lock();
+          Sleep(0); /* yield */
+          GC_acquire_dirty_lock();
+        }
+        if (++retry_cnt >= MAX_SUSPEND_THREAD_RETRIES)
+          ABORT("SuspendThread loop failed"); /* something must be wrong */
 #     endif
-      return;
     }
-    if (SuspendThread(t -> handle) == (DWORD)-1)
-      ABORT("SuspendThread failed");
 # endif
   t -> suspended = (unsigned char)TRUE;
   GC_release_dirty_lock();
@@ -1309,9 +1343,6 @@ GC_INNER void GC_stop_world(void)
     }
 # endif /* PARALLEL_MARK */
 
-# if !defined(GC_NO_THREADS_DISCOVERY) || defined(GC_ASSERTIONS)
-    GC_please_stop = TRUE;
-# endif
 # ifndef CYGWIN32
     GC_ASSERT(!GC_write_disabled);
     EnterCriticalSection(&GC_write_cs);
@@ -1323,19 +1354,32 @@ GC_INNER void GC_stop_world(void)
       GC_write_disabled = TRUE;
 #   endif
 # endif
+
 # ifndef GC_NO_THREADS_DISCOVERY
     if (GC_win32_dll_threads) {
       int i;
       int my_max;
+
+      DETACH_THREAD_LOCK();
+      GC_please_stop = TRUE;
+      DETACH_THREAD_UNLOCK();
+
       /* Any threads being created during this loop will end up setting */
       /* GC_attached_thread when they start.  This will force marking   */
       /* to restart.  This is not ideal, but hopefully correct.         */
       AO_store(&GC_attached_thread, FALSE);
+
       my_max = (int)GC_get_max_thread_index();
       for (i = 0; i <= my_max; i++) {
         GC_vthread t = dll_thread_table + i;
         if (t -> stack_base != 0 && t -> thread_blocked_sp == NULL
             && t -> id != thread_id) {
+          /* A race with GC_DllMain() in accessing                      */
+          /* pending_delete_thread is fine.                             */
+          if (EXPECT(*(volatile GC_bool *)&(t -> pending_delete_thread),
+                     FALSE))
+            continue;
+
           GC_suspend((GC_thread)t);
         }
       }
@@ -1345,6 +1389,9 @@ GC_INNER void GC_stop_world(void)
     GC_thread t;
     int i;
 
+#   ifdef GC_ASSERTIONS
+      GC_please_stop = TRUE;
+#   endif
     for (i = 0; i < THREAD_TABLE_SZ; i++) {
       for (t = GC_threads[i]; t != 0; t = t -> tm.next) {
         if (t -> stack_base != 0 && t -> thread_blocked_sp == NULL
@@ -1373,20 +1420,41 @@ GC_INNER void GC_start_world(void)
 # endif
 
   GC_ASSERT(I_HOLD_LOCK());
+#ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     LONG my_max = GC_get_max_thread_index();
     int i;
+    GC_bool pending_delete;
 
     for (i = 0; i <= my_max; i++) {
       GC_thread t = (GC_thread)(dll_thread_table + i);
       if (t -> suspended) {
         GC_ASSERT(t -> stack_base != 0 && t -> id != thread_id);
-        if (ResumeThread(THREAD_HANDLE(t)) == (DWORD)-1)
+        if (ResumeThread(t -> handle) == (DWORD)-1)
           ABORT("ResumeThread failed");
         t -> suspended = FALSE;
       }
     }
-  } else {
+
+    DETACH_THREAD_LOCK();
+    GC_please_stop = FALSE;
+    pending_delete = GC_has_pending_delete_threads;
+    DETACH_THREAD_UNLOCK();
+    if (EXPECT(pending_delete, FALSE)) {
+      GC_has_pending_delete_threads = FALSE;
+      my_max = GC_get_max_thread_index(); /* a reload */
+      for (i = 0; i <= my_max; i++) {
+        GC_thread p = (/* no volatile */ GC_thread)(dll_thread_table + i);
+
+        if (p -> pending_delete_thread) {
+          p -> pending_delete_thread = FALSE;
+          GC_delete_gc_thread_no_free(p);
+        }
+      }
+    }
+  } else
+#endif
+  /* else */ {
     GC_thread t;
     int i;
 
@@ -1401,10 +1469,10 @@ GC_INNER void GC_start_world(void)
         }
       }
     }
+#   ifdef GC_ASSERTIONS
+      GC_please_stop = FALSE;
+#   endif
   }
-# if !defined(GC_NO_THREADS_DISCOVERY) || defined(GC_ASSERTIONS)
-    GC_please_stop = FALSE;
-# endif
 }
 
 #ifdef MSWINCE
@@ -1531,6 +1599,13 @@ STATIC word GC_push_stack_for(GC_thread thread, DWORD me)
 
   struct GC_traced_stack_sect_s *traced_stack_sect =
                                       thread -> traced_stack_sect;
+# ifndef GC_NO_THREADS_DISCOVERY
+    /* If the thread is scheduled for deletion, do not scan its stack.  */
+    /* A race with GC_DllMain() in accessing pending_delete_thread is   */
+    /* fine.                                                            */
+    if (EXPECT(*(volatile GC_bool *)&(thread -> pending_delete_thread), FALSE))
+      return 0;
+# endif
   if (thread -> id == me) {
     GC_ASSERT(thread -> thread_blocked_sp == NULL);
     sp = GC_approx_sp();
@@ -2961,7 +3036,28 @@ GC_INNER void GC_thr_init(void)
        case DLL_THREAD_DETACH:
         /* We are hopefully running in the context of the exiting thread. */
         if (GC_win32_dll_threads) {
-          GC_delete_thread(GetCurrentThreadId());
+          GC_vthread t = GC_lookup_thread_inner(GetCurrentThreadId());
+
+          if (NULL == t) {
+            WARN("Removing nonexistent thread, id = %" WARN_PRIdPTR "\n",
+                 GetCurrentThreadId());
+          } else {
+            DETACH_THREAD_LOCK();
+            if (EXPECT(GC_please_stop, FALSE)) {
+              GC_has_pending_delete_threads = TRUE;
+              t -> pending_delete_thread = TRUE;
+              t = NULL;
+            } else {
+              /* Indicate (before unlocking) that the thread is under   */
+              /* deletion.                                              */
+              t -> stack_base = NULL;
+            }
+            /* It should be fine even in case of the current thread is  */
+            /* suspended while holding the lock.                        */
+            DETACH_THREAD_UNLOCK();
+            if (EXPECT(t != NULL, TRUE))
+              GC_delete_gc_thread_no_free(t);
+          }
         }
         break;
 
