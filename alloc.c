@@ -360,7 +360,7 @@ min_bytes_allocd(void)
 
   GC_ASSERT(I_HOLD_LOCK());
 #ifdef THREADS
-  if (GC_need_to_lock) {
+  if (GC_has_running_threads()) {
     /* We are multi-threaded... */
     stack_size = GC_total_stacksize;
     /*

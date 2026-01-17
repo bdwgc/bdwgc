@@ -337,29 +337,31 @@ GC_EXTERN volatile unsigned char GC_collecting;
 #      endif
 #    endif
 #  endif /* GC_PTHREADS */
+
 #  if defined(GC_ALWAYS_MULTITHREADED) \
       && (defined(USE_PTHREAD_LOCKS) || defined(USE_SPIN_LOCK))
 #    define GC_need_to_lock TRUE
-#    define set_need_to_lock() (void)0
 #  else
 #    if defined(GC_ALWAYS_MULTITHREADED) && !defined(CPPCHECK)
 #      error Runtime initialization of the allocator lock is needed!
 #    endif
 #    undef GC_ALWAYS_MULTITHREADED
-#    ifdef THREAD_SANITIZER
+#    define GC_need_to_lock GC_need_to_lock_real
+#  endif
+
+#  ifdef THREAD_SANITIZER
 /*
- * To workaround TSan false positive (e.g., when `GC_pthread_create()` is
- * called from multiple threads in parallel), do not set `GC_need_to_lock`
- * if it is already set.
+ * To workaround TSan false positive (e.g., when `GC_pthread_create()`
+ * is called from multiple threads in parallel), do not set
+ * `GC_need_to_lock_real` if it is already set.
  */
-#      define set_need_to_lock()                     \
-        (void)(*(GC_bool volatile *)&GC_need_to_lock \
-                   ? FALSE                           \
-                   : (GC_need_to_lock = TRUE))
-#    else
-#      define set_need_to_lock() (void)(GC_need_to_lock = TRUE)
+#    define set_need_to_lock()                          \
+      (void)(*(GC_bool volatile *)&GC_need_to_lock_real \
+                 ? FALSE                                \
+                 : (GC_need_to_lock_real = TRUE))
+#  else
 /* We are multi-threaded now. */
-#    endif
+#    define set_need_to_lock() (void)(GC_need_to_lock_real = TRUE)
 #  endif
 
 EXTERN_C_END

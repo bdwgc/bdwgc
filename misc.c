@@ -1059,9 +1059,7 @@ GC_init(void)
    * do not hold any locks, and can safely initialize them here.
    */
 #ifdef THREADS
-#  ifndef GC_ALWAYS_MULTITHREADED
-  GC_ASSERT(!GC_need_to_lock);
-#  endif
+  GC_ASSERT(!GC_need_to_lock_real);
   {
 #  if !defined(GC_BUILTIN_ATOMIC) && defined(HP_PA) \
       && (defined(USE_SPIN_LOCK) || defined(NEED_FAULT_HANDLER_LOCK))

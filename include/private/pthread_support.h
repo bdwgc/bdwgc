@@ -384,19 +384,6 @@ GC_EXTERN GC_on_thread_event_proc GC_on_thread_event;
 
 #  ifdef GC_WIN32_THREADS
 
-#    ifdef GC_NO_THREADS_DISCOVERY
-#      define GC_win32_dll_threads FALSE
-#    elif defined(GC_DISCOVER_TASK_THREADS)
-#      define GC_win32_dll_threads TRUE
-#    else
-/*
- * `GC_win32_dll_threads` must be set (if needed) at the application
- * initialization time, i.e. before any collector or thread calls.
- * We make it a "dynamic" option only to avoid multiple library versions.
- */
-GC_EXTERN GC_bool GC_win32_dll_threads;
-#    endif
-
 #    ifdef PARALLEL_MARK
 GC_EXTERN int GC_available_markers_m1;
 
