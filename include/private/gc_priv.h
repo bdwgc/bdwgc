@@ -2310,7 +2310,7 @@ struct _GC_arrays {
   unsigned32 _stopped_mark_total_ns_frac;
 #endif
 
-#ifdef GC_WIN32_THREADS
+#if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
   /* Largest index in `dll_thread_table` that was ever used. */
 #  define GC_max_thread_index GC_arrays._max_thread_index
   volatile LONG _max_thread_index;

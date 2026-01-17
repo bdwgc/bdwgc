@@ -62,62 +62,7 @@ static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext);
 #    ifndef GC_DISCOVER_TASK_THREADS
 GC_INNER GC_bool GC_win32_dll_threads = FALSE;
 #    endif
-#  else
-/*
- * If not `GC_win32_dll_threads` (or the collector is built without `GC_DLL`
- * macro defined), things operate in a way that is very similar to POSIX
- * platforms, and new threads must be registered with the collector,
- * e.g. by using preprocessor-based interception of the thread primitives.
- * In this case, we use a real data structure for the thread table.
- * Note that there is no equivalent of linker-based call interception,
- * since we do not have ELF-like facilities.  The Windows analog appears
- * to be "API hooking", which really seems to be a standard way to do minor
- * binary rewriting (?).  I would prefer not to have the basic collector
- * rely on such facilities, but an optional package that intercepts thread
- * calls this way would probably be nice.
- */
-#    undef MAX_THREADS
-/* `dll_thread_table[]` is always empty. */
-#    define MAX_THREADS 1
-#  endif /* GC_NO_THREADS_DISCOVERY */
 
-/*
- * We have two variants of the thread table.  Which one we use depends
- * on whether `GC_win32_dll_threads` is set.  Note that before the
- * initialization, we do not add any entries to either table, even
- * if `DllMain()` is called.  The main thread will be added on the
- * collector initialization.
- */
-
-GC_API void GC_CALL
-GC_use_threads_discovery(void)
-{
-#  ifdef GC_NO_THREADS_DISCOVERY
-  /*
-   * `GC_use_threads_discovery()` is currently incompatible with
-   * `pthreads` and WinCE.  It might be possible to get `DllMain`-based
-   * thread registration to work with Cygwin, but if you try it then
-   * you are on your own.
-   */
-  ABORT("GC DllMain-based thread registration unsupported");
-#  else
-  /* Turn on `GC_win32_dll_threads`. */
-  GC_ASSERT(!GC_is_initialized);
-  /*
-   * Note that `GC_use_threads_discovery()` is expected to be called by
-   * the client application (not from `DllMain()`) at start-up.
-   */
-#    ifndef GC_DISCOVER_TASK_THREADS
-  GC_win32_dll_threads = TRUE;
-#    endif
-  GC_init();
-#    ifdef CPPCHECK
-  GC_noop1((word)(GC_funcptr_uint)(&GC_DllMain));
-#    endif
-#  endif
-}
-
-#  ifndef GC_NO_THREADS_DISCOVERY
 /*
  * We track thread attachments while the world is supposed to be stopped.
  * Unfortunately, we cannot stop them from starting, since blocking in
@@ -156,6 +101,56 @@ STATIC volatile GC_bool GC_please_stop = FALSE;
 STATIC GC_bool GC_please_stop = FALSE;
 #  endif /* GC_NO_THREADS_DISCOVERY && GC_ASSERTIONS */
 
+/*
+ * If not `GC_win32_dll_threads` (or the collector is built without `GC_DLL`
+ * macro defined), things operate in a way that is very similar to POSIX
+ * platforms, and new threads must be registered with the collector,
+ * e.g. by using preprocessor-based interception of the thread primitives.
+ * In this case, we use a real data structure for the thread table.
+ * Note that there is no equivalent of linker-based call interception,
+ * since we do not have ELF-like facilities.  The Windows analog appears
+ * to be "API hooking", which really seems to be a standard way to do minor
+ * binary rewriting (?).  I would prefer not to have the basic collector
+ * rely on such facilities, but an optional package that intercepts thread
+ * calls this way would probably be nice.
+ */
+
+/*
+ * We have two variants of the thread table.  Which one we use depends
+ * on whether `GC_win32_dll_threads` is set.  Note that before the
+ * initialization, we do not add any entries to either table, even
+ * if `DllMain()` is called.  The main thread will be added on the
+ * collector initialization.
+ */
+
+GC_API void GC_CALL
+GC_use_threads_discovery(void)
+{
+#  ifdef GC_NO_THREADS_DISCOVERY
+  /*
+   * `GC_use_threads_discovery()` is currently incompatible with
+   * `pthreads` and WinCE.  It might be possible to get `DllMain`-based
+   * thread registration to work with Cygwin, but if you try it then
+   * you are on your own.
+   */
+  ABORT("GC DllMain-based thread registration unsupported");
+#  else
+  /* Turn on `GC_win32_dll_threads`. */
+  GC_ASSERT(!GC_is_initialized);
+  /*
+   * Note that `GC_use_threads_discovery()` is expected to be called by
+   * the client application (not from `DllMain()`) at start-up.
+   */
+#    ifndef GC_DISCOVER_TASK_THREADS
+  GC_win32_dll_threads = TRUE;
+#    endif
+  GC_init();
+#    ifdef CPPCHECK
+  GC_noop1((word)(GC_funcptr_uint)(&GC_DllMain));
+#    endif
+#  endif
+}
+
 #  if defined(WRAP_MARK_SOME) && !defined(GC_PTHREADS)
 GC_INNER GC_bool
 GC_started_thread_while_stopped(void)
@@ -181,21 +176,21 @@ GC_started_thread_while_stopped(void)
 }
 #  endif /* WRAP_MARK_SOME */
 
+#  ifndef GC_NO_THREADS_DISCOVERY
 /*
  * The thread table used if `GC_win32_dll_threads`.  This is a fixed-size
  * array.  Since we use runtime conditionals, both variants are always
  * defined.
  */
-#  ifndef MAX_THREADS
-#    define MAX_THREADS 512
-#  endif
+#    ifndef MAX_THREADS
+#      define MAX_THREADS 512
+#    endif
 
 /*
  * Things may get quite slow for large numbers of threads,
  * since we look them up with the sequential search.
  */
 static volatile struct GC_Thread_Rep dll_thread_table[MAX_THREADS];
-#  ifndef GC_NO_THREADS_DISCOVERY
 static struct GC_StackContext_Rep dll_crtn_table[MAX_THREADS];
 #  endif
 
@@ -330,25 +325,23 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
   return me;
 }
 
+#  ifndef GC_NO_THREADS_DISCOVERY
 /*
  * `GC_max_thread_index` may temporarily be larger than `MAX_THREADS`.
  * To avoid subscript errors, we check it on access.
  */
-GC_INLINE LONG
+GC_INLINE int
 GC_get_max_thread_index(void)
 {
-  LONG my_max = GC_max_thread_index;
-  if (UNLIKELY(my_max >= MAX_THREADS))
-    return MAX_THREADS - 1;
-  return my_max;
+  int my_max = (int)GC_max_thread_index;
+
+  return LIKELY(my_max < MAX_THREADS) ? my_max : MAX_THREADS - 1;
 }
 
-#  ifndef GC_NO_THREADS_DISCOVERY
 GC_INNER GC_thread
 GC_win32_dll_lookup_thread(thread_id_t id)
 {
-  int i;
-  LONG my_max = GC_get_max_thread_index();
+  int i, my_max = GC_get_max_thread_index();
 
   GC_ASSERT(GC_win32_dll_threads);
   for (i = 0; i <= my_max; i++) {
@@ -587,8 +580,7 @@ GC_stop_world(void)
 
 #  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
-    int i;
-    int my_max;
+    int i, my_max;
 
     DETACH_THREAD_LOCK();
     GC_please_stop = TRUE;
@@ -601,7 +593,7 @@ GC_stop_world(void)
      */
     AO_store(&GC_attached_thread, FALSE);
 
-    my_max = (int)GC_get_max_thread_index();
+    my_max = GC_get_max_thread_index();
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
 
@@ -655,8 +647,7 @@ GC_start_world(void)
   GC_ASSERT(I_HOLD_LOCK());
 #  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
-    LONG my_max = GC_get_max_thread_index();
-    int i;
+    int i, my_max = GC_get_max_thread_index();
     GC_bool pending_delete;
 
     for (i = 0; i <= my_max; i++) {
@@ -1126,8 +1117,7 @@ GC_push_all_stacks(void)
   GC_ASSERT(GC_thr_initialized);
 #  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
-    int i;
-    LONG my_max = GC_get_max_thread_index();
+    int i, my_max = GC_get_max_thread_index();
 
     for (i = 0; i <= my_max; i++) {
       GC_thread p = (GC_thread)(dll_thread_table + i);
@@ -1143,6 +1133,7 @@ GC_push_all_stacks(void)
 #  endif
   /* else */ {
     int i;
+
     for (i = 0; i < THREAD_TABLE_SZ; i++) {
       GC_thread p;
 
@@ -1174,7 +1165,6 @@ GC_INNER ptr_t GC_marker_last_stack_min[MAX_MARKERS - 1] = { NULL };
 GC_INNER void
 GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
 {
-  int i;
   /* Least in-range stack base. */
   ptr_t current_min = ADDR_LIMIT;
   /*
@@ -1190,8 +1180,9 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
 
   GC_ASSERT(I_HOLD_LOCK());
   /* First set `current_min`, ignoring `limit`. */
+#  ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
-    LONG my_max = GC_get_max_thread_index();
+    int i, my_max = GC_get_max_thread_index();
 
     for (i = 0; i <= my_max; i++) {
       ptr_t stack_end = (ptr_t)dll_thread_table[i].crtn->stack_end;
@@ -1200,13 +1191,17 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
         /* Update address of `last_stack_min`. */
         plast_stack_min = &dll_thread_table[i].crtn->last_stack_min;
         current_min = stack_end;
-#  ifdef CPPCHECK
+#    ifdef CPPCHECK
         /* To avoid a warning that thread is always null. */
         thread = (GC_thread)&dll_thread_table[i];
-#  endif
+#    endif
       }
     }
-  } else {
+  } else
+#  endif
+  /* else */ {
+    int i;
+
     for (i = 0; i < THREAD_TABLE_SZ; i++) {
       GC_thread p;
 
@@ -2068,8 +2063,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
   case DLL_PROCESS_DETACH:
     /* Do nothing on process exit, all handles will be closed automatically. */
     if (GC_win32_dll_threads && NULL == reserved) {
-      int i;
-      int my_max = (int)GC_get_max_thread_index();
+      int i, my_max = GC_get_max_thread_index();
 
       for (i = 0; i <= my_max; ++i) {
         if (AO_load(&dll_thread_table[i].tm.in_use))
