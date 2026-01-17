@@ -135,9 +135,7 @@ GC_use_threads_discovery(void)
 #  ifdef GC_NO_THREADS_DISCOVERY
   ABORT("Darwin task-threads-based stop and push unsupported");
 #  else
-#    ifndef GC_ALWAYS_MULTITHREADED
-  GC_ASSERT(!GC_need_to_lock);
-#    endif
+  GC_ASSERT(!GC_need_to_lock_real);
 #    ifndef GC_DISCOVER_TASK_THREADS
   GC_query_task_threads = TRUE;
 #    endif

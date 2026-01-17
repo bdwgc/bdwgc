@@ -2550,8 +2550,12 @@ GC_register_my_thread(const struct GC_stack_base *sb)
 {
   GC_thread me;
 
+#  ifdef GC_ALWAYS_MULTITHREADED
+  set_need_to_lock();
+#  else
   if (!GC_need_to_lock)
     ABORT("Threads explicit registering is not previously enabled");
+#  endif
 
   /* We lock here, since we want to wait for an ongoing GC. */
   LOCK();

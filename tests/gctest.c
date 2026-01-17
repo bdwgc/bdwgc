@@ -1991,7 +1991,7 @@ run_one_test(void)
   }
 #endif
   /*
-   * `GC_allocate_ml` and `GC_need_to_lock` are not exported, and
+   * `GC_allocate_ml` and `GC_need_to_lock_real` are not exported, and
    * `AO_fetch_and_add1()` may be unavailable to update a counter.
    */
   (void)GC_call_with_alloc_lock(inc_int_counter, &n_tests);

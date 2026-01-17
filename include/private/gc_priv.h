@@ -1893,11 +1893,9 @@ struct _GC_arrays {
       GC_arrays._dll_main_detach_thread_lock
   volatile AO_TS_t _dll_main_detach_thread_lock;
 #  endif
-#  if !(defined(GC_ALWAYS_MULTITHREADED) \
-        && (defined(USE_PTHREAD_LOCKS) || defined(USE_SPIN_LOCK)))
-#    define GC_need_to_lock GC_arrays._need_to_lock
-  GC_bool _need_to_lock;
-#  endif
+
+#  define GC_need_to_lock_real GC_arrays._need_to_lock_real
+  GC_bool _need_to_lock_real;
 
 #  ifdef GC_ASSERTIONS
 #    define GC_thr_initialized GC_arrays._thr_initialized
@@ -4069,6 +4067,7 @@ GC_INNER void GC_init_win32(void);
 #endif
 
 #ifdef THREADS
+
 #  if (defined(MSWIN32) && !defined(CONSOLE_LOG)) || defined(MSWINCE)
 GC_EXTERN CRITICAL_SECTION GC_write_cs;
 #    ifdef GC_ASSERTIONS
@@ -4079,6 +4078,7 @@ GC_EXTERN CRITICAL_SECTION GC_write_cs;
 GC_EXTERN GC_bool GC_write_disabled;
 #    endif
 #  endif /* MSWIN32 || MSWINCE */
+
 #  ifdef NEED_FAULT_HANDLER_LOCK
 /*
  * Acquire the spin lock we use to update dirty bits.  Threads should
@@ -4093,9 +4093,34 @@ GC_EXTERN GC_bool GC_write_disabled;
 #    define GC_acquire_dirty_lock() (void)0
 #    define GC_release_dirty_lock() (void)0
 #  endif
+
+#  ifdef GC_WIN32_THREADS
+#    ifdef GC_NO_THREADS_DISCOVERY
+#      define GC_win32_dll_threads FALSE
+#    elif defined(GC_DISCOVER_TASK_THREADS)
+#      define GC_win32_dll_threads TRUE
+#    else
+/*
+ * `GC_win32_dll_threads` must be set (if needed) at the application
+ * initialization time, i.e. before any collector or thread calls.
+ * We make it a "dynamic" option only to avoid multiple library versions.
+ */
+GC_EXTERN GC_bool GC_win32_dll_threads;
+#    endif
+#  endif
+
+/* This returns `FALSE` until a thread is created (or attached), at least. */
+#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#    define GC_has_running_threads() \
+      (GC_win32_dll_threads ? GC_max_thread_index > 1 : GC_need_to_lock_real)
+#  else
+#    define GC_has_running_threads() GC_need_to_lock_real
+#  endif
+
 #  ifdef MSWINCE
 GC_EXTERN GC_bool GC_dont_query_stack_min;
 #  endif
+
 #endif /* THREADS */
 
 #ifdef THREAD_LOCAL_ALLOC
