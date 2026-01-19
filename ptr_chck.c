@@ -146,7 +146,6 @@ GC_default_is_visible_print_proc(void *p)
 GC_valid_ptr_print_proc_t GC_is_visible_print_proc
     = GC_default_is_visible_print_proc;
 
-#ifndef THREADS
 /* Could `p` be a stack address? */
 STATIC GC_bool
 GC_on_stack(ptr_t p)
@@ -161,10 +160,10 @@ GC_is_static_root(ptr_t p)
   static size_t last_static_root_set = MAX_ROOT_SETS;
   size_t i;
 
-#  if defined(CPPCHECK)
+#ifdef CPPCHECK
   if (n_root_sets > MAX_ROOT_SETS)
     ABORT("Bad n_root_sets");
-#  endif
+#endif
   if (last_static_root_set < n_root_sets
       && ADDR_INSIDE(p, GC_static_roots[last_static_root_set].r_start,
                      GC_static_roots[last_static_root_set].r_end))
@@ -177,7 +176,6 @@ GC_is_static_root(ptr_t p)
   }
   return FALSE;
 }
-#endif /* !THREADS */
 
 GC_API void *GC_CALL
 GC_is_visible(void *p)
@@ -188,32 +186,38 @@ GC_is_visible(void *p)
     goto fail;
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
-#ifdef THREADS
   hhdr = HDR(p);
-  if (hhdr != NULL && NULL == GC_base(p)) {
-    goto fail;
-  } else {
-    /* May be inside thread stack.  We cannot do much. */
+#ifdef THREADS
+  if (GC_has_running_threads()) {
+    if (hhdr != NULL && NULL == GC_base(p))
+      goto fail;
+    /* May be inside a thread's stack.  We cannot do much. */
     return p;
   }
-#else
-  /* Check stack first. */
-  if (GC_on_stack((ptr_t)p))
-    return p;
-
-  hhdr = HDR(p);
+#endif
   if (NULL == hhdr) {
+    /* Check stack first. */
+    if (GC_on_stack((ptr_t)p))
+      return p;
+
     if (GC_is_static_root((ptr_t)p)) {
       return p;
     }
     /* Else do it again correctly. */
-#  if defined(ANY_MSWIN) || defined(DYNAMIC_LOADING)
+#if defined(ANY_MSWIN) || defined(DYNAMIC_LOADING)
     if (!GC_no_dls) {
+#  ifdef GC_ASSERTIONS
+      /* Just to set `GC_lock_holder`. */
+      LOCK();
+#  endif
       GC_register_dynamic_libraries();
+#  ifdef GC_ASSERTIONS
+      UNLOCK();
+#  endif
       if (GC_is_static_root((ptr_t)p))
         return p;
     }
-#  endif
+#endif
   } else {
     /* `p` points to the heap. */
     word descr;
@@ -234,10 +238,10 @@ GC_is_visible(void *p)
     case GC_DS_BITMAP:
       if ((ptr_t)p - base >= (ptrdiff_t)PTRS_TO_BYTES(BITMAP_BITS))
         goto fail;
-#  if ALIGNMENT != CPP_PTRSZ / 8
+#if ALIGNMENT != CPP_PTRSZ / 8
       if ((ADDR(p) & (sizeof(ptr_t) - 1)) != 0)
         goto fail;
-#  endif
+#endif
       if (!(((word)1 << (CPP_WORDSZ - 1 - (word)((ptr_t)p - base))) & descr))
         goto fail;
       break;
@@ -262,7 +266,6 @@ GC_is_visible(void *p)
     }
     return p;
   }
-#endif
 fail:
   GC_is_visible_print_proc((ptr_t)p);
   return p;
