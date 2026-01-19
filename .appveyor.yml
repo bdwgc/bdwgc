@@ -42,7 +42,7 @@ environment:
     CFLAGS_EXTRA: -DCONSOLE_LOG -DNO_GWW_VDB
     CMAKE_OPTIONS: -DGC_BUILD_SHARED_LIBS=OFF -Denable_cplusplus=ON -Denable_gc_assertions=ON -Denable_gc_debug=ON -Denable_large_config=ON -Denable_threads=OFF
   - TARGET: cmake-bcc
-    CFLAGS_EXTRA: -DCONSOLE_LOG
+    CFLAGS_EXTRA: -DCONSOLE_LOG -DTEST_NO_THREADS
     CMAKE_CONFIG: Release
     CMAKE_OPTIONS: -DGC_BUILD_SHARED_LIBS=OFF
   - TARGET: cmake-mingw
