@@ -44,7 +44,7 @@ jobs:
           build_type: MinSizeRel
           c_compiler: gcc
           shared_libs: on
-          cmake_options: -Denable_large_config=on
+          cmake_options: -Denable_large_config=on -DCFLAGS_EXTRA=-DTEST_NO_THREADS
         - os: ubuntu-latest
           build_type: MinSizeRel
           c_compiler: gcc
