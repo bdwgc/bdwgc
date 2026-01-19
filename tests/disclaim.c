@@ -85,7 +85,7 @@ misc_sizes_dct(void *obj, void *cd)
   my_assert(cd == NULL);
   size = (size_t)1 << log_size;
   my_assert(is_equal((char *)obj + 1, MEM_FILL_BYTE, size - 1));
-#if defined(CPPCHECK)
+#ifdef CPPCHECK
   GC_noop1_ptr(cd);
 #endif
 }
@@ -152,7 +152,7 @@ pair_dct(void *obj, void *cd)
   p->checksum = 0;
   p->car = NULL;
   p->cdr = NULL;
-#if defined(CPPCHECK)
+#ifdef CPPCHECK
   GC_noop1_ptr(cd);
 #endif
 }
@@ -199,7 +199,7 @@ pair_check_rec(pair_t p)
   }
 }
 
-#ifdef GC_PTHREADS
+#if defined(GC_PTHREADS) && !defined(TEST_NO_THREADS)
 #  ifndef NTHREADS
 /* Note: this excludes the main thread, which also runs a test. */
 #    define NTHREADS 5

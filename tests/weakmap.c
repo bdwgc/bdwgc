@@ -28,6 +28,10 @@
 #define NOT_GCBUILD
 #include "private/gc_priv.h"
 
+#ifdef TEST_NO_THREADS
+#  undef GC_PTHREADS
+#endif
+
 #include <string.h>
 
 #ifdef GC_PTHREADS
@@ -183,7 +187,7 @@ static void *GC_CALLBACK
 set_mark_bit(void *obj)
 {
   GC_set_mark_bit(obj);
-#if defined(CPPCHECK)
+#ifdef CPPCHECK
   GC_noop1_ptr(obj);
 #endif
   return NULL;
@@ -342,7 +346,7 @@ weakmap_new(size_t capacity, size_t key_size, size_t obj_size,
     for (i = 0; i < WEAKMAP_MUTEX_COUNT; ++i) {
       int err = pthread_mutex_init(&wm->mutex[i], NULL);
 
-      my_assert(err == 0);
+      my_assert(0 == err);
     }
   }
 #endif
