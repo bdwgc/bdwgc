@@ -45,8 +45,10 @@ main(void)
     CHECK_OUT_OF_MEMORY(GC_malloc(ALLOC_SZ));
   }
 
+#ifndef TEST_NO_THREADS
   /* Test delayed start of marker threads, if they are enabled. */
   GC_start_mark_threads();
+#endif
 
   for (i = 0; i < N_TESTS; ++i) {
     CHECK_OUT_OF_MEMORY(GC_malloc_atomic(ALLOC_SZ / 2));

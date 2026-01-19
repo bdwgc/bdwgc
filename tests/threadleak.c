@@ -3,23 +3,25 @@
 #  include "config.h"
 #endif
 
-#ifndef GC_THREADS
+#if !defined(GC_THREADS) && !defined(TEST_NO_THREADS)
 #  define GC_THREADS
 #endif
 
 #undef GC_NO_THREAD_REDIRECTS
 #include "gc/leak_detector.h"
 
-#ifdef GC_PTHREADS
-#  include <errno.h> /*< for `EAGAIN` */
-#  include <pthread.h>
-#else
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN 1
+#ifndef TEST_NO_THREADS
+#  ifdef GC_PTHREADS
+#    include <errno.h> /*< for `EAGAIN` */
+#    include <pthread.h>
+#  else
+#    ifndef WIN32_LEAN_AND_MEAN
+#      define WIN32_LEAN_AND_MEAN 1
+#    endif
+#    define NOSERVICE
+#    include <windows.h>
 #  endif
-#  define NOSERVICE
-#  include <windows.h>
-#endif /* !GC_PTHREADS */
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,8 +61,13 @@ test(LPVOID arg)
 #endif
 }
 
-#ifndef NTHREADS
-#  define NTHREADS 5
+#ifndef TEST_NO_THREADS
+#  ifndef NTHREADS
+#    define NTHREADS 5
+#  endif
+#else
+#  undef NTHREADS
+#  define NTHREADS 0
 #endif
 
 int

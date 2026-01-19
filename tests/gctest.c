@@ -89,6 +89,14 @@
 #define NOT_GCBUILD
 #include "private/gc_priv.h"
 
+#ifdef TEST_NO_THREADS
+#  undef THREADS
+#  undef GC_PTHREADS
+#  undef GC_WIN32_PTHREADS
+#  undef GC_WIN32_THREADS
+#  undef THREAD_LOCAL_ALLOC
+#endif
+
 #if defined(GC_PRINT_VERBOSE_STATS) || defined(GCTEST_PRINT_VERBOSE)
 #  define print_stats VERBOSE
 #  define INIT_PRINT_STATS (void)0
