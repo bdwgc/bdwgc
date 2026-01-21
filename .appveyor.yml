@@ -26,6 +26,7 @@ environment:
     CMAKE_CONFIG: Release
     CMAKE_OPTIONS: -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=MinSizeRel -Denable_parallel_mark=OFF
   - TARGET: cmake
+    CFLAGS_EXTRA: -DGC_DISCOVER_TASK_THREADS
     CMAKE_OPTIONS: -Denable_gc_assertions=ON -Denable_thread_local_alloc=OFF -Ddisable_single_obj_compilation=ON
   - TARGET: cmake
     CFLAGS_EXTRA: -DGC_DISABLE_INCREMENTAL
