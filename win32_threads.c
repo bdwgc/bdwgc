@@ -1839,6 +1839,9 @@ GC_thr_init(void)
 {
   struct GC_stack_base sb;
   thread_id_t self_id = GetCurrentThreadId();
+#  ifdef PARALLEL_MARK
+  int markers = 1;
+#  endif
 #  if (!defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID) && !defined(MSWINCE) \
        && defined(PARALLEL_MARK))                                      \
       || defined(WOW64_THREAD_CONTEXT_WORKAROUND)
@@ -1879,11 +1882,11 @@ GC_thr_init(void)
   sb.reg_base = GC_register_stackbottom;
 #  endif
 
-#  if defined(PARALLEL_MARK)
-  {
+#  ifdef PARALLEL_MARK
+  if (!GC_win32_dll_threads) {
     const char *markers_string = GETENV("GC_MARKERS");
-    int markers = GC_required_markers_cnt;
 
+    markers = GC_required_markers_cnt;
     if (markers_string != NULL) {
       markers = atoi(markers_string);
       if (markers <= 0 || markers > MAX_MARKERS) {
@@ -1940,11 +1943,11 @@ GC_thr_init(void)
         markers = MAX_MARKERS;
       }
     }
-    GC_available_markers_m1 = markers - 1;
   }
+  GC_available_markers_m1 = markers - 1;
 
   /* Check whether parallel mode could be enabled. */
-  if (GC_win32_dll_threads || GC_available_markers_m1 <= 0) {
+  if (GC_available_markers_m1 <= 0) {
     /* Disable parallel marking. */
     GC_parallel = FALSE;
     GC_COND_LOG_PRINTF("Single marker thread, turning off parallel marking\n");
