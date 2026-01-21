@@ -1309,30 +1309,8 @@ STATIC void GC_suspend(GC_thread t)
         }
 
         /* Resume the thread, try to suspend it in a better location.   */
-        if (ResumeThread(t->handle) == (DWORD)-1) {
-#         ifndef GC_NO_THREADS_DISCOVERY
-          if (0 == AO_load_acquire((volatile AO_t *)&t->handle)) {
-            /* It might be the scenario like this:                          */
-            /* 1. GC_suspend calls SuspendThread on a valid handle;         */
-            /* 2. Within the SuspendThread call a context switch occurs     */
-            /*    to DllMain (before the thread has actually been           */
-            /*    suspended);                                               */
-            /* 3. DllMain sets t->handle to NULL, but does not yet close    */
-            /*    the handle;                                               */
-            /* 4. A context switch occurs returning to SuspendThread        */
-            /*    which completes on the handle that was originally         */
-            /*    passed into it;                                           */
-            /* 5. Then ResumeThread attempts to run on t->handle which is   */
-            /*    now NULL.                                                 */
-            GC_release_dirty_lock();
-            /* FIXME: the thread seems to be suspended forever (causing     */
-            /* a resource leak).                                            */
-            WARN("ResumeThread failed (async CloseHandle by DllMain)\n", 0);
-            return;
-          }
-#         endif
+        if (ResumeThread(t->handle) == (DWORD)-1)
           ABORT("ResumeThread failed in suspend loop");
-        }
       } else {
 #      ifndef GC_NO_THREADS_DISCOVERY
          if (0 == AO_load_acquire((volatile AO_t *)&t->handle)) {
@@ -1470,7 +1448,6 @@ GC_INNER void GC_start_world(void)
 # endif
 
   GC_ASSERT(I_HOLD_LOCK());
-# ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     LONG my_max = GC_get_max_thread_index();
     int i;
@@ -1479,22 +1456,14 @@ GC_INNER void GC_start_world(void)
       GC_thread t = (GC_thread)(dll_thread_table + i);
       if (t -> suspended) {
         GC_ASSERT(t -> stack_base != 0 && t -> id != thread_id);
-        if (ResumeThread(t->handle) == (DWORD)-1) {
-          if (0 == AO_load_acquire((volatile AO_t *)&t->handle)) {
-            /* FIXME: See the same issue in GC_suspend() */
-            WARN("ResumeThread failed (async CloseHandle by DllMain)\n", 0);
-          } else {
-            ABORT("ResumeThread failed");
-          }
-        }
+        if (ResumeThread(THREAD_HANDLE(t)) == (DWORD)-1)
+          ABORT("ResumeThread failed");
         t -> suspended = FALSE;
         if (GC_on_thread_event)
-          GC_on_thread_event(GC_EVENT_THREAD_UNSUSPENDED, t->handle);
+          GC_on_thread_event(GC_EVENT_THREAD_UNSUSPENDED, THREAD_HANDLE(t));
       }
     }
-  } else
-# endif
-  /* else */ {
+  } else {
     GC_thread t;
     int i;
 
@@ -1675,10 +1644,6 @@ STATIC word GC_push_stack_for(GC_thread thread, DWORD me)
         if (GetThreadContext(THREAD_HANDLE(thread), &context)) {
           sp = copy_ptr_regs(regs, &context);
         } else {
-#         ifndef GC_NO_THREADS_DISCOVERY
-            if (0 == AO_load_acquire((volatile AO_t *)&thread->handle))
-              return 0;
-#         endif
 #         ifdef RETRY_GET_THREAD_CONTEXT
             /* At least, try to use the stale context if saved. */
             sp = thread->context_sp;
