@@ -2817,6 +2817,11 @@ EXTERN_C_BEGIN
 #  define NO_SIGNALS_UNBLOCK_IN_MAIN
 #endif
 
+#if defined(GC_WIN32_THREADS) && defined(GC_DISCOVER_TASK_THREADS)
+/* TODO: Support parallel markers in the implicit thread registration mode. */
+#  undef PARALLEL_MARK
+#endif
+
 #ifndef PARALLEL_MARK
 #  undef GC_PTHREADS_PARAMARK /*< just in case it is defined by client */
 #elif defined(GC_PTHREADS) && !defined(GC_PTHREADS_PARAMARK) \
