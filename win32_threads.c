@@ -682,12 +682,11 @@ GC_API void GC_CALL GC_register_altstack(void *stack GC_ATTR_UNUSED,
 /* thread being deleted.                                        */
 STATIC void GC_delete_gc_thread_no_free(GC_vthread t)
 {
+# ifndef MSWINCE
+    CloseHandle(t->handle);
+# endif
 # ifndef GC_NO_THREADS_DISCOVERY
     if (GC_win32_dll_threads) {
-      HANDLE handle = t -> handle;
-
-      AO_store_release((volatile AO_t *)&t->handle, 0);
-      CloseHandle(handle);
       /* This is intended to be lock-free.                              */
       /* It is either called synchronously from the thread being        */
       /* deleted, or by the joining thread.                             */
@@ -711,9 +710,6 @@ STATIC void GC_delete_gc_thread_no_free(GC_vthread t)
     register GC_thread prev = 0;
 
     GC_ASSERT(I_HOLD_LOCK());
-#   ifndef MSWINCE
-      CloseHandle(((GC_thread)t) -> handle);
-#   endif
     while (p != (GC_thread)t) {
       prev = p;
       p = p -> tm.next;
@@ -731,9 +727,8 @@ STATIC void GC_delete_gc_thread_no_free(GC_vthread t)
 /* (The code intentionally traps if it wasn't.)  Assumes we     */
 /* hold the allocation lock unless GC_win32_dll_threads is set. */
 /* If GC_win32_dll_threads is set then it should be called from */
-/* the thread being deleted (except for DLL_PROCESS_DETACH      */
-/* case).  It is also safe to delete the main thread (unless    */
-/* GC_win32_dll_threads).                                       */
+/* the thread being deleted.  It is also safe to delete the     */
+/* main thread (unless GC_win32_dll_threads).                   */
 STATIC void GC_delete_thread(DWORD id)
 {
   if (GC_win32_dll_threads) {
@@ -1248,10 +1243,6 @@ STATIC void GC_suspend(GC_thread t)
 #   define MAX_SUSPEND_THREAD_RETRIES (1000 * 1000)
 # endif
 
-# ifndef GC_NO_THREADS_DISCOVERY
-    if (0 == AO_load_acquire((volatile AO_t *)&t->handle))
-      return;
-# endif
   UNPROTECT_THREAD(t);
   GC_acquire_dirty_lock();
 
@@ -1297,22 +1288,10 @@ STATIC void GC_suspend(GC_thread t)
         /* Resume the thread, try to suspend it in a better location.   */
         if (ResumeThread(t->handle) == (DWORD)-1)
           ABORT("ResumeThread failed in suspend loop");
-      } else {
-#      ifndef GC_NO_THREADS_DISCOVERY
-         if (0 == AO_load_acquire((volatile AO_t *)&t->handle)) {
-           /* The thread handle is closed asynchronously by GC_DllMain. */
-           GC_release_dirty_lock();
-           return;
-         }
-#      endif
       }
       if (retry_cnt > 1) {
         GC_release_dirty_lock();
         Sleep(0); /* yield */
-#       ifndef GC_NO_THREADS_DISCOVERY
-          if (0 == AO_load_acquire((volatile AO_t *)&t->handle))
-            return;
-#       endif
         GC_acquire_dirty_lock();
       }
       if (++retry_cnt >= MAX_SUSPEND_THREAD_RETRIES)
@@ -1330,15 +1309,8 @@ STATIC void GC_suspend(GC_thread t)
 #     endif
       return;
     }
-    if (SuspendThread(t -> handle) == (DWORD)-1) {
-#     ifndef GC_NO_THREADS_DISCOVERY
-        if (0 == AO_load_acquire((volatile AO_t *)&t->handle)) {
-          GC_release_dirty_lock();
-          return;
-        }
-#     endif
+    if (SuspendThread(t -> handle) == (DWORD)-1)
       ABORT("SuspendThread failed");
-    }
 # endif
   t -> suspended = (unsigned char)TRUE;
   GC_release_dirty_lock();
