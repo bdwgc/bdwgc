@@ -478,18 +478,23 @@ GC_suspend(GC_thread t)
        * `GC_delete_thread()` call here would break `pthread_join` on Cygwin,
        * as `pthread_join` is guaranteed to only see user threads.
        */
-#    elif !defined(GC_NO_THREADS_DISCOVERY)
-      /*
-       * `pending_delete_thread` might already be set (or be about to)
-       * by `GC_DllMain()`.  And, `DETACH_THREAD_LOCK()` cannot be used here.
-       * Thus, we ensure `pending_delete_thread` is set instead of deleting
-       * the thread now.  It is OK if there is a race with `GC_DllMain()`
-       * in setting the flags.
-       */
-      GC_has_pending_delete_threads = TRUE;
-      t->pending_delete_thread = TRUE;
 #    else
-      GC_delete_thread(t);
+#      ifndef GC_NO_THREADS_DISCOVERY
+      if (GC_win32_dll_threads) {
+        /*
+         * `pending_delete_thread` might already be set (or be about to) by
+         * `GC_DllMain()`.  And, `DETACH_THREAD_LOCK()` cannot be used here.
+         * Thus, we ensure `pending_delete_thread` is set instead of deleting
+         * the thread now.  It is OK if there is a race with `GC_DllMain()`
+         * in setting the flags.
+         */
+        GC_has_pending_delete_threads = TRUE;
+        t->pending_delete_thread = TRUE;
+      } else
+#      endif
+      /* else */ {
+        GC_delete_thread(t);
+      }
 #    endif
       return;
     }
