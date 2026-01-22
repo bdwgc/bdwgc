@@ -236,7 +236,7 @@ GC_is_visible(void *p)
         goto fail;
       break;
     case GC_DS_BITMAP:
-      if ((ptr_t)p - base >= (ptrdiff_t)PTRS_TO_BYTES(BITMAP_BITS))
+      if ((word)p - (word)base >= PTRS_TO_BYTES(BITMAP_BITS))
         goto fail;
 #if ALIGNMENT != CPP_PTRSZ / 8
       if ((ADDR(p) & (sizeof(ptr_t) - 1)) != 0)
