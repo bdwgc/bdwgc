@@ -699,11 +699,8 @@ strndup(const char *str, size_t size)
 void
 free(void *p)
 {
-#  ifdef IGNORE_FREE
-  UNUSED_ARG(p);
-#  else
-#    if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
-        && !defined(USE_PROC_FOR_LIBRARIES)
+#  if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
+      && !defined(USE_PROC_FOR_LIBRARIES)
   /*
    * Do not bother with initialization checks.  If nothing has been
    * initialized, then the check fails, and that is safe, since we have
@@ -716,14 +713,17 @@ free(void *p)
    * will be set when/if we create another thread.
    */
   if (ADDR_INSIDE(caller, GC_libld_start, GC_libld_end)
-#      ifdef HAVE_LIBPTHREAD_SO
+#    ifdef HAVE_LIBPTHREAD_SO
       || ADDR_INSIDE(caller, GC_libpthread_start, GC_libpthread_end)
-#      endif
+#    endif
   ) {
     GC_free(p);
     return;
   }
-#    endif
+#  endif
+#  ifdef IGNORE_FREE
+  UNUSED_ARG(p);
+#  else
   REDIRECT_FREE_F(p);
 #  endif
 }
