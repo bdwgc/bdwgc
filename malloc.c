@@ -559,7 +559,9 @@ malloc(size_t lb)
   return (void *)REDIRECT_MALLOC_F(lb);
 }
 
-#  ifdef REDIR_MALLOC_AND_LINUX_THREADS
+#  if defined(REDIR_MALLOC_AND_LINUX_THREADS)                    \
+      && (defined(IGNORE_FREE) || defined(REDIRECT_MALLOC_DEBUG) \
+          || !defined(REDIRECT_MALLOC_UNCOLLECTABLE))
 #    ifdef HAVE_LIBPTHREAD_SO
 STATIC ptr_t GC_libpthread_start = NULL;
 STATIC ptr_t GC_libpthread_end = NULL;
@@ -605,7 +607,7 @@ GC_init_lib_bounds(void)
   RESTORE_CANCEL(cancel_state);
   lib_bounds_set = TRUE;
 }
-#  endif /* REDIR_MALLOC_AND_LINUX_THREADS */
+#  endif
 
 void *
 calloc(size_t n, size_t lb)
@@ -614,6 +616,8 @@ calloc(size_t n, size_t lb)
       && lb && n > GC_SIZE_MAX / lb)
     return (*GC_get_oom_fn())(GC_SIZE_MAX); /*< `n * lb` overflow */
 #  ifdef REDIR_MALLOC_AND_LINUX_THREADS
+#    if defined(REDIRECT_MALLOC_DEBUG) \
+        || !defined(REDIRECT_MALLOC_UNCOLLECTABLE)
   /*
    * The linker may allocate some memory that is only pointed to by
    * memory-mapped thread stacks.  Make sure it is not collectible.
@@ -623,17 +627,21 @@ calloc(size_t n, size_t lb)
 
     GC_init_lib_bounds();
     if (ADDR_INSIDE(caller, GC_libld_start, GC_libld_end)
-#    ifdef HAVE_LIBPTHREAD_SO
+#      ifdef HAVE_LIBPTHREAD_SO
         /*
          * Note: the two ranges are actually usually adjacent, so there
          * may be a way to speed this up.
          */
         || ADDR_INSIDE(caller, GC_libpthread_start, GC_libpthread_end)
-#    endif
+#      endif
     ) {
       return GC_generic_malloc_uncollectable(n * lb, UNCOLLECTABLE);
     }
   }
+#    elif defined(IGNORE_FREE)
+  /* Just to ensure `static` variables used by `free()` are initialized. */
+  GC_init_lib_bounds();
+#    endif
 #  endif
   return (void *)REDIRECT_MALLOC_F(n * lb);
 }
@@ -700,7 +708,8 @@ void
 free(void *p)
 {
 #  if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
-      && !defined(USE_PROC_FOR_LIBRARIES)
+      && !defined(USE_PROC_FOR_LIBRARIES)     \
+      && (defined(REDIRECT_MALLOC_DEBUG) || defined(IGNORE_FREE))
   /*
    * Do not bother with initialization checks.  If nothing has been
    * initialized, then the check fails, and that is safe, since we have
