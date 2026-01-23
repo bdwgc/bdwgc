@@ -4180,8 +4180,10 @@ GC_INNER void GC_setpagesize(void);
 GC_INNER void GC_initialize_offsets(void);
 #endif
 
-#if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
-    && !defined(REDIRECT_MALLOC_IN_HEADER)
+#if defined(REDIR_MALLOC_AND_LINUX_THREADS)                    \
+    && !defined(REDIRECT_MALLOC_IN_HEADER)                     \
+    && (defined(IGNORE_FREE) || defined(REDIRECT_MALLOC_DEBUG) \
+        || !defined(REDIRECT_MALLOC_UNCOLLECTABLE))
 GC_INNER void GC_init_lib_bounds(void);
 #else
 #  define GC_init_lib_bounds() (void)0
