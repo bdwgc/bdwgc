@@ -684,8 +684,7 @@ GC_API void GC_CALL GC_free(void * p)
 
   void free(void * p GC_ATTR_UNUSED)
   {
-#   ifndef IGNORE_FREE
-#     if defined(GC_LINUX_THREADS) && !defined(USE_PROC_FOR_LIBRARIES)
+#   if defined(GC_LINUX_THREADS) && !defined(USE_PROC_FOR_LIBRARIES)
         /* Don't bother with initialization checks.  If nothing         */
         /* has been initialized, the check fails, and that's safe,      */
         /* since we have not allocated uncollectible objects neither.   */
@@ -699,7 +698,8 @@ GC_API void GC_CALL GC_free(void * p)
           GC_free(p);
           return;
         }
-#     endif
+#   endif
+#   ifndef IGNORE_FREE
       REDIRECT_FREE_F(p);
 #   endif
   }
