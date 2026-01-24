@@ -542,20 +542,15 @@ GC_malloc_atomic_uncollectable(size_t lb)
 void *
 malloc(size_t lb)
 {
+#  ifdef REDIR_MALLOC_UNINITIALIZED_TO_SBRK
+  if (UNLIKELY(!GC_is_initialized))
+    return sbrk(lb);
+#  endif
   /*
    * It might help to manually inline the `GC_malloc` call here.
    * But any decent compiler should reduce the extra procedure call
    * to at most a jump instruction in this case.
    */
-#  if defined(SOLARIS) && defined(THREADS) && defined(I386)
-  /*
-   * Thread initialization can call `malloc` before we are ready for.
-   * It is not clear that this is enough to help matters.  The thread
-   * implementation may well call `malloc` at other inopportune times.
-   */
-  if (UNLIKELY(!GC_is_initialized))
-    return sbrk(lb);
-#  endif
   return (void *)REDIRECT_MALLOC_F(lb);
 }
 
@@ -850,8 +845,8 @@ GC_free(void *p)
   hhdr = HDR(p);
 #if defined(REDIRECT_MALLOC)                                           \
     && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
-        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
-        || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
+        || defined(REDIR_MALLOC_UNINITIALIZED_TO_SBRK)                 \
+        || defined(REDIR_MALLOC_AND_LINUX_THREADS) || defined(MSWIN32))
   /*
    * This might be called indirectly by `GC_print_callers` to free the
    * result of `backtrace_symbols()`.  For Solaris, we have to redirect
