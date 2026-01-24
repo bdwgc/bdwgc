@@ -3703,6 +3703,18 @@ extern ptr_t GC_data_start;
  */
 #endif
 
+#if defined(REDIRECT_MALLOC) && defined(SOLARIS) && defined(THREADS) \
+    && defined(I386)
+/*
+ * Redirect `malloc()` calls to `sbrk()` until the collector is initialized.
+ * As of Solaris 2.3, thread initialization can call `malloc()` (to allocate
+ * the data structure for the initial thread) before we are ready for
+ * (however, it is not clear if this is enough to help matters as the thread
+ * implementation may well call `malloc()` at other inopportune times).
+ */
+#  define REDIR_MALLOC_UNINITIALIZED_TO_SBRK
+#endif
+
 EXTERN_C_END
 
 #endif /* GCCONFIG_H */
