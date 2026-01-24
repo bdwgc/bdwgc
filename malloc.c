@@ -551,7 +551,7 @@ malloc(size_t lb)
    * But any decent compiler should reduce the extra procedure call
    * to at most a jump instruction in this case.
    */
-  return (void *)REDIRECT_MALLOC_F(lb);
+  return REDIRECT_MALLOC_F(lb);
 }
 
 #  if defined(REDIR_MALLOC_AND_LINUX_THREADS)                    \
@@ -638,7 +638,7 @@ calloc(size_t n, size_t lb)
   GC_init_lib_bounds();
 #    endif
 #  endif
-  return (void *)REDIRECT_MALLOC_F(n * lb);
+  return REDIRECT_MALLOC_F(n * lb);
 }
 
 #  ifndef strdup
