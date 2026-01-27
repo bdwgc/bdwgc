@@ -610,6 +610,10 @@ calloc(size_t n, size_t lb)
   if (UNLIKELY((lb | n) > GC_SQRT_SIZE_MAX) /*< fast initial test */
       && lb && n > GC_SIZE_MAX / lb)
     return (*GC_get_oom_fn())(GC_SIZE_MAX); /*< `n * lb` overflow */
+#  ifdef REDIR_MALLOC_UNINITIALIZED_TO_SBRK
+  if (UNLIKELY(!GC_is_initialized))
+    return sbrk(n * lb);
+#  endif
 #  ifdef REDIR_MALLOC_AND_LINUX_THREADS
 #    if defined(REDIRECT_MALLOC_DEBUG) \
         || !defined(REDIRECT_MALLOC_UNCOLLECTABLE)
@@ -702,27 +706,33 @@ strndup(const char *str, size_t size)
 void
 free(void *p)
 {
+#  ifdef REDIR_MALLOC_UNINITIALIZED_TO_SBRK
+  if (UNLIKELY(!GC_is_initialized))
+    return;
+#  endif
 #  if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
       && !defined(USE_PROC_FOR_LIBRARIES)     \
       && (defined(REDIRECT_MALLOC_DEBUG) || defined(IGNORE_FREE))
-  /*
-   * Do not bother with initialization checks.  If nothing has been
-   * initialized, then the check fails, and that is safe, since we have
-   * not allocated uncollectible objects neither.
-   */
-  ptr_t caller = (ptr_t)__builtin_return_address(0);
+  {
+    /*
+     * Do not bother with initialization checks.  If nothing has been
+     * initialized, then the check fails, and that is safe, since we have
+     * not allocated uncollectible objects neither.
+     */
+    ptr_t caller = (ptr_t)__builtin_return_address(0);
 
-  /*
-   * This test does not need to ensure memory visibility, since the bounds
-   * will be set when/if we create another thread.
-   */
-  if (ADDR_INSIDE(caller, GC_libld_start, GC_libld_end)
+    /*
+     * This test does not need to ensure memory visibility, since the bounds
+     * will be set when/if we create another thread.
+     */
+    if (ADDR_INSIDE(caller, GC_libld_start, GC_libld_end)
 #    ifdef HAVE_LIBPTHREAD_SO
-      || ADDR_INSIDE(caller, GC_libpthread_start, GC_libpthread_end)
+        || ADDR_INSIDE(caller, GC_libpthread_start, GC_libpthread_end)
 #    endif
-  ) {
-    GC_free(p);
-    return;
+    ) {
+      GC_free(p);
+      return;
+    }
   }
 #  endif
 #  ifdef IGNORE_FREE
