@@ -537,22 +537,29 @@ tiny_sbrk(ptrdiff_t increment)
 #  define sbrk tiny_sbrk
 #endif /* ECOS */
 
-#if defined(ADDRESS_SANITIZER)                         \
-    && (defined(UNIX_LIKE) || defined(NEED_FIND_LIMIT) \
-        || defined(MPROTECT_VDB))                      \
-    && !defined(CUSTOM_ASAN_DEF_OPTIONS)
+#if defined(ADDRESS_SANITIZER) && !defined(CUSTOM_ASAN_DEF_OPTIONS)
 EXTERN_C_BEGIN
 GC_API const char *__asan_default_options(void);
 EXTERN_C_END
 
 /*
- * To tell ASan to allow the collector to use its own `SIGBUS` and `SIGSEGV`
- * handlers.  The function is exported just to be visible to ASan library.
+ * Provide the Address Sanitizer runtime configuration.  The function is
+ * exported just to be visible to the ASan library.
+ * FIXME: It might not work if the collector is built as a shared library
+ * unless the client provides own `__asan_default_options()` or sets
+ * `ASAN_OPTIONS` environment variable with the below flags.
  */
 GC_API const char *
 __asan_default_options(void)
 {
-  return "allow_user_segv_handler=1";
+  /* TODO: support ASan fake stacks properly. */
+  return (
+#  if defined(MPROTECT_VDB) || defined(NEED_FIND_LIMIT) || defined(UNIX_LIKE)
+      /* Use its own `SIGBUS` and `SIGSEGV` handlers. */
+      "allow_user_segv_handler=1:"
+#  endif
+      /* Do not to use fake stacks. */
+      "detect_stack_use_after_return=0");
 }
 #endif
 
