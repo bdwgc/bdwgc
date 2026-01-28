@@ -558,6 +558,13 @@ __asan_default_options(void)
       /* Use its own `SIGBUS` and `SIGSEGV` handlers. */
       "allow_user_segv_handler=1:"
 #  endif
+#  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES)
+      /*
+       * Decorate sanitizer mappings in `/proc/self/maps` to filter them out
+       * in `GC_register_map_entries()`.
+       */
+      "decorate_proc_maps=1:"
+#  endif
       /* Do not to use fake stacks. */
       "detect_stack_use_after_return=0");
 }
