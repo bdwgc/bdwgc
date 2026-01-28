@@ -373,6 +373,37 @@ sort_heap_sects(struct HeapSect *base, size_t number_of_elements)
   }
 }
 
+#      ifdef ADDRESS_SANITIZER
+#        include <ctype.h>
+
+static GC_bool
+is_asan_mapping(const char *path)
+{
+  /*
+   * Note: this assumes `decorate_proc_maps` flag (set to true or 1) is
+   * passed to the Address Sanitizer runtime, see `__asan_default_options()`.
+   */
+  int i;
+
+  /* Match start of `path` to "/dev/shm/<pid> [...] (deleted)\n". */
+  /* FIXME: This is probably Linux-specific. */
+#        define ASAN_MAPPING_PREFIX "/dev/shm/"
+  i = sizeof(ASAN_MAPPING_PREFIX) - 1;
+  if (strncmp(path, ASAN_MAPPING_PREFIX, i) != 0)
+    return FALSE;
+  while (isdigit(path[i]))
+    i++;
+  if (strncmp(path + i, " [", 2) != 0)
+    return FALSE;
+  i += 2;
+  while (isalpha(path[i]) || path[i] == ' ' || path[i] == ':')
+    i++;
+#        define ASAN_MAPPING_TAIL "] (deleted)\n"
+  return strncmp(path + i, ASAN_MAPPING_TAIL, sizeof(ASAN_MAPPING_TAIL) - 1)
+         == 0;
+}
+#      endif
+
 STATIC void
 GC_register_map_entries(const char *maps)
 {
@@ -418,7 +449,12 @@ GC_register_map_entries(const char *maps)
         /* Discard a pseudo-file path except for "[heap]". */
         continue;
       }
-
+#      ifdef ADDRESS_SANITIZER
+      if (is_asan_mapping(path)) {
+        /* Discard ASan-specific mapping. */
+        continue;
+      }
+#      endif
 #      ifdef THREADS
       /*
        * This may fail, since a thread may already be unregistered, but
