@@ -3160,6 +3160,11 @@ EXTERN_C_BEGIN
 # define WRAP_MARK_SOME
 #endif
 
+#if defined(FREEBSD) && defined(PARALLEL_MARK) && defined(REDIRECT_MALLOC)
+  /* Prevent calling redirected strdup() from a marker thread.  */
+# undef HAVE_PTHREAD_SETNAME_NP_WITH_TID
+#endif
+
 #if defined(GC_DISABLE_SUSPEND_THREAD)
 # undef GC_ENABLE_SUSPEND_THREAD
 #endif
