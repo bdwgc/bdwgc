@@ -3328,6 +3328,11 @@ extern ptr_t GC_data_start;
 #  undef HAVE_PTHREAD_SET_NAME_NP
 #endif
 
+#if defined(FREEBSD) && defined(PARALLEL_MARK) && defined(REDIRECT_MALLOC)
+/* Prevent calling redirected `strdup()` from a marker thread. */
+#  undef HAVE_PTHREAD_SETNAME_NP_WITH_TID
+#endif
+
 #if !(defined(GC_PTHREADS) || defined(GC_PTHREADS_PARAMARK) \
       || (defined(MPROTECT_VDB) && defined(DARWIN)))
 #  undef HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID
