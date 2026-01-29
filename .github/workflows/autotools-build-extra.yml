@@ -111,6 +111,10 @@ jobs:
         - os: ubuntu-24.04-arm
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
           cflags_extra: -D DONT_PROTECT_PTRFREE -D FORCE_MPROTECT_BEFORE_MADVISE -D GC_UNMAPPED_REGIONS_SOFT_LIMIT=120 -D _FORTIFY_SOURCE=2 -O3
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=address
+          extra_sanitizer_checks: true
         - os: ubuntu-24.04-arm
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-valgrind-tracking
           cflags_extra: -O3
@@ -138,6 +142,16 @@ jobs:
           install_libatomic_ops: true
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-cplusplus --enable-large-config
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-dynamic-loading --enable-rwlock
+          cflags_extra: -O0 -fsanitize=address -m32
+          extra_sanitizer_checks: true
+          install_multilib: true
+        - os: ubuntu-latest
+          conf_options: --disable-shared --enable-gc-assertions
+          cflags_extra: -O0 -fsanitize=address
+          c_compiler: gcc
+          ldflags: -fuse-ld=gold
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-single-obj-compilation
           cflags_extra: -O3 -m32 -std=gnu11
@@ -272,21 +286,6 @@ jobs:
           cflags_extra: -D GC_NO_FINALIZATION
           c_compiler: gcc
           fetch_libatomic_ops: true
-        # TODO: Address Sanitizer fake stack is not scanned.
-        #- os: ubuntu-latest
-        #  conf_options: --disable-shared --enable-cplusplus
-        #  cflags_extra: -O0 -fsanitize=address -m32
-        #  extra_sanitizer_checks: true
-        #  install_multilib: true
-        #- os: ubuntu-latest
-        #  conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions
-        #  cflags_extra: -fno-common -fno-omit-frame-pointer -fsanitize=address
-        #  extra_sanitizer_checks: true
-        #- os: ubuntu-latest
-        #  conf_options: --enable-gc-assertions
-        #  cflags_extra: -O0 -fsanitize=address
-        #  c_compiler: gcc
-        #  ldflags: -fuse-ld=gold
         # FIXME: Inconsistent soft-dirty against mprotect dirty bits
         #- os: ubuntu-latest
         #  conf_options: --disable-shared --disable-thread-local-alloc --enable-gc-assertions
