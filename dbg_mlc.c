@@ -718,8 +718,8 @@ debug_free_zero(void *p, size_t clear_lb)
   if (NULL == base) {
 #if defined(REDIRECT_MALLOC)                                           \
     && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
-        || defined(REDIR_MALLOC_UNINITIALIZED_TO_SBRK)                 \
-        || defined(REDIR_MALLOC_AND_LINUX_THREADS) || defined(MSWIN32))
+        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
+        || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
     /*
      * In some cases, we should ignore objects that do not belong to
      * the collector heap.  See the comment in `GC_free()`.
