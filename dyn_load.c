@@ -388,7 +388,6 @@ is_asan_mapping(const char *path)
   int i;
 
   /* Match start of `path` to "/dev/shm/<pid> [...] (deleted)\n". */
-  /* FIXME: This is probably Linux-specific. */
 #        define ASAN_MAPPING_PREFIX "/dev/shm/"
   i = sizeof(ASAN_MAPPING_PREFIX) - 1;
   if (strncmp(path, ASAN_MAPPING_PREFIX, i) != 0)
