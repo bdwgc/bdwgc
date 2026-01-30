@@ -234,6 +234,7 @@ GC_register_dynamic_libraries(void)
 
 #  if defined(DGUX) || defined(HURD) || defined(NACL) || defined(SCO_ELF) \
       || defined(SERENITY)                                                \
+      || (defined(SOLARISDL) && !defined(USE_PROC_FOR_LIBRARIES))         \
       || ((defined(ANY_BSD) || defined(LINUX)) && defined(__ELF__))
 #    include <stddef.h>
 #    if !defined(OPENBSD) && !defined(HOST_ANDROID)
@@ -328,6 +329,7 @@ EXTERN_C_END
 
 #  if defined(DGUX) || defined(HURD) || defined(NACL) || defined(SCO_ELF) \
       || defined(SERENITY)                                                \
+      || (defined(SOLARISDL) && !defined(USE_PROC_FOR_LIBRARIES))         \
       || ((defined(ANY_BSD) || defined(LINUX)) && defined(__ELF__))
 
 #    ifdef USE_PROC_FOR_LIBRARIES
