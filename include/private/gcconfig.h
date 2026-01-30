@@ -3708,13 +3708,10 @@ extern ptr_t GC_data_start;
  */
 #endif
 
-#if defined(REDIRECT_MALLOC)       \
-    && (defined(ADDRESS_SANITIZER) \
-        || (defined(SOLARIS) && defined(THREADS) && defined(I386)))
+#if defined(REDIRECT_MALLOC) && defined(SOLARIS) && defined(THREADS) \
+    && defined(I386)
 /*
  * Redirect `malloc()` calls to `sbrk()` until the collector is initialized.
- * ASan initialization can call `calloc()`, `malloc()` and `free()` before
- * we could proceed with the collector initialization.
  * As of Solaris 2.3, thread initialization can call `malloc()` (to allocate
  * the data structure for the initial thread) before we are ready for
  * (however, it is not clear if this is enough to help matters as the thread
