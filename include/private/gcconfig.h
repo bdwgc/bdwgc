@@ -2673,9 +2673,7 @@ extern char __global_base, __heap_base;
 #  define NO_BLACK_LISTING
 #endif
 
-#if defined(REDIRECT_MALLOC) && defined(THREADS) \
-    && (defined(LINUX) || defined(NACL))
-/* TODO: Unclear if NaCl really needs this. */
+#if defined(REDIRECT_MALLOC) && defined(THREADS) && defined(LINUX)
 #  define REDIR_MALLOC_AND_LINUX_THREADS
 #endif
 
