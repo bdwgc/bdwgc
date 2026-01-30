@@ -547,15 +547,6 @@ malloc(size_t lb)
    * But any decent compiler should reduce the extra procedure call
    * to at most a jump instruction in this case.
    */
-#  if defined(SOLARIS) && defined(THREADS) && defined(I386)
-  /*
-   * Thread initialization can call `malloc` before we are ready for.
-   * It is not clear that this is enough to help matters.  The thread
-   * implementation may well call `malloc` at other inopportune times.
-   */
-  if (UNLIKELY(!GC_is_initialized))
-    return sbrk(lb);
-#  endif
   return REDIRECT_MALLOC_F(lb);
 }
 
@@ -850,12 +841,10 @@ GC_free(void *p)
   hhdr = HDR(p);
 #if defined(REDIRECT_MALLOC)                                           \
     && ((defined(NEED_CALLINFO) && defined(GC_HAVE_BUILTIN_BACKTRACE)) \
-        || defined(REDIR_MALLOC_AND_LINUX_THREADS)                     \
-        || (defined(SOLARIS) && defined(THREADS)) || defined(MSWIN32))
+        || defined(REDIR_MALLOC_AND_LINUX_THREADS) || defined(MSWIN32))
   /*
    * This might be called indirectly by `GC_print_callers` to free the
-   * result of `backtrace_symbols()`.  For Solaris, we have to redirect
-   * `malloc` calls during initialization.  For the others, this seems
+   * result of `backtrace_symbols()`.  For the other cases, this seems
    * to happen implicitly.  Do not try to deallocate that memory.
    */
   if (UNLIKELY(NULL == hhdr)) {

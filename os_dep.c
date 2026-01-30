@@ -2369,21 +2369,6 @@ GC_register_data_segments(void)
    */
 #  elif defined(DYNAMIC_LOADING) && (defined(DARWIN) || defined(HAIKU))
   /* No-op.  `GC_register_main_static_data()` always returns `FALSE`. */
-#  elif defined(REDIRECT_MALLOC) && defined(SOLARIS) && defined(THREADS)
-  /*
-   * As of Solaris 2.3, the Solaris threads implementation allocates
-   * the data structure for the initial thread with `sbrk` at the
-   * process startup.  It needs to be scanned, so that we do not lose
-   * some `malloc`-allocated data structures hanging from it.
-   * We are on thin ice here...
-   */
-  GC_ASSERT(DATASTART);
-  {
-    ptr_t p = (ptr_t)sbrk(0);
-
-    if (ADDR_LT(DATASTART, p))
-      GC_add_roots_inner(DATASTART, p, FALSE);
-  }
 #  else
   /*
    * Note: subtract one is to also check for `NULL` without a compiler
