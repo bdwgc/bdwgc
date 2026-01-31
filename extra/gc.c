@@ -28,6 +28,8 @@
 /* for GC and the client otherwise GC_thread_exit_proc() is not         */
 /* guaranteed to be invoked (see the comments in pthread_start.c).      */
 
+#define GC_SINGLE_OBJ_BUILD
+
 #ifndef __cplusplus
   /* static is desirable here for more efficient linkage.               */
   /* TODO: Enable this in case of the compilation as C++ code.          */
