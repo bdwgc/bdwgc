@@ -847,7 +847,7 @@ STATIC void GC_remove_all_threads_but_me(void)
 }
 #endif /* CAN_HANDLE_FORK */
 
-#ifdef USE_PROC_FOR_LIBRARIES
+#if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
   GC_INNER GC_bool GC_segment_is_thread_stack(ptr_t lo, ptr_t hi)
   {
     int i;
@@ -882,7 +882,7 @@ STATIC void GC_remove_all_threads_but_me(void)
     }
     return FALSE;
   }
-#endif /* USE_PROC_FOR_LIBRARIES */
+#endif
 
 #if (defined(HAVE_PTHREAD_ATTR_GET_NP) || defined(HAVE_PTHREAD_GETATTR_NP)) \
     && defined(IA64)
