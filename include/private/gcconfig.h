@@ -2912,6 +2912,13 @@ EXTERN_C_BEGIN
 # undef SOFT_VDB
 #endif
 
+#if defined(USE_PROC_FOR_LIBRARIES) && !defined(LINUX) \
+    && defined(GC_SINGLE_OBJ_BUILD)
+  /* GC_proc_read_dirty() use the new structured "/proc" definitions,   */
+  /* but GC_register_dynamic_libraries() requires the old ones.         */
+# undef PROC_VDB
+#endif
+
 #ifdef NO_GWW_VDB
 # undef GWW_VDB
 #endif
