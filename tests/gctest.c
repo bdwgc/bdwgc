@@ -2343,8 +2343,9 @@ enable_incremental_mode(void)
 #if (defined(TEST_DEFAULT_VDB) || defined(TEST_MANUAL_VDB) \
      || !defined(DEFAULT_VDB))                             \
     && !defined(GC_DISABLE_INCREMENTAL)
-#  if !defined(MAKE_BACK_GRAPH) && !defined(NO_INCREMENTAL) \
-      && !defined(REDIRECT_MALLOC) && !defined(USE_PROC_FOR_LIBRARIES)
+#  if !defined(MAKE_BACK_GRAPH) && !defined(NO_INCREMENTAL)   \
+      && !(defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)) \
+      && !defined(REDIRECT_MALLOC)
   GC_enable_incremental();
 #  endif
   if (GC_is_incremental_mode()) {
