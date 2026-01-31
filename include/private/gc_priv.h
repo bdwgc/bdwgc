@@ -3207,7 +3207,7 @@ void GC_check_fl_marks(void **);
  */
 GC_INNER void GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp);
 
-#ifdef USE_PROC_FOR_LIBRARIES
+#if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
 /*
  * Remove given range from every static root which intersects with the range.
  * `GC_remove_tmp_roots` is assumed to be called before this function is
@@ -4327,7 +4327,7 @@ GC_INNER void GC_do_blocking_inner(ptr_t data, void *context);
  */
 GC_INNER void GC_push_all_stacks(void);
 
-#  ifdef USE_PROC_FOR_LIBRARIES
+#  if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
 GC_INNER GC_bool GC_segment_is_thread_stack(ptr_t lo, ptr_t hi);
 #  endif
 #  if (defined(HAVE_PTHREAD_ATTR_GET_NP) || defined(HAVE_PTHREAD_GETATTR_NP)) \

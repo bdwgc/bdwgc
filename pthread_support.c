@@ -345,12 +345,13 @@ GC_check_tls(void)
 
 #  ifdef PARALLEL_MARK
 
-#    if defined(GC_WIN32_THREADS) || defined(USE_PROC_FOR_LIBRARIES) \
-        || (defined(IA64)                                            \
-            && (defined(HAVE_PTHREAD_ATTR_GET_NP)                    \
+#    if defined(GC_WIN32_THREADS)                              \
+        || (defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)) \
+        || (defined(IA64)                                      \
+            && (defined(HAVE_PTHREAD_ATTR_GET_NP)              \
                 || defined(HAVE_PTHREAD_GETATTR_NP)))
 GC_INNER_WIN32THREAD ptr_t GC_marker_sp[MAX_MARKERS - 1] = { NULL };
-#    endif /* GC_WIN32_THREADS || USE_PROC_FOR_LIBRARIES */
+#    endif
 
 #    if defined(IA64) && defined(USE_PROC_FOR_LIBRARIES)
 static ptr_t marker_bsp[MAX_MARKERS - 1] = { NULL };
@@ -486,9 +487,10 @@ unsigned __stdcall GC_mark_thread(void *id)
   DISABLE_CANCEL(cancel_state);
 
   set_marker_thread_name((unsigned)id_n);
-#    if defined(GC_WIN32_THREADS) || defined(USE_PROC_FOR_LIBRARIES) \
-        || (defined(IA64)                                            \
-            && (defined(HAVE_PTHREAD_ATTR_GET_NP)                    \
+#    if defined(GC_WIN32_THREADS)                              \
+        || (defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)) \
+        || (defined(IA64)                                      \
+            && (defined(HAVE_PTHREAD_ATTR_GET_NP)              \
                 || defined(HAVE_PTHREAD_GETATTR_NP)))
   GC_marker_sp[id_n] = GC_approx_sp();
 #    endif
@@ -1021,7 +1023,7 @@ GC_register_altstack(void *normstack, size_t normstack_size, void *altstack,
 #  endif
 }
 
-#  ifdef USE_PROC_FOR_LIBRARIES
+#  if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
 GC_INNER GC_bool
 GC_segment_is_thread_stack(ptr_t lo, ptr_t hi)
 {
@@ -1056,7 +1058,7 @@ GC_segment_is_thread_stack(ptr_t lo, ptr_t hi)
   }
   return FALSE;
 }
-#  endif /* USE_PROC_FOR_LIBRARIES */
+#  endif
 
 #  if (defined(HAVE_PTHREAD_ATTR_GET_NP) || defined(HAVE_PTHREAD_GETATTR_NP)) \
       && defined(IA64)
