@@ -378,7 +378,7 @@ STATIC void GC_remove_tmp_roots(void)
   }
 #endif /* !defined(MSWIN32) && !defined(MSWINCE) && !defined(CYGWIN32) */
 
-#ifdef USE_PROC_FOR_LIBRARIES
+#if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
   /* Exchange the elements of the roots table.  Requires rebuild of     */
   /* the roots index table after the swap.                              */
   GC_INLINE void swap_static_roots(int i, int j)
@@ -473,7 +473,7 @@ STATIC void GC_remove_tmp_roots(void)
     if (rebuild)
       GC_rebuild_root_index();
   }
-#endif /* USE_PROC_FOR_LIBRARIES */
+#endif
 
 #if !defined(NO_DEBUGGING)
   /* For the debugging purpose only.                                    */
