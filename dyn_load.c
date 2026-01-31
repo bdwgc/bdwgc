@@ -828,6 +828,8 @@ GC_INNER void GC_register_dynamic_libraries(void)
     ptr_t heap_end = heap_start;
 
 #   ifdef SOLARISDL
+#     define MA_FETCHOP 0
+#     define MA_NOTCACHED 0
 #     define MA_PHYS 0
 #   endif /* SOLARISDL */
 
