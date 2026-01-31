@@ -992,6 +992,8 @@ GC_register_dynamic_libraries(void)
   word heap_start = HEAP_START;
   word heap_end = heap_start;
 #    ifdef SOLARISDL
+#      define MA_FETCHOP 0
+#      define MA_NOTCACHED 0
 #      define MA_PHYS 0
 #    endif
 
