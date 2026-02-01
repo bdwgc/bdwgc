@@ -500,10 +500,10 @@ GC_DISCOVER_TASK_THREADS (Darwin and Win32+DLL only)    Compile the collector
   compatibility and for the case when it is not possible to call
   GC_use_threads_discovery() early (before other GC calls).
 
-USE_PROC_FOR_LIBRARIES  Causes the Linux collector to treat writable
-  memory mappings (as reported by /proc) as roots, if it doesn't have
-  other information about them.  It no longer traverses dynamic loader
-  data structures to find dynamic library static data.  This may be
+USE_PROC_FOR_LIBRARIES (Linux and Solaris only)     Causes the collector to
+  treat writable memory mappings (as reported by /proc) as roots, if it does
+  not have other information about them.  It no longer traverses dynamic
+  loader data structures to find dynamic library static data.  This may be
   required for applications that store pointers in mmapped segments without
   informing the collector.  But it typically performs poorly, especially
   since it will scan inactive but cached NPTL thread stacks completely.
