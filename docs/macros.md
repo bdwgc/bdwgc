@@ -526,9 +526,9 @@ DllMain-based (on Windows) approach of threads registering.  Only for
 compatibility and for the case when it is not possible to call
 `GC_use_threads_discovery()` early (before other garbage collector calls).
 
-`USE_PROC_FOR_LIBRARIES` - Causes the Linux collector to treat writable
-memory mappings (as reported by `/proc`) as roots, if it does not have
-other information about them.  It no longer traverses dynamic loader
+`USE_PROC_FOR_LIBRARIES` (Linux and Solaris only) - Causes the collector to
+treat writable memory mappings (as reported by `/proc`) as roots, if it does
+not have other information about them.  It no longer traverses dynamic loader
 data structures to find dynamic library static data.  This may be required
 for applications that store pointers in segments obtained by `mmap()` without
 informing the collector.  But it typically performs poorly, especially
