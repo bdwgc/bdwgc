@@ -1,3 +1,53 @@
+2026-02-01  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.macros (USE_PROC_FOR_LIBRARIES): Mention that it
+	is also applicable to Solaris OS.
+
+2026-01-03  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/gcinterface.html (GC_REALLOC): Fix a typo ("copies").
+
+2026-01-01  Ivan Maidanski <ivmai@mail.ru>
+
+	* misc.c [GC_READ_ENV_FILE] (GC_envfile_content, GC_envfile_init): Fix
+	typo ("contents") in comment.
+	* pthread_stop_world.c (GC_suspend_handler_inner): Likewise.
+	* pthread_support.c [LINUX && ARM32] (GC_get_nprocs_present): Likewise.
+	* dbg_mlc.c (GC_check_leaked): Likewise.
+
+2026-01-01  Ivan Maidanski <ivmai@mail.ru>
+
+	* Makefile.in: Regenerate.
+	* configure: Likewise.
+	* configure.ac (GC_VERSION): Remove `AC_SUBST()`.
+
+2025-12-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* tests/test.c [GC_PTHREADS && GC_DEBUG] (GC_free): Do not define to
+	`GC_debug_free`.
+
+2025-12-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* malloc.c [REDIRECT_MALLOC && !strdup]
+	(strdup): Do not set `errno` if `MSWINCE` is defined.
+	* malloc.c [REDIRECT_MALLOC && !strndup] (strndup): Likewise.
+
+2025-12-23  Tobiasz Laskowski <tobil4sk@outlook.com>
+
+	* win32_threads.c [!GC_PTHREADS && !GC_NO_THREADS_DISCOVERY] (DllMain):
+	If `reserved` is non-null, then do not call `GC_delete_thread()`,
+	`GC_deinit()` and `DeleteCriticalSection()`; add comment.
+
+2025-12-21  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.changes (6.1): Fix typo ("added").
+
+2016-08-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* dyn_load.c (GC_init_dyld): Cast _dyld_register_func_for_add_image
+	and _dyld_register_func_for_remove_image argument to void compiler
+	warning about incompatible pointer types; update relevant comment.
+
 2025-11-10  Ivan Maidanski <ivmai@mail.ru>
 
 	* cord/de.c [!WIN32] (main): Add trailing "\n" to format string of
