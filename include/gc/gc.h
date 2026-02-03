@@ -167,6 +167,18 @@ GC_API GC_ATTR_DEPRECATED GC_on_heap_resize_proc GC_on_heap_resize;
 GC_API void GC_CALL GC_set_on_heap_resize(GC_on_heap_resize_proc);
 GC_API GC_on_heap_resize_proc GC_CALL GC_get_on_heap_resize(void);
 
+/**
+ * Invoked when new memory space is obtained from the OS.  Called with the
+ * allocator lock held.  If `space` argument is `NULL`, this means a failure
+ * to the get the memory.  The argument of `GC_set_on_os_get_mem()` may be 0
+ * (means no notifier).  Both the setter and the getter acquire the allocator
+ * lock (in the reader mode in case of the getter).
+ */
+typedef void(GC_CALLBACK *GC_on_os_get_mem_proc)(void * /* space */,
+                                                 size_t /* size_in_bytes */);
+GC_API void GC_CALL GC_set_on_os_get_mem(GC_on_os_get_mem_proc);
+GC_API GC_on_os_get_mem_proc GC_CALL GC_get_on_os_get_mem(void);
+
 typedef enum {
   GC_EVENT_START, /*< start collection */
   GC_EVENT_MARK_START,
