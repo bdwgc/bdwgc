@@ -1495,6 +1495,28 @@ GC_gcollect_and_unmap(void)
   (void)GC_try_to_collect_general(GC_never_stop_func, TRUE);
 }
 
+STATIC GC_on_os_get_mem_proc GC_on_os_get_mem = 0;
+
+GC_API void GC_CALL
+GC_set_on_os_get_mem(GC_on_os_get_mem_proc fn)
+{
+  /* `fn` may be 0 (means no event notifier). */
+  LOCK();
+  GC_on_os_get_mem = fn;
+  UNLOCK();
+}
+
+GC_API GC_on_os_get_mem_proc GC_CALL
+GC_get_on_os_get_mem(void)
+{
+  GC_on_os_get_mem_proc fn;
+
+  READER_LOCK();
+  fn = GC_on_os_get_mem;
+  READER_UNLOCK();
+  return fn;
+}
+
 GC_INNER ptr_t
 GC_os_get_mem(size_t bytes)
 {
@@ -1502,6 +1524,8 @@ GC_os_get_mem(size_t bytes)
 
   GC_ASSERT(I_HOLD_LOCK());
   space = (ptr_t)GET_MEM(bytes); /*< `HBLKSIZE`-aligned */
+  if (GC_on_os_get_mem)
+    (*GC_on_os_get_mem)(space, bytes);
   if (UNLIKELY(NULL == space))
     return NULL;
 #ifdef USE_PROC_FOR_LIBRARIES
