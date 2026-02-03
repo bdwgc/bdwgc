@@ -336,6 +336,7 @@ STATIC DWORD GC_main_thread;
         Sleep(0); /* yield */ \
       } while (TRUE)
 # define DETACH_THREAD_UNLOCK() AO_CLEAR(&GC_dll_main_detach_thread_lock)
+  STATIC volatile AO_TS_t GC_dll_main_detach_thread_lock = AO_TS_CLEAR;
 
   /* An indicator that some threads have pending_delete_thread set.     */
   STATIC GC_bool GC_has_pending_delete_threads = FALSE;
