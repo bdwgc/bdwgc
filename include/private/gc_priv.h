@@ -48,13 +48,6 @@
 #  define _USING_POSIX4A_DRAFT10 1
 #endif
 
-#if defined(__MINGW32__) && !defined(__MINGW_EXCPT_DEFINE_PSDK) \
-    && defined(__i386__)                                        \
-    && defined(GC_EXTERN) /*< defined in `extra/gc.c` file */
-/* See the description in `mark.c` file. */
-#  define __MINGW_EXCPT_DEFINE_PSDK 1
-#endif
-
 #if defined(NO_DEBUGGING) && !defined(GC_ASSERTIONS) && !defined(NDEBUG)
 /* To turn off assertion checking (in `atomic_ops.h` file). */
 #  define NDEBUG 1
