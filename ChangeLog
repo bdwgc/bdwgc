@@ -1,3 +1,11 @@
+[7.2u]
+
+2026-02-04  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README: Bump version to 7.2u (rev. U).
+	* Makefile.am (libgc_la_LDFLAGS): Bump version-info to 2:10:1.
+	* Makefile.in: Regenerate.
+
 2026-02-01  Ivan Maidanski <ivmai@mail.ru>
 
 	* doc/README.macros (USE_PROC_FOR_LIBRARIES): Mention that it
