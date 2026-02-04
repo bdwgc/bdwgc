@@ -1951,7 +1951,7 @@ Also, includes 7.6.18 changes
 * Workaround Thread Sanitizer (TSan) false positive warnings
 
 
-== [7.6.26] (not released yet) ==
+== [7.6.26] 2026-02-04 ==
 
 * Eliminate 'argument unused' gcc warning in push_all_stack_partially_eager
 * Fix GC_NO_THREADS_DISCOVERY macro check before definition
