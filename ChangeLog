@@ -3,6 +3,176 @@
 	* doc/README.macros (USE_PROC_FOR_LIBRARIES): Mention that it
 	is also applicable to Solaris OS.
 
+2026-01-15  Ivan Maidanski <ivmai@mail.ru> (and Tobiasz Laskowski)
+
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY]
+	(GC_Thread_Rep.pending_delete_thread): New field.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY]
+	(GC_delete_gc_thread_no_free): Update comment.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (DETACH_THREAD_LOCK,
+	DETACH_THREAD_UNLOCK): New macro.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY]
+	(GC_dll_main_detach_thread_lock, GC_has_pending_delete_threads): New
+	`STATIC` variable.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY]
+	(GC_register_my_thread_inner): Add assertion that
+	`pending_delete_thread` is false.
+	* win32_threads.c [!MSWINCE] (GC_suspend): Remove code duplication
+	regarding `GetExitCodeThread()` call.
+	* win32_threads.c [!MSWINCE && GC_PTHREADS] (GC_suspend): Refine
+	comment about `pthread_join`.
+	* win32_threads.c [!MSWINCE && !GC_PTHREADS
+	&& !GC_NO_THREADS_DISCOVERY] (GC_suspend): Set
+	`GC_has_pending_delete_threads` and `pending_delete_thread` instead
+	of `GC_delete_gc_thread_no_free()` call; add comment.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY || GC_ASSERTIONS]
+	(GC_stop_world): Move `GC_please_stop = TRUE` down (to be after setting
+	of `GC_write_disabled`).
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY && !GC_ASSERTIONS]
+	(GC_stop_world, GC_start_world): Do not set `GC_please_stop` unless
+	`GC_win32_dll_threads`.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (GC_stop_world,
+	GC_start_world): Wrap setting of `GC_please_stop` into
+	`DETACH_THREAD_LOCK`/`DETACH_THREAD_UNLOCK`.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (GC_stop_world): If
+	`p->pending_delete_thread`, then do not call `GC_suspend(p)`.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (GC_start_world): Define
+	`pending_delete` local variable; if `GC_has_pending_delete_threads`,
+	then call `GC_delete_gc_thread_no_free()` for each thread that has
+	`pending_delete_thread` set (and clear it).
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (GC_push_stack_for):
+	Return 0 if `pending_delete_thread` is set; add comment.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (DllMain):
+	Expand `GC_delete_thread()` call; if `GC_please_stop`, then
+	`GC_has_pending_delete_threads` and `pending_delete_thread` instead
+	of calling `GC_delete_gc_thread_no_free()`; otherwise clear
+	t->stack_base wrapped into `DETACH_THREAD_LOCK`/`DETACH_THREAD_UNLOCK
+	(before calling `GC_delete_gc_thread_no_free(t)`).
+
+2023-08-26  Marius Gerbershagen <marius.gerbershagen@gmail.com>
+
+	* win32_threads.c [X86_64
+	&& !XMM_CANT_STORE_PTRS] (PUSHED_REGS_COUNT): Change from 15 to 47; add
+	comment.
+	* win32_threads.c [!WOW64_THREAD_CONTEXT_WORKAROUND && !I386
+	&& !XMM_CANT_STORE_PTRS] (GET_THREAD_CONTEXT_FLAGS): Add
+	CONTEXT_FLOATING_POINT.
+	* win32_threads.c (PUSH8_LH): Define macro.
+	* win32_threads.c [X86_64 && !XMM_CANT_STORE_PTRS] (copy_ptr_regs): Use
+	PUSH8_LH() to store Xmm registers.
+
+2019-09-05  Jonathan Chambers <joncham@gmail.com>
+
+	* include/private/gcconfig.h [(I386 || X86_64) && (CYGWIN32 || MSWIN32)]
+	(RETRY_GET_THREAD_CONTEXT): Define macro.
+	* win32_threads.c [RETRY_GET_THREAD_CONTEXT]
+	(MAX_SUSPEND_THREAD_RETRIES): Likewise.
+	* include/private/gcconfig.h [NO_RETRY_GET_THREAD_CONTEXT]
+	(RETRY_GET_THREAD_CONTEXT): Undefine macro (for test purposes).
+	* win32_threads.c (copy_ptr_regs): Declare static function.
+	* win32_threads.c (PUSHED_REGS_COUNT): Define macro.
+	* win32_threads.c [RETRY_GET_THREAD_CONTEXT] (GC_Thread_Rep): Add
+	context_sp and context_regs[] fields; add comment.
+	* win32_threads.c (first_thread): Refine the comment.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY]
+	(GC_delete_gc_thread_no_free): Reset suspended if GC_win32_dll_threads.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY && RETRY_GET_THREAD_CONTEXT]
+	(GC_delete_gc_thread_no_free): Reset context_sp if GC_win32_dll_threads.
+	* win32_threads.c [RETRY_GET_THREAD_CONTEXT] (GC_suspend): Define
+	retry_cnt and context local variables; set ContextFlags and call
+	GetThreadContext() after invocation of SuspendThread();
+	if GetThreadContext() succeeds then call copy_ptr_regs(); call
+	ResumeThread() and proceed to SuspendThread() if GetThreadContext()
+	failed (the limit of iterations is MAX_SUSPEND_THREAD_RETRIES); call
+	Sleep(0) after ResumeThread() or failed SuspendThread() except for the
+	first 2 iterations.
+	* win32_threads.c (copy_ptr_regs): Define static function (move
+	PUSH-related part of GC_push_stack_for code here); change PUSH1(reg) to
+	store reg to regs[]; define context as *pcontext; add assertion that
+	number of stored registers is equal to PUSHED_REGS_COUNT.
+	* win32_threads.c [WOW64_THREAD_CONTEXT_WORKAROUND] (copy_ptr_regs):
+	Store ContextFlags and SegFs as the first elements of regs[].
+	* win32_threads.c (GC_push_stack_for): Declare i local variable.
+	* win32_threads.c [RETRY_GET_THREAD_CONTEXT] (GC_push_stack_for):
+	Define regs local variable as pointer to thread->context_regs; if
+	thread->suspended then set sp to thread->context_sp; do not call
+	GetThreadContext() if thread->suspended; if GetThreadContext() failed
+	then set sp to thread->context_sp unless it is null, in the later case
+	just return from the function with a zero result; add comment.
+	* win32_threads.c [!RETRY_GET_THREAD_CONTEXT] (GC_push_stack_for):
+	Define regs local variable as array of PUSHED_REGS_COUNT elements.
+	* win32_threads.c (GC_push_stack_for): If GetThreadContext() is
+	successful then call copy_ptr_regs() and save the result to sp; call
+	GC_push_one() for each regs[] element (except for the first 2 ones if
+	WOW64_THREAD_CONTEXT_WORKAROUND).
+	* win32_threads.c [WOW64_THREAD_CONTEXT_WORKAROUND]
+	(GC_push_stack_for): Define ContextFlags, SegFs local variables
+	(the values are obtained from regs[]); use these variables instead of
+	context one; do not overwrite sp local variable value so that not to
+	use context.Esp directly (i.e. not to use context out of its scope).
+	* win32_threads.c (GC_push_all_stacks): Add the title comment (copied
+	from pthread_stop_world.c).
+
+2019-09-05  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gcconfig.h [I386 && (CYGWIN32 || MSWIN32)]
+	(WOW64_THREAD_CONTEXT_WORKAROUND): Define macro.
+	* win32_threads.c [!CONTEXT_EXCEPTION_ACTIVE] (CONTEXT_EXCEPTION_ACTIVE,
+	CONTEXT_EXCEPTION_REQUEST, CONTEXT_EXCEPTION_REPORTING): Move macro
+	definition upper to be before GC_suspend(); define only if
+	WOW64_THREAD_CONTEXT_WORKAROUND is defined (instead of I386).
+	* win32_threads.c (isWow64): Move static variable upper to be before
+	GC_suspend(); define only if WOW64_THREAD_CONTEXT_WORKAROUND.
+	* win32_threads.c (GET_THREAD_CONTEXT_FLAGS): New macro.
+	* win32_threads.c (GC_push_stack_for): Always set context.ContextFlags
+	to GET_THREAD_CONTEXT_FLAGS.
+	* win32_threads.c [I386] (GC_push_stack_for): Always store context.Esp
+	to sp (as the initial value).
+	* win32_threads.c (GC_push_stack_for): Use WoW64 workaround only
+	if WOW64_THREAD_CONTEXT_WORKAROUND (instead of I386).
+	* win32_threads.c (GC_thr_init): Set isWow64 only if
+	WOW64_THREAD_CONTEXT_WORKAROUND (instead of I386).
+
+2017-04-13  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_priv.h [__MINGW32__ && __i386__ && GC_EXTERN]
+	(__MINGW_EXCPT_DEFINE_PSDK): Define (before any system header include);
+	this macro definition is needed only when extra/gc.c is compiled.
+	* mark.c [__MINGW32__ && __i386__] (__MINGW_EXCPT_DEFINE_PSDK): Define
+	(before include gc_pmark.h).
+
+2012-11-11  Ivan Maidanski <ivmai@mail.ru>
+
+	* win32_threads.c (GC_delete_gc_thread): Rename to
+	GC_delete_gc_thread_no_free; remove GC_INTERNAL_FREE call; update
+	comment.
+	* win32_threads.c (GC_delete_thread, GC_suspend, DllMain): Replace
+	GC_delete_gc_thread call with GC_delete_gc_thread_no_free one (since
+	GC_win32_dll_threads is true thus there is no entry to free).
+	* win32_threads.c (GC_delete_thread): Change type of "t" local
+	variable from GC_thread to GC_vthread.
+	* win32_threads.c (GC_stop_world): Update comment.
+	* win32_threads.c (GC_pthread_join, GC_pthread_detach): Replace
+	GC_delete_gc_thread call with GC_delete_gc_thread_no_free and
+	GC_INTERNAL_FREE calls (since GC_win32_dll_threads is false).
+	* win32_threads.c (GC_pthread_detach): Add assertion that
+	GC_win32_dll_threads is false.
+
+2012-02-16  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordxtra.c (refill_cache): Replace the K&R-style function
+	definition with the ANSI C one.
+
+2012-01-29  Ivan Maidanski <ivmai@mail.ru>
+
+	* win32_threads.c (first_thread, GC_push_thread_structures): Refine
+	the comment.
+	* win32_threads.c (GC_delete_gc_thread, GC_push_thread_structures):
+	Remove pthread-specific code from the code specific to DllMain-based
+	thread registration (since GC_PTHREADS cannot be defined if
+	GC_NO_THREADS_DISCOVERY is undefined).
+	* win32_threads.c (DllMain): Reformat the code.
+
 2026-01-03  Ivan Maidanski <ivmai@mail.ru>
 
 	* doc/gcinterface.html (GC_REALLOC): Fix a typo ("copies").
