@@ -86,7 +86,7 @@ endif
 # linuxthread semaphore functions get linked:
 libgc_la_LIBADD = @addobjs@ $(THREADDLLIBS) $(UNWINDLIBS) $(ATOMIC_OPS_LIBS)
 libgc_la_DEPENDENCIES = @addobjs@
-libgc_la_LDFLAGS = $(extra_ldflags_libgc) -version-info 2:9:1 -no-undefined
+libgc_la_LDFLAGS = $(extra_ldflags_libgc) -version-info 2:10:1 -no-undefined
 
 EXTRA_libgc_la_SOURCES = alpha_mach_dep.S \
     mips_sgi_mach_dep.s mips_ultrix_mach_dep.s \

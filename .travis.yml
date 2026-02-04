@@ -92,7 +92,7 @@ jobs:
     dist: focal
     env:
     - MAKEFILE_TARGETS="distcheck"
-    - GC_REAL_VERSION=7.2t
+    - GC_REAL_VERSION=7.2u
     - AO_SRC_VER=v7.2l
 
 before_install:
