@@ -1371,6 +1371,15 @@
 * Workaround various cppcheck false positives
 
 
+== [8.0.18] (not released yet) ==
+
+* Eliminate 'GC_push_all_stack not used' gcc warning if fix-up pointers
+* Fix 'MA_FETCHOP undeclared' gcc error if USE_PROC_FOR_LIBRARIES on Solaris
+* Fix 'PIOCNMAP undeclared' gcc error if USE_PROC_FOR_LIBRARIES on Solaris
+
+Also, includes 7.6.26 changes
+
+
 == [8.0.16] 2025-10-17 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
