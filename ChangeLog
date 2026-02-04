@@ -1225,6 +1225,15 @@ Also, includes 7.6.18 changes
 * Workaround Thread Sanitizer (TSan) false positive warnings
 
 
+== [7.6.26] (not released yet) ==
+
+* Eliminate 'argument unused' gcc warning in push_all_stack_partially_eager
+* Fix GC_NO_THREADS_DISCOVERY macro check before definition
+* Fix redirected 'free' for callers from libdl/libpthread if IGNORE_FREE
+
+Also, includes 7.4.32 changes
+
+
 == [7.6.24] 2025-10-17 ==
 
 * Eliminate 'int-to-ptr cast' gcc warning in GC_restart_all on OpenBSD
