@@ -1829,6 +1829,31 @@ Also, includes 7.4.6 changes
 Also, includes 7.4.4 changes
 
 
+== [7.4.32] (not released yet) ==
+
+* Eliminate 'cast between incompatible func types' warnings for FARPROC vars
+* Eliminate 'format expects argument of type' gcc warnings in dump_meminfo
+* Eliminate 'GC_remove_roots_subregion not used' gcc warning on Solaris
+* Eliminate 'unused parameter' clang warnings in GC_darwin_sigbus
+* Eliminate 'unused variable i' gcc warning in GC_start_world (Windows)
+* Fix 'KERN_PROTECTION_FAILURE while world is stopped' error on MacOS X
+* Fix 'reserved' argument handling in GC_DllMain
+* Fix 'undefined errno' compiler error in strdup/strndup on WinCE
+* Fix a cycle in NORMAL freelist if malloc is redirected on Linux
+* Fix assertion in GC_wait_for_reclaim if DllMain-based thread registration
+* Fix missing new-line in help message of console variant of cord/de
+* Fix race in DllMain by deferring delete_thread call to GC_start_world
+* Fix SIGSEGV if pthread_detach is called before collector initialization
+* Fix typos (about getcontext) in printed message in setjmp_test
+* Fix various typos in comments and documentation
+* Prevent collection if fork from an unregistered thread
+* Refine USE_PROC_FOR_LIBRARIES macro documentation for Solaris
+* Remove unused GC_VERSION in configure
+* Remove unused redefinition of GC_free in gctest
+* Revert 'Avoid abort on ResumeThread failure if Win32 DllMain closes thread'
+* Revert 'Fix GC_suspend abort when the thread is deleted by DllMain'
+
+
 == [7.4.30] 2025-10-17 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
@@ -2449,6 +2474,34 @@ Also, includes 7.2e, 7.2d, 7.2c, 7.2b changes
 * Use pthread_key for thread-local storage on FreeBSD
 * Use union of AO_t and word to favor strict-aliasing compiler optimization
 Also, includes 7.2 changes
+
+
+== [7.2u] (not released yet) ==
+
+* Change cord function declaration style from K-R to ANSI C
+* Eliminate 'incompatible function pointer' warning in mark_some (MinGW/x86)
+* Fix 'incompatible pointer' compiler warning in GC_init_dyld (OS X 64-bit)
+* Fix 'KERN_PROTECTION_FAILURE while world is stopped' error on MacOS X
+* Fix 'reserved' argument handling in DllMain
+* Fix 'undefined errno' compiler error in strdup/strndup on WinCE
+* Fix a cycle in NORMAL freelist if malloc is redirected on Linux
+* Fix GC_push_stack_for() to push also Xmm registers on Windows/x64
+* Fix missing new-line in help message of console variant of cord/de
+* Fix race in DllMain by deferring delete_thread call to GC_start_world
+* Fix SIGSEGV if pthread_detach is called before collector initialization
+* Fix typos (about getcontext) in printed message in setjmp_test
+* Fix various typos in comments and documentation
+* Prevent collection if fork from an unregistered thread
+* Prevent GetThreadContext failure (Windows)
+* Refactoring of WoW64 workaround (Win32)
+* Refine USE_PROC_FOR_LIBRARIES macro documentation for Solaris
+* Remove dummy GC_noop call from code visible to Lint tool only
+* Remove part of DllMain-specific code which is always disabled (Windows)
+* Remove unused GC_VERSION in configure
+* Remove unused redefinition of GC_free in gctest
+* Replace var-args GC_noop with fixed-args one
+* Replace Win32 GC_delete_gc_thread with GC_delete_gc_thread_no_free
+* Use GC_noop1 instead of GC_noop in GC_pause and remove duplicate GC_noop1
 
 
 == [7.2t] 2025-10-17 ==
