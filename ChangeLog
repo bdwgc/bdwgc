@@ -1,5 +1,5 @@
 
-== [8.0.18] (not released yet) ==
+== [8.0.18] 2026-02-04 ==
 
 * Eliminate 'GC_push_all_stack not used' gcc warning if fix-up pointers
 * Fix 'MA_FETCHOP undeclared' gcc error if USE_PROC_FOR_LIBRARIES on Solaris
