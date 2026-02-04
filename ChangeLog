@@ -1183,7 +1183,7 @@ Also, includes 7.4.6 changes
 Also, includes 7.4.4 changes
 
 
-== [7.4.32] (not released yet) ==
+== [7.4.32] 2026-02-04 ==
 
 * Eliminate 'cast between incompatible func types' warnings for FARPROC vars
 * Eliminate 'format expects argument of type' gcc warnings in dump_meminfo
