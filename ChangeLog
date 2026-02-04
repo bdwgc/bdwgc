@@ -1830,7 +1830,7 @@ Also, includes 7.2e, 7.2d, 7.2c, 7.2b changes
 Also, includes 7.2 changes
 
 
-== [7.2u] (not released yet) ==
+== [7.2u] 2026-02-04 ==
 
 * Change cord function declaration style from K-R to ANSI C
 * Eliminate 'incompatible function pointer' warning in mark_some (MinGW/x86)
