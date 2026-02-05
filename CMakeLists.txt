@@ -24,14 +24,14 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-set(PACKAGE_VERSION 8.2.10)
+set(PACKAGE_VERSION 8.2.12)
 # Version must match that in AC_INIT of configure.ac and that in README.
 # Version must conform to: [0-9]+[.][0-9]+[.][0-9]+
 
 # Info (current:revision:age) for the Libtool versioning system.
 # These values should match those in cord/cord.am and Makefile.am.
 set(LIBCORD_VER_INFO    6:1:5)
-set(LIBGC_VER_INFO      6:5:5)
+set(LIBGC_VER_INFO      6:6:5)
 set(LIBGCCPP_VER_INFO   6:0:5)
 
 option(enable_cplusplus "C++ support" OFF)
