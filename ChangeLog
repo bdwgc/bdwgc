@@ -1,5 +1,5 @@
 
-== [8.2.12] (not released yet) ==
+== [8.2.12] 2026-02-05 ==
 
 * Do not prevent shared builds on OpenBSD/alpha
 * Eliminate 'argument unused' gcc warning in push_all_stack_partially_eager

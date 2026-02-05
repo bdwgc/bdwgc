@@ -30,7 +30,7 @@
 /* it to keep the old-style build process working.              */
 #define GC_TMP_VERSION_MAJOR 8
 #define GC_TMP_VERSION_MINOR 2
-#define GC_TMP_VERSION_MICRO 10 /* 8.2.10 */
+#define GC_TMP_VERSION_MICRO 12 /* 8.2.12 */
 
 #ifdef GC_VERSION_MAJOR
 # if GC_TMP_VERSION_MAJOR != GC_VERSION_MAJOR \
