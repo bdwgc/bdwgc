@@ -1,4 +1,42 @@
 
+== [8.2.12] (not released yet) ==
+
+* Do not prevent shared builds on OpenBSD/alpha
+* Eliminate 'argument unused' gcc warning in push_all_stack_partially_eager
+* Eliminate 'assign long to void*' gcc warning in get_stack_base on Serenity
+* Eliminate 'format expects argument of type' gcc warnings in dump_meminfo
+* Eliminate 'GC_push_all_stack not used' gcc warning if fix-up pointers
+* Eliminate 'GC_remove_roots_subregion not used' gcc warning on Solaris
+* Eliminate 'unused parameter' clang warnings in GC_darwin_sigbus
+* Fix 'KERN_PROTECTION_FAILURE while world is stopped' error on MacOS X
+* Fix 'MA_FETCHOP undeclared' gcc error if USE_PROC_FOR_LIBRARIES on Solaris
+* Fix 'PIOCNMAP undeclared' gcc error if USE_PROC_FOR_LIBRARIES on Solaris
+* Fix 'reserved' argument handling in GC_DllMain
+* Fix 'undefined errno' compiler error in strdup/strndup on WinCE
+* Fix a cycle in NORMAL freelist if malloc is redirected on Linux
+* Fix assertion in GC_wait_for_reclaim if DllMain-based thread registration
+* Fix code defect of LOCK/UNLOCK in separate 'if' in GC_generic_malloc_many
+* Fix missing new-line in help message of console variant of cord/de
+* Fix race in DllMain by deferring delete_thread call to GC_start_world
+* Fix redirected 'free' for callers from libdl/libpthread if IGNORE_FREE
+* Fix reliance on glibc-specific '__data_start' for some Linux platforms
+* Fix shared library build on MinGW if disable_single_obj_compilation
+* Fix SIGSEGV during pthread_setname_np if redirect malloc on FreeBSD
+* Fix SIGSEGV if pthread_detach is called before collector initialization
+* Fix SIGSEGV in remove_all_threads_but_me if fork from unregistered thread
+* Fix typos (about getcontext) in printed message in setjmp_test
+* Fix various typos in comments and documentation
+* Prevent collection if fork from an unregistered thread
+* Refine USE_PROC_FOR_LIBRARIES macro documentation for Solaris
+* Remove unneeded '__MINGW_EXCPT_DEFINE_PSDK' macro define for mingw32
+* Remove unused GC_VERSION in configure
+* Remove unused redefinition of GC_free in gctest
+* Revert 'Avoid abort on ResumeThread failure if DllMain closes thread'
+* Revert 'Fix GC_suspend abort when the thread is deleted by DllMain'
+* Turn on pthread_atfork usage on Hurd
+* Workaround locals not pushed in sanitized binaries by disabling fake stacks
+
+
 == [8.2.10] 2025-10-18 ==
 
 * Add missing test_cpp dependency on gc_allocator.h in build scripts
