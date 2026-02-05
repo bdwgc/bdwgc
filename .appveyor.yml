@@ -9,7 +9,7 @@ environment:
   DJGPP_VER: 3.4
   DJGPP_GCC_VER: 1220
   DMC_VER: 857
-  WATCOM_VER: 2025-11-03
+  WATCOM_VER: 2026-02-02
   CMAKE_CONFIG: Debug
   TEST_TARGET: check
   matrix:
