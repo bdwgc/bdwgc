@@ -52,10 +52,10 @@ help, go to cmake.org.
 HOW TO IMPORT BDWGC
 -------------------
 
-Another project could add bdwgc as one of its dependencies with something like
-this in their CMakeLists.txt:
+Another project could add bdwgc (of the required version) as one of its
+dependencies with something like this in their CMakeLists.txt file:
 
-find_package(BDWgc 8.2.12 REQUIRED)
+find_package(BDWgc <version> REQUIRED)
 add_executable(Foo foo.c)
 target_link_libraries(Foo BDWgc::gc)
 
