@@ -2114,9 +2114,11 @@ struct _GC_arrays {
 #    define GC_blocked_register_sp GC_arrays._blocked_register_sp
   ptr_t _blocked_register_sp;
 
+#    ifndef STACK_NOT_SCANNED
   /* Value returned from register flushing routine (`ar.bsp`). */
-#    define GC_save_regs_ret_val GC_arrays._save_regs_ret_val
+#      define GC_save_regs_ret_val GC_arrays._save_regs_ret_val
   ptr_t _save_regs_ret_val;
+#    endif
 #  endif
 
   /*
