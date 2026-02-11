@@ -2785,7 +2785,7 @@ GC_EXTERN signed_word GC_bytes_found;
     GC_EXTERN GC_bool GC_dont_query_stack_min;
                                 /* Defined and set in os_dep.c. */
 # endif
-#elif defined(IA64)
+#elif defined(IA64) && !defined(STACK_NOT_SCANNED)
   GC_EXTERN ptr_t GC_save_regs_ret_val; /* defined in mach_dep.c. */
                         /* Previously set to backing store pointer.     */
 #endif /* !THREADS */
