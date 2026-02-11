@@ -176,7 +176,7 @@
 
 #endif /* MACOS && __MWERKS__ */
 
-# if defined(SPARC) || defined(IA64)
+# if (defined(SPARC) || defined(IA64)) && !defined(STACK_NOT_SCANNED)
     /* Value returned from register flushing routine; either sp (SPARC) */
     /* or ar.bsp (IA64).                                                */
     GC_INNER ptr_t GC_save_regs_ret_val = NULL;
@@ -374,7 +374,7 @@ GC_INNER void GC_with_callee_saves_pushed(void (*fn)(ptr_t, void *),
         /* On a register window machine, we need to save register       */
         /* contents on the stack for this to work.  This may already be */
         /* subsumed by the getcontext() call.                           */
-#       if defined(IA64) || defined(SPARC)
+#       if (defined(IA64) || defined(SPARC)) && !defined(STACK_NOT_SCANNED)
           GC_save_regs_ret_val =
 #       endif
             GC_save_regs_in_stack();
