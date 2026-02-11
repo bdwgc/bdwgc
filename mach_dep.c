@@ -118,7 +118,7 @@ GC_with_callee_saves_pushed(GC_with_callee_saves_func fn, ptr_t arg)
    * the stack for this to work.  This may already be subsumed by the
    * `getcontext()` call.
    */
-#        if defined(IA64) && !defined(THREADS)
+#        if defined(IA64) && !defined(THREADS) && !defined(STACK_NOT_SCANNED)
   GC_save_regs_ret_val =
 #        endif
       GC_save_regs_in_stack();
