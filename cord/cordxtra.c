@@ -295,7 +295,7 @@ CORD_from_char_star(const char *s)
 const char *
 CORD_to_const_char_star(CORD x)
 {
-  if (0 == x)
+  if (x == CORD_EMPTY)
     return "";
   if (CORD_IS_STRING(x))
     return (const char *)x;
@@ -483,7 +483,7 @@ CORD_ec_flush_buf(CORD_ec x)
   size_t len = (size_t)(x[0].ec_bufptr - x[0].ec_buf);
   char *s;
 
-  if (len == 0)
+  if (0 == len)
     return;
   s = (char *)GC_MALLOC_ATOMIC(len + 1);
   if (NULL == s)
