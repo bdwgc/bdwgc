@@ -346,7 +346,9 @@ jobs:
     - name: Install gcc-multilib (Ubuntu)
       if: ${{ matrix.install_multilib }}
       # Note: cache-apt-pkgs-action fails sometimes.
-      run: sudo apt install -y gcc-multilib
+      run: |
+        sudo apt update
+        sudo apt install -y gcc-multilib
 
     - name: Configure project
       run: |
