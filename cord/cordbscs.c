@@ -153,7 +153,7 @@ CORD_dump_inner(CORD x, unsigned n)
   for (i = 0; i < (size_t)n; i++) {
     fputs("  ", stdout);
   }
-  if (x == 0) {
+  if (x == CORD_EMPTY) {
     fputs("NIL\n", stdout);
   } else if (CORD_IS_STRING(x)) {
     for (i = 0; i <= SHORT_LIMIT; i++) {
@@ -394,7 +394,7 @@ CORD_from_fn(CORD_fn fn, void *client_data, size_t len)
 size_t
 CORD_len(CORD x)
 {
-  return x == 0 ? 0 : GEN_LEN(x);
+  return x == CORD_EMPTY ? 0 : GEN_LEN(x);
 }
 
 struct substr_args {
@@ -542,7 +542,7 @@ CORD_substr(CORD x, size_t i, size_t n)
   size_t len = CORD_len(x);
 
   if (i >= len || 0 == n)
-    return 0;
+    return CORD_EMPTY;
   if (i + n > len)
     n = len - i;
   return CORD_substr_checked(x, i, n);
@@ -552,7 +552,7 @@ int
 CORD_iter5(CORD x, size_t i, CORD_iter_fn f1, CORD_batched_iter_fn f2,
            void *client_data)
 {
-  if (0 == x)
+  if (x == CORD_EMPTY)
     return 0;
   if (CORD_IS_STRING(x)) {
     const char *p = x + i;
@@ -607,7 +607,7 @@ CORD_iter(CORD x, CORD_iter_fn f1, void *client_data)
 int
 CORD_riter4(CORD x, size_t i, CORD_iter_fn f1, void *client_data)
 {
-  if (0 == x)
+  if (x == CORD_EMPTY)
     return 0;
   if (CORD_IS_STRING(x)) {
     const char *p = x + i;
@@ -776,7 +776,7 @@ static CORD
 CORD_concat_forest(ForestElement *forest, size_t expected_len)
 {
   int i = 0;
-  CORD sum = 0;
+  CORD sum = CORD_EMPTY;
   size_t sum_len = 0;
 
   while (sum_len != expected_len) {
@@ -819,9 +819,7 @@ CORD_balance(CORD x)
   Forest forest;
   size_t len;
 
-  if (0 == x)
-    return 0;
-  if (CORD_IS_STRING(x))
+  if (x == CORD_EMPTY || CORD_IS_STRING(x))
     return x;
   if (!min_len_init)
     CORD_init_min_len();
