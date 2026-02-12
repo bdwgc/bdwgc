@@ -201,10 +201,10 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
   size_t len_x;
   int depth;
 
-  if (x == CORD_EMPTY)
-    return y;
   if (0 == len_y)
     return x;
+  if (x == CORD_EMPTY)
+    return y;
   if (CORD_IS_STRING(x)) {
     len_x = strlen(x);
     result_len = len_x + len_y;
