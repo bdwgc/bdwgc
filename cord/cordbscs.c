@@ -250,7 +250,7 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
       result_len = right_len + len_y; /*< length of `new_right` */
       if (result_len <= SHORT_LIMIT) {
         new_right = (char *)GC_MALLOC_ATOMIC(result_len + 1);
-        if (new_right == 0)
+        if (NULL == new_right)
           OUT_OF_MEMORY;
         memcpy(new_right, right, right_len);
         memcpy(new_right + right_len, y, len_y);
@@ -271,6 +271,7 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
     }
     result_len = len_x + len_y;
   }
+
   {
     /* The general case; `len_x` and `result_len` are known. */
     CordRep *result = GC_NEW(CordRep);
@@ -319,6 +320,7 @@ CORD_cat(CORD x, CORD y)
       depth = depth_y + 1;
   }
   result_len = len_x + LEN(y);
+
   {
     CordRep *result = GC_NEW(CordRep);
 
@@ -347,7 +349,6 @@ CORD_from_fn_inner(CORD_fn fn, void *client_data, size_t len)
   if (0 == len)
     return NULL;
   if (len <= SHORT_LIMIT) {
-    char *result;
     size_t i;
     char buf[SHORT_LIMIT + 1];
 
@@ -355,18 +356,21 @@ CORD_from_fn_inner(CORD_fn fn, void *client_data, size_t len)
       char c = fn(i, client_data);
 
       if (c == '\0')
-        goto gen_case;
+        break;
       buf[i] = c;
     }
 
-    result = (char *)GC_MALLOC_ATOMIC(len + 1);
-    if (NULL == result)
-      OUT_OF_MEMORY;
-    memcpy(result, buf, len);
-    result[len] = '\0';
-    return (CordRep *)result;
+    if (i == len) {
+      char *result = (char *)GC_MALLOC_ATOMIC(len + 1);
+
+      if (NULL == result)
+        OUT_OF_MEMORY;
+      memcpy(result, buf, len);
+      result[len] = '\0';
+      return (CordRep *)result;
+    }
   }
-gen_case:
+
   {
     CordRep *result = GC_NEW(CordRep);
 
@@ -427,7 +431,7 @@ CORD_substr_closure(CORD x, size_t i, size_t n, CORD_fn f)
   struct substr_args *sa = GC_NEW(struct substr_args);
   CordRep *result;
 
-  if (sa == 0)
+  if (NULL == sa)
     OUT_OF_MEMORY;
   sa->sa_index = i;
   GC_PTR_STORE_AND_DIRTY(&sa->sa_cord, x);
