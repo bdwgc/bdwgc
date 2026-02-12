@@ -56,6 +56,9 @@ void test_basics(void)
     CORD y;
     CORD_pos p;
 
+    if (CORD_cat_char_star(CORD_EMPTY, "", 0) != CORD_EMPTY)
+        ABORT("CORD_cat_char_star() returned non-empty cord");
+
     x = CORD_cat(x,x);
     if (!CORD_IS_STRING(x)) ABORT("short cord should usually be a string");
     if (strcmp(x, "abab") != 0) ABORT("bad CORD_cat result");
