@@ -161,8 +161,8 @@ CORD CORD_cat_char_star(CORD x, const char * y, size_t leny)
     size_t lenx;
     int depth;
 
-    if (x == CORD_EMPTY) return(y);
     if (leny == 0) return(x);
+    if (x == CORD_EMPTY) return(y);
     if (CORD_IS_STRING(x)) {
         lenx = strlen(x);
         result_len = lenx + leny;
