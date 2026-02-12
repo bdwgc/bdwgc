@@ -200,6 +200,9 @@ test_basics(void)
   CORD x = CORD_from_char_star("ab");
   size_t i;
 
+  if (CORD_cat_char_star(CORD_EMPTY, "", 0) != CORD_EMPTY)
+    ABORT("CORD_cat_char_star() returned non-empty cord");
+
   x = CORD_cat(x, x);
   if (x == CORD_EMPTY)
     ABORT("CORD_cat(x,x) returned empty cord");
