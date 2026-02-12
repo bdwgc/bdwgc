@@ -100,7 +100,7 @@ extern "C" {
 typedef const char *CORD;
 
 /** An empty cord is always represented as nil. */
-#define CORD_EMPTY 0
+#define CORD_EMPTY ((CORD)0)
 
 /** Is a nonempty cord represented as a C string? */
 #define CORD_IS_STRING(s) (*(s) != '\0')
