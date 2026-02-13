@@ -277,21 +277,6 @@ CORD_to_char_star(CORD x)
   return result;
 }
 
-CORD
-CORD_from_char_star(const char *s)
-{
-  char *result;
-  size_t len = strlen(s);
-
-  if (0 == len)
-    return CORD_EMPTY;
-  result = (char *)GC_MALLOC_ATOMIC(len + 1);
-  if (NULL == result)
-    OUT_OF_MEMORY;
-  memcpy(result, s, len + 1);
-  return result;
-}
-
 const char *
 CORD_to_const_char_star(CORD x)
 {
@@ -611,7 +596,7 @@ refill_cache(void *client_data)
       && fseek(f, (long)line_start, SEEK_SET) != 0) {
     ABORT("fseek failed");
   }
-  if (fread(new_cache->data, sizeof(char), LINE_SZ, f)
+  if (fread(new_cache->data, 1 /* `sizeof char` */, LINE_SZ, f)
       <= file_pos - line_start) {
     ABORT("fread failed");
   }
@@ -699,7 +684,7 @@ CORD_from_file_lazy_inner(FILE *f, size_t len)
   }
   state->lf_file = f;
   for (i = 0; i < CACHE_SZ / LINE_SZ; i++) {
-    state->lf_cache[i] = 0;
+    state->lf_cache[i] = NULL;
   }
   state->lf_current = 0;
 #ifndef GC_NO_FINALIZATION
