@@ -194,6 +194,40 @@ CORD_dump(CORD x)
   fflush(stdout);
 }
 
+static char *
+copy_char_substr(const char *s, size_t len)
+{
+  char *result = (char *)GC_MALLOC_ATOMIC(len + 1);
+
+  if (NULL == result)
+    OUT_OF_MEMORY;
+  memcpy(result, s, len);
+  result[len] = '\0';
+  return result;
+}
+
+static char *
+cat_char_substr(const char *x, size_t len_x, const char *y, size_t len_y)
+{
+  size_t result_len = len_x + len_y;
+  char *result = (char *)GC_MALLOC_ATOMIC(result_len + 1);
+
+  if (NULL == result)
+    OUT_OF_MEMORY;
+  memcpy(result, x, len_x);
+  memcpy(result + len_x, y, len_y);
+  result[result_len] = '\0';
+  return result;
+}
+
+CORD
+CORD_from_char_star(const char *s)
+{
+  size_t len = strlen(s);
+
+  return 0 == len ? CORD_EMPTY : (CORD)copy_char_substr(s, len);
+}
+
 CORD
 CORD_cat_char_star(CORD x, const char *y, size_t len_y)
 {
@@ -209,29 +243,13 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
     len_x = strlen(x);
     result_len = len_x + len_y;
     if (result_len <= SHORT_LIMIT) {
-      char *result = (char *)GC_MALLOC_ATOMIC(result_len + 1);
-
-      if (NULL == result)
-        OUT_OF_MEMORY;
-#ifdef LINT2
-      memcpy(result, x, len_x + 1);
-#else
-      /*
-       * No need to copy the terminating zero as `result[len_x]` is
-       * written below.
-       */
-      memcpy(result, x, len_x);
-#endif
-      memcpy(result + len_x, y, len_y);
-      result[result_len] = '\0';
-      return (CORD)result;
+      return (CORD)cat_char_substr(x, len_x, y, len_y);
     } else {
       depth = 1;
     }
   } else {
     CORD right;
     CORD left;
-    char *new_right;
 
     len_x = LEN(x);
     if (len_y <= SHORT_LIMIT / 2 && IS_CONCATENATION(x)
@@ -247,15 +265,9 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
       } else {
         right_len = strlen(right);
       }
-      result_len = right_len + len_y; /*< length of `new_right` */
+      result_len = right_len + len_y; /*< length of updated `y` */
       if (result_len <= SHORT_LIMIT) {
-        new_right = (char *)GC_MALLOC_ATOMIC(result_len + 1);
-        if (NULL == new_right)
-          OUT_OF_MEMORY;
-        memcpy(new_right, right, right_len);
-        memcpy(new_right + right_len, y, len_y);
-        new_right[result_len] = '\0';
-        y = new_right;
+        y = cat_char_substr((const char *)right, right_len, y, len_y);
         len_y = result_len;
         x = left;
         len_x -= right_len;
@@ -350,7 +362,7 @@ CORD_from_fn_inner(CORD_fn fn, void *client_data, size_t len)
     return NULL;
   if (len <= SHORT_LIMIT) {
     size_t i;
-    char buf[SHORT_LIMIT + 1];
+    char buf[SHORT_LIMIT];
 
     for (i = 0; i < len; i++) {
       char c = fn(i, client_data);
@@ -361,13 +373,8 @@ CORD_from_fn_inner(CORD_fn fn, void *client_data, size_t len)
     }
 
     if (i == len) {
-      char *result = (char *)GC_MALLOC_ATOMIC(len + 1);
-
-      if (NULL == result)
-        OUT_OF_MEMORY;
-      memcpy(result, buf, len);
-      result[len] = '\0';
-      return (CordRep *)result;
+      /* No NUL characters inside. */
+      return (CordRep *)copy_char_substr(buf, len);
     }
   }
 
@@ -459,13 +466,7 @@ CORD_substr_checked(CORD x, size_t i, size_t n)
     if (n > SUBSTR_LIMIT) {
       return CORD_substr_closure(x, i, n, CORD_index_access_fn);
     } else {
-      char *result = (char *)GC_MALLOC_ATOMIC(n + 1);
-
-      if (NULL == result)
-        OUT_OF_MEMORY;
-      strncpy(result, x + i, n);
-      result[n] = '\0';
-      return result;
+      return (CORD)copy_char_substr((const char *)x + i, n);
     }
   } else if (IS_CONCATENATION(x)) {
     const struct Concatenation *conc = &((const CordRep *)x)->data.concat;
@@ -511,27 +512,19 @@ CORD_substr_checked(CORD x, size_t i, size_t n)
         return CORD_substr_closure(x, i, n, CORD_apply_access_fn);
       }
     } else {
-      char *result;
       const struct Function *f = &((const CordRep *)x)->data.function;
-      char buf[SUBSTR_LIMIT + 1];
-      char *p = buf;
+      char buf[SUBSTR_LIMIT];
       size_t j;
-      size_t lim = i + n;
 
-      for (j = i; j < lim; j++) {
-        char c = f->fn(j, f->client_data);
+      for (j = 0; j < n; j++) {
+        char c = f->fn(i + j, f->client_data);
 
         if (c == '\0') {
           return CORD_substr_closure(x, i, n, CORD_apply_access_fn);
         }
-        *p++ = c;
+        buf[j] = c;
       }
-      result = (char *)GC_MALLOC_ATOMIC(n + 1);
-      if (NULL == result)
-        OUT_OF_MEMORY;
-      memcpy(result, buf, n);
-      result[n] = '\0';
-      return result;
+      return (CORD)copy_char_substr(buf, n);
     }
   }
 }
