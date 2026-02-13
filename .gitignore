@@ -173,6 +173,7 @@ gc.def
 # Stuff from VS build system and IDE
 *.vcproj.*.user
 .vs/
+.vscode/
 
 # Code analysis tools:
 *.c.gcov
