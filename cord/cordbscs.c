@@ -238,7 +238,7 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
   if (0 == len_y)
     return x;
   if (x == CORD_EMPTY)
-    return y;
+    return (CORD)(y[len_y] == '\0' ? y : copy_char_substr(y, len_y));
   if (CORD_IS_STRING(x)) {
     len_x = strlen(x);
     result_len = len_x + len_y;
@@ -297,7 +297,7 @@ CORD_cat_char_star(CORD x, const char *y, size_t len_y)
     result->generic.len = (unsigned long)result_len;
     result->data.concat.left = x;
     GC_PTR_STORE_AND_DIRTY((/* no const */ void *)&result->data.concat.right,
-                           y);
+                           y[len_y] == '\0' ? y : copy_char_substr(y, len_y));
     GC_reachable_here(x);
     if (depth >= CORD_MAX_DEPTH) {
       return CORD_balance((CORD)result);
