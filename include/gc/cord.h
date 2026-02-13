@@ -112,9 +112,9 @@ typedef const char *CORD;
 CORD_API CORD CORD_cat(CORD, CORD);
 
 /**
- * Concatenate a cord and a C string with known length.  Except for the
- * empty string case, this is a special case of `CORD_cat`.  Since the
- * length is known, it can be faster.  The string `y` is shared with
+ * Concatenate a cord and a substring of C string.  Except for the empty
+ * string case, this is a special case of `CORD_cat`.  Since the length of
+ * the substring is known, it can be faster.  The string `y` is shared with
  * the resulting cord.  Hence it should not be altered by the caller.
  */
 CORD_API CORD CORD_cat_char_star(CORD /* `x` */, const char * /* `y` */,
