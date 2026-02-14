@@ -173,6 +173,7 @@ void test_extras(void)
     if (CORD_cmp(x,CORD_cat(z, CORD_nul(13))) >= 0) ABORT("comparison 2");
     if (CORD_cmp(CORD_cat(x, CORD_nul(13)), z) <= 0) ABORT("comparison 3");
     if (CORD_cmp(x,CORD_cat(z, "13")) >= 0) ABORT("comparison 4");
+    z = CORD_cat(z, CORD_nul(3));
     if ((f = fopen(FNAME1, "w")) == 0) ABORT("open failed");
     if (CORD_put(z,f) == EOF) ABORT("CORD_put failed");
     if (fclose(f) == EOF) ABORT("fclose failed");
