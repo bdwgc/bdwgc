@@ -252,6 +252,7 @@ prepare_cord_f1(CORD y)
     ABORT("comparison 3");
   if (CORD_cmp(x, CORD_cat(z, "13")) >= 0)
     ABORT("comparison 4");
+  z = CORD_cat(z, CORD_nul(3));
   return z;
 }
 

@@ -188,7 +188,7 @@ CORD_cmp(CORD x, CORD y)
     if (!CORD_pos_valid(ypos))
       return 1;
     avail = CORD_pos_chars_left(xpos);
-    if (0 == avail || (avail_y = CORD_pos_chars_left(ypos)) == 0) {
+    if (avail <= 0 || (avail_y = CORD_pos_chars_left(ypos)) <= 0) {
       char cur_x = CORD_pos_fetch(xpos);
       char cur_y = CORD_pos_fetch(ypos);
 
