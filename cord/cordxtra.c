@@ -164,61 +164,26 @@ CORD_fill_buf(CORD x, size_t i, size_t len, char *buf)
 int
 CORD_cmp(CORD x, CORD y)
 {
-  CORD_pos xpos;
-  CORD_pos ypos;
-
-  if (y == CORD_EMPTY)
-    return x != CORD_EMPTY;
-  if (x == CORD_EMPTY)
-    return -1;
-  if (CORD_IS_STRING(y) && CORD_IS_STRING(x))
-    return strcmp(x, y);
-#if defined(CPPCHECK)
-  memset(xpos, '\0', sizeof(CORD_pos));
-  memset(ypos, '\0', sizeof(CORD_pos));
-#endif
-  CORD_set_pos(xpos, x, 0);
-  CORD_set_pos(ypos, y, 0);
-  for (;;) {
-    long avail, avail_y;
-
-    if (!CORD_pos_valid(xpos)) {
-      return CORD_pos_valid(ypos) ? -1 : 0;
-    }
-    if (!CORD_pos_valid(ypos))
-      return 1;
-    avail = CORD_pos_chars_left(xpos);
-    if (avail <= 0 || (avail_y = CORD_pos_chars_left(ypos)) <= 0) {
-      char cur_x = CORD_pos_fetch(xpos);
-      char cur_y = CORD_pos_fetch(ypos);
-
-      if (cur_x != cur_y)
-        return cur_x - cur_y;
-      CORD_next(xpos);
-      CORD_next(ypos);
-    } else {
-      /* Process as many characters as we can. */
-      int result;
-
-      if (avail > avail_y)
-        avail = avail_y;
-      result = memcmp(CORD_pos_cur_char_addr(xpos),
-                      CORD_pos_cur_char_addr(ypos), (size_t)avail);
-      if (result != 0)
-        return result;
-      CORD_pos_advance(xpos, (size_t)avail);
-      CORD_pos_advance(ypos, (size_t)avail);
-    }
-  }
+  return CORD_ncmp(x, 0, y, 0, ~(size_t)0);
 }
 
 int
 CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
 {
-  CORD_pos xpos;
-  CORD_pos ypos;
+  CORD_pos xpos, ypos;
   size_t count;
 
+  if (0 == len)
+    return 0;
+  if ((x_start | y_start) == 0) {
+    if (y == CORD_EMPTY) {
+      return x != CORD_EMPTY;
+    } else if (x == CORD_EMPTY) {
+      return -1;
+    }
+  }
+  if (CORD_IS_STRING(x) && CORD_IS_STRING(y))
+    return strncmp((const char *)x + x_start, (const char *)y + y_start, len);
 #if defined(CPPCHECK)
   memset(xpos, '\0', sizeof(CORD_pos));
   memset(ypos, '\0', sizeof(CORD_pos));
