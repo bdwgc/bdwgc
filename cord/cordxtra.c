@@ -183,8 +183,8 @@ int CORD_cmp(CORD x, CORD y)
             register int result;
 
             if (avail > yavail) avail = yavail;
-            result = strncmp(CORD_pos_cur_char_addr(xpos),
-                             CORD_pos_cur_char_addr(ypos), (size_t)avail);
+            result = memcmp(CORD_pos_cur_char_addr(xpos),
+                            CORD_pos_cur_char_addr(ypos), (size_t)avail);
             if (result != 0) return(result);
             CORD_pos_advance(xpos, (size_t)avail);
             CORD_pos_advance(ypos, (size_t)avail);
@@ -228,8 +228,8 @@ int CORD_ncmp(CORD x, size_t x_start, CORD y, size_t y_start, size_t len)
             count += (size_t)avail;
             if (count > len)
                 avail -= (long)(count - len);
-            result = strncmp(CORD_pos_cur_char_addr(xpos),
-                         CORD_pos_cur_char_addr(ypos), (size_t)avail);
+            result = memcmp(CORD_pos_cur_char_addr(xpos),
+                            CORD_pos_cur_char_addr(ypos), (size_t)avail);
             if (result != 0) return(result);
             CORD_pos_advance(xpos, (size_t)avail);
             CORD_pos_advance(ypos, (size_t)avail);
