@@ -173,8 +173,8 @@ int CORD_cmp(CORD x, CORD y)
             return(1);
         }
         avail = CORD_pos_chars_left(xpos);
-        if (avail == 0
-            || (yavail = CORD_pos_chars_left(ypos)) == 0) {
+        if (avail <= 0
+            || (yavail = CORD_pos_chars_left(ypos)) <= 0) {
             char xcurrent = CORD_pos_fetch(xpos);
             char ycurrent = CORD_pos_fetch(ypos);
             if (xcurrent != ycurrent) return(xcurrent - ycurrent);
