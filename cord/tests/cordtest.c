@@ -185,12 +185,6 @@ test_cord_x2(CORD x)
   }
   if (i != 13)
     ABORT("Bad apparent length for function node");
-#if defined(CPPCHECK)
-  /* TODO: Actually test these functions. */
-  CORD_prev(p);
-  (void)CORD_pos_to_cord(p);
-  (void)CORD_pos_to_index(p);
-#endif
 }
 
 static void
@@ -505,6 +499,65 @@ fn_get_char(size_t i, void *client_data)
 }
 
 static void
+test_prev(void)
+{
+  CORD x;
+  size_t i, len;
+  CORD_pos p;
+
+  x = "hello";
+  len = CORD_len(x);
+  CORD_set_pos(p, x, len - 1);
+
+  for (i = 0; i < len; i++) {
+    if (!CORD_pos_valid(p))
+      ABORT("Position became invalid unexpectedly in prev test");
+    if (CORD_pos_fetch(p) != x[len - 1 - i])
+      ABORT("CORD_prev character mismatch in simple string");
+    if (i < len - 1)
+      CORD_prev(p);
+  }
+  if (CORD_pos_to_index(p) != 0)
+    ABORT("Invalid result of CORD_pos_to_index");
+  if (CORD_pos_to_cord(p) != x)
+    ABORT("Cord returned by CORD_pos_to_cord is wrong");
+
+  CORD_prev(p);
+  if (CORD_pos_valid(p))
+    ABORT("Position should be invalid before beginning");
+
+  CORD_set_pos(p, CORD_cat("hello", " world"), 5);
+  CORD_prev(p);
+  if (!CORD_pos_valid(p))
+    ABORT("Position should be valid at concatenation boundary (prev)");
+  if (CORD_pos_fetch(p) != 'o')
+    ABORT("CORD_prev failed at concatenation boundary");
+
+  x = CORD_cat(CORD_nul(3),
+               CORD_from_fn(fn_get_char, (void *)(GC_uintptr_t)15, 45));
+  x = CORD_cat(x, CORD_nul(2));
+  CORD_set_pos(p, x, 49);
+
+  for (i = 0; i <= 49 && CORD_pos_valid(p); i++) {
+    char c = CORD_pos_fetch(p);
+
+    if (c != (char)(i < 2 || i > 46 ? '\0' : 'A' + (46 - i) % ('Z' - 'A' + 1)))
+      ABORT("CORD_prev character mismatch in function node");
+    if (i < 49)
+      CORD_prev(p);
+  }
+
+  x = CORD_substr(x, 10, 20);
+  CORD_set_pos(p, x, 19);
+  for (i = 0; i <= 19 && CORD_pos_valid(p); i++) {
+    if (CORD_pos_fetch(p) != (char)('A' + (26 - i) % ('Z' - 'A' + 1)))
+      ABORT("CORD_prev character mismatch in substring");
+    if (i < 19)
+      CORD_prev(p);
+  }
+}
+
+static void
 test_dump(void)
 {
   CORD x = "CORD";
@@ -531,6 +584,7 @@ main(void)
   test_extras();
   test_printf();
   test_cat_char_star();
+  test_prev();
   test_dump();
 
   GC_gcollect(); /*< to close `f2` before the file removal */
