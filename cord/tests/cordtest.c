@@ -483,6 +483,16 @@ test_printf(void)
   (void)wrap_vprintf(CORD_EMPTY);
 }
 
+static void
+test_cat_char_star(void)
+{
+  CORD x = CORD_cat_char_star(CORD_cat(CORD_chars('a', 9), "bcd"), " cat", 4);
+  CORD y = CORD_cat_char_star(CORD_cat(x, x), "a", 1);
+
+  if (CORD_len(y) != 33 || CORD_fetch(y, 10) != 'c')
+    ABORT("CORD_cat_char_star(CORD_cat(x,x)) failed");
+}
+
 static char
 fn_get_char(size_t i, void *client_data)
 {
@@ -520,6 +530,7 @@ main(void)
   test_basics();
   test_extras();
   test_printf();
+  test_cat_char_star();
   test_dump();
 
   GC_gcollect(); /*< to close `f2` before the file removal */
