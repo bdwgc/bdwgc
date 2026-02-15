@@ -80,7 +80,7 @@ test_fn(char c, void *client_data)
 static char
 id_cord_fn(size_t i, void *client_data)
 {
-  if (client_data != 0)
+  if (client_data != NULL)
     ABORT("id_cord_fn: bad client data");
 #if defined(CPPCHECK)
   GC_noop1_ptr(client_data);
@@ -190,7 +190,6 @@ test_cord_x2(CORD x)
   CORD_prev(p);
   (void)CORD_pos_to_cord(p);
   (void)CORD_pos_to_index(p);
-  CORD_dump(y);
 #endif
 }
 
@@ -484,6 +483,29 @@ test_printf(void)
   (void)wrap_vprintf(CORD_EMPTY);
 }
 
+static char
+fn_get_char(size_t i, void *client_data)
+{
+  if ((GC_uintptr_t)client_data != 15U)
+    ABORT("fn_get_char: bad client data");
+#if defined(CPPCHECK)
+  GC_noop1_ptr(client_data);
+#endif
+  return (char)('A' + i % ('Z' - 'A' + 1));
+}
+
+static void
+test_dump(void)
+{
+  CORD x = "CORD";
+
+  CORD_dump(CORD_cat(x, " dump"));
+  CORD_dump(CORD_EMPTY);
+  CORD_dump(CORD_cat(x, CORD_chars('.', 30)));
+  x = CORD_from_fn(fn_get_char, (void *)(GC_uintptr_t)15, 50);
+  CORD_dump(x);
+}
+
 int
 main(void)
 {
@@ -498,6 +520,7 @@ main(void)
   test_basics();
   test_extras();
   test_printf();
+  test_dump();
 
   GC_gcollect(); /*< to close `f2` before the file removal */
   if (remove(FNAME2) != 0) {
