@@ -337,7 +337,7 @@ CORD_API CORD CORD_from_file_lazy(FILE *);
 
 /**
  * Turn a cord into a C string.  The result shares no structure with `x`,
- * and is thus modifiable.
+ * and is thus modifiable.  The result is never `NULL`.
  */
 CORD_API char *CORD_to_char_star(CORD /* `x` */);
 
