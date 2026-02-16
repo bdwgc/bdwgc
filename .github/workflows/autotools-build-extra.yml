@@ -134,7 +134,7 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-cplusplus --enable-gc-assertions --enable-large-config
-          cflags_extra: -D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_REUSE_SIG_SUSPEND
+          cflags_extra: -D LINT2 -D NO_VDB_FOR_STATIC_ROOTS -D TEST_COVERAGE -D TEST_REUSE_SIG_SUSPEND
           c_compiler: gcc
         - os: ubuntu-latest
           conf_cflags: -D AO_USE_PTHREAD_DEFS -D RANDOM_ONE_CPU_CORE -O3
