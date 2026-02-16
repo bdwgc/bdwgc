@@ -219,9 +219,11 @@ test_basics(void)
     ABORT("bad length 2");
   test_cord_x2(x);
 
-  /* TODO: Actually test these functions. */
-  (void)CORD_iter(CORD_EMPTY, test_fn, NULL);
-  (void)CORD_riter(CORD_EMPTY, test_fn, NULL);
+  if (CORD_iter(CORD_EMPTY, test_fn, NULL) != 0
+      || CORD_riter(CORD_EMPTY, test_fn, NULL) != 0)
+    ABORT("CORD_[r]iter(CORD_EMPTY) failed");
+  if (CORD_riter(x, test_fn, (void *)(GC_uintptr_t)13) != 1)
+    ABORT("CORD_riter failed");
 }
 
 static CORD
