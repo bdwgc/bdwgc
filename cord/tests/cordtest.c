@@ -561,6 +561,10 @@ test_prev(void)
 static void
 test_dump(void)
 {
+#ifndef TEST_COVERAGE
+  /* Skip testing of `CORD_dump()` to suppress test output. */
+#  define CORD_dump(x) (void)(x)
+#endif
   CORD x = "CORD";
 
   CORD_dump(CORD_cat(x, " dump"));
@@ -568,6 +572,7 @@ test_dump(void)
   CORD_dump(CORD_cat(x, CORD_chars('.', 30)));
   x = CORD_from_fn(fn_get_char, (void *)(GC_uintptr_t)15, 50);
   CORD_dump(x);
+#undef CORD_dump
 }
 
 int
