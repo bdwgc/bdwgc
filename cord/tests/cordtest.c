@@ -558,6 +558,46 @@ test_prev(void)
   }
 }
 
+static char
+fn_char_at(size_t i, void *client_data)
+{
+  return ((char *)client_data)[i];
+}
+
+static void
+test_substr(void)
+{
+  CORD func_cord, long_substr, nested_substr;
+  CORD long_data, long_func_cord, second_substr;
+  int i;
+  char buf[64];
+
+  for (i = 0; i < (int)sizeof(buf) - 1; i++)
+    buf[i] = (char)('0' + i);
+  buf[i] = '\0';
+
+  func_cord = CORD_from_fn(fn_char_at, buf, sizeof(buf) - 1);
+  long_substr = CORD_substr(func_cord, 0, sizeof(buf) - 1);
+  nested_substr = CORD_substr(long_substr, 5, 360);
+  if (CORD_len(nested_substr) != strlen(buf) - 5)
+    ABORT("Incorrect nested substring length");
+
+  long_data = CORD_EMPTY;
+  for (i = 0; i < 20; i++)
+    long_data = CORD_cat(long_data, buf);
+
+  long_func_cord = CORD_from_fn(fn_char_at, CORD_to_char_star(long_data),
+                                CORD_len(long_data));
+  second_substr = CORD_substr(CORD_substr(long_func_cord, 0, 400), 10, 360);
+  if (second_substr == CORD_EMPTY)
+    ABORT("CORD_substr returned NULL for nested substring with long data");
+  if (CORD_len(second_substr) != 360)
+    ABORT("Incorrect nested substring length with long data");
+  if (CORD_fetch(second_substr, 100)
+      != (char)('0' + (100 + 10) % (sizeof(buf) - 1)))
+    ABORT("Incorrect nested substring has invalid character");
+}
+
 static void
 test_dump(void)
 {
@@ -591,6 +631,7 @@ main(void)
   test_printf();
   test_cat_char_star();
   test_prev();
+  test_substr();
   test_dump();
 
   GC_gcollect(); /*< to close `f2` before the file removal */
