@@ -14,7 +14,7 @@ jobs:
     compiler: gcc
     env:
     - CONF_OPTIONS="--enable-single-obj-compilation --enable-cplusplus --disable-shared --enable-gc-assertions --enable-valgrind-tracking"
-    - CFLAGS_EXTRA="--coverage -fprofile-update=atomic -O0 -D NTHREADS=20 -D USE_CUSTOM_SPECIFIC"
+    - CFLAGS_EXTRA="--coverage -fprofile-update=atomic -O0 -D TEST_COVERAGE -D NTHREADS=20 -D USE_CUSTOM_SPECIFIC"
     - CC_FOR_CHECK=g++
     - MAKEFILE_TARGETS="all"
     - MAKEFILE_TARGETS_CHECK="check"
@@ -24,9 +24,9 @@ jobs:
   - env:
     - MAKEFILE_TARGETS="dist"
   - env:
-    - CPPCHECK_ENABLE="--enable=unusedFunction -I libatomic_ops/src extra/gc.c tests/*.c"
+    - CPPCHECK_ENABLE="--enable=unusedFunction -I libatomic_ops/src -D TEST_COVERAGE extra/gc.c tests/*.c"
   - env:
-    - CPPCHECK_ENABLE="--enable=unusedFunction --force -D GC_BUILTIN_ATOMIC *.cc cord/*.c cord/tests/*.c tests/*.c"
+    - CPPCHECK_ENABLE="--enable=unusedFunction --force -D GC_BUILTIN_ATOMIC -D TEST_COVERAGE *.cc cord/*.c cord/tests/*.c tests/*.c"
     - CPPCHECK_OUT_FILTER="Z"
     - NO_CLONE_LIBATOMIC_OPS=true
   - env:
