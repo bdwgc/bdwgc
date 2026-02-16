@@ -31,14 +31,17 @@
     abort();                                 \
   }
 
-#if defined(CPPCHECK)
+#ifdef TEST_COVERAGE
 #  undef CORD_iter
 #  undef CORD_next
 #  undef CORD_pos_fetch
 #  undef CORD_pos_to_cord
+#  undef CORD_prev
+#endif
+
+#if defined(CPPCHECK) || defined(TEST_COVERAGE)
 #  undef CORD_pos_to_index
 #  undef CORD_pos_valid
-#  undef CORD_prev
 #endif
 
 static int count;
@@ -216,11 +219,9 @@ test_basics(void)
     ABORT("bad length 2");
   test_cord_x2(x);
 
-#if defined(CPPCHECK)
   /* TODO: Actually test these functions. */
   (void)CORD_iter(CORD_EMPTY, test_fn, NULL);
   (void)CORD_riter(CORD_EMPTY, test_fn, NULL);
-#endif
 }
 
 static CORD
