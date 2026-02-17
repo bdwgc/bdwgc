@@ -1489,7 +1489,7 @@ GC_push_all(void *bottom, void *top)
 
   mark_stack_top = GC_mark_stack_top + 1;
   if (ADDR_GE((ptr_t)mark_stack_top, (ptr_t)GC_mark_stack_limit)) {
-    ABORT("Unexpected mark stack overflow");
+    mark_stack_top = GC_signal_mark_stack_overflow(mark_stack_top);
   }
   length = (word)((ptr_t)top - (ptr_t)bottom);
 #if GC_DS_TAGS > ALIGNMENT - 1
