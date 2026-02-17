@@ -446,10 +446,10 @@ GC_API void GC_CALL GC_set_mark_bit(const void *) GC_ATTR_NONNULL(1);
 GC_API int GC_CALL GC_is_marked(const void *) GC_ATTR_NONNULL(1);
 
 /**
- * Push everything in the given range onto the mark stack.  `bottom` is
- * the first location to be scanned; `top` is one past the last location
- * to be scanned.  Should only be used if there is no possibility of mark
- * stack overflow.
+ * Push everything in the given range onto the mark stack.  `bottom` is the
+ * first location to be scanned; `top` is one past the last location to be
+ * scanned.  Should be used with care if there is a possibility of mark stack
+ * overflow.
  */
 GC_API void GC_CALL GC_push_all(void * /* `bottom` */, void * /* `top` */);
 
