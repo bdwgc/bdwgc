@@ -1479,25 +1479,8 @@ GC_mark_init(void)
 GC_API void GC_CALL
 GC_push_all(void *bottom, void *top)
 {
-  mse *mark_stack_top;
-  word length;
-
-  bottom = PTR_ALIGN_UP((ptr_t)bottom, ALIGNMENT);
-  top = PTR_ALIGN_DOWN((ptr_t)top, ALIGNMENT);
-  if (ADDR_GE((ptr_t)bottom, (ptr_t)top))
-    return;
-
-  mark_stack_top = GC_mark_stack_top + 1;
-  if (ADDR_GE((ptr_t)mark_stack_top, (ptr_t)GC_mark_stack_limit)) {
-    mark_stack_top = GC_signal_mark_stack_overflow(mark_stack_top);
-  }
-  length = (word)((ptr_t)top - (ptr_t)bottom);
-#if GC_DS_TAGS > ALIGNMENT - 1
-  length = (length + GC_DS_TAGS) & ~(word)GC_DS_TAGS; /*< round up */
-#endif
-  mark_stack_top->mse_start = (ptr_t)bottom;
-  mark_stack_top->mse_descr = length | GC_DS_LENGTH;
-  GC_mark_stack_top = mark_stack_top;
+  GC_mark_stack_top
+      = GC_ms_push_all(bottom, top, GC_mark_stack_top, GC_mark_stack_limit);
 }
 
 GC_API struct GC_ms_entry *GC_CALL
