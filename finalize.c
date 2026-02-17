@@ -675,8 +675,8 @@ GC_ATTR_NOINLINE
 STATIC void
 GC_normal_finalize_mark_proc(ptr_t p)
 {
-  GC_mark_stack_top = GC_push_obj(p, HDR(p), GC_mark_stack_top,
-                                  GC_mark_stack + GC_mark_stack_size);
+  GC_mark_stack_top = GC_ms_push_obj_hdr(p, HDR(p), GC_mark_stack_top,
+                                         GC_mark_stack + GC_mark_stack_size);
 }
 
 /*

@@ -4668,7 +4668,7 @@ extern __thread unsigned char GC_cancel_disable_count;
 #  define ASSERT_CANCEL_DISABLED() (void)0
 #endif /* !CANCEL_SAFE */
 
-/* Multiply 32-bit unsigned values (used by `GC_push_contents_hdr()`). */
+/* Multiply 32-bit unsigned values (used by `GC_ms_push_contents_hdr()`). */
 #ifdef NO_LONGLONG64
 #  define LONG_MULT(hprod, lprod, x, y)                                 \
     do {                                                                \

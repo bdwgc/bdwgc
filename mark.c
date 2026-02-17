@@ -1691,8 +1691,8 @@ GC_mark_and_push(void *obj, mse *mark_stack_top, mse *mark_stack_limit,
     GC_ADD_TO_BLACK_LIST_NORMAL((ptr_t)obj, (ptr_t)src);
     return mark_stack_top;
   }
-  return GC_push_contents_hdr((ptr_t)obj, mark_stack_top, mark_stack_limit,
-                              (ptr_t)src, hhdr, TRUE);
+  return GC_ms_push_contents_hdr((ptr_t)obj, hhdr, mark_stack_top,
+                                 mark_stack_limit, (ptr_t)src, TRUE);
 }
 
 GC_ATTR_NO_SANITIZE_ADDR
@@ -1727,8 +1727,8 @@ GC_mark_and_push_stack(ptr_t p)
    */
   GC_dirty(p); /*< entire object */
 #endif
-  GC_mark_stack_top = GC_push_contents_hdr(
-      r, GC_mark_stack_top, GC_mark_stack_limit, source, hhdr, FALSE);
+  GC_mark_stack_top = GC_ms_push_contents_hdr(
+      r, hhdr, GC_mark_stack_top, GC_mark_stack_limit, source, FALSE);
   /*
    * We silently ignore pointers to near the end of a block, which is
    * very mildly suboptimal.
@@ -2128,7 +2128,7 @@ GC_push_marked(struct hblk *h, const hdr *hhdr)
       /* Mark from fields inside the object. */
       if (mark_bit_from_hdr(hhdr, bit_no)) {
         mark_stack_top
-            = GC_push_obj(p, hhdr, mark_stack_top, mark_stack_limit);
+            = GC_ms_push_obj_hdr(p, hhdr, mark_stack_top, mark_stack_limit);
       }
     }
     GC_mark_stack_top = mark_stack_top;
@@ -2167,7 +2167,8 @@ GC_push_unconditionally(struct hblk *h, const hdr *hhdr)
   mark_stack_top = GC_mark_stack_top;
   for (p = h->hb_body; ADDR_GE(plim, p); p += sz) {
     if ((ADDR(*(ptr_t *)p) & 0x3) != 0) {
-      mark_stack_top = GC_push_obj(p, hhdr, mark_stack_top, mark_stack_limit);
+      mark_stack_top
+          = GC_ms_push_obj_hdr(p, hhdr, mark_stack_top, mark_stack_limit);
     }
   }
   GC_mark_stack_top = mark_stack_top;
