@@ -112,8 +112,8 @@ GC_EXTERN unsigned GC_n_mark_procs;
  * onto the mark stack.  Returns the updated `mark_stack_top` value.
  */
 GC_INLINE mse *
-GC_push_obj(ptr_t obj, const hdr *hhdr, mse *mark_stack_top,
-            mse *mark_stack_limit)
+GC_ms_push_obj_hdr(ptr_t obj, const hdr *hhdr, mse *mark_stack_top,
+                   mse *mark_stack_limit)
 {
   GC_ASSERT(!HBLK_IS_FREE(hhdr));
   if (!IS_PTRFREE(hhdr)) {
@@ -131,8 +131,8 @@ GC_push_obj(ptr_t obj, const hdr *hhdr, mse *mark_stack_top,
   do {                                                                     \
     hdr *my_hhdr;                                                          \
     HC_GET_HDR(current, my_hhdr, source); /*< contains `break` */          \
-    mark_stack_top = GC_push_contents_hdr(                                 \
-        current, mark_stack_top, mark_stack_limit, source, my_hhdr, TRUE); \
+    mark_stack_top = GC_ms_push_contents_hdr(                              \
+        current, my_hhdr, mark_stack_top, mark_stack_limit, source, TRUE); \
   } while (0)
 
 /* Set mark bit, exit (using `break` statement) if it is already set. */
@@ -220,8 +220,9 @@ GC_push_obj(ptr_t obj, const hdr *hhdr, mse *mark_stack_top,
  * to the object.  Thus we can omit the otherwise necessary tests here.
  */
 GC_INLINE mse *
-GC_push_contents_hdr(ptr_t current, mse *mark_stack_top, mse *mark_stack_limit,
-                     ptr_t source, hdr *hhdr, GC_bool do_offset_check)
+GC_ms_push_contents_hdr(ptr_t current, hdr *hhdr, mse *mark_stack_top,
+                        mse *mark_stack_limit, ptr_t source,
+                        GC_bool do_offset_check)
 {
   do {
     /*
@@ -321,7 +322,8 @@ GC_push_contents_hdr(ptr_t current, mse *mark_stack_top, mse *mark_stack_limit,
                                      (void *)source));
     INCR_MARKS(hhdr);
     GC_STORE_BACK_PTR(source, base);
-    mark_stack_top = GC_push_obj(base, hhdr, mark_stack_top, mark_stack_limit);
+    mark_stack_top
+        = GC_ms_push_obj_hdr(base, hhdr, mark_stack_top, mark_stack_limit);
   } while (0);
   return mark_stack_top;
 }
