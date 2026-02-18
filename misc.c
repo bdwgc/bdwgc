@@ -2707,6 +2707,7 @@ GC_dump_named(const char *name)
 #  ifndef GC_NO_FINALIZATION
   GC_dump_finalization();
 #  endif
+  GC_printf("\n");
 }
 #endif /* !NO_DEBUGGING */
 
