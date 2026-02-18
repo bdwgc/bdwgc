@@ -43,7 +43,7 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-24.04-arm
           conf_options: --disable-gcj-support --enable-cplusplus
-          cflags_extra: -D SIMULATE_LOST_SIGNALS -D TEST_DUMP_REGIONS_AND_FREELIST -D TRACE_BUF -O3
+          cflags_extra: -D SIMULATE_LOST_SIGNALS -D TRACE_BUF -O3
           c_compiler: gcc
         - os: macos-latest
           conf_options: --disable-handle-fork --disable-munmap --disable-threads --enable-checksums --enable-gc-assertions --enable-large-config --enable-static
