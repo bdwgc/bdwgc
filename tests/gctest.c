@@ -2863,8 +2863,8 @@ main(void)
 #    ifdef AO_HAVE_nop
   AO_nop();
 #    endif
-  UNTESTED(GC_custom_push_range);
-  UNTESTED(GC_push_proc);
+  UNTESTED(GC_ms_push_all);
+  UNTESTED(GC_push_obj_descr);
   UNTESTED(GC_register_altstack);
 #  endif
 

@@ -197,9 +197,10 @@ GC_typed_mark_proc(word *addr, mse *mark_stack_top, mse *mark_stack_limit,
      * Thus we never do too much work at once.  Note that we also cannot
      * overflow the mark stack unless we actually mark something.
      */
-    mark_stack_top = GC_custom_push_proc(
-        GC_MAKE_PROC(GC_typed_mark_proc_index, env + 1),
-        (ptr_t *)addr + CPP_WORDSZ, mark_stack_top, mark_stack_limit);
+    mark_stack_top
+        = GC_ms_push_obj_descr((ptr_t *)addr + CPP_WORDSZ,
+                               GC_MAKE_PROC(GC_typed_mark_proc_index, env + 1),
+                               mark_stack_top, mark_stack_limit);
   }
   return mark_stack_top;
 }

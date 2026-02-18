@@ -1501,9 +1501,8 @@ GC_push_all(void *bottom, void *top)
 }
 
 GC_API struct GC_ms_entry *GC_CALL
-GC_custom_push_range(void *bottom, void *top,
-                     struct GC_ms_entry *mark_stack_top,
-                     struct GC_ms_entry *mark_stack_limit)
+GC_ms_push_all(void *bottom, void *top, struct GC_ms_entry *mark_stack_top,
+               struct GC_ms_entry *mark_stack_limit)
 {
   word length;
 
@@ -1516,14 +1515,14 @@ GC_custom_push_range(void *bottom, void *top,
 #if GC_DS_TAGS > ALIGNMENT - 1
   length = (length + GC_DS_TAGS) & ~(word)GC_DS_TAGS; /*< round up */
 #endif
-  return GC_custom_push_proc(length | GC_DS_LENGTH, bottom, mark_stack_top,
-                             mark_stack_limit);
+  return GC_ms_push_obj_descr(bottom, length | GC_DS_LENGTH, mark_stack_top,
+                              mark_stack_limit);
 }
 
 GC_API struct GC_ms_entry *GC_CALL
-GC_custom_push_proc(GC_word descr, void *obj,
-                    struct GC_ms_entry *mark_stack_top,
-                    struct GC_ms_entry *mark_stack_limit)
+GC_ms_push_obj_descr(void *obj, GC_word descr,
+                     struct GC_ms_entry *mark_stack_top,
+                     struct GC_ms_entry *mark_stack_limit)
 {
   mark_stack_top++;
   if (ADDR_GE((ptr_t)mark_stack_top, (ptr_t)mark_stack_limit)) {
@@ -1535,10 +1534,10 @@ GC_custom_push_proc(GC_word descr, void *obj,
 }
 
 GC_API void GC_CALL
-GC_push_proc(GC_word descr, void *obj)
+GC_push_obj_descr(void *obj, GC_word descr)
 {
-  GC_mark_stack_top = GC_custom_push_proc(descr, obj, GC_mark_stack_top,
-                                          GC_mark_stack_limit);
+  GC_mark_stack_top = GC_ms_push_obj_descr(obj, descr, GC_mark_stack_top,
+                                           GC_mark_stack_limit);
 }
 
 #ifndef GC_DISABLE_INCREMENTAL

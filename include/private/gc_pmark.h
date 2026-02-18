@@ -117,8 +117,8 @@ GC_ms_push_obj_hdr(ptr_t obj, const hdr *hhdr, mse *mark_stack_top,
 {
   GC_ASSERT(!HBLK_IS_FREE(hhdr));
   if (!IS_PTRFREE(hhdr)) {
-    mark_stack_top = GC_custom_push_proc(hhdr->hb_descr, obj, mark_stack_top,
-                                         mark_stack_limit);
+    mark_stack_top = GC_ms_push_obj_descr(obj, hhdr->hb_descr, mark_stack_top,
+                                          mark_stack_limit);
   }
   return mark_stack_top;
 }
