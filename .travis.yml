@@ -20,6 +20,7 @@ jobs:
     - MAKEFILE_TARGETS_CHECK="check"
     - NO_CLONE_LIBATOMIC_OPS=true
     - REPORT_COVERAGE=true
+    - GCTEST_WITH_MPROTECT_VDB=true
     - TESTS_CUSTOM_RUN=true
   - env:
     - MAKEFILE_TARGETS="dist"
