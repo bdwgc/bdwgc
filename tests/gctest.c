@@ -1869,6 +1869,7 @@ run_one_test(void)
     }
   }
   thr_handle_sb.gc_thread_handle = GC_get_my_stackbottom(&thr_handle_sb.sb);
+  GC_push_obj_descr(NULL, GC_DS_LENGTH);
 #ifdef GC_GCJ_SUPPORT
   GC_REGISTER_DISPLACEMENT(sizeof(struct fake_vtable *));
   GC_init_gcj_malloc_mp(0U, fake_gcj_mark_proc, GC_GCJ_MARK_DESCR_OFFSET);
@@ -2863,7 +2864,6 @@ main(void)
 #    ifdef AO_HAVE_nop
   AO_nop();
 #    endif
-  UNTESTED(GC_push_obj_descr);
   UNTESTED(GC_register_altstack);
 #  endif
 
