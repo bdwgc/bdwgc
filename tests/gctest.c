@@ -2103,8 +2103,8 @@ check_heap_stats(void)
     FAIL;
   }
 
-#if !defined(NO_DEBUGGING) && defined(TEST_DUMP_REGIONS_AND_FREELIST)
-  GC_print_free_list(NORMAL, 1);
+#if !defined(NO_DEBUGGING) && defined(TEST_COVERAGE)
+  GC_print_free_list(NORMAL, 32);
   GC_dump_regions();
 #endif
 
