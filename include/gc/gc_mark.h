@@ -199,17 +199,24 @@ GC_API struct GC_ms_entry *GC_CALL GC_mark_and_push(
        ? GC_mark_and_push(obj, msp, lim, src)                      \
        : (msp))
 
-GC_API void GC_CALL GC_push_proc(GC_word /* `descr` */, void * /* `obj` */);
+GC_API void GC_CALL GC_push_obj_descr(void * /* `obj` */,
+                                      GC_word /* `descr` */);
 
+/**
+ * Same as `GC_push_obj_descr()` but using the given mark stack.
+ */
 GC_API struct GC_ms_entry *GC_CALL
-GC_custom_push_proc(GC_word /* `descr` */, void * /* `obj` */,
-                    struct GC_ms_entry * /* `mark_stack_top` */,
-                    struct GC_ms_entry * /* `mark_stack_limit` */);
-
-GC_API struct GC_ms_entry *GC_CALL
-GC_custom_push_range(void * /* `bottom` */, void * /* `top` */,
+GC_ms_push_obj_descr(void * /* `obj` */, GC_word /* `descr` */,
                      struct GC_ms_entry * /* `mark_stack_top` */,
                      struct GC_ms_entry * /* `mark_stack_limit` */);
+
+/**
+ * Same as `GC_push_all()` but using the given mark stack.
+ */
+GC_API struct GC_ms_entry *GC_CALL
+GC_ms_push_all(void * /* `bottom` */, void * /* `top` */,
+               struct GC_ms_entry * /* `mark_stack_top` */,
+               struct GC_ms_entry * /* `mark_stack_limit` */);
 
 /**
  * The size of the header added to objects allocated through the `GC_debug_`
