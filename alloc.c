@@ -1228,10 +1228,10 @@ set_all_fl_marks(void)
   unsigned kind;
 
   for (kind = 0; kind < GC_n_kinds; kind++) {
-    word size; /*< current object size */
+    size_t lg;
 
-    for (size = 1; size <= MAXOBJGRANULES; size++) {
-      ptr_t q = (ptr_t)GC_obj_kinds[kind].ok_freelist[size];
+    for (lg = 1; lg <= MAXOBJGRANULES; lg++) {
+      ptr_t q = (ptr_t)GC_obj_kinds[kind].ok_freelist[lg];
 
       if (q != NULL)
         GC_set_fl_marks(q);
@@ -1249,10 +1249,10 @@ clear_all_fl_marks(void)
   unsigned kind;
 
   for (kind = 0; kind < GC_n_kinds; kind++) {
-    word size; /*< current object size */
+    size_t lg;
 
-    for (size = 1; size <= MAXOBJGRANULES; size++) {
-      ptr_t q = (ptr_t)GC_obj_kinds[kind].ok_freelist[size];
+    for (lg = 1; lg <= MAXOBJGRANULES; lg++) {
+      ptr_t q = (ptr_t)GC_obj_kinds[kind].ok_freelist[lg];
 
       if (q != NULL)
         GC_clear_fl_marks(q);
