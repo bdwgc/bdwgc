@@ -2106,6 +2106,7 @@ check_heap_stats(void)
 #if !defined(NO_DEBUGGING) && defined(TEST_COVERAGE)
   GC_print_free_list(NORMAL, 32);
   GC_dump_regions();
+  GC_dump();
 #endif
 
   /*
@@ -2471,9 +2472,6 @@ main(void)
   UNTESTED(GC_abort_on_oom);
 #    ifndef GC_NO_DEINIT
   UNTESTED(GC_deinit);
-#    endif
-#    ifndef NO_DEBUGGING
-  UNTESTED(GC_dump);
 #    endif
 #  endif
 #  if !defined(GC_ANDROID_LOG) && !defined(KOS) && !defined(OS2) \
