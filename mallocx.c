@@ -299,6 +299,8 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
   struct obj_kind *ok;
   struct hblk **rlh;
 
+  if (UNLIKELY(!GC_is_initialized))
+    GC_init();
   GC_ASSERT(lb_adjusted != 0 && (lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
   /* Currently a single object is always allocated if manual VDB. */
   /*
@@ -326,8 +328,6 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
     GC_print_all_errors();
   GC_notify_or_invoke_finalizers();
   GC_DBG_COLLECT_AT_MALLOC(lb_adjusted - EXTRA_BYTES);
-  if (UNLIKELY(!GC_is_initialized))
-    GC_init();
 
   LOCK();
   /* Do our share of marking work. */

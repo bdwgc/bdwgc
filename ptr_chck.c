@@ -182,10 +182,10 @@ GC_is_visible(void *p)
 {
   const hdr *hhdr;
 
-  if ((ADDR(p) & (ALIGNMENT - 1)) != 0)
-    goto fail;
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
+  if ((ADDR(p) & (ALIGNMENT - 1)) != 0)
+    goto fail;
   hhdr = HDR(p);
 #ifdef THREADS
   if (GC_has_running_threads()) {
