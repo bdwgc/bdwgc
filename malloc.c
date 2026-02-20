@@ -60,13 +60,14 @@ GC_alloc_large(size_t lb_adjusted, int kind, unsigned flags, size_t align_m1)
   ptr_t result;
 
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(lb_adjusted != 0 && (lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
-  n_blocks = OBJ_SZ_TO_BLOCKS_CHECKED(SIZET_SAT_ADD(lb_adjusted, align_m1));
   if (UNLIKELY(!GC_is_initialized)) {
     UNLOCK(); /*< just to unset `GC_lock_holder` */
     GC_init();
     LOCK();
   }
+  GC_ASSERT(lb_adjusted != 0 && (lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
+  n_blocks = OBJ_SZ_TO_BLOCKS_CHECKED(SIZET_SAT_ADD(lb_adjusted, align_m1));
+
   /* Do our share of marking work. */
   if (GC_incremental && !GC_dont_gc) {
     GC_collect_a_little_inner(n_blocks);
