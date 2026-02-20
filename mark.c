@@ -1605,7 +1605,10 @@ GC_API void GC_CALL GC_push_all_eager(void *bottom, void *top)
 #   undef GC_least_plausible_heap_addr
 }
 
-#if !defined(NEED_FIXUP_POINTER)
+#if !defined(NEED_FIXUP_POINTER) \
+    && (!defined(STACK_NOT_SCANNED) || defined(E2K) || defined(IA64) \
+        || defined(PCR) || defined(THREADS) \
+        || (defined(EMSCRIPTEN) && defined(EMSCRIPTEN_ASYNCIFY)))
 GC_INNER void GC_push_all_stack(void *bottom, void *top)
 {
     if (GC_all_interior_pointers
