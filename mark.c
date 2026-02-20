@@ -1818,7 +1818,9 @@ GC_push_all_eager(void *bottom, void *top)
 #undef GC_least_plausible_heap_addr
 }
 
-#if !defined(NEED_FIXUP_POINTER) && !defined(NO_ALL_INTERIOR_POINTERS)
+#if !defined(NEED_FIXUP_POINTER) && !defined(NO_ALL_INTERIOR_POINTERS)   \
+    && (!defined(STACK_NOT_SCANNED) || defined(IA64) || defined(THREADS) \
+        || (defined(EMSCRIPTEN) && defined(EMSCRIPTEN_ASYNCIFY)))
 GC_INNER void
 GC_push_all_stack(void *bottom, void *top)
 {
