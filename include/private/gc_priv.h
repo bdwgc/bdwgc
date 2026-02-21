@@ -4429,8 +4429,10 @@ GC_INNER word GC_compute_root_size(void);
 /* Workaround tautological-pointer-compare Clang warning. */
 #  define NONNULL_ARG_NOT_NULL(arg) \
     (*CAST_THRU_UINTPTR(volatile void **, &(arg)) != NULL)
+#  define NONNULL_PROC_NOT_ZERO(proc) TRUE /*< conservatively say yes */
 #else
 #  define NONNULL_ARG_NOT_NULL(arg) ((arg) != NULL)
+#  define NONNULL_PROC_NOT_ZERO(proc) ((proc) != 0)
 #endif
 
 #define COND_DUMP_CHECKS                                             \

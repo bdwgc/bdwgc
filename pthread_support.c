@@ -2831,6 +2831,7 @@ GC_wrap_pthread_create(pthread_t *new_thread,
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
   GC_ASSERT(GC_thr_initialized);
+  GC_ASSERT(NONNULL_PROC_NOT_ZERO(start_routine));
 
   GC_init_lib_bounds();
   if (sem_init(&si.registered, GC_SEM_INIT_PSHARED, 0) == -1)
