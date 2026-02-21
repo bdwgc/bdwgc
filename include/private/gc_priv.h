@@ -2591,8 +2591,10 @@ GC_INNER void *GC_store_debug_info_inner(void *p, word sz, const char *str,
 #if GC_GNUC_PREREQ(4, 0)
   /* Workaround tautological-pointer-compare Clang warning.     */
 # define NONNULL_ARG_NOT_NULL(arg) (*(volatile void **)&(arg) != NULL)
+# define NONNULL_PROC_NOT_ZERO(proc) TRUE /* conservatively say yes */
 #else
 # define NONNULL_ARG_NOT_NULL(arg) (NULL != (arg))
+# define NONNULL_PROC_NOT_ZERO(proc) ((proc) != 0)
 #endif
 
 #define COND_DUMP_CHECKS \

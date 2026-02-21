@@ -73,8 +73,8 @@
 # endif
 
   GC_API int GC_pthread_create(pthread_t *,
-                               GC_PTHREAD_CREATE_CONST pthread_attr_t *,
-                               void *(*)(void *), void * /* arg */);
+                GC_PTHREAD_CREATE_CONST pthread_attr_t *, void *(*)(void *),
+                void * /* arg */) GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(3);
   GC_API int GC_pthread_join(pthread_t, void ** /* retval */);
   GC_API int GC_pthread_detach(pthread_t);
 

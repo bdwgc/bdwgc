@@ -68,7 +68,7 @@
 /* size lb in *result.  The caller must make sure that *result is       */
 /* traced even if objects are ptrfree.                                  */
 GC_API void GC_CALL GC_generic_malloc_many(size_t /* lb */, int /* k */,
-                                           void ** /* result */);
+                                void ** /* result */) GC_ATTR_NONNULL(3);
 
 /* Generalized version of GC_malloc and GC_malloc_atomic.               */
 /* Uses appropriately the thread-local (if available) or the global     */
