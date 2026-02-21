@@ -878,8 +878,9 @@ GC_API void GC_CALL GC_set_max_heap_size(GC_word /* `n` */);
  * Both section start (`low_address`) and end (`high_address_plus_1`)
  * are not needed to be pointer-aligned.
  */
-GC_API void GC_CALL GC_exclude_static_roots(
-    void * /* `low_address` */, void * /* `high_address_plus_1` */);
+GC_API void GC_CALL GC_exclude_static_roots(void * /* `low_address` */,
+                                            void * /* `high_address_plus_1` */)
+    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2);
 
 /**
  * Clear the number of entries in the exclusion table.  Wizards only.
@@ -898,7 +899,8 @@ GC_API void GC_CALL GC_clear_roots(void);
  * `low_address` must not be greater than `high_address_plus_1`.
  */
 GC_API void GC_CALL GC_add_roots(void * /* `low_address` */,
-                                 void * /* `high_address_plus_1` */);
+                                 void * /* `high_address_plus_1` */)
+    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2);
 
 /** Remove root segments located fully in the region.  Wizards only. */
 GC_API void GC_CALL GC_remove_roots(void * /* `low_address` */,
@@ -2588,11 +2590,12 @@ GC_API int __stdcall GC_DllMain(void *, unsigned long, void *);
  * `GC_ExitThread`, so that the thread is properly unregistered.
  */
 #    ifdef GC_WINDOWS_H_INCLUDED
-GC_API HANDLE WINAPI GC_CreateThread(
-    LPSECURITY_ATTRIBUTES /* `lpThreadAttributes` */,
-    GC_WIN32_SIZE_T /* `dwStackSize` */,
-    LPTHREAD_START_ROUTINE /* `lpStartAddress` */, LPVOID /* `lpParameter` */,
-    DWORD /* `dwCreationFlags` */, LPDWORD /* `lpThreadId` */);
+GC_API HANDLE WINAPI
+    GC_CreateThread(LPSECURITY_ATTRIBUTES /* `lpThreadAttributes` */,
+                    GC_WIN32_SIZE_T /* `dwStackSize` */,
+                    LPTHREAD_START_ROUTINE /* `lpStartAddress` */,
+                    LPVOID /* `lpParameter` */, DWORD /* `dwCreationFlags` */,
+                    LPDWORD /* `lpThreadId` */) GC_ATTR_NONNULL(3);
 
 GC_API DECLSPEC_NORETURN void WINAPI GC_ExitThread(DWORD /* `dwExitCode` */);
 #    else
@@ -2600,17 +2603,16 @@ struct _SECURITY_ATTRIBUTES;
 GC_API void *__stdcall GC_CreateThread(struct _SECURITY_ATTRIBUTES *,
                                        GC_WIN32_SIZE_T,
                                        unsigned long(__stdcall *)(void *),
-                                       void *, unsigned long, unsigned long *);
+                                       void *, unsigned long, unsigned long *)
+    GC_ATTR_NONNULL(3);
 GC_API DECLSPEC_NORETURN void __stdcall GC_ExitThread(unsigned long);
 #    endif
 
 #    if !defined(_WIN32_WCE) && !defined(__CEGCC__)
-GC_API GC_uintptr_t GC_CALL GC_beginthreadex(void * /* `security` */,
-                                             unsigned /* `stack_size` */,
-                                             unsigned(__stdcall *)(void *),
-                                             void * /* `arglist` */,
-                                             unsigned /* `initflag` */,
-                                             unsigned * /* `thr_addr` */);
+GC_API GC_uintptr_t GC_CALL GC_beginthreadex(
+    void * /* `security` */, unsigned /* `stack_size` */,
+    unsigned(__stdcall *)(void *), void * /* `arglist` */,
+    unsigned /* `initflag` */, unsigned * /* `thr_addr` */) GC_ATTR_NONNULL(3);
 
 /*
  * Note: `_endthreadex()` is not currently marked as `noreturn` in VC++

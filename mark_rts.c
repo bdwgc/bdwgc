@@ -120,7 +120,7 @@ GC_INNER void
 GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp)
 {
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(ADDR_GE(e, b));
+  GC_ASSERT(b != NULL && ADDR_GE(e, b));
   b = PTR_ALIGN_UP(b, ALIGNMENT);
   e = PTR_ALIGN_DOWN(e, ALIGNMENT);
   if (ADDR_GE(b, e)) {
@@ -534,7 +534,7 @@ GC_exclude_static_roots_inner(ptr_t start, ptr_t finish)
   size_t next_index;
 
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(ADDR(start) % ALIGNMENT == 0);
+  GC_ASSERT(start != NULL && ADDR(start) % ALIGNMENT == 0);
   GC_ASSERT(ADDR_LT(start, finish));
 
   next = GC_next_exclusion(start);

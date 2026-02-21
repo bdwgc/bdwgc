@@ -301,6 +301,7 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
 
   if (UNLIKELY(!GC_is_initialized))
     GC_init();
+  GC_ASSERT(NONNULL_ARG_NOT_NULL(result));
   GC_ASSERT(lb_adjusted != 0 && (lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
   /* Currently a single object is always allocated if manual VDB. */
   /*

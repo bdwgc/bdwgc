@@ -102,7 +102,8 @@ GC_API int GC_CALL GC_get_dont_add_byte_at_end(void);
  */
 GC_API void GC_CALL GC_generic_malloc_many(size_t /* `lb_adjusted` */,
                                            int /* `kind` */,
-                                           void ** /* `result` */);
+                                           void ** /* `result` */)
+    GC_ATTR_NONNULL(3);
 
 /**
  * A generalized variant of `GC_malloc` and `GC_malloc_atomic`.
