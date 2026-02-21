@@ -161,12 +161,13 @@ struct GC_calloc_typed_descr_s {
  */
 GC_API int GC_CALL GC_calloc_prepare_explicitly_typed(
     struct GC_calloc_typed_descr_s * /* `p_ctd` */, size_t /* `sizeof_ctd` */,
-    size_t /* `nelements` */, size_t /* `element_size_in_bytes` */, GC_descr);
+    size_t /* `nelements` */, size_t /* `element_size_in_bytes` */, GC_descr)
+    GC_ATTR_NONNULL(1);
 
 /** The actual object allocation for the prepared description. */
 GC_API GC_ATTR_MALLOC void *GC_CALL GC_calloc_do_explicitly_typed(
     const struct GC_calloc_typed_descr_s * /* `p_ctd` */,
-    size_t /* `sizeof_ctd` */);
+    size_t /* `sizeof_ctd` */) GC_ATTR_NONNULL(1);
 
 #ifdef GC_DEBUG
 #  define GC_MALLOC_EXPLICITLY_TYPED(bytes, d) ((void)(d), GC_MALLOC(bytes))
