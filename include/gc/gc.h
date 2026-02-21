@@ -1126,7 +1126,8 @@ struct GC_prof_stats_s {
  * (excluding all unknown fields, if any).
  */
 GC_API size_t GC_CALL GC_get_prof_stats(struct GC_prof_stats_s *,
-                                        size_t /* `stats_sz` */);
+                                        size_t /* `stats_sz` */)
+    GC_ATTR_NONNULL(1);
 #ifdef GC_THREADS
 /**
  * Same as `GC_get_prof_stats` but unsynchronized (i.e., not holding
@@ -1134,7 +1135,8 @@ GC_API size_t GC_CALL GC_get_prof_stats(struct GC_prof_stats_s *,
  * `GC_call_with_reader_lock()` to avoid data race on multiprocessors.
  */
 GC_API size_t GC_CALL GC_get_prof_stats_unsafe(struct GC_prof_stats_s *,
-                                               size_t /* `stats_sz` */);
+                                               size_t /* `stats_sz` */)
+    GC_ATTR_NONNULL(1);
 #endif
 
 /**
