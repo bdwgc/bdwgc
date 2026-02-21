@@ -2440,9 +2440,11 @@ GC_API void GC_CALL GC_foreach_heap_section_inner(GC_heap_section_proc fn,
  * (assuming `p` and `q` do not have side effects).
  */
 GC_API void GC_CALL GC_ptr_store_and_dirty(void * /* `p` */,
-                                           const void * /* `q` */);
+                                           const void * /* `q` */)
+    GC_ATTR_NONNULL(1);
 GC_API void GC_CALL GC_debug_ptr_store_and_dirty(void * /* `p` */,
-                                                 const void * /* `q` */);
+                                                 const void * /* `q` */)
+    GC_ATTR_NONNULL(1);
 
 #ifdef GC_PTHREADS
 /*
