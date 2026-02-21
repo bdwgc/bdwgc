@@ -767,13 +767,13 @@ struct GC_prof_stats_s {
 /* (in bytes) of the filled in part of the structure (excluding all     */
 /* unknown fields, if any).                                             */
 GC_API size_t GC_CALL GC_get_prof_stats(struct GC_prof_stats_s *,
-                                        size_t /* stats_sz */);
+                                size_t /* stats_sz */) GC_ATTR_NONNULL(1);
 #ifdef GC_THREADS
   /* Same as above but unsynchronized (i.e., not holding the allocation */
   /* lock).  Clients should call it using GC_call_with_alloc_lock to    */
   /* avoid data races on multiprocessors.                               */
   GC_API size_t GC_CALL GC_get_prof_stats_unsafe(struct GC_prof_stats_s *,
-                                                 size_t /* stats_sz */);
+                                size_t /* stats_sz */) GC_ATTR_NONNULL(1);
 #endif
 
 /* Get the element value (converted to bytes) at a given index of       */
