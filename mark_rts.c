@@ -166,7 +166,7 @@ GC_API void GC_CALL GC_add_roots(void *b, void *e)
 /* re-registering dynamic libraries.                                    */
 void GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp)
 {
-    GC_ASSERT((word)b <= (word)e);
+    GC_ASSERT(b != NULL && (word)b <= (word)e);
     b = (ptr_t)(((word)b + (ALIGNMENT - 1)) & ~(word)(ALIGNMENT - 1));
                         /* round b up to pointer alignment boundary */
     e = (ptr_t)((word)e & ~(word)(ALIGNMENT - 1));
@@ -570,7 +570,7 @@ GC_INNER void GC_exclude_static_roots_inner(void *start, void *finish)
     struct exclusion * next;
     size_t next_index;
 
-    GC_ASSERT((word)start % ALIGNMENT == 0);
+    GC_ASSERT(start != NULL && (word)start % ALIGNMENT == 0);
     GC_ASSERT((word)start < (word)finish);
 
     if (0 == GC_excl_table_entries) {

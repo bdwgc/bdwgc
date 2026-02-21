@@ -149,9 +149,9 @@ GC_API void * GC_greatest_plausible_heap_addr;
 /* Note that mark procedures should explicitly call FIXUP_POINTER()     */
 /* if required.                                                         */
 GC_API struct GC_ms_entry * GC_CALL GC_mark_and_push(void * /* obj */,
-                                struct GC_ms_entry * /* mark_stack_ptr */,
-                                struct GC_ms_entry * /* mark_stack_limit */,
-                                void ** /* src */);
+                struct GC_ms_entry * /* mark_stack_ptr */,
+                struct GC_ms_entry * /* mark_stack_limit */,
+                void ** /* src */) GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2);
 
 #define GC_MARK_AND_PUSH(obj, msp, lim, src) \
           ((GC_word)(obj) >= (GC_word)GC_least_plausible_heap_addr && \
@@ -197,8 +197,8 @@ GC_API unsigned GC_CALL GC_new_kind_inner(void ** /* free_list */,
 
 /* Return a new mark procedure identifier, suitable for use as  */
 /* the first argument in GC_MAKE_PROC.                          */
-GC_API unsigned GC_CALL GC_new_proc(GC_mark_proc);
-GC_API unsigned GC_CALL GC_new_proc_inner(GC_mark_proc);
+GC_API unsigned GC_CALL GC_new_proc(GC_mark_proc) GC_ATTR_NONNULL(1);
+GC_API unsigned GC_CALL GC_new_proc_inner(GC_mark_proc) GC_ATTR_NONNULL(1);
 
 /* Allocate an object of a given kind.  By default, there are only      */
 /* a few kinds: composite (pointerful), atomic, uncollectible, etc.     */

@@ -312,6 +312,7 @@ GC_API void GC_CALL GC_generic_malloc_many(size_t lb, int k, void **result)
     struct hblk ** rlh;
     DCL_LOCK_STATE;
 
+    GC_ASSERT(NONNULL_ARG_NOT_NULL(result));
     GC_ASSERT(lb != 0 && (lb & (GRANULE_BYTES-1)) == 0);
     /* Currently a single object is always allocated if manual VDB. */
     /* TODO: GC_dirty should be called for each linked object (but  */

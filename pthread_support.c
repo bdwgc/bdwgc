@@ -2297,6 +2297,7 @@ GC_INNER_PTHRSTART GC_thread GC_start_rtn_prepare_thread(
     INIT_REAL_SYMS();
     if (!EXPECT(parallel_initialized, TRUE))
       GC_init_parallel();
+    GC_ASSERT(NONNULL_PROC_NOT_ZERO(start_routine));
     GC_init_lib_bounds();
     if (sem_init(&si.registered, GC_SEM_INIT_PSHARED, 0) != 0)
       ABORT("sem_init failed");
