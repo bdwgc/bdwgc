@@ -293,7 +293,8 @@ GC_is_black_listed(struct GC_hblk_s * /* `h` */, size_t /* `len` */);
  * is located.  Defined only if the library has been compiled without
  * `NO_DEBUGGING` macro defined.
  */
-GC_API unsigned GC_CALL GC_count_set_marks_in_hblk(const void * /* `p` */);
+GC_API unsigned GC_CALL GC_count_set_marks_in_hblk(const void * /* `p` */)
+    GC_ATTR_NONNULL(1);
 
 /*
  * And some routines to support creation of new "kinds", e.g. with custom
