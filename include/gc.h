@@ -647,7 +647,7 @@ GC_API void GC_CALL GC_set_max_heap_size(GC_word /* n */);
 /* mistaken for dynamic library data segments on some systems.          */
 /* Both section start and end are not needed to be pointer-aligned.     */
 GC_API void GC_CALL GC_exclude_static_roots(void * /* low_address */,
-                                            void * /* high_address_plus_1 */);
+                        void * /* high_address_plus_1 */) GC_ATTR_NONNULL(1);
 
 /* Clear the number of entries in the exclusion table.  Wizards only.   */
 GC_API void GC_CALL GC_clear_exclusion_table(void);
@@ -660,7 +660,7 @@ GC_API void GC_CALL GC_clear_roots(void);
 /* Both segment start and end are not needed to be pointer-aligned.     */
 /* low_address must not be greater than high_address_plus_1.            */
 GC_API void GC_CALL GC_add_roots(void * /* low_address */,
-                                 void * /* high_address_plus_1 */);
+                        void * /* high_address_plus_1 */) GC_ATTR_NONNULL(1);
 
 /* Remove root segments located fully in the region.  Wizards only.     */
 GC_API void GC_CALL GC_remove_roots(void * /* low_address */,
@@ -1930,7 +1930,7 @@ GC_API void GC_CALL GC_register_has_static_roots_callback(
                 GC_WIN32_SIZE_T /* dwStackSize */,
                 LPTHREAD_START_ROUTINE /* lpStartAddress */,
                 LPVOID /* lpParameter */, DWORD /* dwCreationFlags */,
-                LPDWORD /* lpThreadId */);
+                LPDWORD /* lpThreadId */) GC_ATTR_NONNULL(3);
 
       GC_API DECLSPEC_NORETURN void WINAPI GC_ExitThread(
                                                 DWORD /* dwExitCode */);
@@ -1939,7 +1939,8 @@ GC_API void GC_CALL GC_register_has_static_roots_callback(
       GC_API void *__stdcall GC_CreateThread(struct _SECURITY_ATTRIBUTES *,
                                 GC_WIN32_SIZE_T,
                                 unsigned long (__stdcall *)(void *),
-                                void *, unsigned long, unsigned long *);
+                                void *, unsigned long,
+                                unsigned long *) GC_ATTR_NONNULL(3);
       GC_API DECLSPEC_NORETURN void __stdcall GC_ExitThread(unsigned long);
 #   endif
 
@@ -1948,7 +1949,7 @@ GC_API void GC_CALL GC_register_has_static_roots_callback(
                         void * /* security */, unsigned /* stack_size */,
                         unsigned (__stdcall *)(void *),
                         void * /* arglist */, unsigned /* initflag */,
-                        unsigned * /* thrdaddr */);
+                        unsigned * /* thrdaddr */) GC_ATTR_NONNULL(3);
 
       /* Note: _endthreadex() is not currently marked as no-return in   */
       /* VC++ and MinGW headers, so we don't mark it neither.           */

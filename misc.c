@@ -2168,6 +2168,7 @@ GC_API unsigned GC_CALL GC_new_proc_inner(GC_mark_proc proc)
 {
     unsigned result = GC_n_mark_procs;
 
+    GC_ASSERT(NONNULL_PROC_NOT_ZERO(proc));
     if (result < MAX_MARK_PROCS) {
       GC_n_mark_procs++;
       GC_mark_procs[result] = proc;
