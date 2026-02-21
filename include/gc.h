@@ -1670,9 +1670,9 @@ GC_API void GC_CALL GC_dump_finalization(void);
 /* followed by GC_END_STUBBORN_CHANGE(p) and GC_reachable_here(q)       */
 /* (assuming p and q do not have side effects).                         */
 GC_API void GC_CALL GC_ptr_store_and_dirty(void * /* p */,
-                                           const void * /* q */);
+                                const void * /* q */) GC_ATTR_NONNULL(1);
 GC_API void GC_CALL GC_debug_ptr_store_and_dirty(void * /* p */,
-                                                 const void * /* q */);
+                                const void * /* q */) GC_ATTR_NONNULL(1);
 
 /* Functions called to report pointer checking errors */
 GC_API void (GC_CALLBACK * GC_same_obj_print_proc)(void * /* p */,
