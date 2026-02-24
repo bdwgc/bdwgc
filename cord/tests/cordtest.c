@@ -255,14 +255,21 @@ prepare_cord_f1(CORD y)
 static void
 test_cords_f1b(CORD w, CORD z)
 {
+  size_t w_len = CORD_len(w);
+  CORD x;
+
   if (CORD_cmp(w, z) != 0)
     ABORT("File conversions differ");
-  if (CORD_chr(w, 0, '9') != 37)
-    ABORT("CORD_chr failed 1");
-  if (CORD_chr(w, 3, 'a') != 38)
-    ABORT("CORD_chr failed 2");
-  if (CORD_rchr(w, CORD_len(w) - 1, '}') != 1)
+  if (CORD_chr(w, 0, '9') != 37 || CORD_chr(w, 3, 'a') != 38
+      || CORD_chr(w, 30, '/') != CORD_NOT_FOUND)
+    ABORT("CORD_chr failed");
+  if (CORD_rchr(w, w_len - 1, '}') != 1
+      || CORD_rchr(w, w_len / 2, '^') != CORD_NOT_FOUND)
     ABORT("CORD_rchr failed");
+
+  x = CORD_cat("abc", CORD_chars('.', 100));
+  if (CORD_chr(x, 0, '.') != 3)
+    ABORT("CORD_chr failed 2");
 
   if (CORD_cmp(CORD_EMPTY, "a") >= 0 || CORD_cmp("b", CORD_EMPTY) <= 0
       || CORD_cmp(CORD_EMPTY, CORD_EMPTY) != 0)
