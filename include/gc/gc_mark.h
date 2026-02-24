@@ -210,7 +210,7 @@ GC_API struct GC_ms_entry *GC_CALL
 GC_ms_push_obj_descr(void * /* `obj` */, GC_word /* `descr` */,
                      struct GC_ms_entry * /* `mark_stack_top` */,
                      struct GC_ms_entry * /* `mark_stack_limit` */)
-    GC_ATTR_NONNULL(3) GC_ATTR_NONNULL(4);
+    GC_ATTR_NONNULL(3) /* `GC_ATTR_NONNULL(4)` */;
 
 /**
  * Same as `GC_push_all()` but using the given mark stack.
@@ -219,7 +219,7 @@ GC_API struct GC_ms_entry *GC_CALL
 GC_ms_push_all(void * /* `bottom` */, void * /* `top` */,
                struct GC_ms_entry * /* `mark_stack_top` */,
                struct GC_ms_entry * /* `mark_stack_limit` */)
-    GC_ATTR_NONNULL(3) GC_ATTR_NONNULL(4);
+    GC_ATTR_NONNULL(3) /* `GC_ATTR_NONNULL(4)` */;
 
 /**
  * The size of the header added to objects allocated through the `GC_debug_`
