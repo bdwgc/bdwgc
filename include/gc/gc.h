@@ -880,7 +880,7 @@ GC_API void GC_CALL GC_set_max_heap_size(GC_word /* `n` */);
  */
 GC_API void GC_CALL GC_exclude_static_roots(void * /* `low_address` */,
                                             void * /* `high_address_plus_1` */)
-    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2);
+    GC_ATTR_NONNULL(1) /* `GC_ATTR_NONNULL(2)` */;
 
 /**
  * Clear the number of entries in the exclusion table.  Wizards only.
@@ -900,7 +900,7 @@ GC_API void GC_CALL GC_clear_roots(void);
  */
 GC_API void GC_CALL GC_add_roots(void * /* `low_address` */,
                                  void * /* `high_address_plus_1` */)
-    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2);
+    GC_ATTR_NONNULL(1) /* `GC_ATTR_NONNULL(2)` */;
 
 /** Remove root segments located fully in the region.  Wizards only. */
 GC_API void GC_CALL GC_remove_roots(void * /* `low_address` */,

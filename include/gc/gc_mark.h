@@ -191,7 +191,7 @@ GC_API unsigned GC_CALL GC_get_pointer_shift(void);
 GC_API struct GC_ms_entry *GC_CALL GC_mark_and_push(
     void * /* `obj` */, struct GC_ms_entry * /* `mark_stack_top` */,
     struct GC_ms_entry * /* `mark_stack_limit` */, void ** /* `src` */)
-    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2) GC_ATTR_NONNULL(3);
+    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(2) /* `GC_ATTR_NONNULL(3)` */;
 
 #define GC_MARK_AND_PUSH(obj, msp, lim, src)                       \
   (GC_ADDR_LT((char *)GC_least_plausible_heap_addr, (char *)(obj)) \
