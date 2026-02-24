@@ -517,6 +517,28 @@ test_cat_char_star(void)
     ABORT("CORD_cat_char_star(CORD_cat(x,x)) failed");
 }
 
+static void
+test_to_const_char_star(void)
+{
+  const char *result = CORD_to_const_char_star(CORD_EMPTY);
+
+  if (result[0] != '\0')
+    ABORT("CORD_to_const_char_star with empty cord wrong");
+
+  result = CORD_to_const_char_star("hello");
+  if (strcmp(result, "hello") != 0)
+    ABORT("CORD_to_const_char_star with simple string wrong");
+
+  result = CORD_to_const_char_star(
+      CORD_cat(CORD_from_char_star("hello"), CORD_chars(' ', 30)));
+  if (strncmp(result, "hello ", 6) != 0)
+    ABORT("CORD_to_const_char_star with concat wrong");
+
+  result = CORD_to_const_char_star(CORD_from_char_star("test"));
+  if (result[0] != 't')
+    ABORT("CORD_to_const_char_star result wrong");
+}
+
 static char
 fn_get_char(size_t i, void *client_data)
 {
@@ -660,6 +682,7 @@ main(void)
   test_printf();
   test_cat_char();
   test_cat_char_star();
+  test_to_const_char_star();
   test_prev();
   test_substr();
   test_dump();
