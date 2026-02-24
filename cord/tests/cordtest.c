@@ -543,6 +543,52 @@ test_to_const_char_star(void)
     ABORT("CORD_to_const_char_star result wrong");
 }
 
+static void
+test_cord_str(void)
+{
+  CORD x;
+
+  /* Find a substring at the beginning. */
+  x = CORD_from_char_star("hello world");
+  if (CORD_str(x, 0, CORD_from_char_star("hello")) != 0)
+    ABORT("CORD_str should find substring at beginning");
+
+  /* Find a substring in the middle. */
+  x = CORD_from_char_star("hello world");
+  if (CORD_str(x, 0, CORD_from_char_star("world")) != 6)
+    ABORT("CORD_str should find substring in middle");
+
+  /* Find a non-string cord. */
+  x = CORD_chars('.', 50);
+  if (CORD_str(CORD_cat(CORD_from_char_star("hello"), x), 1, x) != 5)
+    ABORT("CORD_str should find substring in middle");
+
+  /* Substring is not found. */
+  x = CORD_from_char_star("hello world");
+  if (CORD_str(x, 0, CORD_from_char_star("xyz")) != CORD_NOT_FOUND)
+    ABORT("CORD_str should not find non-existent substring");
+
+  /* Find from some offset. */
+  x = CORD_from_char_star("hello hello");
+  if (CORD_str(x, 1, CORD_from_char_star("hello")) != 6)
+    ABORT("CORD_str should find substring with start offset");
+
+  /* Find empty cord. */
+  x = CORD_from_char_star("hello");
+  if (CORD_str(x, 0, CORD_EMPTY) != 0)
+    ABORT("CORD_str should find empty substring at start");
+
+  /* Find a substring longer than cord. */
+  x = CORD_from_char_star("hi");
+  if (CORD_str(x, 0, CORD_from_char_star("hello")) != CORD_NOT_FOUND)
+    ABORT("CORD_str should not find substring longer than cord");
+
+  /* Find in a concatenated cord. */
+  x = CORD_cat(CORD_from_char_star("hello"), CORD_from_char_star(" world"));
+  if (CORD_str(x, 0, CORD_from_char_star("world")) != 6)
+    ABORT("CORD_str should find substring in concatenated cord");
+}
+
 static char
 fn_get_char(size_t i, void *client_data)
 {
@@ -687,6 +733,7 @@ main(void)
   test_cat_char();
   test_cat_char_star();
   test_to_const_char_star();
+  test_cord_str();
   test_prev();
   test_substr();
   test_dump();
