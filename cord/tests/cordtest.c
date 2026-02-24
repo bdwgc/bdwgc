@@ -263,6 +263,10 @@ test_cords_f1b(CORD w, CORD z)
     ABORT("CORD_chr failed 2");
   if (CORD_rchr(w, CORD_len(w) - 1, '}') != 1)
     ABORT("CORD_rchr failed");
+
+  if (CORD_cmp(CORD_EMPTY, "a") >= 0 || CORD_cmp("b", CORD_EMPTY) <= 0
+      || CORD_cmp(CORD_EMPTY, CORD_EMPTY) != 0)
+    ABORT("CORD_cmp() failed for empty cord");
 }
 
 static void
