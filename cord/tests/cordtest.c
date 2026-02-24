@@ -481,6 +481,33 @@ test_printf(void)
 }
 
 static void
+test_cat_char(void)
+{
+  CORD y = CORD_cat_char(CORD_from_char_star("hello"), '!');
+  CORD z;
+
+  if (CORD_len(y) != 6 || CORD_fetch(y, 5) != '!'
+      || strcmp(CORD_to_char_star(y), "hello!") != 0)
+    ABORT("CORD_cat_char result wrong");
+
+  y = CORD_cat_char(CORD_EMPTY, 'a');
+  if (CORD_len(y) != 1 || CORD_fetch(y, 0) != 'a')
+    ABORT("CORD_cat_char with empty cord wrong");
+
+  y = CORD_cat_char(CORD_from_char_star("hello"), '\0');
+  if (CORD_len(y) != 6)
+    ABORT("CORD_cat_char with null char length wrong");
+  z = CORD_substr(y, 5, 1);
+  if (CORD_len(z) != 1 || CORD_fetch(z, 0) != '\0')
+    ABORT("CORD_cat_char with null char wrong");
+
+  y = CORD_cat_char(CORD_from_char_star("a"), 'b');
+  y = CORD_cat_char(y, 'c');
+  if (CORD_len(y) != 3 || strcmp(CORD_to_char_star(y), "abc") != 0)
+    ABORT("CORD_cat_char chaining result wrong");
+}
+
+static void
 test_cat_char_star(void)
 {
   CORD x = CORD_cat_char_star(CORD_cat(CORD_chars('a', 9), "bcd"), " cat", 4);
@@ -631,6 +658,7 @@ main(void)
   test_basics();
   test_extras();
   test_printf();
+  test_cat_char();
   test_cat_char_star();
   test_prev();
   test_substr();
