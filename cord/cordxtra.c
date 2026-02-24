@@ -371,6 +371,7 @@ CORD_str(CORD x, size_t start, CORD s)
    * This has the advantage that we allocate very little, or not at all.
    * It is very fast if there are few close misses.
    */
+#define STR_START_MAX_LEN sizeof(long)
   CORD_pos xpos;
   size_t xlen = CORD_len(x);
   size_t slen;
@@ -390,14 +391,14 @@ CORD_str(CORD x, size_t start, CORD s)
     s_start = s;
     slen = strlen(s);
   } else {
-    s_start = CORD_to_char_star(CORD_substr(s, 0, sizeof(unsigned long)));
+    s_start = CORD_to_char_star(CORD_substr(s, 0, STR_START_MAX_LEN));
     slen = CORD_len(s);
   }
   if (xlen < start || xlen - start < slen)
     return CORD_NOT_FOUND;
   start_len = slen;
-  if (start_len > sizeof(unsigned long))
-    start_len = sizeof(unsigned long);
+  if (start_len > STR_START_MAX_LEN)
+    start_len = STR_START_MAX_LEN;
 #if defined(CPPCHECK)
   memset(xpos, '\0', sizeof(CORD_pos));
 #endif
