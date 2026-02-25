@@ -397,6 +397,18 @@ wrap_vprintf(CORD format, ...)
 }
 
 static int
+wrap_vsprintf(CORD *out, CORD format, ...)
+{
+  va_list args;
+  int result;
+
+  va_start(args, format);
+  result = CORD_vsprintf(out, format, args);
+  va_end(args);
+  return result;
+}
+
+static int
 wrap_vfprintf(FILE *f, CORD format, ...)
 {
   va_list args;
@@ -710,6 +722,136 @@ test_substr(void)
 }
 
 static void
+test_vsprintf(void)
+{
+  CORD x, result;
+  unsigned short us;
+  unsigned ui;
+  int i;
+  double d;
+
+  /* Test `n` specifier with `unsigned short` (`long_arg` is negative). */
+  us = 0;
+  if (wrap_vsprintf(&result, "test%hn", &us) != 4 || us != 4
+      || CORD_cmp(result, "test") != 0)
+    ABORT("CORD_vsprintf failed for 'n'");
+
+  /* Test `r` specifier with negative `prec` (an error case). */
+  x = CORD_from_char_star("hello");
+  /* This should handle negative precision gracefully. */
+  if (wrap_vsprintf(&result, "%.*r", -1, x) < 0)
+    ABORT("CORD_vsprintf should handle negative precision gracefully");
+
+  /* Test `extract_conv_spec` error case (format is too long). */
+  if (wrap_vsprintf(&result, CORD_cat("%-", CORD_chars('-', 80))) != -1)
+    ABORT("CORD_vsprintf should return -1 for overly long format specifier");
+
+  /* Test `c` specifier with various flags. */
+  if (wrap_vsprintf(&result, "%5c", 'x') <= 0 || CORD_len(result) != 5)
+    ABORT("CORD_vsprintf failed for 'c' with width");
+  if (wrap_vsprintf(&result, "%-3c", 'z') <= 0)
+    ABORT("CORD_vsprintf failed for 'c' with left alignment");
+
+  /* Test `s` specifier with width/precision (goes to standard `sprintf`). */
+  if (wrap_vsprintf(&result, "%.3s", "hello") <= 0
+      || wrap_vsprintf(&result, "%10s", "hi") <= 0
+      || wrap_vsprintf(&result, "%-8s", "test") <= 0)
+    ABORT("CORD_vsprintf failed for 's'");
+
+  /* Test integer specifiers with padding and precision. */
+  i = 41;
+  if (wrap_vsprintf(&result, "%05d", i) <= 0)
+    ABORT("CORD_vsprintf failed for zero padding");
+  if (wrap_vsprintf(&result, "%.5d", i) <= 0)
+    ABORT("CORD_vsprintf failed for integer precision");
+
+  /* Test integer specifiers with different `long_arg` values. */
+  i = 42;
+  if (wrap_vsprintf(&result, "%d", i) <= 0
+      || wrap_vsprintf(&result, "%ld", (long)i) <= 0
+      || wrap_vsprintf(&result, "%hd", (short)i) <= 0)
+    ABORT("CORD_vsprintf failed for 'd'");
+
+  /* Test unsigned integer specifiers. */
+  ui = 43;
+  if (wrap_vsprintf(&result, "%u", ui) <= 0
+      || wrap_vsprintf(&result, "%lu", (unsigned long)ui) <= 0
+      || wrap_vsprintf(&result, "%hu", (unsigned short)ui) <= 0)
+    ABORT("CORD_vsprintf failed for 'u'");
+
+  /* Test octal and hex specifiers. */
+  ui = 44;
+  if (wrap_vsprintf(&result, "%o", ui) <= 0
+      || wrap_vsprintf(&result, "%x", ui) <= 0
+      || wrap_vsprintf(&result, "%X", ui) <= 0)
+    ABORT("CORD_vsprintf failed for 'o' or 'x' specifier");
+
+  /* Test pointer specifier. */
+  if (wrap_vsprintf(&result, "%p", &i) <= 0)
+    ABORT("CORD_vsprintf failed for 'p' specifier");
+
+  /* Test floating point specifiers. */
+  d = 3.14159;
+  if (wrap_vsprintf(&result, "%f", d) <= 0
+      || wrap_vsprintf(&result, "%e", d) <= 0
+      || wrap_vsprintf(&result, "%E", d) <= 0
+      || wrap_vsprintf(&result, "%g", d) <= 0
+      || wrap_vsprintf(&result, "%G", d) <= 0)
+    ABORT("CORD_vsprintf failed for a floating-point specifier");
+
+  /* Test `size_t` specifier (`long_arg` is 2). */
+  if (wrap_vsprintf(&result, "%zd", (size_t)456) <= 0
+      || wrap_vsprintf(&result, "%zu", (size_t)123) <= 0
+      || wrap_vsprintf(&result, "%zx", (size_t)0x789) <= 0)
+    ABORT("CORD_vsprintf failed for 'zd' or 'zu', or 'zx'");
+
+  /* Test various format combinations. */
+  if (wrap_vsprintf(&result, "int=%d str=%s char=%c", 45, "hello", 'x') <= 0)
+    ABORT("CORD_vsprintf failed for mixed format");
+
+  /* Test complex format with multiple specifiers. */
+  if (wrap_vsprintf(&result, "%5d %10s %c %f", 46, "test", 'z', 3.14) <= 0)
+    ABORT("CORD_vsprintf failed for complex format");
+
+  /* Test error handling - invalid format (this should return -1). */
+  if (wrap_vsprintf(&result, "%", 47) != -1)
+    ABORT("CORD_vsprintf should return -1 for invalid format");
+
+  /* Test format with an invalid conversion specifier. */
+  if (wrap_vsprintf(&result, "%q", 48) <= 0) {
+    /* No abort here.  Some implementations might handle this. */
+  }
+
+  /* Test various flag combinations. */
+  i = 46;
+  if (wrap_vsprintf(&result, "%+d", i) <= 0
+      || wrap_vsprintf(&result, "% d", i) <= 0
+      || wrap_vsprintf(&result, "%#x", (unsigned)i) <= 0)
+    ABORT("CORD_vsprintf failed for ' ' or '+', or '#' flag");
+
+  /* Test zero padding. */
+  if (wrap_vsprintf(&result, "%05d", 42) <= 0)
+    ABORT("CORD_vsprintf failed for zero padding");
+
+  /* Test precision with integers. */
+  if (wrap_vsprintf(&result, "%.5d", 42) <= 0)
+    ABORT("CORD_vsprintf failed for integer precision");
+
+  /* Test a very long format string. */
+  if (wrap_vsprintf(&result, "%r", CORD_chars('a', 100)) <= 0)
+    ABORT("CORD_vsprintf failed for long cord");
+
+  /* Test an empty format. */
+  if (wrap_vsprintf(&result, CORD_EMPTY) != 0 || result != CORD_EMPTY)
+    ABORT("CORD_vsprintf empty format should return empty cord");
+
+  /* Test a format with only literal text. */
+  if (wrap_vsprintf(&result, "hello world") != 11
+      || CORD_cmp(result, "hello world") != 0)
+    ABORT("CORD_vsprintf literal text wrong result");
+}
+
+static void
 test_dump(void)
 {
 #ifndef TEST_COVERAGE
@@ -746,6 +888,7 @@ main(void)
   test_cord_str();
   test_prev();
   test_substr();
+  test_vsprintf();
   test_dump();
 
   GC_gcollect(); /*< to close `f2` before the file removal */
