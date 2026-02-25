@@ -96,6 +96,7 @@ extern "C" {
  * 100% portable.  But it means that nonempty character string constants
  * may be used as cords directly, provided the string is never modified in
  * place.  The empty cord is represented by, and can be written as, `NULL`.
+ * Important: the empty C string is not a valid cord!
  */
 typedef const char *CORD;
 
