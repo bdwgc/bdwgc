@@ -495,11 +495,14 @@ static void
 test_cat_char(void)
 {
   CORD y = CORD_cat_char(CORD_from_char_star("hello"), '!');
-  CORD z;
+  CORD z = CORD_cat_char(CORD_nul(33), '^');
 
   if (CORD_len(y) != 6 || CORD_fetch(y, 5) != '!'
       || strcmp(CORD_to_char_star(y), "hello!") != 0)
     ABORT("CORD_cat_char result wrong");
+
+  if (CORD_len(z) != 34 || memcmp(CORD_to_char_star(z) + 32, "\0^", 2) != 0)
+    ABORT("CORD_cat_char with cord of multiple null chars wrong");
 
   y = CORD_cat_char(CORD_EMPTY, 'a');
   if (CORD_len(y) != 1 || CORD_fetch(y, 0) != 'a')
