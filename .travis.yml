@@ -187,8 +187,9 @@ after_success:
 - if [[ "$REPORT_COVERAGE" == true ]]; then
     lcov --capture --base-directory . --directory . --output-file coverage.info &&
     lcov --remove coverage.info '/usr/*' 'cord/tests/*' 'tests/*' --output-file coverage.info &&
-    lcov --list coverage.info &&
+    lcov --list coverage.info;
     coveralls report coverage.info -r ${COVERALLS_REPO_TOKEN};
+    bash <(curl -s https://codecov.io/bash) -f coverage.info -t ${CODECOV_TOKEN};
   fi
 
 before_deploy:
