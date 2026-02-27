@@ -1018,15 +1018,17 @@ struct closure {
   void *cl_data;
 };
 
-STATIC void *
+GC_INLINE void *
 GC_make_closure(GC_finalization_proc fn, void *data)
 {
-  struct closure *result =
 #  ifdef DBG_HDRS_ALL
-      (struct closure *)GC_debug_malloc(sizeof(struct closure), GC_EXTRAS);
+  struct closure *result
+      = (struct closure *)GC_debug_malloc(sizeof(struct closure), GC_EXTRAS);
 #  else
-      (struct closure *)GC_malloc(sizeof(struct closure));
+  struct closure *result
+      = (struct closure *)GC_malloc_kind(sizeof(struct closure), NORMAL);
 #  endif
+
   if (result != NULL) {
     result->cl_fn = fn;
     result->cl_data = data;
