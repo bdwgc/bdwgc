@@ -171,9 +171,9 @@ GC_INNER void GC_save_callers_safe(struct callinfo info[NFRAMES]);
 #endif
 
 #ifdef GC_ADD_CALLER
-#  define OPT_RA ra,
+#  define PASS_EXTRA_PARAMS ra, s, i
 #else
-#  define OPT_RA
+#  define PASS_EXTRA_PARAMS s, i
 #endif
 
 GC_INNER void *GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
