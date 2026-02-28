@@ -176,10 +176,10 @@ GC_API void * GC_CALL GC_realloc(void * p, size_t lb)
 # endif
 
 # ifdef REDIRECT_REALLOC
+#   include "private/dbg_mlc.h"
 
-/* As with malloc, avoid two levels of extra calls here.        */
 # define GC_debug_realloc_replacement(p, lb) \
-        GC_debug_realloc(p, lb, GC_DBG_EXTRAS)
+        GC_debug_realloc_inner(p, lb, TRUE /* is_redirect */, GC_DBG_EXTRAS)
 
 # if !defined(REDIRECT_MALLOC_IN_HEADER)
     void * realloc(void * p, size_t lb)
