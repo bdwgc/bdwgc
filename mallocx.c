@@ -206,12 +206,10 @@ GC_reallocf(void *p, size_t lb)
 #if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
 #  ifdef REDIRECT_MALLOC_DEBUG
 #    include "private/dbg_mlc.h"
-#    define REDIRECT_REALLOC_F GC_debug_realloc_replacement
-#    define REDIRECT_REALLOCF_F GC_debug_reallocf_replacement
-#    define GC_debug_realloc_replacement(p, lb)                      \
+#    define REDIRECT_REALLOC_F(p, lb)                                \
       GC_debug_realloc_inner(p, lb, FALSE, TRUE /* `is_redirect` */, \
                              GC_DBG_EXTRAS)
-#    define GC_debug_reallocf_replacement(p, lb)                     \
+#    define REDIRECT_REALLOCF_F(p, lb)                               \
       GC_debug_realloc_inner(p, lb, TRUE /* `free_on_fail` */, TRUE, \
                              GC_DBG_EXTRAS)
 #  else
@@ -230,9 +228,6 @@ reallocf(void *p, size_t lb)
 {
   return REDIRECT_REALLOCF_F(p, lb);
 }
-
-#  undef GC_debug_realloc_replacement
-#  undef GC_debug_reallocf_replacement
 #endif
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
