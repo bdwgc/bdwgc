@@ -129,10 +129,13 @@ typedef struct {
   GC_INNER void GC_save_callers(struct callinfo info[NFRAMES]);
   GC_INNER void GC_print_callers(struct callinfo info[NFRAMES]);
 # define ADD_CALL_CHAIN(base, ra) GC_save_callers(((oh *)(base)) -> oh_ci)
-# if defined(REDIRECT_MALLOC) && defined(THREADS) && defined(DBG_HDRS_ALL) \
+# if defined(REDIRECT_MALLOC) \
      && NARGS == 0 && NFRAMES % 2 == 0 && defined(GC_HAVE_BUILTIN_BACKTRACE)
     GC_INNER void GC_save_callers_no_unlock(struct callinfo info[NFRAMES]);
-#   define ADD_CALL_CHAIN_INNER(base) \
+#   define ADD_CALL_CHAIN_IS_UNSAFE
+    /* A variant of ADD_CALL_CHAIN() which does not call libc   */
+    /* functions that might allocate memory.                    */
+#   define ADD_CALL_CHAIN_SAFE(base, ra) \
                     GC_save_callers_no_unlock(((oh *)(base)) -> oh_ci)
 # endif
 # define PRINT_CALL_CHAIN(base) GC_print_callers(((oh *)(base)) -> oh_ci)
@@ -146,9 +149,9 @@ typedef struct {
 # define PRINT_CALL_CHAIN(base)
 #endif
 
-#if !defined(ADD_CALL_CHAIN_INNER) && defined(DBG_HDRS_ALL)
+#ifndef ADD_CALL_CHAIN_IS_UNSAFE
   /* A variant of ADD_CALL_CHAIN() used for internal allocations.   */
-# define ADD_CALL_CHAIN_INNER(base) ADD_CALL_CHAIN(base, GC_RETURN_ADDR)
+# define ADD_CALL_CHAIN_SAFE(base, ra) ADD_CALL_CHAIN(base, ra)
 #endif
 
 #ifdef GC_ADD_CALLER
@@ -156,6 +159,11 @@ typedef struct {
 #else
 # define OPT_RA
 #endif
+
+GC_INNER void *GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
+                                     GC_EXTRA_PARAMS);
+GC_INNER void *GC_debug_realloc_inner(void *p, size_t lb, GC_bool is_redirect,
+                                      GC_EXTRA_PARAMS);
 
 /* Check whether object with base pointer p has debugging info  */
 /* p is assumed to point to a legitimate object in our part     */

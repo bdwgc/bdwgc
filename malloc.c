@@ -373,6 +373,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
 #endif /* GC_ATOMIC_UNCOLLECTABLE */
 
 #if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
+# include "private/dbg_mlc.h"
 
 # ifndef MSWINCE
 #  include <errno.h>
@@ -380,9 +381,11 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
 
   /* Avoid unnecessary nested procedure calls here, by #defining some   */
   /* malloc replacements.  Otherwise we end up saving a meaningless     */
-  /* return address in the object.  It also speeds things up, but it is */
+  /* return address in the object.  It also instructs our malloc        */
+  /* not to use backtrace().  It also speeds things up, but it is       */
   /* admittedly quite ugly.                                             */
-# define GC_debug_malloc_replacement(lb) GC_debug_malloc(lb, GC_DBG_EXTRAS)
+# define GC_debug_malloc_replacement(lb) \
+        GC_debug_malloc_inner(lb, TRUE /* is_redirect */, GC_DBG_EXTRAS)
 
 # if defined(CPPCHECK)
 #   define REDIRECT_MALLOC_F GC_malloc /* e.g. */
