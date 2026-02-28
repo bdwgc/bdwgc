@@ -5589,14 +5589,6 @@ GC_save_callers_safe(struct callinfo info[NFRAMES])
 #    if NARGS == 0 && NFRAMES % 2 == 0 /*< no padding */ \
         && defined(GC_HAVE_BUILTIN_BACKTRACE)
 
-#      ifdef REDIRECT_MALLOC
-/*
- * Deal with possible `malloc()` calls in `backtrace()` by omitting
- * the infinitely recursing backtrace.
- */
-STATIC GC_bool GC_in_save_callers = FALSE;
-#      endif /* REDIRECT_MALLOC */
-
 GC_INNER void
 GC_save_callers(struct callinfo info[NFRAMES])
 {
@@ -5612,12 +5604,6 @@ GC_save_callers(struct callinfo info[NFRAMES])
 
   GC_STATIC_ASSERT(sizeof(struct callinfo) == sizeof(void *));
 #      ifdef REDIRECT_MALLOC
-  if (GC_in_save_callers) {
-    info[0].ci_pc = CAST_THRU_UINTPTR(GC_return_addr_t, GC_save_callers);
-    BZERO(&info[1], sizeof(void *) * (NFRAMES - 1));
-    return;
-  }
-  GC_in_save_callers = TRUE;
   /* `backtrace()` might call a redirected `malloc`. */
   UNLOCK();
   npcs = backtrace((void **)tmp_info, NFRAMES + 1);
@@ -5635,9 +5621,6 @@ GC_save_callers(struct callinfo info[NFRAMES])
     BCOPY(&tmp_info[1], info, (unsigned)i * sizeof(void *));
   }
   BZERO(&info[i], sizeof(void *) * (unsigned)(NFRAMES - i));
-#      ifdef REDIRECT_MALLOC
-  GC_in_save_callers = FALSE;
-#      endif
 }
 
 #    elif defined(I386) || defined(SPARC)
@@ -5694,7 +5677,7 @@ GC_save_callers(struct callinfo info[NFRAMES])
     info[nframes].ci_pc = 0;
 }
 
-#    endif /* !GC_HAVE_BUILTIN_BACKTRACE */
+#    endif /* !GC_HAVE_BUILTIN_BACKTRACE && (I386 || SPARC) */
 
 #  endif /* SAVE_CALL_CHAIN */
 
