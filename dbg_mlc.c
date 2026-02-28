@@ -517,6 +517,7 @@ GC_debug_malloc(size_t lb, GC_EXTRA_PARAMS)
 GC_INNER void *
 GC_debug_malloc_inner(size_t lb, GC_bool is_redirect, GC_EXTRA_PARAMS)
 {
+  size_t sz;
   void *base;
 
   /*
@@ -527,11 +528,12 @@ GC_debug_malloc_inner(size_t lb, GC_bool is_redirect, GC_EXTRA_PARAMS)
    */
 #if defined(_FORTIFY_SOURCE) && !defined(__clang__)
   /* Workaround to avoid "exceeds maximum object size" gcc warning. */
-  base = GC_malloc(lb < GC_SIZE_MAX - DEBUG_BYTES ? lb + DEBUG_BYTES
-                                                  : GC_SIZE_MAX >> 1);
+  sz = lb < GC_SIZE_MAX - DEBUG_BYTES ? lb + DEBUG_BYTES : GC_SIZE_MAX >> 1;
 #else
-  base = GC_malloc(SIZET_SAT_ADD(lb, DEBUG_BYTES));
+  sz = SIZET_SAT_ADD(lb, DEBUG_BYTES);
 #endif
+
+  base = GC_malloc_kind(sz, NORMAL);
 #ifdef GC_ADD_CALLER
   if (NULL == s) {
     GC_caller_func_offset(ra, &s, &i);
@@ -1022,8 +1024,8 @@ GC_INLINE void *
 GC_make_closure(GC_finalization_proc fn, void *data)
 {
 #  ifdef DBG_HDRS_ALL
-  struct closure *result
-      = (struct closure *)GC_debug_malloc(sizeof(struct closure), GC_EXTRAS);
+  struct closure *result = (struct closure *)GC_debug_malloc_inner(
+      sizeof(struct closure), FALSE, GC_EXTRAS);
 #  else
   struct closure *result
       = (struct closure *)GC_malloc_kind(sizeof(struct closure), NORMAL);
@@ -1234,25 +1236,26 @@ GC_debug_toggleref_add(void *obj, int is_strong_ref)
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_debug_malloc_replacement(size_t lb)
 {
-  return GC_debug_malloc(lb, GC_DBG_EXTRAS);
+  return GC_debug_malloc_inner(lb, FALSE, GC_DBG_EXTRAS);
 }
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_debug_malloc_uncollectable_replacement(size_t lb)
 {
-  return GC_debug_malloc_uncollectable(lb, GC_DBG_EXTRAS);
+  return GC_debug_malloc_uncollectable_inner(lb, FALSE, GC_DBG_EXTRAS);
 }
 
 GC_API void *GC_CALL
 GC_debug_realloc_replacement(void *p, size_t lb)
 {
-  return GC_debug_realloc(p, lb, GC_DBG_EXTRAS);
+  return GC_debug_realloc_inner(p, lb, FALSE, FALSE, GC_DBG_EXTRAS);
 }
 
 GC_API void *GC_CALL
 GC_debug_reallocf_replacement(void *p, size_t lb)
 {
-  return GC_debug_reallocf(p, lb, GC_DBG_EXTRAS);
+  return GC_debug_realloc_inner(p, lb, TRUE /* `free_on_fail` */, FALSE,
+                                GC_DBG_EXTRAS);
 }
 
 #ifdef GC_GCJ_SUPPORT
