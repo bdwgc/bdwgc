@@ -141,16 +141,21 @@ typedef struct {
  */
 #if defined(SAVE_CALL_CHAIN)
 #  define ADD_CALL_CHAIN(base, ra) GC_save_callers(((oh *)(base))->oh_ci)
-#  if defined(REDIRECT_MALLOC) && defined(THREADS) && defined(DBG_HDRS_ALL) \
+#  if defined(REDIRECT_MALLOC)                                     \
+      && (defined(DBG_HDRS_ALL) || defined(REDIRECT_MALLOC_DEBUG)) \
       && NARGS == 0 && NFRAMES % 2 == 0 && defined(GC_HAVE_BUILTIN_BACKTRACE)
 /*
  * A dummy variant of `GC_save_callers()` which does not call
  * `backtrace()`.
  */
-GC_INNER void GC_save_callers_no_unlock(struct callinfo info[NFRAMES]);
-
-#    define ADD_CALL_CHAIN_INNER(base) \
-      GC_save_callers_no_unlock(((oh *)(base))->oh_ci)
+GC_INNER void GC_save_callers_safe(struct callinfo info[NFRAMES]);
+#    define ADD_CALL_CHAIN_IS_UNSAFE
+/*
+ * A variant of `ADD_CALL_CHAIN()` which does not call `libc` functions that
+ * might allocate memory.
+ */
+#    define ADD_CALL_CHAIN_SAFE(base, ra) \
+      GC_save_callers_safe(((oh *)(base))->oh_ci)
 #  endif
 #  define PRINT_CALL_CHAIN(base) GC_print_callers(((oh *)(base))->oh_ci)
 #elif defined(GC_ADD_CALLER)
@@ -161,9 +166,8 @@ GC_INNER void GC_save_callers_no_unlock(struct callinfo info[NFRAMES]);
 #  define PRINT_CALL_CHAIN(base)
 #endif
 
-#if !defined(ADD_CALL_CHAIN_INNER) && defined(DBG_HDRS_ALL)
-/* A variant of `ADD_CALL_CHAIN()` used for internal allocations. */
-#  define ADD_CALL_CHAIN_INNER(base) ADD_CALL_CHAIN(base, GC_RETURN_ADDR)
+#ifndef ADD_CALL_CHAIN_IS_UNSAFE
+#  define ADD_CALL_CHAIN_SAFE(base, ra) ADD_CALL_CHAIN(base, ra)
 #endif
 
 #ifdef GC_ADD_CALLER
@@ -171,6 +175,14 @@ GC_INNER void GC_save_callers_no_unlock(struct callinfo info[NFRAMES]);
 #else
 #  define OPT_RA
 #endif
+
+GC_INNER void *GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
+                                     GC_EXTRA_PARAMS);
+GC_INNER void *GC_debug_malloc_uncollectable_inner(size_t lb,
+                                                   GC_bool is_redirect,
+                                                   GC_EXTRA_PARAMS);
+GC_INNER void *GC_debug_realloc_inner(void *p, size_t lb, GC_bool free_on_fail,
+                                      GC_bool is_redirect, GC_EXTRA_PARAMS);
 
 /*
  * Check whether object given by its base pointer has debugging info.

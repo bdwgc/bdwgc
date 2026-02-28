@@ -5574,6 +5574,17 @@ EXTERN_C_END
 #  endif /* GC_HAVE_BUILTIN_BACKTRACE */
 
 #  ifdef SAVE_CALL_CHAIN
+#    include "private/dbg_mlc.h"
+
+#    ifdef ADD_CALL_CHAIN_IS_UNSAFE
+GC_INNER void
+GC_save_callers_safe(struct callinfo info[NFRAMES])
+{
+  GC_ASSERT(I_HOLD_LOCK());
+  info[0].ci_pc = CAST_THRU_UINTPTR(GC_return_addr_t, GC_save_callers_safe);
+  BZERO(&info[1], sizeof(void *) * (NFRAMES - 1));
+}
+#    endif
 
 #    if NARGS == 0 && NFRAMES % 2 == 0 /*< no padding */ \
         && defined(GC_HAVE_BUILTIN_BACKTRACE)
@@ -5584,19 +5595,6 @@ EXTERN_C_END
  * the infinitely recursing backtrace.
  */
 STATIC GC_bool GC_in_save_callers = FALSE;
-
-#        if defined(THREADS) && defined(DBG_HDRS_ALL)
-#          include "private/dbg_mlc.h"
-
-GC_INNER void
-GC_save_callers_no_unlock(struct callinfo info[NFRAMES])
-{
-  GC_ASSERT(I_HOLD_LOCK());
-  info[0].ci_pc
-      = CAST_THRU_UINTPTR(GC_return_addr_t, GC_save_callers_no_unlock);
-  BZERO(&info[1], sizeof(void *) * (NFRAMES - 1));
-}
-#        endif
 #      endif /* REDIRECT_MALLOC */
 
 GC_INNER void
