@@ -303,6 +303,7 @@ GC_INNER void *GC_store_debug_info_inner(void *p, word sz GC_ATTR_UNUSED,
 /* Check the allocation is successful, store debugging info into p,     */
 /* start the debugging mode (if not yet), and return displaced pointer. */
 static void *store_debug_info(void *p, size_t lb,
+                              GC_bool is_redirect GC_ATTR_UNUSED,
                               const char *fn, GC_EXTRA_PARAMS)
 {
     void *result;
@@ -317,7 +318,14 @@ static void *store_debug_info(void *p, size_t lb,
     if (!GC_debugging_started)
         GC_start_debugging_inner();
     result = GC_store_debug_info_inner(p, (word)lb, s, i);
-    ADD_CALL_CHAIN(p, ra);
+#   ifdef ADD_CALL_CHAIN_IS_UNSAFE
+      if (is_redirect) {
+        ADD_CALL_CHAIN_SAFE(p, ra);
+      } else
+#   endif
+    /* else */ {
+      ADD_CALL_CHAIN(p, ra);
+    }
     UNLOCK();
     return result;
 }
@@ -530,6 +538,12 @@ GC_API void GC_CALL GC_debug_register_displacement(size_t offset)
 GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc(size_t lb,
                                                      GC_EXTRA_PARAMS)
 {
+    return GC_debug_malloc_inner(lb, FALSE, OPT_RA s, i);
+}
+
+GC_INNER void * GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
+                                      GC_EXTRA_PARAMS)
+{
     void * result;
 
     /* Note that according to malloc() specification, if size is 0 then */
@@ -547,7 +561,8 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc(size_t lb,
         GC_caller_func_offset(ra, &s, &i);
       }
 #   endif
-    return store_debug_info(result, lb, "GC_debug_malloc", OPT_RA s, i);
+    return store_debug_info(result, lb, is_redirect, "GC_debug_malloc",
+                            OPT_RA s, i);
 }
 
 GC_API GC_ATTR_MALLOC void * GC_CALL
@@ -555,8 +570,8 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
 {
     void * result = GC_malloc_ignore_off_page(SIZET_SAT_ADD(lb, DEBUG_BYTES));
 
-    return store_debug_info(result, lb, "GC_debug_malloc_ignore_off_page",
-                            OPT_RA s, i);
+    return store_debug_info(result, lb, FALSE,
+                            "GC_debug_malloc_ignore_off_page", OPT_RA s, i);
 }
 
 GC_API GC_ATTR_MALLOC void * GC_CALL
@@ -565,7 +580,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
     void * result = GC_malloc_atomic_ignore_off_page(
                                 SIZET_SAT_ADD(lb, DEBUG_BYTES));
 
-    return store_debug_info(result, lb,
+    return store_debug_info(result, lb, FALSE,
                             "GC_debug_malloc_atomic_ignore_off_page",
                             OPT_RA s, i);
 }
@@ -574,7 +589,7 @@ STATIC void * GC_debug_generic_malloc(size_t lb, int knd, GC_EXTRA_PARAMS)
 {
     void * result = GC_generic_malloc(SIZET_SAT_ADD(lb, DEBUG_BYTES), knd);
 
-    return store_debug_info(result, lb, "GC_debug_generic_malloc",
+    return store_debug_info(result, lb, FALSE, "GC_debug_generic_malloc",
                             OPT_RA s, i);
 }
 
@@ -618,7 +633,7 @@ STATIC void * GC_debug_generic_malloc(size_t lb, int knd, GC_EXTRA_PARAMS)
         GC_start_debugging_inner();
     }
     result = GC_store_debug_info_inner(base, (word)lb, "INTERNAL", 0);
-    ADD_CALL_CHAIN_INNER(base);
+    ADD_CALL_CHAIN_SAFE(base, GC_RETURN_ADDR);
     return result;
   }
 #endif /* DBG_HDRS_ALL */
@@ -653,7 +668,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc_atomic(size_t lb,
 {
     void * result = GC_malloc_atomic(SIZET_SAT_ADD(lb, DEBUG_BYTES));
 
-    return store_debug_info(result, lb, "GC_debug_malloc_atomic",
+    return store_debug_info(result, lb, FALSE, "GC_debug_malloc_atomic",
                             OPT_RA s, i);
 }
 
@@ -725,7 +740,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc_uncollectable(size_t lb,
     void * result = GC_malloc_uncollectable(
                                 SIZET_SAT_ADD(lb, UNCOLLECTABLE_DEBUG_BYTES));
 
-    return store_debug_info(result, lb, "GC_debug_malloc_uncollectable",
+    return store_debug_info(result, lb, FALSE, "GC_debug_malloc_uncollectable",
                             OPT_RA s, i);
 }
 
@@ -736,7 +751,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc_uncollectable(size_t lb,
     void * result = GC_malloc_atomic_uncollectable(
                                 SIZET_SAT_ADD(lb, UNCOLLECTABLE_DEBUG_BYTES));
 
-    return store_debug_info(result, lb,
+    return store_debug_info(result, lb, FALSE,
                             "GC_debug_malloc_atomic_uncollectable",
                             OPT_RA s, i);
   }
@@ -844,12 +859,18 @@ GC_API void GC_CALL GC_debug_free(void * p)
 
 GC_API void * GC_CALL GC_debug_realloc(void * p, size_t lb, GC_EXTRA_PARAMS)
 {
+    return GC_debug_realloc_inner(p, lb, FALSE, OPT_RA s, i);
+}
+
+GC_INNER void * GC_debug_realloc_inner(void *p, size_t lb,
+                                       GC_bool is_redirect, GC_EXTRA_PARAMS)
+{
     void * base;
     void * result;
     hdr * hhdr;
 
     if (p == 0) {
-      return GC_debug_malloc(lb, OPT_RA s, i);
+      return GC_debug_malloc_inner(lb, is_redirect, OPT_RA s, i);
     }
     if (0 == lb) /* and p != NULL */ {
       GC_debug_free(p);
@@ -873,20 +894,24 @@ GC_API void * GC_CALL GC_debug_realloc(void * p, size_t lb, GC_EXTRA_PARAMS)
     hhdr = HDR(base);
     switch (hhdr -> hb_obj_kind) {
       case NORMAL:
-        result = GC_debug_malloc(lb, OPT_RA s, i);
+        result = GC_debug_malloc_inner(lb, is_redirect, OPT_RA s, i);
         break;
       case PTRFREE:
+        GC_ASSERT(!is_redirect);
         result = GC_debug_malloc_atomic(lb, OPT_RA s, i);
         break;
       case UNCOLLECTABLE:
+        GC_ASSERT(!is_redirect);
         result = GC_debug_malloc_uncollectable(lb, OPT_RA s, i);
         break;
 #    ifdef GC_ATOMIC_UNCOLLECTABLE
       case AUNCOLLECTABLE:
+        GC_ASSERT(!is_redirect);
         result = GC_debug_malloc_atomic_uncollectable(lb, OPT_RA s, i);
         break;
 #    endif
       default:
+        GC_ASSERT(!is_redirect);
         result = GC_debug_generic_malloc(lb, hhdr -> hb_obj_kind, OPT_RA s, i);
         break;
     }
