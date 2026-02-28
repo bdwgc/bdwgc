@@ -350,6 +350,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
 }
 
 #ifdef REDIRECT_MALLOC
+# include "private/dbg_mlc.h"
 
 # ifndef MSWINCE
 #  include <errno.h>
@@ -357,9 +358,11 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_uncollectable(size_t lb)
 
 /* Avoid unnecessary nested procedure calls here, by #defining some     */
 /* malloc replacements.  Otherwise we end up saving a                   */
-/* meaningless return address in the object.  It also speeds things up, */
+/* meaningless return address in the object.  It also instructs our     */
+/* malloc not to use backtrace().  It also speeds things up,            */
 /* but it is admittedly quite ugly.                                     */
-# define GC_debug_malloc_replacement(lb) GC_debug_malloc(lb, GC_DBG_EXTRAS)
+# define GC_debug_malloc_replacement(lb) \
+        GC_debug_malloc_inner(lb, TRUE /* is_redirect */, GC_DBG_EXTRAS)
 
 void * malloc(size_t lb)
 {
