@@ -520,19 +520,21 @@ GC_malloc_atomic_uncollectable(size_t lb)
 #  endif
 
 #  ifdef REDIRECT_MALLOC_DEBUG
+#    include "private/dbg_mlc.h"
 #    ifndef REDIRECT_MALLOC_UNCOLLECTABLE
 #      define REDIRECT_MALLOC_F GC_debug_malloc_replacement
 /*
  * Avoid unnecessary nested procedure calls here, by `#define` some `malloc`
  * replacements.  Otherwise we end up saving a meaningless return address in
- * the object.  It also speeds things up, but it is admittedly quite ugly.
+ * the object.  It also instructs our `malloc` not to use `backtrace()`.
+ * It also speeds things up, but it is admittedly quite ugly.
  */
 #      define GC_debug_malloc_replacement(lb) \
-        GC_debug_malloc(lb, GC_DBG_EXTRAS)
+        GC_debug_malloc_inner(lb, TRUE /* `is_redirect` */, GC_DBG_EXTRAS)
 #    else
 #      define REDIRECT_MALLOC_F GC_debug_malloc_uncollectable_replacement
 #      define GC_debug_malloc_uncollectable_replacement(lb) \
-        GC_debug_malloc_uncollectable(lb, GC_DBG_EXTRAS)
+        GC_debug_malloc_uncollectable_inner(lb, TRUE, GC_DBG_EXTRAS)
 #    endif
 #  elif defined(REDIRECT_MALLOC_UNCOLLECTABLE)
 #    define REDIRECT_MALLOC_F GC_malloc_uncollectable
