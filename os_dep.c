@@ -5180,6 +5180,18 @@ GC_API int GC_CALL GC_get_pages_executable(void)
 #endif
 
 #ifdef SAVE_CALL_CHAIN
+# include "private/dbg_mlc.h"
+
+# ifdef ADD_CALL_CHAIN_IS_UNSAFE
+    /* A dummy version of GC_save_callers() which does not call */
+    /* backtrace().                                             */
+    GC_INNER void GC_save_callers_no_unlock(struct callinfo info[NFRAMES])
+    {
+      GC_ASSERT(I_HOLD_LOCK());
+      info[0].ci_pc = (word)(&GC_save_callers_no_unlock);
+      BZERO(&info[1], sizeof(void *) * (NFRAMES - 1));
+    }
+# endif
 
 #if NARGS == 0 && NFRAMES % 2 == 0 /* No padding */ \
     && defined(GC_HAVE_BUILTIN_BACKTRACE)
@@ -5192,19 +5204,6 @@ GC_API int GC_CALL GC_get_pages_executable(void)
                 /* you could use something like pthread_getspecific.    */
 # endif
     GC_bool GC_in_save_callers = FALSE;
-
-# if defined(THREADS) && defined(DBG_HDRS_ALL)
-#   include "private/dbg_mlc.h"
-
-    /* A dummy version of GC_save_callers() which does not call */
-    /* backtrace().                                             */
-    GC_INNER void GC_save_callers_no_unlock(struct callinfo info[NFRAMES])
-    {
-      GC_ASSERT(I_HOLD_LOCK());
-      info[0].ci_pc = (word)(&GC_save_callers_no_unlock);
-      BZERO(&info[1], sizeof(void *) * (NFRAMES - 1));
-    }
-# endif
 #endif /* REDIRECT_MALLOC */
 
 GC_INNER void GC_save_callers(struct callinfo info[NFRAMES])
