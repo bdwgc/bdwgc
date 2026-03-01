@@ -373,11 +373,9 @@ jobs:
         make -j -C build check
         CFLAGS_EXTRA="${{ matrix.cflags_extra }}"
         LDFLAGS="${{ matrix.ldflags }}"
-      # Print tests output even if some tests have failed.
-      continue-on-error: true
 
     - name: Print tests output
-      if: ${{ !matrix.skip_tests }}
+      if: ${{ !matrix.skip_tests && (success() || failure()) }}
       run: |
         cd build
         for file in *.log; do
