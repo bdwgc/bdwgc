@@ -538,6 +538,17 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc(size_t lb,
     return GC_debug_malloc_inner(lb, FALSE, OPT_RA s, i);
 }
 
+#ifdef SHORT_DBG_HDRS
+  /* Ensure the proper result of GC_base(base+sizeof(oh)) when lb is 0. */
+# define ADD_DEBUG_BYTES(lb) SIZET_SAT_ADD(0 == (lb) ? 1 : (lb), DEBUG_BYTES)
+# define ADD_DEBUG_UNCOLLECTABLE_BYTES(lb) \
+    SIZET_SAT_ADD(0 == (lb) ? 1 : (lb), UNCOLLECTABLE_DEBUG_BYTES)
+#else
+# define ADD_DEBUG_BYTES(lb) SIZET_SAT_ADD(lb, DEBUG_BYTES)
+# define ADD_DEBUG_UNCOLLECTABLE_BYTES(lb) \
+    SIZET_SAT_ADD(lb, UNCOLLECTABLE_DEBUG_BYTES)
+#endif
+
 GC_INNER void * GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
                                       GC_EXTRA_PARAMS)
 {
@@ -546,7 +557,7 @@ GC_INNER void * GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
     /* Note that according to malloc() specification, if size is 0 then */
     /* malloc() returns either NULL, or a unique pointer value that can */
     /* later be successfully passed to free(). We always do the latter. */
-    result = GC_malloc(SIZET_SAT_ADD(lb, DEBUG_BYTES));
+    result = GC_malloc(ADD_DEBUG_BYTES(lb));
 #   ifdef GC_ADD_CALLER
       if (s == NULL) {
         GC_caller_func_offset(ra, &s, &i);
@@ -559,7 +570,7 @@ GC_INNER void * GC_debug_malloc_inner(size_t lb, GC_bool is_redirect,
 GC_API GC_ATTR_MALLOC void * GC_CALL
     GC_debug_malloc_ignore_off_page(size_t lb, GC_EXTRA_PARAMS)
 {
-    void * result = GC_malloc_ignore_off_page(SIZET_SAT_ADD(lb, DEBUG_BYTES));
+    void * result = GC_malloc_ignore_off_page(ADD_DEBUG_BYTES(lb));
 
     return store_debug_info(result, lb, FALSE,
                             "GC_debug_malloc_ignore_off_page", OPT_RA s, i);
@@ -568,8 +579,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
 GC_API GC_ATTR_MALLOC void * GC_CALL
     GC_debug_malloc_atomic_ignore_off_page(size_t lb, GC_EXTRA_PARAMS)
 {
-    void * result = GC_malloc_atomic_ignore_off_page(
-                                SIZET_SAT_ADD(lb, DEBUG_BYTES));
+    void * result = GC_malloc_atomic_ignore_off_page(ADD_DEBUG_BYTES(lb));
 
     return store_debug_info(result, lb, FALSE,
                             "GC_debug_malloc_atomic_ignore_off_page",
@@ -578,7 +588,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
 
 STATIC void * GC_debug_generic_malloc(size_t lb, int knd, GC_EXTRA_PARAMS)
 {
-    void * result = GC_generic_malloc(SIZET_SAT_ADD(lb, DEBUG_BYTES), knd);
+    void * result = GC_generic_malloc(ADD_DEBUG_BYTES(lb), knd);
 
     return store_debug_info(result, lb, FALSE, "GC_debug_generic_malloc",
                             OPT_RA s, i);
@@ -591,10 +601,10 @@ STATIC void * GC_debug_generic_malloc(size_t lb, int knd, GC_EXTRA_PARAMS)
   /* We assume we already hold the GC lock.                             */
   GC_INNER void * GC_debug_generic_malloc_inner(size_t lb, int k)
   {
-    void *base = GC_generic_malloc_inner(
-                                SIZET_SAT_ADD(lb, DEBUG_BYTES), k);
-    void *result;
+    void *base, *result;
 
+    GC_ASSERT(lb != 0);
+    base = GC_generic_malloc_inner(SIZET_SAT_ADD(lb, DEBUG_BYTES), k);
     if (NULL == base) {
         GC_err_printf("GC internal allocation (%lu bytes) returning NULL\n",
                        (unsigned long) lb);
@@ -611,10 +621,11 @@ STATIC void * GC_debug_generic_malloc(size_t lb, int knd, GC_EXTRA_PARAMS)
   GC_INNER void * GC_debug_generic_malloc_inner_ignore_off_page(size_t lb,
                                                                 int k)
   {
-    void *base = GC_generic_malloc_inner_ignore_off_page(
-                                SIZET_SAT_ADD(lb, DEBUG_BYTES), k);
-    void *result;
+    void *base, *result;
 
+    GC_ASSERT(lb != 0);
+    base = GC_generic_malloc_inner_ignore_off_page(
+                                SIZET_SAT_ADD(lb, DEBUG_BYTES), k);
     if (NULL == base) {
         GC_err_printf("GC internal allocation (%lu bytes) returning NULL\n",
                        (unsigned long) lb);
@@ -684,7 +695,7 @@ GC_API void GC_CALL GC_debug_end_stubborn_change(const void *p)
 GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc_atomic(size_t lb,
                                                             GC_EXTRA_PARAMS)
 {
-    void * result = GC_malloc_atomic(SIZET_SAT_ADD(lb, DEBUG_BYTES));
+    void * result = GC_malloc_atomic(ADD_DEBUG_BYTES(lb));
 
     return store_debug_info(result, lb, FALSE, "GC_debug_malloc_atomic",
                             OPT_RA s, i);
@@ -754,8 +765,7 @@ GC_API GC_ATTR_MALLOC char * GC_CALL GC_debug_strndup(const char *str,
 GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc_uncollectable(size_t lb,
                                                         GC_EXTRA_PARAMS)
 {
-    void * result = GC_malloc_uncollectable(
-                                SIZET_SAT_ADD(lb, UNCOLLECTABLE_DEBUG_BYTES));
+    void * result = GC_malloc_uncollectable(ADD_DEBUG_UNCOLLECTABLE_BYTES(lb));
 
     return store_debug_info(result, lb, FALSE, "GC_debug_malloc_uncollectable",
                             OPT_RA s, i);
@@ -766,7 +776,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_malloc_uncollectable(size_t lb,
         GC_debug_malloc_atomic_uncollectable(size_t lb, GC_EXTRA_PARAMS)
   {
     void * result = GC_malloc_atomic_uncollectable(
-                                SIZET_SAT_ADD(lb, UNCOLLECTABLE_DEBUG_BYTES));
+                                        ADD_DEBUG_UNCOLLECTABLE_BYTES(lb));
 
     return store_debug_info(result, lb, FALSE,
                             "GC_debug_malloc_atomic_uncollectable",
