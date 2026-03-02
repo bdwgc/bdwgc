@@ -182,7 +182,7 @@ static CRITICAL_SECTION incr_cs;
         != (((GC_VERSION_VAL_T)GC_VERSION_MAJOR << 16)       \
             | (GC_VERSION_MINOR << 8) | GC_VERSION_MICRO)) { \
       GC_printf("GC version mismatch\n");                    \
-      exit(1);                                               \
+      exit(4);                                               \
     }                                                        \
   } while (0)
 

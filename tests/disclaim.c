@@ -52,7 +52,7 @@ static GC_RAND_STATE_T seed;
   if (!(e)) {                                                          \
     fflush(stdout);                                                    \
     fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
-    exit(-1);                                                          \
+    exit(1);                                                           \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)            \
@@ -285,7 +285,7 @@ main(void)
       fprintf(stderr, "Thread #%d creation failed, errno= %d\n", i, err);
       if (i > 1 && EAGAIN == err)
         break;
-      exit(1);
+      exit(69);
     }
   }
   n = i;
@@ -297,7 +297,7 @@ main(void)
 
     if (err != 0) {
       fprintf(stderr, "Thread #%d join failed, errno= %d\n", i, err);
-      exit(69);
+      exit(2);
     }
   }
 #endif

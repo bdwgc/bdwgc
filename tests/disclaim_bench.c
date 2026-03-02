@@ -30,7 +30,7 @@ static GC_RAND_STATE_T seed;
 #define TEST_ASSERT(e)                                                 \
   if (!(e)) {                                                          \
     fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
-    exit(-1);                                                          \
+    exit(1);                                                           \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)            \
@@ -81,7 +81,7 @@ testobj_new(int type)
     obj = (struct testobj_s *)GC_malloc(sizeof(struct testobj_s));
     break;
   default:
-    exit(-1);
+    exit(2);
   }
   CHECK_OUT_OF_MEMORY(obj);
   TEST_ASSERT(obj->i == 0 && obj->keep_link == NULL);
@@ -116,7 +116,7 @@ main(int argc, const char *argv[])
 
     type_min = type_max = (int)COVERT_DATAFLOW(atoi(argv[1]));
     if (type_min < 0 || type_max > 2)
-      exit(2);
+      exit(3);
   } else {
 #ifndef GC_NO_FINALIZATION
     type_min = 0;

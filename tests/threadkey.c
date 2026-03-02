@@ -115,7 +115,7 @@ main(void)
       fprintf(stderr, "Thread #%d creation failed, errno= %d\n", i, err);
       if (i > 0 && EAGAIN == err)
         break;
-      exit(2);
+      exit(69);
     }
 
     if ((i & 1) != 0) {

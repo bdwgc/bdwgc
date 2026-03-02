@@ -99,7 +99,7 @@ main(void)
       fprintf(stderr, "Thread #%d creation failed, errno= %d\n", i, err);
       if (i > 1 && EAGAIN == err)
         break;
-      exit(2);
+      exit(69);
     }
 #  else
     DWORD thread_id;
@@ -108,7 +108,7 @@ main(void)
     if (NULL == t[i]) {
       fprintf(stderr, "Thread #%d creation failed, errcode= %d\n", i,
               (int)GetLastError());
-      exit(2);
+      exit(69);
     }
 #  endif
   }

@@ -80,7 +80,7 @@ entry(LPVOID arg)
               "Thread #%d creation failed from other thread, errno= %d\n",
               thread_num, err);
       if (err != EAGAIN)
-        exit(2);
+        exit(69);
     } else {
       err = pthread_detach(th);
       if (err != 0) {
@@ -97,7 +97,7 @@ entry(LPVOID arg)
     if (th == NULL) {
       fprintf(stderr, "Thread #%d creation failed, errcode= %d\n", thread_num,
               (int)GetLastError());
-      exit(2);
+      exit(69);
     }
     CloseHandle(th);
 #  endif
@@ -130,7 +130,7 @@ main(void)
               err);
       if (i > 0 && EAGAIN == err)
         break;
-      exit(1);
+      exit(69);
     }
 #    else
     {
@@ -141,7 +141,7 @@ main(void)
     if (th[i] == NULL) {
       fprintf(stderr, "Thread #%d creation failed, errcode= %d\n", th_nums[i],
               (int)GetLastError());
-      exit(1);
+      exit(69);
     }
 #    endif
   }
@@ -153,14 +153,14 @@ main(void)
     err = pthread_join(th[i], &res);
     if (err != 0) {
       fprintf(stderr, "Thread #%d join failed, errno= %d\n", th_nums[i], err);
-      exit(1);
+      exit(2);
     }
 #    else
     if (WaitForSingleObject(th[i], INFINITE) != WAIT_OBJECT_0) {
       fprintf(stderr, "Thread #%d join failed, errcode= %d\n", th_nums[i],
               (int)GetLastError());
       CloseHandle(th[i]);
-      exit(1);
+      exit(2);
     }
     CloseHandle(th[i]);
 #    endif
