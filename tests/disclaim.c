@@ -47,7 +47,7 @@ static GC_RAND_STATE_T seed;
 #define POP_SIZE 1000
 #define MUTATE_CNT_BASE (6 * 1000000)
 
-#define my_assert(e)                                                   \
+#define TEST_ASSERT(e)                                                 \
   if (!(e)) {                                                          \
     fflush(stdout);                                                    \
     fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
@@ -81,10 +81,10 @@ misc_sizes_dct(void *obj, void *cd)
   unsigned log_size = *(unsigned char *)obj;
   size_t size;
 
-  my_assert(log_size < sizeof(size_t) * 8);
-  my_assert(cd == NULL);
+  TEST_ASSERT(log_size < sizeof(size_t) * 8);
+  TEST_ASSERT(cd == NULL);
   size = (size_t)1 << log_size;
-  my_assert(is_equal((char *)obj + 1, MEM_FILL_BYTE, size - 1));
+  TEST_ASSERT(is_equal((char *)obj + 1, MEM_FILL_BYTE, size - 1));
 #ifdef CPPCHECK
   GC_noop1_ptr(cd);
 #endif
@@ -99,7 +99,7 @@ test_misc_sizes(void)
     void *p = GC_finalized_malloc((size_t)1 << i, &fc);
 
     CHECK_OUT_OF_MEMORY(p);
-    my_assert(is_equal(p, 0, (size_t)1 << i));
+    TEST_ASSERT(is_equal(p, 0, (size_t)1 << i));
     memset(p, MEM_FILL_BYTE, (size_t)1 << i);
     *(unsigned char *)p = (unsigned char)i;
   }
@@ -131,21 +131,21 @@ pair_dct(void *obj, void *cd)
   pair_t p = (pair_t)obj;
   int checksum = CSUM_SEED;
 
-  my_assert(cd == (void *)PTR_HASH(p));
+  TEST_ASSERT(cd == (void *)PTR_HASH(p));
   /* Check that `obj` and its fields are not trashed. */
 #ifdef DEBUG_DISCLAIM_DESTRUCT
   printf("Destruct %p: (car= %p, cdr= %p)\n", (void *)p, (void *)p->car,
          (void *)p->cdr);
 #endif
-  my_assert(GC_base(obj));
-  my_assert(is_pair(p));
-  my_assert(!p->car || is_pair(p->car));
-  my_assert(!p->cdr || is_pair(p->cdr));
+  TEST_ASSERT(GC_base(obj));
+  TEST_ASSERT(is_pair(p));
+  TEST_ASSERT(!p->car || is_pair(p->car));
+  TEST_ASSERT(!p->cdr || is_pair(p->cdr));
   if (p->car)
     checksum += p->car->checksum;
   if (p->cdr)
     checksum += p->cdr->checksum;
-  my_assert(p->checksum == checksum);
+  TEST_ASSERT(p->checksum == checksum);
 
   /* Invalidate it. */
   memset(p->magic, '*', sizeof(p->magic));
@@ -169,8 +169,8 @@ pair_new(pair_t car, pair_t cdr)
   p = (pair_t)GC_finalized_malloc(sizeof(struct pair_s), pfc);
   CHECK_OUT_OF_MEMORY(p);
   pfc->cd = (void *)PTR_HASH(p);
-  my_assert(!is_pair(p));
-  my_assert(is_equal(p, 0, sizeof(struct pair_s)));
+  TEST_ASSERT(!is_pair(p));
+  TEST_ASSERT(is_equal(p, 0, sizeof(struct pair_s)));
   memcpy(p->magic, pair_magic, sizeof(p->magic));
   p->checksum = CSUM_SEED + (car != NULL ? car->checksum : 0)
                 + (cdr != NULL ? cdr->checksum : 0);
@@ -194,7 +194,7 @@ pair_check_rec(pair_t p)
       checksum += p->car->checksum;
     if (p->cdr)
       checksum += p->cdr->checksum;
-    my_assert(p->checksum == checksum);
+    TEST_ASSERT(p->checksum == checksum);
     p = (rand() & 1) != 0 ? p->cdr : p->car;
   }
 }

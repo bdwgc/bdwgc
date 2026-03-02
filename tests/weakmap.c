@@ -82,7 +82,7 @@ static GC_RAND_STATE_T seed;
 #define IS_FLAG_SET(p, mask) \
   (((unsigned)(GC_uintptr_t)(p) & (unsigned)(mask)) != 0)
 
-#define my_assert(e)                                                   \
+#define TEST_ASSERT(e)                                                 \
   if (!(e)) {                                                          \
     fflush(stdout);                                                    \
     fprintf(stderr, "Assertion failure, line %d: %s\n", __LINE__, #e); \
@@ -108,7 +108,7 @@ memhash(void *src, size_t len)
   unsigned acc = 0;
   size_t i;
 
-  my_assert(len % sizeof(GC_word) == 0);
+  TEST_ASSERT(len % sizeof(GC_word) == 0);
   for (i = 0; i < len / sizeof(GC_word); ++i) {
     acc = (unsigned)((2003 * (GC_word)acc + ((GC_word *)src)[i]) / 3);
   }
@@ -149,7 +149,7 @@ weakmap_lock(struct weakmap *wm, unsigned h)
 #ifdef GC_PTHREADS
   int err = pthread_mutex_lock(&wm->mutex[h % WEAKMAP_MUTEX_COUNT]);
 
-  my_assert(0 == err);
+  TEST_ASSERT(0 == err);
 #else
   (void)wm;
   (void)h;
@@ -176,7 +176,7 @@ weakmap_unlock(struct weakmap *wm, unsigned h)
 #ifdef GC_PTHREADS
   int err = pthread_mutex_unlock(&wm->mutex[h % WEAKMAP_MUTEX_COUNT]);
 
-  my_assert(0 == err);
+  TEST_ASSERT(0 == err);
 #else
   (void)wm;
   (void)h;
@@ -202,9 +202,9 @@ weakmap_add(struct weakmap *wm, void *obj, size_t obj_size)
   unsigned h;
   size_t key_size = wm->key_size;
 
-  my_assert(!IS_FLAG_SET(wm, FINALIZER_CLOSURE_FLAG));
+  TEST_ASSERT(!IS_FLAG_SET(wm, FINALIZER_CLOSURE_FLAG));
   /* Lock and look for an existing entry. */
-  my_assert(key_size <= obj_size);
+  TEST_ASSERT(key_size <= obj_size);
   h = memhash(obj, key_size);
   first = &wm->links[h % wm->capacity];
   weakmap_lock(wm, h);
@@ -280,7 +280,7 @@ weakmap_disclaim(void *obj_base)
     return 0;
   }
 
-  my_assert(!IS_FLAG_SET(header, INVALIDATE_FLAG));
+  TEST_ASSERT(!IS_FLAG_SET(header, INVALIDATE_FLAG));
   wm = (struct weakmap *)CPTR_CLEAR_FLAGS(header, FINALIZER_CLOSURE_FLAG);
   if (NULL == wm->links) {
     /* The weakmap has been already destroyed. */
@@ -312,7 +312,7 @@ weakmap_disclaim(void *obj_base)
 #ifdef DEBUG_DISCLAIM_WEAKMAP
   printf("Removing %p, hash= 0x%x\n", obj, h);
 #endif
-  my_assert(header == *(void **)obj_base);
+  TEST_ASSERT(header == *(void **)obj_base);
   *(void **)obj_base = CPTR_SET_FLAGS(header, INVALIDATE_FLAG);
   AO_fetch_and_add1(&stat_removed);
   for (link = &wm->links[h % wm->capacity];; link = &(*link)->next) {
@@ -326,7 +326,7 @@ weakmap_disclaim(void *obj_base)
                                  : GC_REVEAL_POINTER((*link)->obj.hidden);
     if (old_obj == obj)
       break;
-    my_assert(memcmp(old_obj, obj, wm->key_size) != 0);
+    TEST_ASSERT(memcmp(old_obj, obj, wm->key_size) != 0);
   }
   GC_ptr_store_and_dirty(link, (*link)->next);
   weakmap_unlock(wm, h);
@@ -346,7 +346,7 @@ weakmap_new(size_t capacity, size_t key_size, size_t obj_size,
     for (i = 0; i < WEAKMAP_MUTEX_COUNT; ++i) {
       int err = pthread_mutex_init(&wm->mutex[i], NULL);
 
-      my_assert(0 == err);
+      TEST_ASSERT(0 == err);
     }
   }
 #endif
@@ -460,9 +460,9 @@ test(void *data)
       p0 = pop[rand() % POP_SIZE];
       p1 = pop[rand() % POP_SIZE];
       pop[t] = pair_new(p0, p1);
-      my_assert(pair_new(p0, p1) == pop[t]);
-      my_assert(pop[t]->car == p0);
-      my_assert(pop[t]->cdr == p1);
+      TEST_ASSERT(pair_new(p0, p1) == pop[t]);
+      TEST_ASSERT(pop[t]->car == p0);
+      TEST_ASSERT(pop[t]->cdr == p1);
       break;
     }
     pair_check_rec(pop[rand() % POP_SIZE], __LINE__);
