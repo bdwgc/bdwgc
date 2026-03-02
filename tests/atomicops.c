@@ -39,7 +39,7 @@
 #  define TEST_ASSERT(e)                                                 \
     if (!(e)) {                                                          \
       fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
-      exit(-1);                                                          \
+      exit(1);                                                           \
     }
 
 int

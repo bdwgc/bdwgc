@@ -87,7 +87,7 @@ static GC_RAND_STATE_T seed;
   if (!(e)) {                                                          \
     fflush(stdout);                                                    \
     fprintf(stderr, "Assertion failure, line %d: %s\n", __LINE__, #e); \
-    exit(70);                                                          \
+    exit(1);                                                           \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)            \
@@ -165,7 +165,7 @@ weakmap_trylock(struct weakmap *wm, unsigned h)
 
   if (err != 0 && err != EBUSY) {
     fprintf(stderr, "pthread_mutex_trylock, errno= %d\n", err);
-    exit(69);
+    exit(2);
   }
   return err;
 }
@@ -321,7 +321,7 @@ weakmap_disclaim(void *obj_base)
 
     if (NULL == *link) {
       fprintf(stderr, "Did not find %p\n", obj);
-      exit(70);
+      exit(2);
     }
     old_obj = GC_get_find_leak() ? (*link)->obj.p
                                  : GC_REVEAL_POINTER((*link)->obj.hidden);
@@ -419,7 +419,7 @@ pair_check_rec(struct pair *p, int line)
 
     if (memcmp(p->magic, pair_magic, PAIR_MAGIC_SIZE) != 0) {
       fprintf(stderr, "Magic bytes wrong for %p at %d\n", (void *)p, line);
-      exit(70);
+      exit(2);
     }
     if (p->car != NULL)
       checksum += p->car->checksum;
@@ -428,7 +428,7 @@ pair_check_rec(struct pair *p, int line)
     if (p->checksum != checksum) {
       fprintf(stderr, "Checksum failure for %p: (car= %p, cdr= %p) at %d\n",
               (void *)p, (void *)p->car, (void *)p->cdr, line);
-      exit(70);
+      exit(2);
     }
     p = (rand() & 1) != 0 ? p->cdr : p->car;
   }
@@ -510,7 +510,7 @@ main(void)
       fprintf(stderr, "Thread #%d creation failed, errno= %d\n", i, err);
       if (i > 1 && EAGAIN == err)
         break;
-      exit(1);
+      exit(69);
     }
   }
   n = i;
@@ -522,7 +522,7 @@ main(void)
 
     if (err != 0) {
       fprintf(stderr, "Thread #%d join failed, errno= %d\n", i, err);
-      exit(69);
+      exit(2);
     }
   }
 #endif
