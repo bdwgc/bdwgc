@@ -26,7 +26,7 @@
 static GC_RAND_STATE_T seed;
 #define rand() GC_RAND_NEXT(&seed)
 
-#define my_assert(e)                                                   \
+#define TEST_ASSERT(e)                                                 \
   if (!(e)) {                                                          \
     fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
     exit(-1);                                                          \
@@ -53,7 +53,7 @@ static void GC_CALLBACK
 testobj_finalize(void *obj, void *carg)
 {
   ++*(int *)carg;
-  my_assert(((testobj_t)obj)->i == 109);
+  TEST_ASSERT(((testobj_t)obj)->i == 109);
   ((testobj_t)obj)->i = 110;
 }
 
@@ -83,7 +83,7 @@ testobj_new(int type)
     exit(-1);
   }
   CHECK_OUT_OF_MEMORY(obj);
-  my_assert(obj->i == 0 && obj->keep_link == NULL);
+  TEST_ASSERT(obj->i == 0 && obj->keep_link == NULL);
   obj->i = 109;
   return obj;
 }

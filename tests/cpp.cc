@@ -66,7 +66,7 @@ struct foo *GC;
 #  define GC_OVERRIDE /*< empty */
 #endif
 
-#define my_assert(e)                                                  \
+#define TEST_ASSERT(e)                                                \
   if (!(e)) {                                                         \
     GC_printf("Assertion failure in " __FILE__ ", line %d: " #e "\n", \
               __LINE__);                                              \
@@ -91,7 +91,7 @@ public:
   void
   Test(int iArg)
   {
-    my_assert(i == iArg);
+    TEST_ASSERT(i == iArg);
   }
   virtual ~A() {}
   A_I_TYPE i;
@@ -103,7 +103,7 @@ class B : public GC_NS_QUALIFY(gc), public A
 public:
   GC_ATTR_EXPLICIT
   B(int j) : A(j) {}
-  virtual ~B() GC_OVERRIDE { my_assert(deleting); }
+  virtual ~B() GC_OVERRIDE { TEST_ASSERT(deleting); }
   static void
   Deleting(int on)
   {
@@ -170,9 +170,9 @@ public:
   {
     this->A::Test(level);
     nFreed++;
-    my_assert(level == 0
-                  ? left == 0 && right == 0
-                  : level == left->level + 1 && level == right->level + 1);
+    TEST_ASSERT(level == 0
+                    ? left == 0 && right == 0
+                    : level == left->level + 1 && level == right->level + 1);
     left = right = 0;
     level = -32456;
   }
@@ -184,9 +184,9 @@ public:
       // number of the finalized objects.
       GC_gcollect();
     }
-    my_assert(nFreed <= nAllocated);
+    TEST_ASSERT(nFreed <= nAllocated);
 #ifndef GC_NO_FINALIZATION
-    my_assert(nFreed >= (nAllocated / 5) * 4 || GC_get_find_leak());
+    TEST_ASSERT(nFreed >= (nAllocated / 5) * 4 || GC_get_find_leak());
 #endif
   }
 
@@ -212,14 +212,14 @@ public:
   {
     const D *self = static_cast<D *>(obj);
     nFreed++;
-    my_assert(static_cast<GC_uintptr_t>(self->i)
-              == reinterpret_cast<GC_uintptr_t>(data));
+    TEST_ASSERT(static_cast<GC_uintptr_t>(self->i)
+                == reinterpret_cast<GC_uintptr_t>(data));
   }
   static void
   Test()
   {
 #ifndef GC_NO_FINALIZATION
-    my_assert(nFreed >= (nAllocated / 5) * 4 || GC_get_find_leak());
+    TEST_ASSERT(nFreed >= (nAllocated / 5) * 4 || GC_get_find_leak());
 #endif
   }
 
@@ -258,9 +258,9 @@ public:
   Test()
   {
 #ifndef GC_NO_FINALIZATION
-    my_assert(nFreedF >= (nAllocatedF / 5) * 4 || GC_get_find_leak());
+    TEST_ASSERT(nFreedF >= (nAllocatedF / 5) * 4 || GC_get_find_leak());
 #endif
-    my_assert(2 * nFreedF == nFreed);
+    TEST_ASSERT(2 * nFreedF == nFreed);
   }
 
   E e;
@@ -289,7 +289,7 @@ Undisguise(GC_uintptr_t v)
     size_t freed_before = GC_get_expl_freed_bytes_since_gc(); \
     delete p;                                                 \
     size_t freed_after = GC_get_expl_freed_bytes_since_gc();  \
-    my_assert(freed_before != freed_after);                   \
+    TEST_ASSERT(freed_before != freed_after);                 \
   }
 
 #define N_TESTS 7
@@ -466,7 +466,7 @@ main(int argc, const char *argv[])
   }
 
   x = *xptr;
-  my_assert(29 == x[0]);
+  TEST_ASSERT(29 == x[0]);
   GC_printf("The test appears to have succeeded.\n");
 #endif
   return 0;
