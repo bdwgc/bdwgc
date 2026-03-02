@@ -32,6 +32,7 @@
 #  undef GC_PTHREADS
 #endif
 
+#include <stdio.h>
 #include <string.h>
 
 #ifdef GC_PTHREADS

@@ -28,6 +28,7 @@
 #define NOT_GCBUILD
 #include "private/gc_priv.h"
 
+#include <stdio.h>
 #include <string.h>
 
 /*
