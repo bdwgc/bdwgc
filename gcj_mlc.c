@@ -209,6 +209,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_debug_gcj_malloc(size_t lb,
     void *base, *result;
     DCL_LOCK_STATE;
 
+    GC_ASSERT(lb != 0);
     /* We're careful to avoid extra calls, which could          */
     /* confuse the backtrace.                                   */
     LOCK();
