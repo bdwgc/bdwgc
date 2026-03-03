@@ -36,10 +36,12 @@
 
 #  include "private/gc_atomic_ops.h"
 
-#  define TEST_ASSERT(e)                                                 \
-    if (!(e)) {                                                          \
-      fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
-      exit(1);                                                           \
+#  define TEST_ASSERT(e)                                                    \
+    if (!(e)) {                                                             \
+      fflush(stdout);                                                       \
+      fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+              #e);                                                          \
+      exit(1);                                                              \
     }
 
 int
@@ -103,6 +105,7 @@ main(void)
   AO_store_release(&x, 113);
   TEST_ASSERT(x == 113);
 #  endif
+  printf("SUCCEEDED\n");
   return 0;
 }
 

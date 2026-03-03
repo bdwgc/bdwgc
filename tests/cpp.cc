@@ -66,11 +66,10 @@ struct foo *GC;
 #  define GC_OVERRIDE /*< empty */
 #endif
 
-#define TEST_ASSERT(e)                                                \
-  if (!(e)) {                                                         \
-    GC_printf("Assertion failure in " __FILE__ ", line %d: " #e "\n", \
-              __LINE__);                                              \
-    exit(1);                                                          \
+#define TEST_ASSERT(e)                                                   \
+  if (!(e)) {                                                            \
+    GC_printf("Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, #e); \
+    exit(1);                                                             \
   }
 
 #if defined(__powerpc64__) && !defined(__clang__) && GC_GNUC_PREREQ(10, 0)
@@ -467,7 +466,7 @@ main(int argc, const char *argv[])
 
   x = *xptr;
   TEST_ASSERT(29 == x[0]);
-  GC_printf("The test appears to have succeeded.\n");
+  GC_printf("SUCCEEDED\n");
 #endif
   return 0;
 }
