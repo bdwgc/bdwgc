@@ -83,11 +83,12 @@ static GC_RAND_STATE_T seed;
 #define IS_FLAG_SET(p, mask) \
   (((unsigned)(GC_uintptr_t)(p) & (unsigned)(mask)) != 0)
 
-#define TEST_ASSERT(e)                                                 \
-  if (!(e)) {                                                          \
-    fflush(stdout);                                                    \
-    fprintf(stderr, "Assertion failure, line %d: %s\n", __LINE__, #e); \
-    exit(1);                                                           \
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fflush(stdout);                                                       \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)            \

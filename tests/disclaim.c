@@ -48,11 +48,12 @@ static GC_RAND_STATE_T seed;
 #define POP_SIZE 1000
 #define MUTATE_CNT_BASE (6 * 1000000)
 
-#define TEST_ASSERT(e)                                                 \
-  if (!(e)) {                                                          \
-    fflush(stdout);                                                    \
-    fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
-    exit(1);                                                           \
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fflush(stdout);                                                       \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)            \
@@ -277,7 +278,7 @@ main(void)
   test_misc_sizes();
 
 #if NTHREADS > 0
-  printf("Threaded disclaim test.\n");
+  printf("Threaded disclaim test\n");
   for (i = 0; i < NTHREADS; ++i) {
     int err = pthread_create(&th[i], NULL, test, NULL);
 

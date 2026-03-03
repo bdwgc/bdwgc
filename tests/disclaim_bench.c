@@ -27,10 +27,12 @@
 static GC_RAND_STATE_T seed;
 #define rand() GC_RAND_NEXT(&seed)
 
-#define TEST_ASSERT(e)                                                 \
-  if (!(e)) {                                                          \
-    fprintf(stderr, "Assertion failure, line %d: " #e "\n", __LINE__); \
-    exit(1);                                                           \
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fflush(stdout);                                                       \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)            \
