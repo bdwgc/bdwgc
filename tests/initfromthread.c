@@ -107,7 +107,7 @@ main(void)
   err = pthread_create(&t, NULL, thread, NULL);
   if (err != 0) {
     fprintf(stderr, "Thread #0 creation failed, errno= %d\n", err);
-    return 1;
+    exit(69);
   }
   err = pthread_join(t, NULL);
   if (err != 0) {
@@ -119,7 +119,7 @@ main(void)
   if (t == NULL) {
     fprintf(stderr, "Thread #0 creation failed, errcode= %d\n",
             (int)GetLastError());
-    return 1;
+    exit(69);
   }
   if (WaitForSingleObject(t, INFINITE) != WAIT_OBJECT_0) {
     fprintf(stderr, "Thread #0 join failed, errcode= %d\n",
