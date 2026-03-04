@@ -344,8 +344,6 @@ GC_malloc_explicitly_typed_ignore_off_page(size_t lb, GC_descr d)
 /*
  * Array descriptors.  `GC_array_mark_proc` understands these.
  * We may eventually need to add provisions for headers and trailers.
- * Hence we provide for tree structured descriptors, though we do not
- * really use them currently.
  */
 
 /* This type describes simple array. */
@@ -360,13 +358,6 @@ struct LeafDescriptor {
   GC_descr ld_descriptor;
 };
 
-struct ComplexArrayDescriptor {
-  word ad_tag;
-#define ARRAY_TAG 2
-  size_t ad_nelements;
-  union ComplexDescriptor *ad_element_descr;
-};
-
 struct SequenceDescriptor {
   word sd_tag;
 #define SEQUENCE_TAG 3
@@ -376,7 +367,6 @@ struct SequenceDescriptor {
 
 typedef union ComplexDescriptor {
   struct LeafDescriptor ld;
-  struct ComplexArrayDescriptor ad;
   struct SequenceDescriptor sd;
 } complex_descriptor;
 
@@ -654,12 +644,9 @@ GC_calloc_explicitly_typed(size_t n, size_t lb, GC_descr d)
 STATIC size_t
 GC_descr_obj_size(complex_descriptor *complex_d)
 {
-  switch (complex_d->ad.ad_tag) {
+  switch (complex_d->sd.sd_tag) {
   case LEAF_TAG:
     return complex_d->ld.ld_nelements * complex_d->ld.ld_size;
-  case ARRAY_TAG:
-    return complex_d->ad.ad_nelements
-           * GC_descr_obj_size(complex_d->ad.ad_element_descr);
   case SEQUENCE_TAG:
     return GC_descr_obj_size(complex_d->sd.sd_first)
            + GC_descr_obj_size(complex_d->sd.sd_second);
@@ -680,9 +667,8 @@ GC_push_complex_descriptor(ptr_t current, complex_descriptor *complex_d,
   size_t i, nelements;
   size_t sz;
   GC_descr d;
-  complex_descriptor *element_descr;
 
-  switch (complex_d->ad.ad_tag) {
+  switch (complex_d->sd.sd_tag) {
   case LEAF_TAG:
     d = complex_d->ld.ld_descriptor;
     nelements = complex_d->ld.ld_nelements;
@@ -695,18 +681,6 @@ GC_push_complex_descriptor(ptr_t current, complex_descriptor *complex_d,
       msp++;
       msp->mse_start = current;
       msp->mse_descr = d;
-      current += sz;
-    }
-    break;
-  case ARRAY_TAG:
-    element_descr = complex_d->ad.ad_element_descr;
-    nelements = complex_d->ad.ad_nelements;
-    sz = GC_descr_obj_size(element_descr);
-    GC_ASSERT(sz != 0 || 0 == nelements);
-    for (i = 0; i < nelements; i++) {
-      msp = GC_push_complex_descriptor(current, element_descr, msp, msl);
-      if (UNLIKELY(NULL == msp))
-        return NULL;
       current += sz;
     }
     break;
