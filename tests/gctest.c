@@ -1442,7 +1442,10 @@ static CLOCK_TYPE start_main_time;
 static void
 set_print_procs(void)
 {
-  TEST_ASSERT(ADDR(&A.aa) % ALIGNMENT == 0);
+  if (ADDR(&A.aa) % ALIGNMENT != 0) {
+    GC_printf("A.aa is not aligned properly\n");
+    FAIL;
+  }
   /* Set these global variables just once to avoid TSan false positives. */
   A.dummy = 17;
 #ifndef DBG_HDRS_ALL
