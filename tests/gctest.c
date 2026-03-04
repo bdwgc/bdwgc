@@ -218,11 +218,10 @@ static CRITICAL_SECTION incr_cs;
   INIT_FIND_LEAK;          \
   INIT_PERF_MEASUREMENT
 
-#define TEST_ASSERT(e)                                                    \
-  if (!(e)) {                                                             \
-    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
-            #e);                                                          \
-    FAIL;                                                                 \
+#define TEST_ASSERT(e)                                                   \
+  if (!(e)) {                                                            \
+    GC_printf("Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, #e); \
+    FAIL;                                                                \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)    \
