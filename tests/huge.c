@@ -32,18 +32,18 @@
 
 #include "gc.h"
 
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
 /*
- * Check that very large allocation requests fail.  "Success" would usually
- * indicate that the size was somehow converted to a negative number.
+ * Check that very large allocation requests fail.  A non-null result would
+ * usually indicate that the size was somehow converted to a negative number.
  * Clients should not do this, but we should fail in the expected manner.
  */
-#define CHECK_ALLOC_FAILED(r, sz_str)                                         \
-  do {                                                                        \
-    if (NULL != (r)) {                                                        \
-      fprintf(stderr, "Size " sz_str " allocation unexpectedly succeeded\n"); \
-      exit(1);                                                                \
-    }                                                                         \
-  } while (0)
 
 #undef SIZE_MAX
 #define SIZE_MAX (~(size_t)0)
@@ -55,20 +55,20 @@ main(void)
 {
   GC_INIT();
 
-  CHECK_ALLOC_FAILED(GC_MALLOC(U_SSIZE_MAX - 4096), "SSIZE_MAX-4096");
+  TEST_ASSERT(GC_MALLOC(U_SSIZE_MAX - 4096) == NULL);
   /* Skip other checks to avoid "exceeds maximum object size" gcc warning. */
 #if !(defined(_FORTIFY_SOURCE) && defined(__x86_64__) && defined(__ILP32__))
-  CHECK_ALLOC_FAILED(GC_MALLOC(U_SSIZE_MAX - 1024), "SSIZE_MAX-1024");
-  CHECK_ALLOC_FAILED(GC_MALLOC(U_SSIZE_MAX), "SSIZE_MAX");
+  TEST_ASSERT(GC_MALLOC(U_SSIZE_MAX - 1024) == NULL);
+  TEST_ASSERT(GC_MALLOC(U_SSIZE_MAX) == NULL);
 #endif
 #if !defined(_FORTIFY_SOURCE)
-  CHECK_ALLOC_FAILED(GC_MALLOC(U_SSIZE_MAX + 1), "SSIZE_MAX+1");
-  CHECK_ALLOC_FAILED(GC_MALLOC(U_SSIZE_MAX + 1024), "SSIZE_MAX+1024");
-  CHECK_ALLOC_FAILED(GC_MALLOC(SIZE_MAX - 1024), "SIZE_MAX-1024");
-  CHECK_ALLOC_FAILED(GC_MALLOC(SIZE_MAX - 16), "SIZE_MAX-16");
-  CHECK_ALLOC_FAILED(GC_MALLOC(SIZE_MAX - 8), "SIZE_MAX-8");
-  CHECK_ALLOC_FAILED(GC_MALLOC(SIZE_MAX - 4), "SIZE_MAX-4");
-  CHECK_ALLOC_FAILED(GC_MALLOC(SIZE_MAX), "SIZE_MAX");
+  TEST_ASSERT(GC_MALLOC(U_SSIZE_MAX + 1) == NULL);
+  TEST_ASSERT(GC_MALLOC(U_SSIZE_MAX + 1024) == NULL);
+  TEST_ASSERT(GC_MALLOC(SIZE_MAX - 1024) == NULL);
+  TEST_ASSERT(GC_MALLOC(SIZE_MAX - 16) == NULL);
+  TEST_ASSERT(GC_MALLOC(SIZE_MAX - 8) == NULL);
+  TEST_ASSERT(GC_MALLOC(SIZE_MAX - 4) == NULL);
+  TEST_ASSERT(GC_MALLOC(SIZE_MAX) == NULL);
 #endif
   printf("SUCCEEDED\n");
   return 0;

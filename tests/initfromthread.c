@@ -42,6 +42,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
 #define CHECK_OUT_OF_MEMORY(p)            \
   do {                                    \
     if (NULL == (p)) {                    \
@@ -109,11 +116,7 @@ main(void)
     fprintf(stderr, "Thread #0 creation failed, errno= %d\n", err);
     exit(69);
   }
-  err = pthread_join(t, NULL);
-  if (err != 0) {
-    fprintf(stderr, "Thread #0 join failed, errno= %d\n", err);
-    return 1;
-  }
+  TEST_ASSERT(pthread_join(t, NULL) == 0);
 #else
   t = CreateThread(NULL, 0, thread, 0, 0, &thread_id);
   if (t == NULL) {
@@ -121,12 +124,7 @@ main(void)
             (int)GetLastError());
     exit(69);
   }
-  if (WaitForSingleObject(t, INFINITE) != WAIT_OBJECT_0) {
-    fprintf(stderr, "Thread #0 join failed, errcode= %d\n",
-            (int)GetLastError());
-    CloseHandle(t);
-    return 1;
-  }
+  TEST_ASSERT(WaitForSingleObject(t, INFINITE) == WAIT_OBJECT_0);
   CloseHandle(t);
 #endif
   printf("SUCCEEDED\n");
