@@ -6,6 +6,13 @@
 
 #define COUNT 10000000
 
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
 #define CHECK_OUT_OF_MEMORY(p)            \
   do {                                    \
     if (NULL == (p)) {                    \
@@ -31,10 +38,7 @@ main(void)
     CHECK_OUT_OF_MEMORY(p);
     q = (int *)GC_MALLOC_ATOMIC(sizeof(int));
     CHECK_OUT_OF_MEMORY(q);
-    if (*p != NULL) {
-      fprintf(stderr, "GC_malloc returned garbage (or NULL)\n");
-      exit(1);
-    }
+    TEST_ASSERT(NULL == *p);
 
     *p = (int *)GC_REALLOC(q, (i % 8 != 0 ? 2 : 4) * sizeof(int));
     CHECK_OUT_OF_MEMORY(*p);

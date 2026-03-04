@@ -14,6 +14,13 @@
 #  define GC_TEST_IMPORT_API extern
 #endif
 
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
 #define CHECK_OUT_OF_MEMORY(p)            \
   do {                                    \
     if (NULL == (p)) {                    \
@@ -80,10 +87,7 @@ main(void)
       GC_gcollect();
     }
     for (i = 0; i < (int)sizeof(struct treenode); ++i) {
-      if (staticroot[i] != 0x42) {
-        fprintf(stderr, "Memory check failed\n");
-        return 1;
-      }
+      TEST_ASSERT(staticroot[i] == 0x42);
     }
   }
   printf("SUCCEEDED\n");

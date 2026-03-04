@@ -14,6 +14,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
 #if (!defined(GC_PTHREADS) || defined(GC_SOLARIS_THREADS) \
      || defined(__native_client__))                       \
     && !defined(SKIP_THREADKEY_TEST)
@@ -59,11 +66,9 @@ on_thread_exit_inner(struct GC_stack_base *sb, void *arg)
   int creation_res; /*< to suppress a warning about unchecked result */
   pthread_attr_t attr;
 
-  if (pthread_attr_init(&attr) != 0
-      || pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0) {
-    fprintf(stderr, "Thread attribute init or setdetachstate failed\n");
-    exit(2);
-  }
+  TEST_ASSERT(pthread_attr_init(&attr) == 0);
+  TEST_ASSERT(pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED)
+              == 0);
   creation_res = GC_pthread_create(&t, &attr, entry, NULL);
   (void)pthread_attr_destroy(&attr);
   if (res == GC_SUCCESS)
@@ -119,17 +124,9 @@ main(void)
     }
 
     if ((i & 1) != 0) {
-      err = GC_pthread_join(t, &res);
-      if (err != 0) {
-        fprintf(stderr, "Thread #%d join failed, errno= %d\n", i, err);
-        exit(2);
-      }
+      TEST_ASSERT(GC_pthread_join(t, &res) == 0);
     } else {
-      err = GC_pthread_detach(t);
-      if (err != 0) {
-        fprintf(stderr, "Thread #%d detach failed, errno= %d\n", i, err);
-        exit(2);
-      }
+      TEST_ASSERT(GC_pthread_detach(t) == 0);
     }
   }
   printf("SUCCEEDED\n");
