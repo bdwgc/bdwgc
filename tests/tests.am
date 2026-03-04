@@ -34,6 +34,11 @@ gctest_html_SOURCES = $(gctest_SOURCES)
 gctest_html_LDADD = $(gctest_LDADD)
 endif
 
+TESTS += dbgfunctest$(EXEEXT)
+check_PROGRAMS += dbgfunctest
+dbgfunctest_SOURCES = tests/dbgfunc.c
+dbgfunctest_LDADD = $(test_ldadd)
+
 TESTS += hugetest$(EXEEXT)
 check_PROGRAMS += hugetest
 hugetest_SOURCES = tests/huge.c
@@ -191,6 +196,7 @@ endif
 check-without-test-driver: export GC_PROMPT_DISABLED=1
 check-without-test-driver: $(TESTS)
 	./gctest$(EXEEXT)
+	./dbgfunctest$(EXEEXT)
 	./hugetest$(EXEEXT)
 	./leaktest$(EXEEXT)
 	./middletest$(EXEEXT)
