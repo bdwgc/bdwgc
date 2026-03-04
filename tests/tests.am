@@ -59,6 +59,11 @@ check_PROGRAMS += smashtest
 smashtest_SOURCES = tests/smash.c
 smashtest_LDADD = $(test_ldadd)
 
+TESTS += typedtest$(EXEEXT)
+check_PROGRAMS += typedtest
+typedtest_SOURCES = tests/typed.c
+typedtest_LDADD = $(test_ldadd)
+
 TESTS += staticrootstest$(EXEEXT)
 check_PROGRAMS += staticrootstest
 staticrootstest_SOURCES = tests/staticroots.c
@@ -192,6 +197,7 @@ check-without-test-driver: $(TESTS)
 	./realloctest$(EXEEXT)
 	./smashtest$(EXEEXT)
 	./staticrootstest$(EXEEXT)
+	./typedtest$(EXEEXT)
 	test ! -f atomicopstest$(EXEEXT) || ./atomicopstest$(EXEEXT)
 	test ! -f cpptest$(EXEEXT) || ./cpptest$(EXEEXT)
 	test ! -f disclaim_bench$(EXEEXT) || ./disclaim_bench$(EXEEXT)

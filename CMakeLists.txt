@@ -911,6 +911,10 @@ if (BUILD_TESTING)
   target_link_libraries(smashtest PRIVATE gc)
   add_test(NAME smashtest COMMAND smashtest)
 
+  add_executable(typedtest tests/typed.c ${NODIST_SRC})
+  target_link_libraries(typedtest PRIVATE gc)
+  add_test(NAME typedtest COMMAND typedtest)
+
   if (NOT (GC_BUILD_SHARED_LIBS AND WIN32))
     if (GC_BUILD_SHARED_LIBS)
       add_library(staticroots_lib_test SHARED tests/staticroots_lib.c)
