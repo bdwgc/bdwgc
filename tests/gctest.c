@@ -2618,7 +2618,6 @@ main(void)
   GC_set_force_unmap_on_gcollect(GC_get_force_unmap_on_gcollect());
   GC_set_free_space_divisor(GC_get_free_space_divisor());
   GC_set_full_freq(GC_get_full_freq());
-  GC_set_java_finalization(GC_get_java_finalization());
   GC_set_max_retries(GC_get_max_retries());
   GC_set_no_dls(GC_get_no_dls());
   GC_set_non_gc_bytes(GC_get_non_gc_bytes());

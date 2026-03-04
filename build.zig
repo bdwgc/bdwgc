@@ -603,6 +603,7 @@ pub fn build(b: *std.Build) void {
             });
         }
     }
+    addTest(b, gc, test_step, flags, "dbgfunctest", "tests/dbgfunc.c");
     addTest(b, gc, test_step, flags, "hugetest", "tests/huge.c");
     addTest(b, gc, test_step, flags, "leaktest", "tests/leak.c");
     addTest(b, gc, test_step, flags, "middletest", "tests/middle.c");
