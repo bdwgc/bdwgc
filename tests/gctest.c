@@ -2258,13 +2258,6 @@ main(void)
 #    endif
 #  endif
   n_tests = 0;
-  if (!GC_is_init_called()) {
-    /*
-     * No-op.  Ensure the collector is not initialized implicitly,
-     * e.g. when `malloc` redirection is on.
-     */
-    GC_clear_exclusion_table();
-  }
   GC_COND_INIT();
   GC_set_warn_proc(warn_proc);
   enable_incremental_mode();
@@ -2519,14 +2512,19 @@ main(void)
   pthread_win32_process_attach_np();
   pthread_win32_thread_attach_np();
 #  endif
+  if (!GC_is_init_called()) {
+    /*
+     * No-op.  Ensure the collector is not initialized implicitly,
+     * e.g. when `malloc` redirection is on.
+     */
+    GC_clear_exclusion_table();
 #  if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY) \
       && !defined(DARWIN_DONT_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
-  if (!GC_is_init_called()) {
     /* Test with the Darwin implicit thread registration. */
     GC_use_threads_discovery();
     GC_printf("Using Darwin task-threads-based world stop and push\n");
-  }
 #  endif
+  }
   GC_set_markers_count(0);
 #  ifdef TEST_REUSE_SIG_SUSPEND
   GC_set_suspend_signal(GC_get_thr_restart_signal());
