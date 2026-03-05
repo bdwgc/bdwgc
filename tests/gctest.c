@@ -2258,9 +2258,13 @@ main(void)
 #    endif
 #  endif
   n_tests = 0;
-  /* No-op as called before the collector initialization. */
-  GC_clear_exclusion_table();
-
+  if (!GC_is_init_called()) {
+    /*
+     * No-op.  Ensure the collector is not initialized implicitly,
+     * e.g. when `malloc` redirection is on.
+     */
+    GC_clear_exclusion_table();
+  }
   GC_COND_INIT();
   GC_set_warn_proc(warn_proc);
   enable_incremental_mode();
