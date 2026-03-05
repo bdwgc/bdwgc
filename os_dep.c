@@ -4066,7 +4066,7 @@ GC_proc_read_dirty(GC_bool output_unneeded)
 
   /* Copy dirty bits into `GC_grungy_pages`. */
   BZERO(GC_grungy_pages, sizeof(GC_grungy_pages));
-  nmaps = (size_t)(((struct prpageheader *)bufp)->pr_nmap);
+  nmaps = (size_t)((struct prpageheader *)bufp)->pr_nmap;
 #  ifdef DEBUG_DIRTY_BITS
   GC_log_printf("Proc VDB read: pr_nmap= %u, pr_npage= %ld\n", (unsigned)nmaps,
                 ((struct prpageheader *)bufp)->pr_npage);
