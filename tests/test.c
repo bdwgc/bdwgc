@@ -1830,9 +1830,11 @@ int APIENTRY WinMain(HINSTANCE instance GC_ATTR_UNUSED,
   DWORD thread_id;
 # if defined(GC_DLL) && !defined(GC_NO_THREADS_DISCOVERY) \
         && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC)
-    GC_use_threads_discovery();
+    if (!GC_is_init_called()) {
+      GC_use_threads_discovery();
                 /* Test with implicit thread registration if possible. */
-    GC_printf("Using DllMain to track threads\n");
+      GC_printf("Using DllMain to track threads\n");
+    }
 # endif
   GC_COND_INIT();
 # if !defined(MAKE_BACK_GRAPH) && !defined(NO_INCREMENTAL)
@@ -1944,8 +1946,10 @@ int main(void)
 #   if defined(GC_DARWIN_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
         && !defined(DARWIN_DONT_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
       /* Test with the Darwin implicit thread registration. */
-      GC_use_threads_discovery();
-      GC_printf("Using Darwin task-threads-based world stop and push\n");
+      if (!GC_is_init_called()) {
+        GC_use_threads_discovery();
+        GC_printf("Using Darwin task-threads-based world stop and push\n");
+      }
 #   endif
     GC_COND_INIT();
 
