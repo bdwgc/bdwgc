@@ -2407,8 +2407,10 @@ main(void)
 #  if defined(GC_DLL) && !defined(GC_NO_THREADS_DISCOVERY) \
       && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC)
   /* Test with implicit thread registration if possible. */
-  GC_use_threads_discovery();
-  GC_printf("Using DllMain to track threads\n");
+  if (!GC_is_init_called()) {
+    GC_use_threads_discovery();
+    GC_printf("Using DllMain to track threads\n");
+  }
 #  endif
   GC_COND_INIT();
   enable_incremental_mode();
@@ -2519,9 +2521,11 @@ main(void)
 #  endif
 #  if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY) \
       && !defined(DARWIN_DONT_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
-  /* Test with the Darwin implicit thread registration. */
-  GC_use_threads_discovery();
-  GC_printf("Using Darwin task-threads-based world stop and push\n");
+  if (!GC_is_init_called()) {
+    /* Test with the Darwin implicit thread registration. */
+    GC_use_threads_discovery();
+    GC_printf("Using Darwin task-threads-based world stop and push\n");
+  }
 #  endif
   GC_set_markers_count(0);
 #  ifdef TEST_REUSE_SIG_SUSPEND
