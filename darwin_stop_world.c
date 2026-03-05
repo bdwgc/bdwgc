@@ -437,7 +437,7 @@ GC_push_all_stacks(void)
       for (p = GC_threads[i]; p != NULL; p = p->tm.next) {
         GC_ASSERT(THREAD_TABLE_INDEX(p->id) == i);
         if (!KNOWN_FINISHED(p)) {
-          thread_act_t thread = (thread_act_t)(p->mach_thread);
+          thread_act_t thread = (thread_act_t)p->mach_thread;
           ptr_t lo = GC_stack_range_for(&hi, thread, p, my_thread,
                                         &altstack_lo, &altstack_hi, &found_me);
 

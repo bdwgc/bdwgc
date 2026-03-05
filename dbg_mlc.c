@@ -961,7 +961,7 @@ GC_debug_realloc_inner(void *p, size_t lb, GC_bool free_on_fail,
 #ifdef SHORT_DBG_HDRS
     old_sz = GC_size(base) - sizeof(oh);
 #else
-    old_sz = (size_t)(((oh *)base)->oh_sz);
+    old_sz = (size_t)((oh *)base)->oh_sz;
 #endif
     if (old_sz > 0)
       BCOPY(p, result, old_sz < lb ? old_sz : lb);
