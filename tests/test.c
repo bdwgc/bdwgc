@@ -2032,7 +2032,11 @@ void enable_incremental_mode(void)
       GC_noop1((GC_word)&Init);
 #   endif
     n_tests = 0;
-    GC_clear_exclusion_table(); /* no-op as called before GC init */
+    if (!GC_is_init_called()) {
+      /* No-op.  Ensure the collector is not initialized        */
+      /* implicitly, e.g. when malloc redirection is on.        */
+      GC_clear_exclusion_table();
+    }
 #   if defined(MACOS)
         /* Make sure we have lots and lots of stack space.      */
         SetMinimumStack(cMinStackSpace);
