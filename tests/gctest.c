@@ -2567,6 +2567,7 @@ main(void)
   (void)GC_new_proc(fake_gcj_mark_proc);
 #  endif
 
+  GC_start_incremental_collection();
 #  if NTHREADS > 0
   for (i = 0; i < NTHREADS; ++i) {
     int err = pthread_create(th + i, &attr, thr_run_one_test, 0);
