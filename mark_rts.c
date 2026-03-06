@@ -698,8 +698,13 @@ GC_push_all_stack_sections(ptr_t lo /* top */, ptr_t hi /* bottom */,
 STATIC void
 GC_push_all_stack_partially_eager(ptr_t bottom, ptr_t top, ptr_t cold_gc_frame)
 {
-#    if !defined(NEED_FIXUP_POINTER) && !defined(NO_ALL_INTERIOR_POINTERS)
-  if (GC_all_interior_pointers) {
+#    if (!defined(NEED_FIXUP_POINTER) || defined(DYNAMIC_POINTER_MASK)) \
+        && !defined(NO_ALL_INTERIOR_POINTERS)
+  if (GC_all_interior_pointers
+#      ifdef DYNAMIC_POINTER_MASK
+      && GC_pointer_mask == GC_WORD_MAX && 0 == GC_pointer_shift
+#      endif
+  ) {
     /*
      * Push the hot end of the stack eagerly, so that register values saved
      * inside GC frames are marked before they disappear.  The rest of the
