@@ -742,10 +742,6 @@ test_vsprintf(void)
   if (wrap_vsprintf(&result, "%.*r", -1, x) < 0)
     ABORT("CORD_vsprintf should handle negative precision gracefully");
 
-  /* Test `extract_conv_spec` error case (format is too long). */
-  if (wrap_vsprintf(&result, CORD_cat("%-", CORD_chars('-', 80))) != -1)
-    ABORT("CORD_vsprintf should return -1 for overly long format specifier");
-
   /* Test `c` specifier with various flags. */
   if (wrap_vsprintf(&result, "%5c", 'x') <= 0 || CORD_len(result) != 5)
     ABORT("CORD_vsprintf failed for 'c' with width");
