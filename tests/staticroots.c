@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifndef GC_DEBUG
@@ -12,6 +13,21 @@
 #ifndef GC_TEST_IMPORT_API
 #  define GC_TEST_IMPORT_API extern
 #endif
+
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
+#define CHECK_OUT_OF_MEMORY(p)            \
+  do {                                    \
+    if (NULL == (p)) {                    \
+      fprintf(stderr, "Out of memory\n"); \
+      exit(69);                           \
+    }                                     \
+  } while (0)
 
 /* Should match that in `staticroots_lib.c` file. */
 struct treenode {
@@ -58,10 +74,7 @@ main(void)
   init_staticroot();
   if (GC_get_find_leak())
     printf("This test program is not designed for leak detection mode\n");
-  if (NULL == staticroot) {
-    fprintf(stderr, "GC_malloc returned NULL\n");
-    return 2;
-  }
+  CHECK_OUT_OF_MEMORY(staticroot);
   memset(staticroot, 0x42, sizeof(struct treenode));
   GC_gcollect();
   for (j = 0; j < 4; j++) {
@@ -74,10 +87,7 @@ main(void)
       GC_gcollect();
     }
     for (i = 0; i < (int)sizeof(struct treenode); ++i) {
-      if (staticroot[i] != 0x42) {
-        fprintf(stderr, "Memory check failed\n");
-        return 1;
-      }
+      TEST_ASSERT(staticroot[i] == 0x42);
     }
   }
   printf("SUCCEEDED\n");

@@ -33,17 +33,11 @@ main(void)
   GC_INIT();
 
   p[0] = (char *)aligned_alloc(8, 50 /* `size` */);
-  if (NULL == p[0]) {
-    fprintf(stderr, "aligned_alloc failed\n");
-    return 1;
-  }
+  CHECK_OUT_OF_MEMORY(p[0]);
   free_aligned_sized(p[0], 8, 50);
 
   p[0] = (char *)_aligned_malloc(70 /* `size` */, 16);
-  if (NULL == p[0]) {
-    fprintf(stderr, "_aligned_malloc failed\n");
-    return 1;
-  }
+  CHECK_OUT_OF_MEMORY(p[0]);
   _aligned_free(p[0]);
 
   p[0] = strdup("abc");

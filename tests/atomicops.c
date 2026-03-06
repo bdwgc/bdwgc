@@ -38,7 +38,6 @@
 
 #  define TEST_ASSERT(e)                                                    \
     if (!(e)) {                                                             \
-      fflush(stdout);                                                       \
       fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
               #e);                                                          \
       exit(1);                                                              \

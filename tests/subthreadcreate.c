@@ -34,6 +34,13 @@
 
 #  include <stdlib.h>
 
+#  define TEST_ASSERT(e)                                                    \
+    if (!(e)) {                                                             \
+      fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+              #e);                                                          \
+      exit(1);                                                              \
+    }
+
 #  ifndef NTHREADS
 #    define NTHREADS 5
 #  endif
@@ -82,19 +89,14 @@ entry(LPVOID arg)
       if (err != EAGAIN)
         exit(69);
     } else {
-      err = pthread_detach(th);
-      if (err != 0) {
-        fprintf(stderr, "Thread #%d detach failed, errno= %d\n", thread_num,
-                err);
-        exit(2);
-      }
+      TEST_ASSERT(pthread_detach(th) == 0);
     }
 #  else
     HANDLE th;
     DWORD thread_id;
 
     th = CreateThread(NULL, 0, entry, (LPVOID)my_depth, 0, &thread_id);
-    if (th == NULL) {
+    if (th == (HANDLE)NULL) {
       fprintf(stderr, "Thread #%d creation failed, errcode= %d\n", thread_num,
               (int)GetLastError());
       exit(69);
@@ -150,18 +152,9 @@ main(void)
 #    ifdef GC_PTHREADS
     void *res;
 
-    err = pthread_join(th[i], &res);
-    if (err != 0) {
-      fprintf(stderr, "Thread #%d join failed, errno= %d\n", th_nums[i], err);
-      exit(2);
-    }
+    TEST_ASSERT(pthread_join(th[i], &res) == 0);
 #    else
-    if (WaitForSingleObject(th[i], INFINITE) != WAIT_OBJECT_0) {
-      fprintf(stderr, "Thread #%d join failed, errcode= %d\n", th_nums[i],
-              (int)GetLastError());
-      CloseHandle(th[i]);
-      exit(2);
-    }
+    TEST_ASSERT(WaitForSingleObject(th[i], INFINITE) == WAIT_OBJECT_0);
     CloseHandle(th[i]);
 #    endif
   }

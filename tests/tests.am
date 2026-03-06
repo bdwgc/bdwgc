@@ -34,6 +34,11 @@ gctest_html_SOURCES = $(gctest_SOURCES)
 gctest_html_LDADD = $(gctest_LDADD)
 endif
 
+TESTS += dbgfunctest$(EXEEXT)
+check_PROGRAMS += dbgfunctest
+dbgfunctest_SOURCES = tests/dbgfunc.c
+dbgfunctest_LDADD = $(test_ldadd)
+
 TESTS += hugetest$(EXEEXT)
 check_PROGRAMS += hugetest
 hugetest_SOURCES = tests/huge.c
@@ -58,6 +63,11 @@ TESTS += smashtest$(EXEEXT)
 check_PROGRAMS += smashtest
 smashtest_SOURCES = tests/smash.c
 smashtest_LDADD = $(test_ldadd)
+
+TESTS += typedtest$(EXEEXT)
+check_PROGRAMS += typedtest
+typedtest_SOURCES = tests/typed.c
+typedtest_LDADD = $(test_ldadd)
 
 TESTS += staticrootstest$(EXEEXT)
 check_PROGRAMS += staticrootstest
@@ -186,12 +196,14 @@ endif
 check-without-test-driver: export GC_PROMPT_DISABLED=1
 check-without-test-driver: $(TESTS)
 	./gctest$(EXEEXT)
+	./dbgfunctest$(EXEEXT)
 	./hugetest$(EXEEXT)
 	./leaktest$(EXEEXT)
 	./middletest$(EXEEXT)
 	./realloctest$(EXEEXT)
 	./smashtest$(EXEEXT)
 	./staticrootstest$(EXEEXT)
+	./typedtest$(EXEEXT)
 	test ! -f atomicopstest$(EXEEXT) || ./atomicopstest$(EXEEXT)
 	test ! -f cpptest$(EXEEXT) || ./cpptest$(EXEEXT)
 	test ! -f disclaim_bench$(EXEEXT) || ./disclaim_bench$(EXEEXT)

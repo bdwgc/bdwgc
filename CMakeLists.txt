@@ -891,6 +891,10 @@ if (BUILD_TESTING)
     target_compile_options(gctest PRIVATE /wcd=201)
   endif()
 
+  add_executable(dbgfunctest tests/dbgfunc.c ${NODIST_SRC})
+  target_link_libraries(dbgfunctest PRIVATE gc)
+  add_test(NAME dbgfunctest COMMAND dbgfunctest)
+
   add_executable(hugetest tests/huge.c ${NODIST_SRC})
   target_link_libraries(hugetest PRIVATE gc)
   add_test(NAME hugetest COMMAND hugetest)
@@ -910,6 +914,10 @@ if (BUILD_TESTING)
   add_executable(smashtest tests/smash.c ${NODIST_SRC})
   target_link_libraries(smashtest PRIVATE gc)
   add_test(NAME smashtest COMMAND smashtest)
+
+  add_executable(typedtest tests/typed.c ${NODIST_SRC})
+  target_link_libraries(typedtest PRIVATE gc)
+  add_test(NAME typedtest COMMAND typedtest)
 
   if (NOT (GC_BUILD_SHARED_LIBS AND WIN32))
     if (GC_BUILD_SHARED_LIBS)

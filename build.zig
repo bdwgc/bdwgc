@@ -603,11 +603,13 @@ pub fn build(b: *std.Build) void {
             });
         }
     }
+    addTest(b, gc, test_step, flags, "dbgfunctest", "tests/dbgfunc.c");
     addTest(b, gc, test_step, flags, "hugetest", "tests/huge.c");
     addTest(b, gc, test_step, flags, "leaktest", "tests/leak.c");
     addTest(b, gc, test_step, flags, "middletest", "tests/middle.c");
     addTest(b, gc, test_step, flags, "realloctest", "tests/realloc.c");
     addTest(b, gc, test_step, flags, "smashtest", "tests/smash.c");
+    addTest(b, gc, test_step, flags, "typedtest", "tests/typed.c");
     // TODO: build `staticrootstest` with `-D STATICROOTSLIB2`.
     addTestExt(b, gc, test_step, flags, "staticrootstest", "tests/staticroots.c", .{
         .filename2 = "tests/staticroots_lib.c",

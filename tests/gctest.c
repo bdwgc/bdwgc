@@ -218,12 +218,10 @@ static CRITICAL_SECTION incr_cs;
   INIT_FIND_LEAK;          \
   INIT_PERF_MEASUREMENT
 
-#define TEST_ASSERT(e)                                                    \
-  if (!(e)) {                                                             \
-    fflush(stdout);                                                       \
-    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
-            #e);                                                          \
-    FAIL;                                                                 \
+#define TEST_ASSERT(e)                                                   \
+  if (!(e)) {                                                            \
+    GC_printf("Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, #e); \
+    FAIL;                                                                \
   }
 
 #define CHECK_OUT_OF_MEMORY(p)    \
@@ -1443,7 +1441,10 @@ static CLOCK_TYPE start_main_time;
 static void
 set_print_procs(void)
 {
-  TEST_ASSERT(ADDR(&A.aa) % ALIGNMENT == 0);
+  if (ADDR(&A.aa) % ALIGNMENT != 0) {
+    GC_printf("A.aa is not aligned properly\n");
+    FAIL;
+  }
   /* Set these global variables just once to avoid TSan false positives. */
   A.dummy = 17;
 #ifndef DBG_HDRS_ALL
@@ -2257,9 +2258,6 @@ main(void)
 #    endif
 #  endif
   n_tests = 0;
-  /* No-op as called before the collector initialization. */
-  GC_clear_exclusion_table();
-
   GC_COND_INIT();
   GC_set_warn_proc(warn_proc);
   enable_incremental_mode();
@@ -2402,8 +2400,10 @@ main(void)
 #  if defined(GC_DLL) && !defined(GC_NO_THREADS_DISCOVERY) \
       && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC)
   /* Test with implicit thread registration if possible. */
-  GC_use_threads_discovery();
-  GC_printf("Using DllMain to track threads\n");
+  if (!GC_is_init_called()) {
+    GC_use_threads_discovery();
+    GC_printf("Using DllMain to track threads\n");
+  }
 #  endif
   GC_COND_INIT();
   enable_incremental_mode();
@@ -2512,12 +2512,19 @@ main(void)
   pthread_win32_process_attach_np();
   pthread_win32_thread_attach_np();
 #  endif
+  if (!GC_is_init_called()) {
+    /*
+     * No-op.  Ensure the collector is not initialized implicitly,
+     * e.g. when `malloc` redirection is on.
+     */
+    GC_clear_exclusion_table();
 #  if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY) \
       && !defined(DARWIN_DONT_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
-  /* Test with the Darwin implicit thread registration. */
-  GC_use_threads_discovery();
-  GC_printf("Using Darwin task-threads-based world stop and push\n");
+    /* Test with the Darwin implicit thread registration. */
+    GC_use_threads_discovery();
+    GC_printf("Using Darwin task-threads-based world stop and push\n");
 #  endif
+  }
   GC_set_markers_count(0);
 #  ifdef TEST_REUSE_SIG_SUSPEND
   GC_set_suspend_signal(GC_get_thr_restart_signal());
@@ -2562,6 +2569,7 @@ main(void)
   (void)GC_new_proc(fake_gcj_mark_proc);
 #  endif
 
+  GC_start_incremental_collection();
 #  if NTHREADS > 0
   for (i = 0; i < NTHREADS; ++i) {
     int err = pthread_create(th + i, &attr, thr_run_one_test, 0);
@@ -2610,7 +2618,6 @@ main(void)
   GC_set_force_unmap_on_gcollect(GC_get_force_unmap_on_gcollect());
   GC_set_free_space_divisor(GC_get_free_space_divisor());
   GC_set_full_freq(GC_get_full_freq());
-  GC_set_java_finalization(GC_get_java_finalization());
   GC_set_max_retries(GC_get_max_retries());
   GC_set_no_dls(GC_get_no_dls());
   GC_set_non_gc_bytes(GC_get_non_gc_bytes());

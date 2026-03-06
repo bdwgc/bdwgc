@@ -28,6 +28,13 @@
 
 #define N_TESTS 100
 
+#define TEST_ASSERT(e)                                                    \
+  if (!(e)) {                                                             \
+    fprintf(stderr, "Assertion failure: %s:%d, %s\n", __FILE__, __LINE__, \
+            #e);                                                          \
+    exit(1);                                                              \
+  }
+
 #define CHECK_OUT_OF_MEMORY(p)            \
   do {                                    \
     if (NULL == (p)) {                    \
@@ -114,19 +121,11 @@ main(void)
   }
   n = i;
   for (i = 0; i < n; ++i) {
-    int err;
-
 #  ifdef GC_PTHREADS
-    err = pthread_join(t[i], 0);
+    TEST_ASSERT(pthread_join(t[i], 0) == 0);
 #  else
-    err = WaitForSingleObject(t[i], INFINITE) == WAIT_OBJECT_0
-              ? 0
-              : (int)GetLastError();
+    TEST_ASSERT(WaitForSingleObject(t[i], INFINITE) == WAIT_OBJECT_0);
 #  endif
-    if (err != 0) {
-      fprintf(stderr, "Thread #%d join failed, errcode= %d\n", i, err);
-      exit(2);
-    }
   }
 #else
   (void)test(NULL);
