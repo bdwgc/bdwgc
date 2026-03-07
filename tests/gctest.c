@@ -453,21 +453,25 @@ reverse(sexpr x)
   return reverse1(x, nil);
 }
 
-#ifdef GC_PTHREADS
-/* TODO: Implement for Win32 */
-
+#if defined(GC_PTHREADS) || defined(GC_WIN32_THREADS)
+#  ifdef GC_PTHREADS
 static void *
+#  else
+static DWORD __stdcall
+#  endif
 do_gcollect(void *arg)
 {
+  UNUSED_ARG(arg);
   if (print_stats)
     GC_log_printf("Collect from a standalone thread\n");
   GC_gcollect();
-  return arg;
+  return 0;
 }
 
 static void
 collect_from_other_thread(void)
 {
+#  ifdef GC_PTHREADS
   pthread_t t;
   int err = pthread_create(&t, NULL, do_gcollect, NULL /* `arg` */);
 
@@ -476,18 +480,29 @@ collect_from_other_thread(void)
     exit(69);
   }
   TEST_ASSERT(pthread_join(t, NULL) == 0);
+#  else
+  DWORD thread_id;
+  HANDLE h = CreateThread(NULL, 0, do_gcollect, NULL, 0, &thread_id);
+
+  if (h == (HANDLE)NULL) {
+    GC_printf("gcollect thread creation failed, errcode= %d\n",
+              (int)GetLastError());
+    exit(69);
+  }
+  TEST_ASSERT(WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0);
+#  endif
 }
 
 #  define MAX_GCOLLECT_THREADS ((NTHREADS + 2) / 3)
 static volatile AO_t gcollect_threads_cnt = 0;
-#endif /* GC_PTHREADS */
+#endif
 
 static sexpr
 ints(int low, int up)
 {
   if (up < 0 ? low > -up : low > up) {
     if (up < 0) {
-#ifdef GC_PTHREADS
+#if defined(GC_PTHREADS) || defined(GC_WIN32_THREADS)
       if (AO_fetch_and_add1(&gcollect_threads_cnt) + 1
           <= MAX_GCOLLECT_THREADS) {
         collect_from_other_thread();
