@@ -47,6 +47,10 @@
 
 #include "gc/javaxfc.h"
 
+#if !defined(GC_PTHREADS) && !defined(GC_WIN32_THREADS)
+#  undef THREADS
+#endif
+
 /* Number of additional threads to fork. */
 #ifndef NTHREADS
 /*
@@ -64,8 +68,7 @@
 #  include <assert.h>
 #endif
 
-#if !defined(GC_PTHREADS) && !defined(GC_WIN32_THREADS) && defined(_DEBUG) \
-    && (_MSC_VER >= 1900 /* VS 2015+ */)
+#if defined(_DEBUG) && (_MSC_VER >= 1900 /* VS 2015+ */)
 #  ifndef _CRTDBG_MAP_ALLOC
 #    define _CRTDBG_MAP_ALLOC
 #  endif
@@ -149,20 +152,24 @@ static int print_stats = 0;
 #  define INIT_FORK_SUPPORT (void)0
 #endif
 
-#ifdef GC_PTHREADS
+#ifndef THREADS
+#  define FINALIZER_LOCK() (void)0
+#  define FINALIZER_UNLOCK() (void)0
+#elif defined(GC_PTHREADS)
 static pthread_mutex_t incr_lock = PTHREAD_MUTEX_INITIALIZER;
 #  define FINALIZER_LOCK() pthread_mutex_lock(&incr_lock)
 #  define FINALIZER_UNLOCK() pthread_mutex_unlock(&incr_lock)
-#elif defined(GC_WIN32_THREADS)
+#else
 static CRITICAL_SECTION incr_cs;
 #  define FINALIZER_LOCK() EnterCriticalSection(&incr_cs)
 #  define FINALIZER_UNLOCK() LeaveCriticalSection(&incr_cs)
-#else
-#  define FINALIZER_LOCK() (void)0
-#  define FINALIZER_UNLOCK() (void)0
-#endif /* !THREADS */
+#endif
 
 #include <stdarg.h>
+
+#ifdef GC_PTHREADS
+#  include <errno.h> /*< for `EAGAIN` */
+#endif
 
 #ifdef TEST_MANUAL_VDB
 #  define INIT_MANUAL_VDB_ALLOWED GC_set_manual_vdb_allowed(1)
@@ -453,12 +460,14 @@ reverse(sexpr x)
   return reverse1(x, nil);
 }
 
-#if defined(GC_PTHREADS) || defined(GC_WIN32_THREADS)
+#ifdef THREADS
 #  ifdef GC_PTHREADS
-static void *
+#    define THREAD_RET_TYPE_CALL_CONV void *
 #  else
-static DWORD __stdcall
+#    define THREAD_RET_TYPE_CALL_CONV DWORD __stdcall
 #  endif
+
+static THREAD_RET_TYPE_CALL_CONV
 do_gcollect(void *arg)
 {
   UNUSED_ARG(arg);
@@ -502,7 +511,7 @@ ints(int low, int up)
 {
   if (up < 0 ? low > -up : low > up) {
     if (up < 0) {
-#if defined(GC_PTHREADS) || defined(GC_WIN32_THREADS)
+#ifdef THREADS
       if (AO_fetch_and_add1(&gcollect_threads_cnt) + 1
           <= MAX_GCOLLECT_THREADS) {
         collect_from_other_thread();
@@ -678,16 +687,14 @@ AO_store_release(volatile AO_t *addr, AO_t new_val)
 #    endif
 #  endif /* GC_ENABLE_SUSPEND_THREAD && SIGNAL_BASED_STOP_WORLD */
 
-#  if defined(GC_PTHREADS)
-static void *
-#  elif !defined(MSWINCE) && !defined(MSWIN_XBOX1) && !defined(NO_CRT) \
-      && !defined(NO_TEST_ENDTHREADEX)
+#  if !defined(GC_PTHREADS) && !defined(MSWINCE) && !defined(MSWIN_XBOX1) \
+      && !defined(NO_CRT) && !defined(NO_TEST_ENDTHREADEX)
 #    define TEST_ENDTHREADEX
 static unsigned __stdcall
 #  else
-static DWORD __stdcall
+static THREAD_RET_TYPE_CALL_CONV
 #  endif
-tiny_reverse_test(void *p_resumed)
+    tiny_reverse_test(void *p_resumed)
 {
 #  ifdef TEST_THREAD_SUSPENDED
   if (p_resumed != NULL) {
@@ -711,18 +718,18 @@ tiny_reverse_test(void *p_resumed)
       TEST_ASSERT(GC_pthread_cancel(pthread_self()) == 0);
   }
 #  endif
-#  if defined(GC_PTHREADS) && defined(GC_HAVE_PTHREAD_EXIT) \
-      || (defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS))
+#  if defined(THREADS) \
+      && (!defined(GC_PTHREADS) || defined(GC_HAVE_PTHREAD_EXIT))
   {
     static volatile AO_t tiny_exit_cnt = 0;
 
     if ((AO_fetch_and_add1(&tiny_exit_cnt) & 1) == 0) {
 #    ifdef TEST_ENDTHREADEX
       GC_endthreadex(0);
-#    elif defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS)
-      GC_ExitThread(0);
-#    else
+#    elif defined(GC_PTHREADS)
       GC_pthread_exit(p_resumed);
+#    else
+      GC_ExitThread(0);
 #    endif
     }
   }
@@ -730,13 +737,21 @@ tiny_reverse_test(void *p_resumed)
   return 0;
 }
 
-#  if defined(GC_PTHREADS)
 static void
 fork_a_thread(void)
 {
+#  ifdef GC_PTHREADS
   pthread_t t;
   int err;
-#    ifdef GC_ENABLE_SUSPEND_THREAD
+#  else
+  HANDLE h;
+#    ifdef TEST_ENDTHREADEX
+  unsigned thread_id;
+#    else
+  DWORD thread_id;
+#    endif
+#  endif
+#  ifdef GC_ENABLE_SUSPEND_THREAD
   static volatile AO_t forked_cnt = 0;
   volatile AO_t *p_resumed = NULL;
 
@@ -745,15 +760,35 @@ fork_a_thread(void)
     CHECK_OUT_OF_MEMORY(p_resumed);
     AO_fetch_and_add1(&collectable_count);
   }
-#    else
-#      define p_resumed NULL
-#    endif
+#  else
+#    define p_resumed NULL
+#  endif
+#  ifdef GC_PTHREADS
   err = pthread_create(&t, NULL, tiny_reverse_test, (void *)p_resumed);
   if (err != 0) {
     GC_printf("Small thread creation failed %d\n", err);
     exit(69);
   }
-#    ifdef TEST_THREAD_SUSPENDED
+#  else
+#    ifdef TEST_ENDTHREADEX
+  h = (HANDLE)GC_beginthreadex(NULL /* `security` */, 0 /* `stack_size` */,
+                               tiny_reverse_test, NULL /* `arglist` */,
+                               0 /* `initflag` */, &thread_id);
+#    else
+  /*
+   * Note: the types of the arguments are specified explicitly to test
+   * the prototype.
+   */
+  h = CreateThread((SECURITY_ATTRIBUTES *)NULL, 0U, tiny_reverse_test, NULL,
+                   (DWORD)0, &thread_id);
+#    endif
+  if (h == (HANDLE)NULL) {
+    GC_printf("Small thread creation failed, errcode= %d\n",
+              (int)GetLastError());
+    exit(69);
+  }
+#  endif
+#  ifdef TEST_THREAD_SUSPENDED
   if (GC_is_thread_suspended(t))
     TEST_ASSERT(p_resumed != NULL);
   /* Note: might be already self-suspended. */
@@ -779,41 +814,14 @@ fork_a_thread(void)
   GC_collect_a_little();
   TEST_ASSERT(GC_is_thread_suspended(t));
   GC_resume_thread(t);
-#    endif
-  TEST_ASSERT(pthread_join(t, 0) == 0);
-}
-
-#  elif defined(GC_WIN32_THREADS)
-static void
-fork_a_thread(void)
-{
-  HANDLE h;
-#    ifdef TEST_ENDTHREADEX
-  unsigned thread_id;
-
-  h = (HANDLE)GC_beginthreadex(NULL /* `security` */, 0 /* `stack_size` */,
-                               tiny_reverse_test, NULL /* `arglist` */,
-                               0 /* `initflag` */, &thread_id);
-#    else
-  DWORD thread_id;
-
-  /*
-   * Note: the types of the arguments are specified explicitly to test
-   * the prototype.
-   */
-  h = CreateThread((SECURITY_ATTRIBUTES *)NULL, 0U, tiny_reverse_test, NULL,
-                   (DWORD)0, &thread_id);
-#    endif
-  if (h == (HANDLE)NULL) {
-    GC_printf("Small thread creation failed, errcode= %d\n",
-              (int)GetLastError());
-    exit(69);
-  }
-  TEST_ASSERT(WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0);
-}
 #  endif
-
-#endif
+#  ifdef GC_PTHREADS
+  TEST_ASSERT(pthread_join(t, 0) == 0);
+#  else
+  TEST_ASSERT(WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0);
+#  endif
+}
+#endif /* THREADS */
 
 static void
 test_generic_malloc_or_special(const void *p)
@@ -970,7 +978,7 @@ reverse_test_inner(void *data)
   check_ints(a_get(), 1, 49);
 #endif
   for (i = 0; i < 10 * (NTHREADS + 1); i++) {
-#if defined(GC_PTHREADS) || defined(GC_WIN32_THREADS)
+#ifdef THREADS
 #  if NTHREADS > 0
     if (i % 10 == 0)
       fork_a_thread();
@@ -2205,125 +2213,26 @@ enable_incremental_mode(void)
 #endif
 }
 
-#if defined(CPPCHECK)
-#  define UNTESTED(sym) GC_noop1((GC_word)(GC_funcptr_uint)(&sym))
-#endif
-
-#if defined(MSWINCE) && defined(UNDER_CE)
-#  define WINMAIN_LPTSTR LPWSTR
-#else
-#  define WINMAIN_LPTSTR LPSTR
-#endif
-
-#if !defined(GC_PTHREADS) && !defined(GC_WIN32_THREADS)
-
-#  if defined(_DEBUG) && (_MSC_VER >= 1900 /* VS 2015+ */)
+#if defined(_DEBUG) && (_MSC_VER >= 1900 /* VS 2015+ */) && !defined(THREADS)
 /*
  * Ensure that there is no system-malloc-allocated objects at normal exit
  * (i.e. no such memory leaked).
  */
-#    define CRTMEM_CHECK_INIT() \
-      (void)_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF)
-#    define CRTMEM_DUMP_LEAKS()                                 \
-      do {                                                      \
-        if (_CrtDumpMemoryLeaks()) {                            \
-          GC_printf("System-malloc-allocated memory leaked\n"); \
-          FAIL;                                                 \
-        }                                                       \
-      } while (0)
-#  else
-#    define CRTMEM_CHECK_INIT() (void)0
-#    define CRTMEM_DUMP_LEAKS() (void)0
-#  endif /* !_MSC_VER || !_DEBUG */
+#  define CRTMEM_CHECK_INIT() \
+    (void)_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF)
+#  define CRTMEM_DUMP_LEAKS()                                 \
+    do {                                                      \
+      if (_CrtDumpMemoryLeaks()) {                            \
+        GC_printf("System-malloc-allocated memory leaked\n"); \
+        FAIL;                                                 \
+      }                                                       \
+    } while (0)
+#else
+#  define CRTMEM_CHECK_INIT() (void)0
+#  define CRTMEM_DUMP_LEAKS() (void)0
+#endif
 
-#  if ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
-      && !defined(NO_WINMAIN_ENTRY)
-int APIENTRY
-WinMain(HINSTANCE instance, HINSTANCE prev, WINMAIN_LPTSTR cmd, int n)
-#  elif defined(RTEMS)
-#    include <bsp.h>
-#    define CONFIGURE_APPLICATION_NEEDS_CLOCK_DRIVER
-#    define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
-#    define CONFIGURE_RTEMS_INIT_TASKS_TABLE
-#    define CONFIGURE_MAXIMUM_TASKS 1
-#    define CONFIGURE_INIT
-#    define CONFIGURE_INIT_TASK_STACK_SIZE (64 * 1024)
-#    include <rtems/confdefs.h>
-rtems_task
-Init(rtems_task_argument ignored)
-#  else
-int
-main(void)
-#  endif
-{
-  CRTMEM_CHECK_INIT();
-#  if ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
-      && !defined(NO_WINMAIN_ENTRY)
-  UNUSED_ARG(instance);
-  UNUSED_ARG(prev);
-  UNUSED_ARG(cmd);
-  UNUSED_ARG(n);
-#    if defined(CPPCHECK)
-  GC_noop1((GC_word)(GC_funcptr_uint)(&WinMain));
-#    endif
-#  elif defined(RTEMS)
-  UNUSED_ARG(ignored);
-#    if defined(CPPCHECK)
-  GC_noop1((GC_word)(GC_funcptr_uint)(&Init));
-#    endif
-#  endif
-  n_tests = 0;
-  GC_COND_INIT();
-  GC_set_warn_proc(warn_proc);
-  enable_incremental_mode();
-  set_print_procs();
-  GC_start_incremental_collection();
-  run_one_test();
-#  if NTHREADS > 0
-  {
-    int i;
-    for (i = 0; i < NTHREADS; i++)
-      run_one_test();
-  }
-#  endif
-  run_single_threaded_test();
-  check_heap_stats();
-#  ifndef MSWINCE
-  fflush(stdout);
-#  endif
-#  if defined(CPPCHECK)
-  /* Entry points we should be testing, but are not. */
-  UNTESTED(GC_abort_on_oom);
-#    ifndef GC_NO_DEINIT
-  UNTESTED(GC_deinit);
-#    endif
-#  endif
-#  if !defined(GC_ANDROID_LOG) && !defined(KOS) && !defined(OS2) \
-      && !defined(MSWIN32) && !defined(MSWINCE)
-  GC_set_log_fd(2);
-#  endif
-#  if defined(ANY_MSWIN) && !defined(GC_NO_DEINIT)
-  GC_win32_free_heap();
-#  endif
-  CRTMEM_DUMP_LEAKS();
-#  ifdef RTEMS
-  exit(0);
-#  else
-  return 0;
-#  endif
-}
-#endif /* !GC_WIN32_THREADS && !GC_PTHREADS */
-
-#if defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS)
-
-static DWORD __stdcall thr_run_one_test(void *arg)
-{
-  UNUSED_ARG(arg);
-  run_one_test();
-  return 0;
-}
-
-#  ifdef MSWINCE
+#if defined(MSWINCE) && defined(THREADS) && !defined(GC_PTHREADS)
 HANDLE win_created_h;
 HWND win_handle;
 
@@ -2384,101 +2293,7 @@ static DWORD __stdcall thr_window(void *arg)
   }
   return 0;
 }
-#  endif
-
-#  if !defined(NO_WINMAIN_ENTRY)
-int APIENTRY
-WinMain(HINSTANCE instance, HINSTANCE prev, WINMAIN_LPTSTR cmd, int n)
-#  else
-int
-main(void)
-#  endif
-{
-#  if NTHREADS > 0
-  HANDLE h[NTHREADS];
-  int i;
-#  endif
-#  ifdef MSWINCE
-  HANDLE win_thr_h;
-#  endif
-  DWORD thread_id;
-
-#  if !defined(NO_WINMAIN_ENTRY)
-  UNUSED_ARG(instance);
-  UNUSED_ARG(prev);
-  UNUSED_ARG(cmd);
-  UNUSED_ARG(n);
-#    if defined(CPPCHECK)
-  GC_noop1((GC_word)(GC_funcptr_uint)(&WinMain));
-#    endif
-#  endif
-#  if defined(GC_DLL) && !defined(GC_NO_THREADS_DISCOVERY) \
-      && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC)
-  /* Test with implicit thread registration if possible. */
-  if (!GC_is_init_called()) {
-    GC_use_threads_discovery();
-    GC_printf("Using DllMain to track threads\n");
-  }
-#  endif
-  GC_COND_INIT();
-  enable_incremental_mode();
-  InitializeCriticalSection(&incr_cs);
-  GC_set_warn_proc(warn_proc);
-#  ifdef MSWINCE
-  win_created_h = CreateEvent(NULL, FALSE, FALSE, NULL);
-  if (win_created_h == (HANDLE)NULL) {
-    GC_printf("Event creation failed, errcode= %d\n", (int)GetLastError());
-    exit(69);
-  }
-  win_thr_h = CreateThread(NULL, 0, thr_window, 0, 0, &thread_id);
-  if (win_thr_h == (HANDLE)NULL) {
-    GC_printf("Thread creation failed, errcode= %d\n", (int)GetLastError());
-    exit(69);
-  }
-  TEST_ASSERT(WaitForSingleObject(win_created_h, INFINITE) == WAIT_OBJECT_0);
-  CloseHandle(win_created_h);
-#  endif
-  set_print_procs();
-#  if NTHREADS > 0
-  for (i = 0; i < NTHREADS; i++) {
-    h[i] = CreateThread(NULL, 0, thr_run_one_test, 0, 0, &thread_id);
-    if (h[i] == (HANDLE)NULL) {
-      GC_printf("Thread creation failed, errcode= %d\n", (int)GetLastError());
-      exit(69);
-    }
-  }
-#  else
-  GC_noop1((GC_word)(GC_funcptr_uint)(&thr_run_one_test));
-#  endif
-  run_one_test();
-#  if NTHREADS > 0
-  for (i = 0; i < NTHREADS; i++) {
-    TEST_ASSERT(WaitForSingleObject(h[i], INFINITE) == WAIT_OBJECT_0);
-  }
-#  endif /* NTHREADS > 0 */
-#  ifdef MSWINCE
-  PostMessage(win_handle, WM_CLOSE, 0, 0);
-  TEST_ASSERT(WaitForSingleObject(win_thr_h, INFINITE) == WAIT_OBJECT_0);
-#  endif
-  run_single_threaded_test();
-  check_heap_stats();
-  /* Just to check it works (for `main`). */
-  (void)GC_unregister_my_thread();
-  return 0;
-}
-
-#endif /* GC_WIN32_THREADS */
-
-#if defined(GC_PTHREADS)
-#  include <errno.h> /*< for `EAGAIN` */
-
-static void *
-thr_run_one_test(void *arg)
-{
-  UNUSED_ARG(arg);
-  run_one_test();
-  return 0;
-}
+#endif
 
 static void GC_CALLBACK
 describe_norm_type(void *p, char *out_buf)
@@ -2497,15 +2312,65 @@ has_static_roots(const char *dlpi_name, void *section_start,
   return 1;
 }
 
+#ifdef THREADS
+static THREAD_RET_TYPE_CALL_CONV
+thr_run_one_test(void *arg)
+{
+  UNUSED_ARG(arg);
+  run_one_test();
+  return 0;
+}
+#endif
+
+#if defined(CPPCHECK)
+#  define UNTESTED(sym) GC_noop1((GC_word)(GC_funcptr_uint)(&sym))
+#endif
+
+#if defined(MSWINCE) && defined(UNDER_CE)
+#  define WINMAIN_LPTSTR LPWSTR
+#else
+#  define WINMAIN_LPTSTR LPSTR
+#endif
+
+#ifdef RTEMS
+#  include <bsp.h>
+#  define CONFIGURE_APPLICATION_NEEDS_CLOCK_DRIVER
+#  define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
+#  define CONFIGURE_RTEMS_INIT_TASKS_TABLE
+#  define CONFIGURE_MAXIMUM_TASKS 1
+#  define CONFIGURE_INIT
+#  define CONFIGURE_INIT_TASK_STACK_SIZE (64 * 1024)
+#  include <rtems/confdefs.h>
+rtems_task
+Init(rtems_task_argument ignored)
+#elif ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
+    && !defined(NO_WINMAIN_ENTRY)
+int APIENTRY
+WinMain(HINSTANCE instance, HINSTANCE prev, WINMAIN_LPTSTR cmd, int n)
+#else
 int
 main(void)
+#endif
 {
+#ifdef THREADS
 #  if NTHREADS > 0
+  int nthreads;
+#    ifdef GC_PTHREADS
   pthread_t th[NTHREADS];
-  int i, nthreads;
+#    else
+  HANDLE h[NTHREADS];
+#    endif
 #  endif
+#  ifdef GC_PTHREADS
   pthread_attr_t attr;
-#  ifdef IRIX5
+#  else
+  DWORD thread_id;
+#  endif
+#endif
+#if defined(MSWINCE) && defined(GC_WIN32_THREADS)
+  HANDLE win_thr_h;
+#endif
+#ifdef IRIX5
   int local_var = 0;
 
   /*
@@ -2513,7 +2378,24 @@ main(void)
    * always grow later.  Require 1 MB.
    */
   *((volatile char *)&local_var - 1024 * 1024) = 0;
+#endif
+#ifdef RTEMS
+  UNUSED_ARG(ignored);
+#  if defined(CPPCHECK)
+  GC_noop1((GC_word)(GC_funcptr_uint)(&Init));
 #  endif
+#elif ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
+    && !defined(NO_WINMAIN_ENTRY)
+  UNUSED_ARG(instance);
+  UNUSED_ARG(prev);
+  UNUSED_ARG(cmd);
+  UNUSED_ARG(n);
+#  ifdef CPPCHECK
+  GC_noop1((GC_word)(GC_funcptr_uint)(&WinMain));
+#  endif
+#endif
+  CRTMEM_CHECK_INIT();
+#ifdef GC_PTHREADS
 #  ifdef HPUX
   /*
    * Default stack size is too small, especially with the 64-bit ABI.
@@ -2527,43 +2409,57 @@ main(void)
   pthread_win32_process_attach_np();
   pthread_win32_thread_attach_np();
 #  endif
+#endif
   if (!GC_is_init_called()) {
     /*
      * No-op.  Ensure the collector is not initialized implicitly,
      * e.g. when `malloc` redirection is on.
      */
     GC_clear_exclusion_table();
-#  if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY) \
-      && !defined(DARWIN_DONT_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
-    /* Test with the Darwin implicit thread registration. */
+#if defined(THREADS) && !defined(GC_NO_THREADS_DISCOVERY)    \
+    && !defined(THREAD_LOCAL_ALLOC)                          \
+    && (defined(DARWIN) && !defined(DARWIN_DONT_PARSE_STACK) \
+        || (defined(GC_WIN32_THREADS) && defined(GC_DLL)     \
+            && !defined(MSWINCE)))
+    /* Test with implicit thread registration if possible. */
     GC_use_threads_discovery();
+#  ifdef DARWIN
     GC_printf("Using Darwin task-threads-based world stop and push\n");
+#  else
+    GC_printf("Using DllMain to track threads\n");
 #  endif
+#endif
   }
+#ifdef THREADS
   GC_set_markers_count(0);
 #  ifdef TEST_REUSE_SIG_SUSPEND
   GC_set_suspend_signal(GC_get_thr_restart_signal());
 #  else
   GC_set_suspend_signal(GC_get_suspend_signal());
 #  endif
+#endif
   GC_set_pointer_mask(GC_get_pointer_mask());
   GC_set_pointer_shift(GC_get_pointer_shift());
   GC_COND_INIT();
 
+#ifdef GC_PTHREADS
   TEST_ASSERT(pthread_attr_init(&attr) == 0);
 #  if defined(AIX) || defined(DARWIN) || defined(FREEBSD) || defined(IRIX5) \
       || defined(OPENBSD)
   TEST_ASSERT(pthread_attr_setstacksize(&attr, 1000 * 1024) == 0);
 #  endif
-  n_tests = 0;
+#endif
   enable_incremental_mode();
   GC_set_min_bytes_allocd(1);
   TEST_ASSERT(GC_get_min_bytes_allocd() == 1);
   GC_set_rate(10);
   GC_set_max_prior_attempts(GC_get_max_prior_attempts());
   TEST_ASSERT(GC_get_rate() == 10);
+#if defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS)
+  InitializeCriticalSection(&incr_cs);
+#endif
   GC_set_warn_proc(warn_proc);
-#  ifndef VERY_SMALL_CONFIG
+#if !defined(VERY_SMALL_CONFIG) && defined(GC_PTHREADS)
   {
     int err = pthread_key_create(&fl_key, 0);
 
@@ -2572,7 +2468,21 @@ main(void)
       exit(69);
     }
   }
-#  endif
+#endif
+#if defined(MSWINCE) && defined(GC_WIN32_THREADS)
+  win_created_h = CreateEvent(NULL, FALSE, FALSE, NULL);
+  if (win_created_h == (HANDLE)NULL) {
+    GC_printf("Event creation failed, errcode= %d\n", (int)GetLastError());
+    exit(69);
+  }
+  win_thr_h = CreateThread(NULL, 0, thr_window, 0, 0, &thread_id);
+  if (win_thr_h == (HANDLE)NULL) {
+    GC_printf("Thread creation failed, errcode= %d\n", (int)GetLastError());
+    exit(69);
+  }
+  TEST_ASSERT(WaitForSingleObject(win_created_h, INFINITE) == WAIT_OBJECT_0);
+  CloseHandle(win_created_h);
+#endif
   set_print_procs();
 
   /* Minimal testing of some API functions. */
@@ -2580,40 +2490,72 @@ main(void)
                           (char *)&atomic_count + sizeof(atomic_count));
   GC_register_has_static_roots_callback(has_static_roots);
   GC_register_describe_type_fn(GC_I_NORMAL, describe_norm_type);
-#  ifdef GC_GCJ_SUPPORT
+#ifdef GC_GCJ_SUPPORT
   (void)GC_new_proc(fake_gcj_mark_proc);
-#  endif
+#endif
 
   GC_start_incremental_collection();
-#  if NTHREADS > 0
-  for (i = 0; i < NTHREADS; ++i) {
-    int err = pthread_create(th + i, &attr, thr_run_one_test, 0);
+#if NTHREADS > 0
+  {
+    int i;
+    for (i = 0; i < NTHREADS; i++) {
+#  ifndef THREADS
+      run_one_test();
+#  elif defined(GC_PTHREADS)
+      int err = pthread_create(th + i, &attr, thr_run_one_test, 0);
 
-    if (err != 0) {
-      GC_printf("Thread #%d creation failed, errno= %d\n", i, err);
-      if (i > 0 && EAGAIN == err) {
-        /* Resource is temporarily unavailable. */
-        break;
+      if (err != 0) {
+        GC_printf("Thread #%d creation failed, errno= %d\n", i, err);
+        if (i > 0 && EAGAIN == err) {
+          /* Resource is temporarily unavailable. */
+          break;
+        }
+        exit(69);
       }
-      exit(69);
-    }
-  }
-  nthreads = i;
-  for (; i <= NTHREADS; i++)
-    run_one_test();
-  for (i = 0; i < nthreads; ++i) {
-    TEST_ASSERT(pthread_join(th[i], 0) == 0);
-  }
 #  else
+      h[i] = CreateThread(NULL, 0, thr_run_one_test, 0, 0, &thread_id);
+      if (h[i] == (HANDLE)NULL) {
+        GC_printf("Thread creation failed, errcode= %d\n",
+                  (int)GetLastError());
+        exit(69);
+      }
+#  endif
+    }
+#  ifdef THREADS
+    nthreads = i;
+#  endif
+    for (; i <= NTHREADS; i++)
+      run_one_test();
+#  ifdef THREADS
+    for (i = 0; i < nthreads; i++) {
+#    ifdef GC_PTHREADS
+      TEST_ASSERT(pthread_join(th[i], 0) == 0);
+#    else
+      TEST_ASSERT(WaitForSingleObject(h[i], INFINITE) == WAIT_OBJECT_0);
+#    endif
+    }
+#  endif
+  }
+#elif defined(THREADS)
   (void)thr_run_one_test(NULL);
-#  endif
+#else
+  run_one_test();
+#endif
+#if defined(MSWINCE) && defined(GC_WIN32_THREADS)
+  PostMessage(win_handle, WM_CLOSE, 0, 0);
+  TEST_ASSERT(WaitForSingleObject(win_thr_h, INFINITE) == WAIT_OBJECT_0);
+#endif
   run_single_threaded_test();
-#  ifdef TRACE_BUF
+#ifdef TRACE_BUF
   GC_print_trace(0);
-#  endif
+#endif
   check_heap_stats();
+#ifndef MSWINCE
   (void)fflush(stdout);
+#endif
+#ifdef GC_PTHREADS
   (void)pthread_attr_destroy(&attr);
+#endif
 
   /* Dummy checking of various getters and setters. */
   (void)GC_get_bytes_since_gc();
@@ -2640,33 +2582,42 @@ main(void)
   GC_set_on_heap_resize(GC_get_on_heap_resize());
   GC_set_on_mark_stack_empty(GC_get_on_mark_stack_empty());
   GC_set_on_os_get_mem(GC_get_on_os_get_mem());
-  GC_set_on_thread_event(GC_get_on_thread_event());
   GC_set_oom_fn(GC_get_oom_fn());
   GC_set_push_other_roots(GC_get_push_other_roots());
   GC_set_same_obj_print_proc(GC_get_same_obj_print_proc());
-  GC_set_sp_corrector(GC_get_sp_corrector());
   GC_set_start_callback(GC_get_start_callback());
   GC_set_stop_func(GC_get_stop_func());
-  GC_set_thr_restart_signal(GC_get_thr_restart_signal());
   GC_set_time_limit(GC_get_time_limit());
   GC_set_abort_func(GC_get_abort_func());
-#  ifndef NO_CLOCK
+#ifdef THREADS
+  GC_set_on_thread_event(GC_get_on_thread_event());
+  GC_set_sp_corrector(GC_get_sp_corrector());
+  GC_set_thr_restart_signal(GC_get_thr_restart_signal());
+#endif
+#ifndef NO_CLOCK
   GC_set_time_limit_tv(GC_get_time_limit_tv());
-#  endif
-#  ifndef GC_NO_FINALIZATION
+#endif
+#ifndef GC_NO_FINALIZATION
   GC_set_await_finalize_proc(GC_get_await_finalize_proc());
   GC_set_interrupt_finalizers(GC_get_interrupt_finalizers());
-#    ifndef GC_TOGGLE_REFS_NOT_NEEDED
+#  ifndef GC_TOGGLE_REFS_NOT_NEEDED
   GC_set_toggleref_func(GC_get_toggleref_func());
-#    endif
 #  endif
-#  if defined(CPPCHECK)
-#    ifdef AO_HAVE_nop
+#endif
+#ifdef CPPCHECK
+#  ifdef AO_HAVE_nop
   AO_nop();
-#    endif
+#  endif
+  UNTESTED(GC_abort_on_oom);
+#  ifndef GC_NO_DEINIT
+  UNTESTED(GC_deinit);
+#  endif
+#  ifdef THREADS
   UNTESTED(GC_register_altstack);
 #  endif
+#endif
 
+#ifdef GC_PTHREADS
 #  if !defined(GC_NO_DLOPEN) && !defined(DARWIN) && !defined(GC_WIN32_THREADS)
   {
     void *h = GC_dlopen("libc.so", 0 /* some value (maybe invalid) */);
@@ -2682,19 +2633,34 @@ main(void)
     TEST_ASSERT(GC_pthread_sigmask(SIG_BLOCK, &blocked, NULL) == 0);
   }
 #  endif
+#endif
+#ifdef THREADS
   GC_stop_world_external();
   GC_start_world_external();
-#  if !defined(GC_NO_FINALIZATION) && !defined(JAVA_FINALIZATION_NOT_NEEDED)
+#endif
+#if !defined(GC_NO_FINALIZATION) && !defined(JAVA_FINALIZATION_NOT_NEEDED)
   GC_finalize_all();
-#  endif
+#endif
   GC_clear_roots();
+#if !defined(GC_ANDROID_LOG) && !defined(KOS) && !defined(OS2) \
+    && !defined(MSWIN32) && !defined(MSWINCE)
+  GC_set_log_fd(2);
+#endif
 
-#  ifdef PTW32_STATIC_LIB
+#if defined(ANY_MSWIN) && !defined(GC_NO_DEINIT) && !defined(THREADS)
+  GC_win32_free_heap();
+#endif
+  CRTMEM_DUMP_LEAKS();
+#if defined(PTW32_STATIC_LIB) && defined(GC_PTHREADS)
   pthread_win32_thread_detach_np();
   pthread_win32_process_detach_np();
-#  else
+#elif defined(THREADS)
+  /* Just to check it works (for `main`). */
   (void)GC_unregister_my_thread();
-#  endif
+#endif
+#ifdef RTEMS
+  exit(0);
+#else
   return 0;
+#endif
 }
-#endif /* GC_PTHREADS */
