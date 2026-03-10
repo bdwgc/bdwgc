@@ -2312,6 +2312,21 @@ has_static_roots(const char *dlpi_name, void *section_start,
   return 1;
 }
 
+static GC_stop_func default_stop_func;
+static GC_word stop_func_last_gc;
+
+static int GC_CALLBACK
+test_stop_func(void)
+{
+  GC_word gc_no = GC_get_gc_no();
+
+  if (gc_no % 123 == 0 && stop_func_last_gc != gc_no) {
+    stop_func_last_gc = gc_no;
+    return 1;
+  }
+  return default_stop_func();
+}
+
 #ifdef THREADS
 static THREAD_RET_TYPE_CALL_CONV
 thr_run_one_test(void *arg)
@@ -2495,6 +2510,8 @@ main(void)
 #endif
 
   GC_start_incremental_collection();
+  default_stop_func = GC_get_stop_func();
+  GC_set_stop_func(test_stop_func);
 #if NTHREADS > 0
   {
     int i;
@@ -2586,7 +2603,6 @@ main(void)
   GC_set_push_other_roots(GC_get_push_other_roots());
   GC_set_same_obj_print_proc(GC_get_same_obj_print_proc());
   GC_set_start_callback(GC_get_start_callback());
-  GC_set_stop_func(GC_get_stop_func());
   GC_set_time_limit(GC_get_time_limit());
   GC_set_abort_func(GC_get_abort_func());
 #ifdef THREADS
