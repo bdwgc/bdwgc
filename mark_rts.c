@@ -689,7 +689,7 @@ GC_push_all_stack_sections(ptr_t lo /* top */, ptr_t hi /* bottom */,
  * callee-save registers are not missed.  Treats all interior pointers
  * as valid and scans part of the area immediately, to make sure that
  * saved register values are not lost.  `cold_gc_frame` delimits the
- * stack section that must be scanned eagerly.  A zero value indicates
+ * stack section that must be scanned eagerly; a `NULL` value indicates
  * that no eager scanning is needed.  We do not need to worry about
  * the manual VDB case here, since this is only called in the
  * single-threaded case.  We assume that we cannot collect between
@@ -849,6 +849,71 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
 #  endif
 }
 
+struct custom_push_data {
+  GC_custom_push_proc push_all;
+  void *cd;
+  const struct GC_stack_base *sb;
+};
+
+#  if defined(IA64) && defined(THREADS)
+GC_INNER __thread ptr_t GC_save_regs_ret_val = NULL;
+#  endif
+
+static void
+custom_push_current_stack(ptr_t arg, void *context)
+{
+  ptr_t lo = GC_approx_sp();
+  const struct custom_push_data *pdata = (const struct custom_push_data *)arg;
+  const struct GC_stack_base *sb = pdata->sb;
+  ptr_t hi = (ptr_t)sb->mem_base;
+
+  UNUSED_ARG(context);
+  /* TODO: Handle `GC_all_interior_pointers`. */
+
+  GC_ASSERT((ADDR(lo) & (ALIGNMENT - 1)) == 0);
+  /* TODO: `hi` should be already aligned too. */
+#  ifdef STACK_GROWS_UP
+  pdata->push_all((void **)PTR_ALIGN_UP(hi, ALIGNMENT), (void **)lo, pdata->cd,
+                  GC_CUSTOM_PUSH_HINT_EAGER);
+#  else
+  pdata->push_all((void **)lo, (void **)PTR_ALIGN_DOWN(hi, ALIGNMENT),
+                  pdata->cd, GC_CUSTOM_PUSH_HINT_EAGER);
+#  endif
+
+#  ifdef IA64
+  {
+    void *bs_lo = sb->reg_base;
+    ptr_t bsp = GC_save_regs_ret_val;
+
+    GC_ASSERT(bs_lo != NULL && (ADDR(bs_lo) & (ALIGNMENT - 1)) == 0);
+    GC_ASSERT(ADDR_GE(bsp, bs_lo) && (ADDR(bsp) & (ALIGNMENT - 1)) == 0);
+    pdata->push_all((void **)bs_lo, (void **)bsp, pdata->cd,
+                    GC_CUSTOM_PUSH_HINT_EAGER);
+  }
+#  elif defined(E2K)
+  {
+    ptr_t bs_lo;
+    size_t stack_size;
+
+    {
+      /* TODO: Support real `ps_ofs` here. */
+#    ifdef CPPCHECK
+      size_t ps_ofs = 0;
+#    else
+#      define ps_ofs 0
+#    endif
+
+      GET_PROCEDURE_STACK_LOCAL(ps_ofs, &bs_lo, &stack_size);
+#    undef ps_ofs
+    }
+    GC_ASSERT(bs_lo != NULL && (ADDR(bs_lo) & (ALIGNMENT - 1)) == 0);
+    GC_ASSERT((stack_size & (ALIGNMENT - 1)) == 0);
+    pdata->push_all((void **)bs_lo, (void **)(bs_lo + stack_size), pdata->cd,
+                    GC_CUSTOM_PUSH_HINT_EAGER);
+  }
+#  endif
+}
+
 STATIC void
 GC_push_regs_and_stack(ptr_t cold_gc_frame)
 {
@@ -863,6 +928,27 @@ GC_push_regs_and_stack(ptr_t cold_gc_frame)
 }
 
 #endif /* !STACK_NOT_SCANNED */
+
+GC_API void GC_CALL
+GC_custom_push_regs_and_stack(GC_custom_push_proc fn, void *client_data,
+                              const struct GC_stack_base *sb,
+                              void *cold_gc_frame)
+{
+#ifndef STACK_NOT_SCANNED
+  struct custom_push_data data;
+
+  GC_ASSERT(sb->mem_base != NULL);
+  data.push_all = fn;
+  data.cd = client_data;
+  data.sb = sb;
+  GC_with_callee_saves_pushed(custom_push_current_stack, (ptr_t)(&data));
+#else
+  UNUSED_ARG(fn);
+  UNUSED_ARG(client_data);
+  UNUSED_ARG(sb);
+#endif
+  UNUSED_ARG(cold_gc_frame);
+}
 
 GC_INNER void (*GC_push_typed_structures)(void) = 0;
 

@@ -4118,6 +4118,10 @@ GC_EXTERN GC_bool GC_win32_dll_threads;
 GC_EXTERN GC_bool GC_dont_query_stack_min;
 #  endif
 
+#  if defined(IA64) && !defined(STACK_NOT_SCANNED)
+/* Used by `custom_push_current_stack()` in the multi-threaded case only. */
+GC_EXTERN __thread ptr_t GC_save_regs_ret_val;
+#  endif
 #endif /* THREADS */
 
 #ifdef THREAD_LOCAL_ALLOC

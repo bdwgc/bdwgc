@@ -525,6 +525,28 @@ typedef struct GC_ms_entry *(GC_CALLBACK *GC_on_mark_stack_empty_proc)(
 GC_API void GC_CALL GC_set_on_mark_stack_empty(GC_on_mark_stack_empty_proc);
 GC_API GC_on_mark_stack_empty_proc GC_CALL GC_get_on_mark_stack_empty(void);
 
+/**
+ * A client-supplied "push" procedure invoked by
+ * `GC_custom_push_regs_and_stack()` for each stack and registers storage
+ * region for the current thread.  `bottom` and `top` pointers are guaranteed
+ * to be properly aligned.
+ */
+typedef void(GC_CALLBACK *GC_custom_push_proc)(void ** /* `bottom` */,
+                                               void ** /* `top` */,
+                                               void * /* `client_data` */,
+                                               unsigned hint);
+#define GC_CUSTOM_PUSH_HINT_EAGER 1U
+
+/**
+ * Push registers and the stack of the current thread using a client-supplied
+ * procedure.  The correct stack base should be provided in `sb`.  Does not
+ * require the collector initialization; does not acquire the allocator lock.
+ */
+GC_API void GC_CALL GC_custom_push_regs_and_stack(
+    GC_custom_push_proc, void * /* `client_data` */,
+    const struct GC_stack_base * /* `sb` */, void * /* `cold_gc_frame` */)
+    GC_ATTR_NONNULL(1) GC_ATTR_NONNULL(3);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

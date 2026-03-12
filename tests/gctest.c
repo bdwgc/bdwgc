@@ -2327,6 +2327,38 @@ test_stop_func(void)
   return default_stop_func();
 }
 
+#ifndef STACK_NOT_SCANNED
+static unsigned custom_push_cnt = 0;
+
+static void GC_CALLBACK
+test_custom_push(void **bottom, void **top, void *client_data, unsigned hint)
+{
+  TEST_ASSERT(ADDR(bottom) % ALIGNMENT == 0);
+  TEST_ASSERT(ADDR(top) % ALIGNMENT == 0);
+  TEST_ASSERT(ADDR_GE((char *)top, (char *)bottom));
+  TEST_ASSERT(&A == client_data);
+  UNUSED_ARG(hint);
+  custom_push_cnt++;
+#  if defined(CPPCHECK)
+  GC_noop1_ptr(client_data);
+#  endif
+}
+
+static void *GC_CALLBACK
+test_stack_base_cb(struct GC_stack_base *sb, void *arg)
+{
+  void *p = NULL;
+
+#  if defined(CPPCHECK)
+  GC_noop1_ptr(p);
+  GC_noop1_ptr(sb);
+#  endif
+  GC_custom_push_regs_and_stack(test_custom_push, arg, sb, NULL);
+  GC_reachable_here(p);
+  return arg;
+}
+#endif
+
 #ifdef THREADS
 static THREAD_RET_TYPE_CALL_CONV
 thr_run_one_test(void *arg)
@@ -2410,6 +2442,11 @@ main(void)
 #  endif
 #endif
   CRTMEM_CHECK_INIT();
+#ifndef STACK_NOT_SCANNED
+  (void)GC_call_with_stack_base(test_stack_base_cb,
+                                (/* no volatile */ void *)&A);
+  TEST_ASSERT(custom_push_cnt != 0);
+#endif
 #ifdef GC_PTHREADS
 #  ifdef HPUX
   /*
