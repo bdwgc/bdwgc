@@ -45,6 +45,7 @@ test_large_bitmap(void)
   GC_descr d;
   size_t bm_sz = ((large_size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+  void **p;
 
   CHECK_OUT_OF_MEMORY(bm);
   memset(bm, 0, bm_sz);
@@ -66,8 +67,8 @@ test_large_bitmap(void)
   TEST_ASSERT(d != 0);
   TEST_ASSERT((d & GC_DS_TAGS) == GC_DS_PROC
               || (d & GC_DS_TAGS) == GC_DS_LENGTH);
-  TEST_ASSERT(GC_MALLOC_EXPLICITLY_TYPED(large_size * sizeof(void *), d)
-              != NULL);
+  p = (void **)GC_MALLOC_EXPLICITLY_TYPED(large_size * sizeof(void *), d);
+  TEST_ASSERT(p != NULL);
 }
 
 /* Test a very large bitmap. */
@@ -80,6 +81,8 @@ test_very_large_bitmap(void)
   size_t bm_sz
       = ((very_large_size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+  void **p;
+
   CHECK_OUT_OF_MEMORY(bm);
   memset(bm, 0, bm_sz);
 
@@ -90,9 +93,9 @@ test_very_large_bitmap(void)
   d = GC_make_descriptor(bm, very_large_size);
   TEST_ASSERT(d != 0);
 
-  TEST_ASSERT(GC_MALLOC_EXPLICITLY_TYPED_IGNORE_OFF_PAGE(
-                  very_large_size * sizeof(void *), d)
-              != NULL);
+  p = (void **)GC_MALLOC_EXPLICITLY_TYPED_IGNORE_OFF_PAGE(
+      very_large_size * sizeof(void *), d);
+  TEST_ASSERT(p != NULL);
 }
 
 /* Test an edge case having bitmap with all bits set. */
@@ -104,6 +107,8 @@ test_all_bits_set(void)
   GC_descr d;
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(
       ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word));
+  void **p;
+
   CHECK_OUT_OF_MEMORY(bm);
 
   /* Set all bits. */
@@ -114,7 +119,8 @@ test_all_bits_set(void)
   d = GC_make_descriptor(bm, size);
   TEST_ASSERT(d != 0);
 
-  TEST_ASSERT(GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d) != NULL);
+  p = (void **)GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d);
+  TEST_ASSERT(p != NULL);
 }
 
 /* Test edge case having a bitmap with only last bit set. */
@@ -125,6 +131,8 @@ test_last_bit_set(void)
   GC_descr d;
   size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+  void **p;
+
   CHECK_OUT_OF_MEMORY(bm);
   memset(bm, 0, bm_sz);
 
@@ -132,7 +140,8 @@ test_last_bit_set(void)
   d = GC_make_descriptor(bm, size);
   TEST_ASSERT(d != 0);
 
-  TEST_ASSERT(GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d) != NULL);
+  p = (void **)GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d);
+  TEST_ASSERT(p != NULL);
 }
 
 /* Test multiple descriptors to check the extended descriptor array growth. */
@@ -143,12 +152,13 @@ test_multiple_descriptors(void)
   const size_t size = 3000; /*< large enough */
   size_t i;
   GC_descr descriptors[10];
-  void *objects[10];
+  void **objects[10];
 
   for (i = 0; i < num_descriptors; i++) {
     size_t j;
     size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
     GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+
     CHECK_OUT_OF_MEMORY(bm);
     memset(bm, 0, bm_sz);
 
@@ -161,8 +171,8 @@ test_multiple_descriptors(void)
     TEST_ASSERT((descriptors[i] & GC_DS_TAGS) == GC_DS_PROC
                 || (descriptors[i] & GC_DS_TAGS) == GC_DS_LENGTH);
 
-    objects[i]
-        = GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), descriptors[i]);
+    objects[i] = (void **)GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *),
+                                                     descriptors[i]);
     TEST_ASSERT(objects[i] != NULL);
   }
 }
@@ -177,6 +187,8 @@ test_typed_array_allocation(void)
   size_t bm_sz
       = ((element_size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+  void **p;
+
   CHECK_OUT_OF_MEMORY(bm);
   memset(bm, 0, bm_sz);
 
@@ -192,9 +204,9 @@ test_typed_array_allocation(void)
   d = GC_make_descriptor(bm, element_size);
   TEST_ASSERT(d != 0);
 
-  TEST_ASSERT(
-      GC_CALLOC_EXPLICITLY_TYPED(nelements, element_size * sizeof(void *), d)
-      != NULL);
+  p = (void **)GC_CALLOC_EXPLICITLY_TYPED(nelements,
+                                          element_size * sizeof(void *), d);
+  TEST_ASSERT(p != NULL);
 }
 
 /* Test the scenario of memory growth and reallocation. */
@@ -204,10 +216,11 @@ test_memory_growth(void)
   const size_t initial_size = 2000; /*< large enough */
   const size_t growth_factor = 50;
   size_t i;
-  void **objects;
+  void ***objects;
   GC_descr *descriptors = (GC_descr *)GC_MALLOC(sizeof(GC_descr) * 50);
+
   CHECK_OUT_OF_MEMORY(descriptors);
-  objects = (void **)GC_MALLOC(sizeof(void *) * 50);
+  objects = (void ***)GC_MALLOC(sizeof(void *) * 50);
   CHECK_OUT_OF_MEMORY(objects);
 
   /* Create progressively larger descriptors. */
@@ -216,6 +229,7 @@ test_memory_growth(void)
     size_t j;
     size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
     GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+
     CHECK_OUT_OF_MEMORY(bm);
     memset(bm, 0, bm_sz);
 
@@ -225,8 +239,8 @@ test_memory_growth(void)
 
     descriptors[i] = GC_make_descriptor(bm, size);
     TEST_ASSERT(descriptors[i] != 0);
-    objects[i]
-        = GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), descriptors[i]);
+    objects[i] = (void **)GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *),
+                                                     descriptors[i]);
     TEST_ASSERT(objects[i] != NULL);
   }
 }
@@ -255,10 +269,11 @@ test_gc_collection(void)
 {
   const size_t size = 4000; /*< large enough */
   GC_descr d;
-  void *obj1, *obj2;
+  void **obj1, **obj2;
   void *ptr1, *ptr2;
   size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
+
   CHECK_OUT_OF_MEMORY(bm);
   memset(bm, 0, bm_sz);
 
@@ -272,9 +287,9 @@ test_gc_collection(void)
   d = GC_make_descriptor(bm, size);
   TEST_ASSERT(d != 0);
 
-  obj1 = GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d);
+  obj1 = (void **)GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d);
   TEST_ASSERT(obj1 != NULL);
-  obj2 = GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d);
+  obj2 = (void **)GC_MALLOC_EXPLICITLY_TYPED(size * sizeof(void *), d);
   TEST_ASSERT(obj2 != NULL);
 
   /* Allocate some pointed-to objects. */
@@ -284,10 +299,10 @@ test_gc_collection(void)
   TEST_ASSERT(ptr2 != NULL);
 
   /* Set some pointers in the typed objects. */
-  ((void **)obj1)[0] = ptr1;
-  ((void **)obj1)[100] = ptr2;
-  ((void **)obj2)[200] = ptr1;
-  ((void **)obj2)[3999] = ptr2;
+  obj1[0] = ptr1;
+  obj1[100] = ptr2;
+  obj2[200] = ptr1;
+  obj2[3999] = ptr2;
 
   GC_gcollect();
 
@@ -296,8 +311,8 @@ test_gc_collection(void)
   TEST_ASSERT(GC_is_heap_ptr(ptr2));
 
 #  ifdef CPPCHECK
-  GC_noop1_ptr(((void **)obj1)[100]);
-  GC_noop1_ptr(((void **)obj2)[3999]);
+  GC_noop1_ptr(obj1[100]);
+  GC_noop1_ptr(obj2[3999]);
 #  endif
 }
 
