@@ -150,7 +150,7 @@ GC_API void GC_CALL
 GC_set_disable_automatic_collection(int value)
 {
   LOCK();
-  GC_disable_automatic_collection = (GC_bool)value;
+  GC_disable_automatic_collection = value != 0;
   UNLOCK();
 }
 
