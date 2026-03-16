@@ -920,7 +920,7 @@ static GC_bool manual_vdb_allowed = FALSE;
 GC_API void GC_CALL
 GC_set_manual_vdb_allowed(int value)
 {
-  manual_vdb_allowed = (GC_bool)value;
+  manual_vdb_allowed = value != 0;
 }
 
 GC_API int GC_CALL
@@ -2419,8 +2419,8 @@ GC_new_kind_inner(void **fl, GC_word descr, int adjust, int clear)
     GC_obj_kinds[result].ok_freelist = fl;
     GC_obj_kinds[result].ok_reclaim_list = 0;
     GC_obj_kinds[result].ok_descriptor = descr;
-    GC_obj_kinds[result].ok_relocate_descr = (GC_bool)adjust;
-    GC_obj_kinds[result].ok_init = (GC_bool)clear;
+    GC_obj_kinds[result].ok_relocate_descr = adjust != 0;
+    GC_obj_kinds[result].ok_init = clear != 0;
 #ifdef ENABLE_DISCLAIM
     GC_obj_kinds[result].ok_mark_unconditionally = FALSE;
     GC_obj_kinds[result].ok_disclaim_proc = 0;
@@ -3020,7 +3020,7 @@ GC_get_time_limit(void)
 GC_API void GC_CALL
 GC_set_force_unmap_on_gcollect(int value)
 {
-  GC_force_unmap_on_gcollect = (GC_bool)value;
+  GC_force_unmap_on_gcollect = value != 0;
 }
 
 GC_API int GC_CALL

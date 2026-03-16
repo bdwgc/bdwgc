@@ -1141,7 +1141,7 @@ GC_find_limit(void *p, int up)
 #  else
   bound = up ? MAKE_CPTR(GC_WORD_MAX) : NULL;
 #  endif
-  return GC_find_limit_with_bound((ptr_t)p, (GC_bool)up, bound);
+  return GC_find_limit_with_bound((ptr_t)p, up != 0, bound);
 }
 #endif /* NEED_FIND_LIMIT || USE_PROC_FOR_LIBRARIES */
 
@@ -5488,7 +5488,7 @@ GC_set_pages_executable(int value)
    * Even if `IGNORE_PAGES_EXECUTABLE` macro is defined,
    * `GC_pages_executable` is touched here to prevent a compiler warning.
    */
-  GC_pages_executable = (GC_bool)(value != 0);
+  GC_pages_executable = value != 0;
 }
 
 GC_API int GC_CALL

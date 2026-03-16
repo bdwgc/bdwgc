@@ -111,7 +111,7 @@ GC_register_disclaim_proc(int kind, GC_disclaim_proc proc,
 {
   LOCK();
   GC_register_disclaim_proc_inner((unsigned)kind, proc,
-                                  (GC_bool)mark_unconditionally);
+                                  mark_unconditionally != 0);
   UNLOCK();
 }
 
