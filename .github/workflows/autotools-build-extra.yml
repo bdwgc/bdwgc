@@ -186,10 +186,10 @@ jobs:
           c_compiler: gcc
         - os: macos-latest
           conf_options: --disable-throw-bad-alloc-library --enable-cplusplus --enable-gc-assertions --enable-handle-fork=manual
-          cflags_extra: -D DBG_HDRS_ALL -D LINT2 -D PRINT_AND_CHECK_INT_LIST -D SHORT_DBG_HDRS -D USE_GETSECTBYNAME -Wno-deprecated-declarations
+          cflags_extra: -D DBG_HDRS_ALL -D LINT2 -D PRINT_AND_CHECK_INT_LIST -D SHORT_DBG_HDRS -D TEST_MPROTECT_VDB_DISALLOWED -D USE_GETSECTBYNAME -Wno-deprecated-declarations
         - os: ubuntu-latest
           conf_options: --disable-throw-bad-alloc-library --enable-cplusplus --enable-gc-assertions --with-libatomic-ops=yes
-          cflags_extra: -D GC_DISABLE_SNPRINTF -D TEST_PAGES_EXECUTABLE -D _FORTIFY_SOURCE=2
+          cflags_extra: -D GC_DISABLE_SNPRINTF -D TEST_MPROTECT_VDB_DISALLOWED -D TEST_PAGES_EXECUTABLE -D _FORTIFY_SOURCE=2
           c_compiler: gcc
           install_libatomic_ops: true
         - os: macos-latest
