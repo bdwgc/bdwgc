@@ -1192,6 +1192,19 @@ GC_API void GC_CALL GC_enable(void);
 GC_API void GC_CALL GC_set_manual_vdb_allowed(int);
 GC_API int GC_CALL GC_get_manual_vdb_allowed(void);
 
+/**
+ * Select whether to allow usage of the `mprotect`-based VDB (virtual dirty
+ * bits) mode for the incremental collection.  The default value is on
+ * regardless of the availability of this VDB mode.  Disallowing the
+ * `mprotect`-based VDB might be useful for applications that use `mprotect()`
+ * and/or `SIGSEGV`/`SIGBUS` for own needs or cannot deal with the related
+ * unintended system call failures.  Has no effect if called after enabling
+ * the incremental collection (either explicitly or implicitly during the
+ * collector initialization).  The setter and the getter are not synchronized.
+ */
+GC_API void GC_CALL GC_set_mprotect_vdb_allowed(int);
+GC_API int GC_CALL GC_get_mprotect_vdb_allowed(void);
+
 /*
  * The constants to represent available VDB (virtual dirty bits)
  * techniques.
@@ -1215,9 +1228,10 @@ GC_API int GC_CALL GC_get_manual_vdb_allowed(void);
 
 /**
  * Get the list of available VDB (virtual dirty bits) techniques.
- * The returned value is a constant one, either `GC_VDB_NONE`, or one
- * or more of the above `GC_VDB_` constants, or'ed together.  May be
- * called before the collector is initialized.
+ * The returned value is a constant one, either `GC_VDB_NONE`, or one or more
+ * of the above `GC_VDB_` constants, or'ed together.  The result is not
+ * affected by `GC_set_mprotect_vdb_allowed()`.  May be called before the
+ * collector is initialized.
  */
 GC_API unsigned GC_CALL GC_get_supported_vdbs(void);
 
@@ -1263,13 +1277,13 @@ GC_API unsigned GC_CALL GC_get_actual_vdb(void);
 #define GC_PROTECTS_NONE 0
 
 /**
- * Does incremental mode write-protect pages?  Returns zero or
- * more of the above `GC_PROTECTS_` constants, or'ed together.
+ * Does incremental mode write-protect pages in a client-visible way?
+ * Returns zero or more of the above `GC_PROTECTS_` constants, or'ed together.
  * The collector is assumed to be initialized before this call.
- * The result is not affected by `GC_set_manual_vdb_allowed()`.
- * Call of `GC_enable_incremental()` may change the result to
- * `GC_PROTECTS_NONE` if some implementation is chosen at
- * runtime not needing to write-protect the pages.
+ * The result is not affected by `GC_set_manual_vdb_allowed()`.  Call of
+ * `GC_enable_incremental()` may change the result to `GC_PROTECTS_NONE` if
+ * some VDB implementation chosen at runtime is not needing to write-protect
+ * the pages (thus `GC_set_mprotect_vdb_allowed(0)` might affect the result).
  */
 GC_API int GC_CALL GC_incremental_protection_needs(void);
 
