@@ -352,6 +352,9 @@ main(int argc, const char *argv[])
 #  ifdef TEST_MANUAL_VDB
   GC_set_manual_vdb_allowed(1);
 #  endif
+#  ifdef TEST_MPROTECT_VDB_DISALLOWED
+  GC_set_mprotect_vdb_allowed(0);
+#  endif
 #  if !defined(CPPCHECK)
   GC_INIT();
 #  endif

@@ -76,6 +76,24 @@ STATIC GC_bool GC_pages_executable = TRUE;
 /* Note: it is undefined later on `GC_pages_executable` real use. */
 #define IGNORE_PAGES_EXECUTABLE 1
 
+/*
+ * A runtime flag indicating that `mprotect`-based VDB should be avoided.
+ * Zero-initialized.
+ */
+static GC_bool mprotect_vdb_disallowed = FALSE;
+
+GC_API void GC_CALL
+GC_set_mprotect_vdb_allowed(int value)
+{
+  mprotect_vdb_disallowed = (0 == value);
+}
+
+GC_API int GC_CALL
+GC_get_mprotect_vdb_allowed(void)
+{
+  return (int)(!mprotect_vdb_disallowed);
+}
+
 #if ((defined(LINUX) && defined(SPECIFIC_MAIN_STACKBOTTOM)                  \
       || defined(NEED_PROC_MAPS) || defined(PROC_VDB) || defined(SOFT_VDB)) \
      && !defined(PROC_READ))                                                \
@@ -300,7 +318,7 @@ GC_parse_map_entry(const char *maps_ptr, ptr_t *p_start, ptr_t *p_end,
   const unsigned char *start_start, *end_start, *maj_dev_start;
   const unsigned char *p; /*< unsigned for `isspace`, `isxdigit` */
 
-  if (maps_ptr == NULL || *maps_ptr == '\0') {
+  if (NULL == maps_ptr || *maps_ptr == '\0') {
     return NULL;
   }
 
@@ -1792,8 +1810,8 @@ detect_GetWriteWatch(void)
   if (done)
     return;
 
-#    if defined(MPROTECT_VDB)
-  {
+#    ifdef MPROTECT_VDB
+  if (!mprotect_vdb_disallowed) {
     char *str = GETENV("GC_USE_GETWRITEWATCH");
 #      if defined(GC_PREFER_MPROTECT_VDB)
     if (NULL == str || (*str == '0' && *(str + 1) == '\0')) {
@@ -3193,6 +3211,8 @@ GC_parse_version(int *pminor, const char *pverstr)
  *     write to a protected page.  We prevent the `read` system call from
  *     doing so.  It is the clients responsibility to make sure that other
  *     system calls are similarly protected or write only to the stack.
+ *     Otherwise the client should disallow the mode at runtime by calling
+ *     `GC_set_mprotect_vdb_allowed(0)` before the collector initialization.
  *
  *   - `GWW_VDB`: Use the Win32 `GetWriteWatch` function, if available, to
  *     read dirty bits.  In case it is not available (because we are
@@ -3686,40 +3706,34 @@ GC_dirty_init(void)
     return FALSE;
   }
 #    endif
-#    if !defined(MSWIN32) && !defined(MSWINCE)
-  act.sa_flags = SA_RESTART | SA_SIGINFO;
-  act.sa_sigaction = GC_write_fault_handler;
-  (void)sigemptyset(&act.sa_mask);
-#      ifdef SIGNAL_BASED_STOP_WORLD
-  /*
-   * Arrange to postpone the signal while we are in a write fault handler.
-   * This effectively makes the handler atomic w.r.t. stopping the world
-   * for the collection.
-   */
-  (void)sigaddset(&act.sa_mask, GC_get_suspend_signal());
-#      endif
-#    endif /* !MSWIN32 */
-  GC_VERBOSE_LOG_PRINTF(
-      "Initializing mprotect virtual dirty bit implementation\n");
   if (GC_page_size % HBLKSIZE != 0) {
     ABORT("Page size not multiple of HBLKSIZE");
   }
-#    ifdef GWW_VDB
-  if (GC_gww_dirty_init()) {
-    GC_COND_LOG_PRINTF("Using GetWriteWatch()\n");
-    return TRUE;
-  }
-#    elif defined(SOFT_VDB)
-#      ifdef CHECK_SOFT_VDB
+#    ifdef CHECK_SOFT_VDB
+  if (mprotect_vdb_disallowed) /*< check before `soft_dirty_init` */
+    return FALSE;
   if (!soft_dirty_init())
     ABORT("Soft-dirty bit support is missing");
-#      else
+#    else
+#      ifdef GWW_VDB
+  if (GC_gww_dirty_init()) {
+    GC_COND_LOG_PRINTF("Using GetWriteWatch\n");
+    return TRUE;
+  }
+#      elif defined(SOFT_VDB)
   if (soft_dirty_init()) {
     GC_COND_LOG_PRINTF("Using soft-dirty bit feature\n");
     return TRUE;
   }
 #      endif
+  if (mprotect_vdb_disallowed) {
+    GC_COND_LOG_PRINTF("Client disallows mprotect-based virtual dirty bit\n");
+    return FALSE;
+  }
 #    endif
+
+  GC_VERBOSE_LOG_PRINTF(
+      "Initializing mprotect virtual dirty bit implementation\n");
 #    ifdef MSWIN32
   GC_old_segv_handler = SetUnhandledExceptionFilter(GC_write_fault_handler);
   if (GC_old_segv_handler != NULL) {
@@ -3733,6 +3747,17 @@ GC_dirty_init(void)
     /* FIXME: Implement (if possible). */
   }
 #    else
+  act.sa_flags = SA_RESTART | SA_SIGINFO;
+  act.sa_sigaction = GC_write_fault_handler;
+  (void)sigemptyset(&act.sa_mask);
+#      ifdef SIGNAL_BASED_STOP_WORLD
+  /*
+   * Arrange to postpone the signal while we are in a write fault handler.
+   * This effectively makes the handler atomic w.r.t. stopping the world
+   * for the collection.
+   */
+  (void)sigaddset(&act.sa_mask, GC_get_suspend_signal());
+#      endif
   /* `act.sa_restorer` is deprecated and should not be initialized. */
 #      if defined(IRIX5) && defined(THREADS)
   sigaction(SIGSEGV, NULL, &oldact);
@@ -3997,7 +4022,7 @@ GC_dirty_init(void)
   if (!proc_dirty_open_files())
     return FALSE;
   GC_proc_buf = GC_scratch_alloc(GC_proc_buf_size);
-  if (GC_proc_buf == NULL)
+  if (NULL == GC_proc_buf)
     ABORT("Insufficient space for /proc read");
   return TRUE;
 }
@@ -4281,18 +4306,20 @@ GC_dirty_init(void)
 #  endif
 {
 #  if defined(MPROTECT_VDB) && !defined(CHECK_SOFT_VDB)
-  char *str = GETENV("GC_USE_GETWRITEWATCH");
+  if (!mprotect_vdb_disallowed) {
+    char *str = GETENV("GC_USE_GETWRITEWATCH");
 #    ifdef GC_PREFER_MPROTECT_VDB
-  if (NULL == str || (*str == '0' && *(str + 1) == '\0')) {
-    /* The environment variable is unset or set to "0". */
-    return FALSE;
-  }
+    if (NULL == str || (*str == '0' && *(str + 1) == '\0')) {
+      /* The environment variable is unset or set to "0". */
+      return FALSE;
+    }
 #    else
-  if (str != NULL && *str == '0' && *(str + 1) == '\0') {
-    /* The environment variable is set "0". */
-    return FALSE;
-  }
+    if (str != NULL && *str == '0' && *(str + 1) == '\0') {
+      /* The environment variable is set "0". */
+      return FALSE;
+    }
 #    endif
+  }
 #  endif
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(NULL == GC_soft_vdb_buf);
@@ -5102,6 +5129,10 @@ GC_dirty_init(void)
   exception_mask_t mask;
 
   GC_ASSERT(I_HOLD_LOCK());
+  if (mprotect_vdb_disallowed) {
+    GC_COND_LOG_PRINTF("Client disallows mprotect-based virtual dirty bit\n");
+    return FALSE;
+  }
 #  if defined(CAN_HANDLE_FORK) && !defined(THREADS)
   if (GC_handle_fork) {
     /*

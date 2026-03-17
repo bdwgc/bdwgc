@@ -77,6 +77,9 @@ libsrl_init(void)
 #  ifdef TEST_MANUAL_VDB
   GC_set_manual_vdb_allowed(1);
 #  endif
+#  ifdef TEST_MPROTECT_VDB_DISALLOWED
+  GC_set_mprotect_vdb_allowed(0);
+#  endif
 #  ifndef STATICROOTSLIB_INIT_IN_MAIN
   GC_INIT();
 #  endif
