@@ -220,7 +220,7 @@ test_memory_growth(void)
   GC_descr *descriptors = (GC_descr *)GC_MALLOC(sizeof(GC_descr) * 50);
 
   CHECK_OUT_OF_MEMORY(descriptors);
-  objects = (void ***)GC_MALLOC(sizeof(void *) * 50);
+  objects = (void ***)GC_MALLOC(sizeof(void **) * 50);
   CHECK_OUT_OF_MEMORY(objects);
 
   /* Create progressively larger descriptors. */
