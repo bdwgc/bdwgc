@@ -36,7 +36,7 @@ main(void)
     int *q;
 
     CHECK_OUT_OF_MEMORY(p);
-    q = (int *)GC_MALLOC_ATOMIC(sizeof(int));
+    q = GC_NEW_ATOMIC(int);
     CHECK_OUT_OF_MEMORY(q);
     TEST_ASSERT(NULL == *p);
 

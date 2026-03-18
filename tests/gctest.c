@@ -399,8 +399,9 @@ small_cons_leaf(int x)
 static sexpr
 small_cons_uncollectable(sexpr x, sexpr y)
 {
-  sexpr r = (sexpr)checkOOM(GC_MALLOC_UNCOLLECTABLE(sizeof(struct SEXPR)));
+  sexpr r = GC_NEW_UNCOLLECTABLE(struct SEXPR);
 
+  CHECK_OUT_OF_MEMORY(r);
   AO_fetch_and_add1(&uncollectable_count);
   r->sexpr_cdr = (sexpr)GC_HIDE_POINTER(y);
   GC_PTR_STORE_AND_DIRTY(&r->sexpr_car, x);
@@ -1675,7 +1676,7 @@ run_one_test(void)
 #endif
 #ifndef GC_NO_FINALIZATION
   if (!GC_get_find_leak()) {
-    void **p = (void **)GC_MALLOC_ATOMIC(sizeof(void *));
+    void **p = GC_NEW_ATOMIC(void *);
 
     CHECK_OUT_OF_MEMORY(p); /*< LINT2: do not use `checkOOM()` */
     AO_fetch_and_add1(&atomic_count);
