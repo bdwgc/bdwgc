@@ -23,6 +23,8 @@
 #  include "gc/gc_mark.h"
 #  include "gc/gc_typed.h"
 
+#  define ROUNDUP_WORDSZ(s) (((s) + GC_WORDSZ - 1) / GC_WORDSZ)
+
 /* Test basic functionality with small bitmap. */
 static void
 test_small_bitmap(void)
@@ -43,7 +45,7 @@ test_large_bitmap(void)
 {
   const size_t large_size = 2000; /*< greater than BITMAP_BITS */
   GC_descr d;
-  size_t bm_sz = ((large_size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+  size_t bm_sz = ROUNDUP_WORDSZ(large_size) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
   void **p;
 
@@ -78,8 +80,7 @@ test_very_large_bitmap(void)
   const size_t very_large_size = 10000;
   GC_descr d;
   size_t i;
-  size_t bm_sz
-      = ((very_large_size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+  size_t bm_sz = ROUNDUP_WORDSZ(very_large_size) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
   void **p;
 
@@ -105,8 +106,8 @@ test_all_bits_set(void)
   const size_t size = 5000; /*< large enough */
   size_t i;
   GC_descr d;
-  GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(
-      ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word));
+  GC_word *bm
+      = (GC_word *)GC_MALLOC_ATOMIC(ROUNDUP_WORDSZ(size) * sizeof(GC_word));
   void **p;
 
   CHECK_OUT_OF_MEMORY(bm);
@@ -129,7 +130,7 @@ test_last_bit_set(void)
 {
   const size_t size = 8000; /*< large enough */
   GC_descr d;
-  size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+  size_t bm_sz = ROUNDUP_WORDSZ(size) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
   void **p;
 
@@ -156,7 +157,7 @@ test_multiple_descriptors(void)
 
   for (i = 0; i < num_descriptors; i++) {
     size_t j;
-    size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+    size_t bm_sz = ROUNDUP_WORDSZ(size) * sizeof(GC_word);
     GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
 
     CHECK_OUT_OF_MEMORY(bm);
@@ -184,8 +185,7 @@ test_typed_array_allocation(void)
   const size_t nelements = 100;
   const size_t element_size = 2500; /*< large enough */
   GC_descr d;
-  size_t bm_sz
-      = ((element_size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+  size_t bm_sz = ROUNDUP_WORDSZ(element_size) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
   void **p;
 
@@ -227,7 +227,7 @@ test_memory_growth(void)
   for (i = 0; i < 50; i++) {
     size_t size = initial_size + i * growth_factor;
     size_t j;
-    size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+    size_t bm_sz = ROUNDUP_WORDSZ(size) * sizeof(GC_word);
     GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
 
     CHECK_OUT_OF_MEMORY(bm);
@@ -271,7 +271,7 @@ test_gc_collection(void)
   GC_descr d;
   void **obj1, **obj2;
   void *ptr1, *ptr2;
-  size_t bm_sz = ((size + GC_WORDSZ - 1) / GC_WORDSZ) * sizeof(GC_word);
+  size_t bm_sz = ROUNDUP_WORDSZ(size) * sizeof(GC_word);
   GC_word *bm = (GC_word *)GC_MALLOC_ATOMIC(bm_sz);
 
   CHECK_OUT_OF_MEMORY(bm);
