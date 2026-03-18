@@ -106,8 +106,7 @@ test_all_bits_set(void)
   const size_t size = 5000; /*< large enough */
   size_t i;
   GC_descr d;
-  GC_word *bm
-      = (GC_word *)GC_MALLOC_ATOMIC(ROUNDUP_WORDSZ(size) * sizeof(GC_word));
+  GC_word *bm = GC_NEW_ATOMIC_ARRAY(GC_word, ROUNDUP_WORDSZ(size));
   void **p;
 
   CHECK_OUT_OF_MEMORY(bm);
@@ -217,10 +216,10 @@ test_memory_growth(void)
   const size_t growth_factor = 50;
   size_t i;
   void ***objects;
-  GC_descr *descriptors = (GC_descr *)GC_MALLOC(sizeof(GC_descr) * 50);
+  GC_descr *descriptors = GC_NEW_ARRAY(GC_descr, 50);
 
   CHECK_OUT_OF_MEMORY(descriptors);
-  objects = (void ***)GC_MALLOC(sizeof(void **) * 50);
+  objects = GC_NEW_ARRAY(void **, 50);
   CHECK_OUT_OF_MEMORY(objects);
 
   /* Create progressively larger descriptors. */

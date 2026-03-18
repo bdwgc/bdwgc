@@ -269,7 +269,7 @@ replace_line(int i, CORD s)
 
   if (NULL == screen || LINES > screen_size) {
     screen_size = LINES;
-    screen = (CORD *)GC_MALLOC(screen_size * sizeof(CORD));
+    screen = GC_NEW_ARRAY(CORD, screen_size);
     if (NULL == screen)
       OUT_OF_MEMORY;
   }

@@ -1504,17 +1504,21 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 #endif /* !GC_DEBUG */
 
 /**
- * Convenient macros for object allocation in C++ style.  The use of
- * them also reduces the chance for a misspecified size argument.
+ * Convenient macros for object and array of objects allocation in C++ style.
+ * The use of them also reduces the chance for a misspecified size argument.
  * But, note, that they may expand to something syntactically incorrect
- * if the argument is a complicated type expression.  Note also, unlike
- * C++ new operator, these ones may return `NULL` (in case of out of
- * memory); however these macros are guaranteed never to return `NULL`
- * unless `GC_oom_fn()` returns `NULL`.
+ * if the argument is a complicated type expression.  Note also, unlike C++
+ * new operator, these ones may return `NULL` (in case of out of memory);
+ * however these macros are guaranteed never to return `NULL` unless
+ * `GC_oom_fn()` returns `NULL`.
  */
-#define GC_NEW(t) ((t *)GC_MALLOC(sizeof(t)))
-#define GC_NEW_ATOMIC(t) ((t *)GC_MALLOC_ATOMIC(sizeof(t)))
-#define GC_NEW_UNCOLLECTABLE(t) ((t *)GC_MALLOC_UNCOLLECTABLE(sizeof(t)))
+#define GC_NEW_ARRAY(t, n) ((t *)GC_MALLOC(sizeof(t) * (n)))
+#define GC_NEW_ATOMIC_ARRAY(t, n) ((t *)GC_MALLOC_ATOMIC(sizeof(t) * (n)))
+#define GC_NEW_UNCOLLECTABLE_ARRAY(t, n) \
+  ((t *)GC_MALLOC_UNCOLLECTABLE(sizeof(t) * (n)))
+#define GC_NEW(t) GC_NEW_ARRAY(t, 1)
+#define GC_NEW_ATOMIC(t) GC_NEW_ATOMIC_ARRAY(t, 1)
+#define GC_NEW_UNCOLLECTABLE(t) GC_NEW_UNCOLLECTABLE_ARRAY(t, 1)
 
 #ifdef GC_REQUIRE_WCSDUP
 /**
