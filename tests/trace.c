@@ -34,7 +34,7 @@ mktree(int i)
   if (0 == i)
     return NULL;
   if (1 == i) {
-    r = (struct treenode *)GC_MALLOC_ATOMIC(sizeof(struct treenode));
+    r = GC_NEW_ATOMIC(struct treenode);
     CHECK_OUT_OF_MEMORY(r);
   }
   x = mktree(i - 1);

@@ -56,7 +56,7 @@ libsrl_mktree(int i)
   if (0 == i)
     return 0;
   if (1 == i) {
-    r = (struct treenode *)GC_MALLOC_ATOMIC(sizeof(struct treenode));
+    r = GC_NEW_ATOMIC(struct treenode);
     CHECK_OUT_OF_MEMORY(r);
   }
   x = libsrl_mktree(i - 1);
@@ -86,7 +86,7 @@ libsrl_init(void)
 #  ifndef NO_INCREMENTAL
   GC_enable_incremental();
 #  endif
-  return GC_MALLOC(sizeof(struct treenode));
+  return GC_NEW(struct treenode);
 }
 
 #endif /* !STATICROOTSLIB2 */
