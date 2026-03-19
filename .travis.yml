@@ -24,23 +24,6 @@ jobs:
     - TESTS_CUSTOM_RUN=true
   - env:
     - MAKEFILE_TARGETS="dist"
-  - env:
-    - CPPCHECK_ENABLE="--enable=unusedFunction -I libatomic_ops/src -D TEST_COVERAGE extra/gc.c tests/*.c"
-  - env:
-    - CPPCHECK_ENABLE="--enable=unusedFunction --force -D GC_BUILTIN_ATOMIC -D TEST_COVERAGE *.cc cord/*.c cord/tests/*.c tests/*.c"
-    - CPPCHECK_OUT_FILTER="Z"
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - env:
-    - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H -I libatomic_ops/src a*.c b*.c c*.c d*.c f*.c"
-    - CPPCHECK_OUT_FILTER="Z"
-  - env:
-    - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H -I libatomic_ops/src g*.c h*.c m*.c"
-    - CPPCHECK_OUT_FILTER="Z"
-  - env:
-    - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H -I libatomic_ops/src n*.c o*.c p*.c r*.c s*.c t*.c w*.c cord/*.c"
-  - env:
-    - CPPCHECK_ENABLE="-j4 --enable=all --disable=missingInclude,unusedFunction --force -I libatomic_ops/src *.cc cord/tests/*.c extra/m*.c extra/*.cpp tests/*.c tests/*.cc tools/*.c"
-    - CPPCHECK_OUT_FILTER="Z"
   - os: freebsd
     env:
     - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2"
@@ -99,12 +82,6 @@ jobs:
     - COVERITY_SCAN_BRANCH=1
 
 before_install:
-- if [[ "$CPPCHECK_ENABLE" != "" ]]; then
-    CPPCHECK_VER=2.14.2;
-    git clone --depth=1 https://github.com/danmar/cppcheck.git
-            ~/cppcheck -b $CPPCHECK_VER;
-    make --directory ~/cppcheck -j8 CXXFLAGS="-O3 -march=native -D NDEBUG";
-  fi
 - if [[ "$REPORT_COVERAGE" == true ]]; then
     mkdir -p ../coveralls;
     wget -O - https://coveralls.io/coveralls-linux.tar.gz | tar xf - --gz --directory ../coveralls;
@@ -152,11 +129,11 @@ install:
 - if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
 
 script:
-- if [[ "$CPPCHECK_ENABLE" == "" && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+- if [[ "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     ./configure $CONF_OPTIONS --enable-werror &&
     cat include/config.h;
   fi
-- if [[ "$CPPCHECK_ENABLE" == "" && "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+- if [[ "$COVERITY_SCAN_BRANCH" != 1 ]]; then
     make -j$MAKE_NPROC $MAKEFILE_TARGETS CFLAGS_EXTRA="$CFLAGS_EXTRA";
   fi
 - if [[ "$CC_FOR_CHECK" != "" ]]; then
@@ -169,12 +146,6 @@ script:
 - if [ -f threadkeytest.log ]; then cat threadkeytest.log; fi
 - if [ -f threadleaktest.log ]; then cat threadleaktest.log; fi
 - if [ -f weakmaptest.log ]; then cat weakmaptest.log; fi
-- if [[ "$CPPCHECK_ENABLE" != "" ]]; then
-    if [[ "$CPPCHECK_OUT_FILTER" == "" ]]; then CPPCHECK_OUT_FILTER="c "; fi;
-    set -o pipefail; ~/cppcheck/cppcheck --error-exitcode=2 -D CPPCHECK
-        -I include --check-level=exhaustive $CPPCHECK_ENABLE |
-        grep --line-buffered "$CPPCHECK_OUT_FILTER";
-  fi
 - if [[ "$TESTS_CUSTOM_RUN" == true ]]; then
     ASAN_OPTIONS="detect_leaks=1" UBSAN_OPTIONS="halt_on_error=1"
         make check-without-test-driver;

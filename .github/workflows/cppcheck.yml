@@ -1,0 +1,59 @@
+# This workflow is to check C/C++ source with cppcheck.
+name: cppcheck
+
+on: [ push, pull_request ]
+
+jobs:
+  check:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        include:
+        - name: Check unused (basic)
+          args: --enable=unusedFunction -D TEST_COVERAGE extra/gc.c tests/*.c
+        - name: Check unused (force)
+          args: --enable=unusedFunction --force -D GC_BUILTIN_ATOMIC -D TEST_COVERAGE *.cc cord/*.c cord/tests/*.c tests/*.c
+        - name: All checks (A-M)
+          args: -j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H a*.c b*.c c*.c d*.c f*.c g*.c h*.c m*.c
+        - name: All checks (N-W and cord)
+          args: -j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H n*.c o*.c p*.c r*.c s*.c t*.c w*.c cord/*.c
+        - name: All checks (other)
+          args: -j4 --enable=all --disable=missingInclude,unusedFunction --force *.cc cord/tests/*.c extra/m*.c extra/*.cpp tests/*.c tests/*.cc tools/*.c
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set cppcheck version
+      id: version
+      run: |
+        CPPCHECK_VER=2.14.2
+        echo "version=$CPPCHECK_VER" >> $GITHUB_OUTPUT
+        echo "cache_key=cppcheck-$CPPCHECK_VER" >> $GITHUB_OUTPUT
+
+    - name: Cache cppcheck
+      id: cache-cppcheck
+      uses: actions/cache@v5
+      with:
+        path: ~/cppcheck-install
+        key: ${{ steps.version.outputs.cache_key }}-${{ runner.os }}
+
+    - name: Download and make cppcheck
+      if: steps.cache-cppcheck.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth=1 https://github.com/danmar/cppcheck.git ~/cppcheck -b ${{ steps.version.outputs.version }}
+        make --directory ~/cppcheck -j8 CXXFLAGS="-O3 -march=native -D NDEBUG" FILESDIR=~/cppcheck-install PREFIX=~/cppcheck-install install
+
+    - name: Checkout libatomic_ops repository
+      uses: actions/checkout@v6
+      with:
+        repository: bdwgc/libatomic_ops
+        path: libatomic_ops
+
+    - name: Run cppcheck analysis
+      run: |
+        ~/cppcheck-install/bin/cppcheck --error-exitcode=2 --quiet -D CPPCHECK -I include -I libatomic_ops/src --check-level=exhaustive ${{ matrix.args }}
