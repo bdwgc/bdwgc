@@ -33,8 +33,11 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Fetch libatomic_ops
-      run: git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git
+    - name: Checkout libatomic_ops repository
+      uses: actions/checkout@v6
+      with:
+        repository: bdwgc/libatomic_ops
+        path: libatomic_ops
 
     - name: Build
       run: >
