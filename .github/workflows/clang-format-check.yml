@@ -4,7 +4,7 @@ name: clang-format check
 on: [ push, pull_request ]
 
 jobs:
-  build:
+  check:
     name: Check by clang-format
     runs-on: ubuntu-latest
 

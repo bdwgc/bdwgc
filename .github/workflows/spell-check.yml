@@ -4,7 +4,7 @@ name: spell check
 on: [ push, pull_request ]
 
 jobs:
-  spellcheck:
+  check:
     name: Spell-check
     runs-on: ubuntu-latest
 

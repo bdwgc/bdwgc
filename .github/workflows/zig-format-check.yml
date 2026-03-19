@@ -4,7 +4,7 @@ name: zig format check
 on: [ push, pull_request ]
 
 jobs:
-  build:
+  check:
     name: Check format of Zig files
     runs-on: ubuntu-latest
 

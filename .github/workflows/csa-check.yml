@@ -4,7 +4,7 @@ name: csa check
 on: [ push, pull_request ]
 
 jobs:
-  build:
+  check:
     name: ${{ matrix.os }} ${{ matrix.cflags_extra }}
     runs-on: ${{ matrix.os }}
 
