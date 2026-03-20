@@ -1,3 +1,100 @@
+2026-03-02  Ivan Maidanski <ivmai@mail.ru>
+
+	* dbg_mlc.c (ADD_DEBUG_BYTES, ADD_DEBUG_UNCOLLECTABLE_BYTES): New
+	macro.
+	* dbg_mlc.c (GC_debug_malloc_inner): Use `ADD_DEBUG_BYTES()` instead
+	of `SIZET_SAT_ADD(DEBUG_BYTES)`.
+	* dbg_mlc.c (GC_debug_malloc_ignore_off_page,
+	GC_debug_malloc_atomic_ignore_off_page, GC_debug_malloc_atomic):
+	Likewise.
+	* dbg_mlc.c [DBG_HDRS_ALL] (GC_debug_generic_malloc_inner): Add
+	assertion that `lb` is non-zero.
+	* gcj_mlc.c (GC_debug_gcj_malloc): Likewise.
+	* dbg_mlc.c (GC_debug_malloc_uncollectable): Use
+	`ADD_DEBUG_UNCOLLECTABLE_BYTES()` instead of
+	`SIZET_SAT_ADD(UNCOLLECTABLE_DEBUG_BYTES))`.
+	* dbg_mlc.c [GC_ATOMIC_UNCOLLECTABLE]
+	(GC_debug_malloc_atomic_uncollectable): Likewise.
+
+2026-02-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* dbg_mlc.c (store_debug_info): Add `is_redirect` argument (unused
+	unless `ADD_CALL_CHAIN_IS_UNSAFE` is defined).
+	* dbg_mlc.c [ADD_CALL_CHAIN_IS_UNSAFE] (store_debug_info): If
+	`is_redirect`, then call `ADD_CALL_CHAIN_SAFE()` instead of
+	`ADD_CALL_CHAIN()`.
+	* dbg_mlc.c (GC_debug_malloc_inner): New `GC_INNER` function (move
+	code from `GC_debug_malloc` and add `is_redirect` argument).
+	* dbg_mlc.c (GC_debug_malloc): Call `GC_debug_malloc_inner(FALSE)`.
+	* dbg_mlc.c [DBG_HDRS_ALL] (GC_debug_generic_malloc_inner): Call
+	`ADD_CALL_CHAIN_SAFE(GC_RETURN_ADDR)` instead of
+	`ADD_CALL_CHAIN_INNER()`.
+	* dbg_mlc.c (GC_debug_realloc_inner): New `static` function (move code
+	from `GC_debug_realloc`, add `is_redirect` argument).
+	* dbg_mlc.c (GC_debug_realloc): Call `GC_debug_realloc_inner(FALSE)`.
+	* dbg_mlc.c (GC_debug_realloc_inner: Call
+	`GC_debug_malloc_inner()` instead of `GC_debug_malloc()`.
+	* include/private/dbg_mlc.h [SAVE_CALL_CHAIN && REDIRECT_MALLOC
+	&& NARGS==0 && NFRAMES%2 == 0 && GC_HAVE_BUILTIN_BACKTRACE]: Do not
+	check `THREADS && DBG_HDRS_ALL`.
+	* include/private/dbg_mlc.h [SAVE_CALL_CHAIN && REDIRECT_MALLOC
+	&& NARGS==0
+	&& NFRAMES%2 == 0 && GC_HAVE_BUILTIN_BACKTRACE]
+	(ADD_CALL_CHAIN_IS_UNSAFE): New macro.
+	* include/private/dbg_mlc.h [SAVE_CALL_CHAIN && REDIRECT_MALLOC
+	&& NARGS==0
+	&& NFRAMES%2 == 0 && GC_HAVE_BUILTIN_BACKTRACE] (ADD_CALL_CHAIN_INNER):
+	Rename to `ADD_CALL_CHAIN_SAFE`; add `ra` argument; update comment.
+	* include/private/dbg_mlc.h [!ADD_CALL_CHAIN_IS_UNSAFE]
+	(ADD_CALL_CHAIN_SAFE): Define (instead of `ADD_CALL_CHAIN_INNER`).
+	* include/private/dbg_mlc.h (GC_debug_malloc_inner,
+	GC_debug_realloc_inner): Declare.
+	* malloc.c [REDIRECT_MALLOC]: Include `dbg_mlc.h` file.
+	* mallocx.c [REDIRECT_REALLOC]: Likewise.
+	* malloc.c [REDIRECT_MALLOC] (GC_debug_malloc_replacement): Define to
+	`GC_debug_malloc_inner(TRUE)` instead of `GC_debug_malloc()`; update
+	comment.
+	* mallocx.c [REDIRECT_REALLOC] (GC_debug_realloc_replacement): Call
+	`GC_debug_realloc_inner(FALSE, TRUE)` instead of `GC_debug_realloc()`;
+	remove non-actual comment.
+	* os_dep.c [NEED_CALLINFO && SAVE_CALL_CHAIN]: Include `dbg_mlc.h` file
+	regardless of `THREADS` and `DBG_HDRS_ALL`, and before checking of
+	`ADD_CALL_CHAIN_IS_UNSAFE`.
+	* os_dep.c [NEED_CALLINFO && SAVE_CALL_CHAIN]
+	(GC_save_callers_no_unlock): Define
+	only if `ADD_CALL_CHAIN_IS_UNSAFE` is defined; define regardless of
+	`NARGS`, `NFRAMES`, `GC_HAVE_BUILTIN_BACKTRACE`, `THREADS` and
+	`DBG_HDRS_ALL`.
+
+2026-02-14  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordxtra.c (CORD_cmp, CORD_ncmp): Use `memcmp()` instead of
+	`strncmp()`.
+
+2026-02-12  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordbscs.c (CORD_cat_char_star): Do not return `y` if `x` is
+	`CORD_EMPTY` and `leny` is 0 (return `x` is this case).
+	* cord/tests/cordtest.c (test_basics): Test result of
+	`CORD_cat_char_star(CORD_EMPTY, "", 0)`.
+
+2023-06-14  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordprnt.c (ec_len): Change return type from int to size_t.
+	* cord/cordprnt.c (ec_len): Cast difference of pointers to size_t type.
+	* cord/cordprnt.c (CORD_vsprintf): Use unsigned int/long or size_t
+	type for pos_ptr local variable; cast ec_len() result to int.
+	* cord/cordxtra.c (CORD_cmp, CORD_ec_flush_buf): Change type of avail,
+	yavail local variables from size_t to long.
+	* include/private/cord_pos.h (CORD_pos_fetch, CORD_next, CORD_prev,
+	CORD_pos_chars_left): Remove redundant parentheses.
+	* include/private/cord_pos.h (CORD_next, CORD_prev): Replace 0 to 0U.
+
+2019-10-11  Ivan Maidanski <ivmai@mail.ru>
+
+	* gc_cpp.cc: Rename gc_c++.h to gc_cpp.h in the head comment.
+	* tests/test_cpp.cc: Likewise.
+
 [7.2u]
 
 2026-02-04  Ivan Maidanski <ivmai@mail.ru>
