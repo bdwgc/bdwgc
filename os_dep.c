@@ -1778,6 +1778,30 @@ GC_get_main_stack_base(void)
  * with SunOS dynamic loading), or `GC_mark_roots` needs to check for them.
  */
 
+#if defined(MPROTECT_VDB) \
+    && (defined(GWW_VDB) || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB)))
+static GC_bool
+is_mprotect_vdb_preferred(void)
+{
+  const char *str;
+
+  if (mprotect_vdb_disallowed)
+    return FALSE;
+
+  str = GETENV("GC_USE_GETWRITEWATCH");
+  if (str != NULL) {
+    /* Check if the environment variable is set to "0". */
+    return str[0] == '0' && str[1] == '\0';
+  }
+  /* The environment variable is unset. */
+#  ifdef GC_PREFER_MPROTECT_VDB
+  return TRUE;
+#  else
+  return FALSE;
+#  endif
+}
+#endif
+
 #ifdef ANY_MSWIN
 
 #  if defined(GWW_VDB)
@@ -1807,32 +1831,14 @@ detect_GetWriteWatch(void)
 {
   static GC_bool done;
   HMODULE hK32;
+
   if (done)
     return;
-
 #    ifdef MPROTECT_VDB
-  if (!mprotect_vdb_disallowed) {
-    char *str = GETENV("GC_USE_GETWRITEWATCH");
-#      if defined(GC_PREFER_MPROTECT_VDB)
-    if (NULL == str || (*str == '0' && *(str + 1) == '\0')) {
-      /*
-       * `GC_USE_GETWRITEWATCH` environment variable is unset or set to "0".
-       * Falling back to `MPROTECT_VDB` strategy.
-       */
-      done = TRUE;
-      /* This should work as if `GWW_VDB` macro is not defined. */
-      return;
-    }
-#      else
-    if (str != NULL && *str == '0' && *(str + 1) == '\0') {
-      /*
-       * `GC_USE_GETWRITEWATCH` environment variable is set "0".
-       * Falling back to `MPROTECT_VDB` strategy.
-       */
-      done = TRUE;
-      return;
-    }
-#      endif
+  if (is_mprotect_vdb_preferred()) {
+    done = TRUE;
+    /* This should work as if `GWW_VDB` macro is not defined. */
+    return;
   }
 #    endif
 
@@ -4305,24 +4311,12 @@ GC_INNER GC_bool
 GC_dirty_init(void)
 #  endif
 {
-#  if defined(MPROTECT_VDB) && !defined(CHECK_SOFT_VDB)
-  if (!mprotect_vdb_disallowed) {
-    char *str = GETENV("GC_USE_GETWRITEWATCH");
-#    ifdef GC_PREFER_MPROTECT_VDB
-    if (NULL == str || (*str == '0' && *(str + 1) == '\0')) {
-      /* The environment variable is unset or set to "0". */
-      return FALSE;
-    }
-#    else
-    if (str != NULL && *str == '0' && *(str + 1) == '\0') {
-      /* The environment variable is set "0". */
-      return FALSE;
-    }
-#    endif
-  }
-#  endif
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(NULL == GC_soft_vdb_buf);
+#  if defined(MPROTECT_VDB) && !defined(CHECK_SOFT_VDB)
+  if (is_mprotect_vdb_preferred())
+    return FALSE;
+#  endif
 #  ifndef NO_SOFT_VDB_LINUX_VER_RUNTIME_CHECK
   if (!ensure_min_linux_ver(3, 18)) {
     GC_COND_LOG_PRINTF(
