@@ -2979,7 +2979,7 @@ EXTERN_C_BEGIN
 #  undef SOFT_VDB
 #endif
 
-#if defined(SOFT_VDB) && defined(SOFT_VDB_LINUX_VER_STATIC_CHECK)
+#if defined(SOFT_VDB) && defined(LINUX_VER_STATIC_CHECK)
 EXTERN_C_END
 #  include <linux/version.h> /*< for `LINUX_VERSION`, `LINUX_VERSION_CODE` */
 EXTERN_C_BEGIN
@@ -2987,7 +2987,7 @@ EXTERN_C_BEGIN
 /* Not reliable in Linux kernels prior to v3.18. */
 #    undef SOFT_VDB
 #  endif
-#endif /* SOFT_VDB */
+#endif
 
 #ifdef GC_DISABLE_INCREMENTAL
 #  undef CHECKSUMS
