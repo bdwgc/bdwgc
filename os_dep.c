@@ -3147,7 +3147,7 @@ GC_get_push_other_roots(void)
   return GC_push_other_roots;
 }
 
-#if defined(SOFT_VDB) && !defined(NO_SOFT_VDB_LINUX_VER_RUNTIME_CHECK) \
+#if defined(SOFT_VDB) && !defined(NO_LINUX_VER_RUNTIME_CHECK) \
     || (defined(GLIBC_2_19_TSX_BUG) && defined(GC_PTHREADS_PARAMARK))
 GC_INNER int
 GC_parse_version(int *pminor, const char *pverstr)
@@ -4276,7 +4276,7 @@ detect_soft_dirty_supported(ptr_t vaddr)
   return TRUE; /*< success */
 }
 
-#  ifndef NO_SOFT_VDB_LINUX_VER_RUNTIME_CHECK
+#  ifndef NO_LINUX_VER_RUNTIME_CHECK
 #    include <string.h> /*< for strcmp() */
 #    include <sys/utsname.h>
 
@@ -4317,7 +4317,7 @@ GC_dirty_init(void)
   if (is_mprotect_vdb_preferred())
     return FALSE;
 #  endif
-#  ifndef NO_SOFT_VDB_LINUX_VER_RUNTIME_CHECK
+#  ifndef NO_LINUX_VER_RUNTIME_CHECK
   if (!ensure_min_linux_ver(3, 18)) {
     GC_COND_LOG_PRINTF(
         "Running on old kernel lacking correct soft-dirty bit support\n");

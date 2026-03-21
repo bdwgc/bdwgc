@@ -4136,7 +4136,8 @@ GC_EXTERN GC_bool GC_world_stopped; /*< defined in `alloc.c` file */
 GC_INNER void GC_mark_thread_local_free_lists(void);
 #endif
 
-#if defined(GLIBC_2_19_TSX_BUG) && defined(GC_PTHREADS_PARAMARK)
+#if defined(SOFT_VDB) && !defined(NO_LINUX_VER_RUNTIME_CHECK) \
+    || (defined(GLIBC_2_19_TSX_BUG) && defined(GC_PTHREADS_PARAMARK))
 /* Parse string like `<major>[.<minor>[<tail>]]` and return `major` value. */
 GC_INNER int GC_parse_version(int *pminor, const char *pverstr);
 #endif
