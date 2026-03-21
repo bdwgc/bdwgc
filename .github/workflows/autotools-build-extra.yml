@@ -35,7 +35,7 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-latest
           conf_options: --disable-dynamic-loading --enable-cplusplus --enable-gc-assertions
-          cflags_extra: -D DBG_HDRS_ALL -D SHORT_DBG_HDRS -D _FORTIFY_SOURCE=2
+          cflags_extra: -D DBG_HDRS_ALL -D LINUX_VER_STATIC_CHECK -D NO_LINUX_VER_RUNTIME_CHECK -D SHORT_DBG_HDRS -D _FORTIFY_SOURCE=2
         - os: macos-latest
           conf_options: --disable-gc-dump --disable-handle-fork --enable-cplusplus --enable-large-config
         - os: ubuntu-24.04-arm
