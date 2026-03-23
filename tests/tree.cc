@@ -37,6 +37,20 @@ class Tree : public GC_NS_QUALIFY(gc)
 public:
   GC_ATTR_EXPLICIT
   Tree(int a, int d, bool uncollectable);
+#ifdef CPPCHECK
+  Tree(const Tree &other)
+      : arity(other.arity), depth(other.depth), m_nodes(other.m_nodes)
+  {
+  }
+  Tree &
+  operator=(const Tree &other)
+  {
+    arity = other.arity;
+    depth = other.depth;
+    m_nodes = other.m_nodes;
+    return *this;
+  }
+#endif
   ~Tree();
   void verify();
 
