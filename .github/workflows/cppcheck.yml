@@ -15,15 +15,15 @@ jobs:
       matrix:
         include:
         - name: Check unused (basic)
-          args: --enable=unusedFunction -D TEST_COVERAGE extra/gc.c tests/*.c
-        - name: Check unused (force)
-          args: --enable=unusedFunction --force -D GC_BUILTIN_ATOMIC -D TEST_COVERAGE *.cc cord/*.c cord/tests/*.c tests/*.c
+          args: --enable=unusedFunction --max-configs=200 --suppress=unusedFunction:libatomic_ops --suppress=unusedFunction:tests/gctest.c -D TEST_COVERAGE extra/gc.c tests/*.c
+        - name: Check unused (cord and tests)
+          args: --enable=unusedFunction --force --suppress=unusedFunction:cord/tests/de_win.c --suppress=unusedFunction:tests/gctest.c --suppress=unusedFunction:tests/cpp.cc -D GC_BUILTIN_ATOMIC -D TEST_COVERAGE *.cc cord/*.c cord/tests/*.c tests/*.c tests/*.cc
         - name: All checks (A-M)
           args: -j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H a*.c b*.c c*.c d*.c f*.c g*.c h*.c m*.c
         - name: All checks (N-W and cord)
           args: -j4 --enable=all --disable=missingInclude,unusedFunction --force -U GC_PRIVATE_H n*.c o*.c p*.c r*.c s*.c t*.c w*.c cord/*.c
         - name: All checks (other)
-          args: -j4 --enable=all --disable=missingInclude,unusedFunction --force *.cc cord/tests/*.c extra/m*.c extra/*.cpp tests/*.c tests/*.cc tools/*.c
+          args: -j4 --enable=all --disable=missingInclude,unusedFunction --force --suppress=functionStatic:include/gc/gc_allocator.h *.cc cord/tests/*.c extra/m*.c extra/*.cpp tests/*.c tests/*.cc tools/*.c
 
     steps:
     - uses: actions/checkout@v6
@@ -31,7 +31,7 @@ jobs:
     - name: Set cppcheck version
       id: version
       run: |
-        CPPCHECK_VER=2.14.2
+        CPPCHECK_VER=2.20.0
         echo "version=$CPPCHECK_VER" >> $GITHUB_OUTPUT
         echo "cache_key=cppcheck-$CPPCHECK_VER" >> $GITHUB_OUTPUT
 
@@ -56,4 +56,4 @@ jobs:
 
     - name: Run cppcheck analysis
       run: |
-        ~/cppcheck-install/bin/cppcheck --error-exitcode=2 --quiet -D CPPCHECK -I include -I libatomic_ops/src --check-level=exhaustive ${{ matrix.args }}
+        ~/cppcheck-install/bin/cppcheck --error-exitcode=2 --quiet -D CPPCHECK -I include -I libatomic_ops/src --check-level=exhaustive --safety ${{ matrix.args }}
