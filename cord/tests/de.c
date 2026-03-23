@@ -449,20 +449,16 @@ fix_pos(void)
   }
 }
 
-#if defined(WIN32)
-#  define beep() Beep(1000 /* Hz */, 300 /* ms */)
+#ifdef WIN32
+#  define beep() (Beep(1000 /* Hz */, 300 /* ms */), 0)
 #else
 /*
  * `beep()` is part of some `curses` packages and not others.
  * We try to match the type of the built-in one, if any.
  * Declared in the platform `curses.h` file.
  */
-int
-beep(void)
-{
-  putc('\007', stderr);
-  return 0;
-}
+#  undef beep
+#  define beep() (putc('\007', stderr), 0)
 #endif
 
 #define NO_PREFIX -1
@@ -521,7 +517,7 @@ do_command(int c)
     } else {
       locate_string
           = CORD_substr(locate_string, 0, CORD_len(locate_string) - 1);
-      beep();
+      (void)beep();
     }
     return;
   }
@@ -583,7 +579,7 @@ do_command(int c)
       break;
     case BS:
       if (col == 0) {
-        beep();
+        (void)beep();
         break;
       }
       col--;
