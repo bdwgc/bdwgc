@@ -1214,7 +1214,7 @@ typedef word page_hash_table[PHT_SIZE];
  * a given size.  Each entry in this map describes a byte offset
  * (displacement) and has the following type.
  */
-#  if (1 << (CPP_LOG_HBLKSIZE - 1)) / GC_GRANULE_BYTES <= 0x100
+#  if (1 << (CPP_LOG_HBLKSIZE - 1)) <= (GC_GRANULE_BYTES << 8)
 typedef unsigned char hb_map_entry_t;
 #  else
 typedef unsigned short hb_map_entry_t;
