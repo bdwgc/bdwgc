@@ -119,7 +119,7 @@ GC_init_thread_local(GC_tlfs p)
   if (UNLIKELY(!keys_initialized)) {
 #  ifdef USE_CUSTOM_SPECIFIC
     /* Ensure proper alignment of a "pushed" GC symbol. */
-    GC_ASSERT(ADDR(&GC_thread_key) % ALIGNMENT == 0);
+    ASSERT_ALIGNMENT(&GC_thread_key);
 #  endif
     res = GC_key_create(&GC_thread_key, reset_thread_key);
     if (COVERT_DATAFLOW(res) != 0) {

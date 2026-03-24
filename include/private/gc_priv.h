@@ -1005,6 +1005,12 @@ EXTERN_C_BEGIN
 #  define UNALIGNED_PTRS
 #endif
 
+#ifdef CPPCHECK
+#  define ASSERT_ALIGNMENT(p) (void)(p)
+#else
+#  define ASSERT_ALIGNMENT(p) GC_ASSERT(ADDR(p) % ALIGNMENT == 0)
+#endif
+
 #define BYTES_TO_GRANULES(lb) ((lb) / GC_GRANULE_BYTES)
 #define GRANULES_TO_BYTES(lg) (GC_GRANULE_BYTES * (lg))
 #define BYTES_TO_PTRS(lb) ((lb) / sizeof(ptr_t))

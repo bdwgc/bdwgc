@@ -79,7 +79,7 @@ GC_add_ext_descriptor(const word *bm, size_t nbits)
     size_t ed_size = GC_ed_size;
 
     if (0 == ed_size) {
-      GC_ASSERT(ADDR(&GC_ext_descriptors) % ALIGNMENT == 0);
+      ASSERT_ALIGNMENT(&GC_ext_descriptors);
       GC_push_typed_structures = GC_push_typed_structures_proc;
       UNLOCK();
       new_size = ED_INITIAL_SIZE;

@@ -1818,7 +1818,7 @@ GC_thr_init(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(!GC_thr_initialized);
-  GC_ASSERT(ADDR(&GC_threads) % ALIGNMENT == 0);
+  ASSERT_ALIGNMENT(&GC_threads);
 #    ifdef GC_ASSERTIONS
   GC_thr_initialized = TRUE;
 #    endif
