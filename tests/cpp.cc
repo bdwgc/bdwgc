@@ -404,12 +404,10 @@ main(int argc, const char *argv[])
       // Stack allocation should work too.
       C c1(2);
       F *f;
-#  if !defined(CPPCHECK)
-      D *d;
+      const D *d;
       d = ::new (USE_GC, D::CleanUp,
                  reinterpret_cast<void *>(static_cast<GC_uintptr_t>(i))) D(i);
       GC_reachable_here(d);
-#  endif
       f = new F;
       F **fa = new F *[1];
       fa[0] = f;

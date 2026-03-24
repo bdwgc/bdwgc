@@ -136,7 +136,7 @@ GetModuleBase(HANDLE hProcess, ULONG_ADDR dwAddress)
 }
 
 static ULONG_ADDR
-CheckAddress(void *address)
+CheckAddress(const void *address)
 {
   ULONG_ADDR dwAddress = (ULONG_ADDR)(GC_ULONG_PTR)address;
   GetModuleBase(GetSymHandle(), dwAddress);
@@ -215,13 +215,13 @@ GetStackFramesFromContext(HANDLE hProcess, HANDLE hThread, CONTEXT *context,
 }
 
 static size_t
-GetModuleNameFromAddress(void *address, char *moduleName, size_t size)
+GetModuleNameFromAddress(const void *address, char *moduleName, size_t size)
 {
   const char *sourceName;
   IMAGEHLP_MODULE moduleInfo = { sizeof(moduleInfo) };
 
   if (size)
-    *moduleName = 0;
+    *moduleName = '\0';
   if (!SymGetModuleInfo(GetSymHandle(), CheckAddress(address), &moduleInfo)) {
     return 0;
   }
@@ -232,7 +232,7 @@ GetModuleNameFromAddress(void *address, char *moduleName, size_t size)
     sourceName = moduleInfo.ImageName;
   }
   if (size) {
-    strncpy(moduleName, sourceName, size)[size - 1] = 0;
+    strncpy(moduleName, sourceName, size)[size - 1] = '\0';
   }
   return strlen(sourceName);
 }
@@ -243,11 +243,11 @@ union sym_namebuf_u {
 };
 
 static size_t
-GetSymbolNameFromAddress(void *address, char *symbolName, size_t size,
+GetSymbolNameFromAddress(const void *address, char *symbolName, size_t size,
                          size_t *offsetBytes)
 {
   if (size)
-    *symbolName = 0;
+    *symbolName = '\0';
   if (offsetBytes)
     *offsetBytes = 0;
   __try {
@@ -274,7 +274,7 @@ GetSymbolNameFromAddress(void *address, char *symbolName, size_t size,
         *offsetBytes = dwOffset;
       }
       if (size) {
-        strncpy(symbolName, sourceName, size)[size - 1] = 0;
+        strncpy(symbolName, sourceName, size)[size - 1] = '\0';
       }
       return strlen(sourceName);
     }
@@ -285,7 +285,7 @@ GetSymbolNameFromAddress(void *address, char *symbolName, size_t size,
 }
 
 static size_t
-GetFileLineFromAddress(void *address, char *fileName, size_t size,
+GetFileLineFromAddress(const void *address, char *fileName, size_t size,
                        size_t *lineNumber, size_t *offsetBytes)
 {
   const char *sourceName;
@@ -293,7 +293,7 @@ GetFileLineFromAddress(void *address, char *fileName, size_t size,
   GC_ULONG_PTR dwOffset = 0;
 
   if (size)
-    *fileName = 0;
+    *fileName = '\0';
   if (lineNumber)
     *lineNumber = 0;
   if (offsetBytes)
@@ -314,7 +314,7 @@ GetFileLineFromAddress(void *address, char *fileName, size_t size,
    * registered with MSVC IDE.
    */
   if (size) {
-    strncpy(fileName, sourceName, size)[size - 1] = 0;
+    strncpy(fileName, sourceName, size)[size - 1] = '\0';
   }
   return strlen(sourceName);
 }
@@ -322,16 +322,16 @@ GetFileLineFromAddress(void *address, char *fileName, size_t size,
 #  define GC_SNPRINTF _snprintf
 
 static size_t
-GetDescriptionFromAddress(void *address, const char *format, char *buffer,
-                          size_t size)
+GetDescriptionFromAddress(const void *address, const char *format,
+                          char *buffer, size_t size)
 {
   char *const begin = buffer;
-  char *const end = buffer + size;
+  const char *const end = buffer + size;
   size_t line_number = 0;
 
   (void)format;
   if (size) {
-    *buffer = 0;
+    *buffer = '\0';
   }
   buffer += GetFileLineFromAddress(address, buffer, size, &line_number, NULL);
   size = (GC_ULONG_PTR)end < (GC_ULONG_PTR)buffer ? 0 : end - buffer;
@@ -342,14 +342,14 @@ GetDescriptionFromAddress(void *address, const char *format, char *buffer,
     (void)GC_SNPRINTF(str, sizeof(str), "(%d) : ", (int)line_number);
     str[sizeof(str) - 1] = '\0';
     if (size) {
-      strncpy(buffer, str, size)[size - 1] = 0;
+      strncpy(buffer, str, size)[size - 1] = '\0';
     }
     buffer += strlen(str);
     size = (GC_ULONG_PTR)end < (GC_ULONG_PTR)buffer ? 0 : end - buffer;
   }
 
   if (size) {
-    strncpy(buffer, "at ", size)[size - 1] = 0;
+    strncpy(buffer, "at ", size)[size - 1] = '\0';
   }
   buffer += sizeof("at ") - 1;
   size = (GC_ULONG_PTR)end < (GC_ULONG_PTR)buffer ? 0 : end - buffer;
@@ -358,7 +358,7 @@ GetDescriptionFromAddress(void *address, const char *format, char *buffer,
   size = (GC_ULONG_PTR)end < (GC_ULONG_PTR)buffer ? 0 : end - buffer;
 
   if (size) {
-    strncpy(buffer, " in ", size)[size - 1] = 0;
+    strncpy(buffer, " in ", size)[size - 1] = '\0';
   }
   buffer += sizeof(" in ") - 1;
   size = (GC_ULONG_PTR)end < (GC_ULONG_PTR)buffer ? 0 : end - buffer;
@@ -368,8 +368,8 @@ GetDescriptionFromAddress(void *address, const char *format, char *buffer,
 }
 
 static size_t
-GetDescriptionFromStack(void *const frames[], size_t count, const char *format,
-                        char *description[], size_t size)
+GetDescriptionFromStack(const void *const frames[], size_t count,
+                        const char *format, char *description[], size_t size)
 {
   const GC_ULONG_PTR begin = (GC_ULONG_PTR)description;
   const GC_ULONG_PTR end = begin + size;

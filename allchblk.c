@@ -509,9 +509,9 @@ GC_add_to_fl(struct hblk *h, hdr *hhdr)
 
 #if defined(GC_ASSERTIONS) && !defined(USE_MUNMAP) && !defined(CHERI_PURECAP)
   {
-    struct hblk *next = (struct hblk *)((ptr_t)h + hhdr->hb_sz);
+    const struct hblk *next = (struct hblk *)((ptr_t)h + hhdr->hb_sz);
     const hdr *nexthdr = HDR(next);
-    struct hblk *prev = GC_free_block_ending_at(h);
+    const struct hblk *prev = GC_free_block_ending_at(h);
     const hdr *prevhdr = HDR(prev);
 
     GC_ASSERT(NULL == nexthdr || !HBLK_IS_FREE(nexthdr)
@@ -552,10 +552,10 @@ GC_add_to_fl(struct hblk *h, hdr *hhdr)
  * from its current state of mapped/unmapped to the opposite state.
  */
 static int
-calc_num_unmapped_regions_delta(struct hblk *h, hdr *hhdr)
+calc_num_unmapped_regions_delta(struct hblk *h, const hdr *hhdr)
 {
-  struct hblk *prev = get_block_ending_at(h);
-  struct hblk *next;
+  const struct hblk *prev = get_block_ending_at(h);
+  const struct hblk *next;
   GC_bool prev_unmapped = FALSE;
   GC_bool next_unmapped = FALSE;
 
@@ -601,7 +601,7 @@ calc_num_unmapped_regions_delta(struct hblk *h, hdr *hhdr)
  * its current state of mapped/unmapped to the opposite state.
  */
 GC_INLINE void
-GC_adjust_num_unmapped(struct hblk *h, hdr *hhdr)
+GC_adjust_num_unmapped(struct hblk *h, const hdr *hhdr)
 {
 #  ifdef COUNT_UNMAPPED_REGIONS
   GC_num_unmapped_regions += calc_num_unmapped_regions_delta(h, hhdr);
@@ -913,7 +913,7 @@ next_hblk_fits_better(const hdr *hhdr, size_t size_avail, size_t size_needed,
   const hdr *nexthdr;
   size_t next_size;
   size_t next_ofs;
-  struct hblk *next_hbp = hhdr->hb_next;
+  const struct hblk *next_hbp = hhdr->hb_next;
 
   if (NULL == next_hbp)
     return FALSE; /*< no next block */
@@ -926,7 +926,9 @@ next_hblk_fits_better(const hdr *hhdr, size_t size_avail, size_t size_needed,
   if (size_needed + next_ofs > next_size)
     return FALSE; /*< not enough size */
 #ifndef NO_BLACK_LISTING
-  if (GC_is_black_listed(next_hbp + divHBLKSZ(next_ofs), size_needed))
+  if (GC_is_black_listed((/* no const */ struct hblk *)next_hbp
+                             + divHBLKSZ(next_ofs),
+                         size_needed))
     return FALSE;
 #endif
   return TRUE;
@@ -1234,7 +1236,8 @@ GC_free_profiler_hook(void *p)
 GC_INNER void
 GC_freehblk(struct hblk *hbp)
 {
-  struct hblk *next, *prev;
+  const struct hblk *next;
+  struct hblk *prev;
   hdr *hhdr, *prevhdr, *nexthdr;
   size_t size;
 

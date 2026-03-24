@@ -570,7 +570,8 @@ STATIC int
 GC_move_disappearing_link_inner(struct dl_hashtbl_s *dl_hashtbl, void **link,
                                 void **new_link)
 {
-  struct disappearing_link *curr_dl, *new_dl;
+  const struct disappearing_link *new_dl;
+  struct disappearing_link *curr_dl;
   struct disappearing_link *prev_dl = NULL;
   size_t curr_index, new_index;
   GC_hidden_pointer curr_hidden_link, new_hidden_link;
@@ -601,7 +602,7 @@ GC_move_disappearing_link_inner(struct dl_hashtbl_s *dl_hashtbl, void **link,
   /* `link` is found; now check `new_link` is not present. */
   new_index = HASH2(new_link, dl_hashtbl->log_size);
   new_hidden_link = GC_HIDE_POINTER(new_link);
-  for (new_dl = dl_hashtbl->head[new_index]; new_dl;
+  for (new_dl = dl_hashtbl->head[new_index]; new_dl != NULL;
        new_dl = dl_next(new_dl)) {
     if (new_dl->dl_hidden_link == new_hidden_link) {
       /* Target already registered; bail out. */
