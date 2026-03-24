@@ -1468,10 +1468,12 @@ static CLOCK_TYPE start_main_time;
 static void
 set_print_procs(void)
 {
+#ifndef CPPCHECK
   if (ADDR(&A.aa) % ALIGNMENT != 0) {
     GC_printf("A.aa is not aligned properly\n");
     FAIL;
   }
+#endif
   /* Set these global variables just once to avoid TSan false positives. */
   A.dummy = 17;
 #ifndef DBG_HDRS_ALL
@@ -2337,8 +2339,8 @@ static unsigned custom_push_cnt = 0;
 static void GC_CALLBACK
 test_custom_push(void **bottom, void **top, void *client_data, unsigned hint)
 {
-  TEST_ASSERT(ADDR(bottom) % ALIGNMENT == 0);
-  TEST_ASSERT(ADDR(top) % ALIGNMENT == 0);
+  ASSERT_ALIGNMENT(bottom);
+  ASSERT_ALIGNMENT(top);
   TEST_ASSERT(ADDR_GE((char *)top, (char *)bottom));
   TEST_ASSERT(&A == client_data);
   UNUSED_ARG(hint);

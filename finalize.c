@@ -74,10 +74,10 @@ struct finalizable_object {
 GC_API void GC_CALL
 GC_push_finalizer_structures(void)
 {
-  GC_ASSERT(ADDR(&GC_dl_hashtbl.head) % ALIGNMENT == 0);
-  GC_ASSERT(ADDR(&GC_fnlz_roots) % ALIGNMENT == 0);
+  ASSERT_ALIGNMENT(&GC_dl_hashtbl.head);
+  ASSERT_ALIGNMENT(&GC_fnlz_roots);
 #  ifndef GC_LONG_REFS_NOT_NEEDED
-  GC_ASSERT(ADDR(&GC_ll_hashtbl.head) % ALIGNMENT == 0);
+  ASSERT_ALIGNMENT(&GC_ll_hashtbl.head);
   GC_PUSH_ALL_SYM(GC_ll_hashtbl.head);
 #  endif
   GC_PUSH_ALL_SYM(GC_dl_hashtbl.head);

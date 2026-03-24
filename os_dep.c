@@ -1355,7 +1355,11 @@ os_main_stackbottom(void)
   stat_buf[buf_offset + i] = '\0';
 
   addr = (word)STRTOULL((char *)stat_buf + buf_offset, NULL, 10);
-  if (addr < 0x100000 || addr % ALIGNMENT != 0)
+  if (addr < 0x100000
+#    if ALIGNMENT > 1 /*< for CPPCHECK */
+      || addr % ALIGNMENT != 0
+#    endif
+  )
     ABORT_ARG1("Absurd stack bottom value", ": 0x%lx", (unsigned long)addr);
   return MAKE_CPTR(addr);
 }
@@ -2212,7 +2216,9 @@ GC_SysVGetDataStart(size_t max_page_size, ptr_t etext_ptr)
 {
   volatile ptr_t result;
 
+#  ifndef CPPCHECK
   GC_ASSERT(max_page_size % ALIGNMENT == 0);
+#  endif
   result = PTR_ALIGN_UP(etext_ptr, ALIGNMENT);
 #  ifdef CHERI_PURECAP
   result = derive_cap_from_ldr(result, DATAEND);

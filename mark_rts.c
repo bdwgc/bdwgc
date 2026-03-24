@@ -364,7 +364,8 @@ GC_remove_roots_subregion(ptr_t b, ptr_t e)
   GC_bool rebuild = FALSE;
 
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(ADDR(b) % ALIGNMENT == 0 && ADDR(e) % ALIGNMENT == 0);
+  ASSERT_ALIGNMENT(b);
+  ASSERT_ALIGNMENT(e);
   for (i = 0; i < n_root_sets; i++) {
     ptr_t r_start, r_end;
 
@@ -534,8 +535,8 @@ GC_exclude_static_roots_inner(ptr_t start, ptr_t finish)
   size_t next_index;
 
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(start != NULL && ADDR(start) % ALIGNMENT == 0);
-  GC_ASSERT(ADDR_LT(start, finish));
+  GC_ASSERT(start != NULL && ADDR_LT(start, finish));
+  ASSERT_ALIGNMENT(start);
 
   next = GC_next_exclusion(start);
   if (next != NULL) {

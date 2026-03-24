@@ -34,7 +34,7 @@ GC_key_create_inner(tsd **key_ptr)
 
   GC_ASSERT(I_HOLD_LOCK());
   /* A quick alignment check, since we need atomic stores. */
-  GC_ASSERT(ADDR(&invalid_tse.next) % ALIGNMENT == 0);
+  ASSERT_ALIGNMENT(&invalid_tse.next);
   result = (tsd *)MALLOC_CLEAR(sizeof(tsd));
   if (NULL == result)
     return ENOMEM;
