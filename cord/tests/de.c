@@ -427,7 +427,6 @@ void do_command(int c)
 {
     int i;
     int need_fix_pos;
-    FILE * out;
 
     if ( c == '\r') c = '\n';
     if (locate_mode) {
@@ -530,14 +529,18 @@ void do_command(int c)
             {
                 CORD name = CORD_cat(CORD_from_char_star(arg_file_name),
                                      ".new");
+                FILE *out = fopen(CORD_to_const_char_star(name), "wb");
 
-                if ((out = fopen(CORD_to_const_char_star(name), "wb")) == NULL
-                    || CORD_put(current, out) == EOF) {
+                if (NULL == out) {
+                    de_error("Open file for write failed\n");
+                    need_redisplay = ALL;
+                    break;
+                }
+                if (CORD_put(current, out) == EOF) {
                     de_error("Write failed\n");
                     need_redisplay = ALL;
-                } else {
-                    fclose(out);
                 }
+                fclose(out);
             }
             break;
           default:
