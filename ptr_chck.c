@@ -104,10 +104,12 @@ GC_valid_ptr_print_proc_t GC_is_valid_displacement_print_proc
 GC_API void *GC_CALL
 GC_is_valid_displacement(void *p)
 {
-  hdr *hhdr;
-  size_t offset;
+#ifdef NO_ALL_INTERIOR_POINTERS
+  const /*< for CPPCHECK */
+#endif
+      hdr *hhdr;
   struct hblk *h;
-  size_t sz;
+  size_t offset, sz;
 
   if (UNLIKELY(!GC_is_initialized))
     GC_init();

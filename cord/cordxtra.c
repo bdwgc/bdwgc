@@ -456,6 +456,9 @@ static char
 CORD_nul_func(size_t i, void *client_data)
 {
   (void)i;
+#if defined(CPPCHECK)
+  GC_noop1_ptr(client_data);
+#endif
   return (char)(GC_uintptr_t)client_data;
 }
 

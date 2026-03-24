@@ -1056,6 +1056,9 @@ finalizer(void *obj, void *client_data)
 {
   tn *t = (tn *)obj;
 
+#  ifdef CPPCHECK
+  GC_noop1_ptr(client_data);
+#  endif
   FINALIZER_LOCK();
   TEST_ASSERT((int)(GC_uintptr_t)client_data == t->level);
   finalized_count++;

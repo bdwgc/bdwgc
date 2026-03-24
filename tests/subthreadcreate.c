@@ -73,6 +73,9 @@ entry(LPVOID arg)
   int thread_num = (int)AO_fetch_and_add1(&thread_created_cnt);
   GC_word my_depth = (GC_word)(GC_uintptr_t)arg + 1;
 
+#  ifdef CPPCHECK
+  GC_noop1_ptr(arg);
+#  endif
   if (my_depth <= MAX_SUBTHREAD_DEPTH && thread_num < MAX_SUBTHREAD_COUNT
       && (thread_num % DECAY_DENOM) < DECAY_NUMER
       && thread_num - (int)AO_load(&thread_ended_cnt)

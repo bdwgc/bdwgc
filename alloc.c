@@ -307,7 +307,8 @@ GC_timeout_stop_func(void)
   time_diff = MS_TIME_DIFF(current_time, GC_start_time);
   nsec_diff = NS_FRAC_TIME_DIFF(current_time, GC_start_time);
 #  if defined(CPPCHECK)
-  GC_noop1_ptr(&nsec_diff);
+  /* Note: GCC reports a warning if `GC_noop1_ptr()` is used here. */
+  GC_noop1(ADDR(&nsec_diff));
 #  endif
   if (time_diff >= GC_time_limit
       && (time_diff > GC_time_limit || nsec_diff >= GC_time_lim_nsec)) {

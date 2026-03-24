@@ -892,6 +892,9 @@ GC_register_finalizer_inner(void *obj, GC_finalization_proc fn, void *cd,
   GC_fnlz_roots.fo_head[index] = new_fo;
   GC_dirty(GC_fnlz_roots.fo_head + index);
   UNLOCK();
+#  ifdef CPPCHECK
+  GC_noop1_ptr(obj);
+#  endif
 }
 
 GC_API void GC_CALL

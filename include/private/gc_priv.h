@@ -2160,7 +2160,7 @@ struct _GC_arrays {
   ptr_t _high_water;
 #endif
 
-#if CPP_PTRSZ > CPP_WORDSZ
+#if CPP_PTRSZ > CPP_WORDSZ || defined(CPPCHECK)
 #  define GC_noop_sink_ptr GC_arrays._noop_sink_ptr
   volatile ptr_t _noop_sink_ptr;
 #endif
