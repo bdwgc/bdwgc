@@ -51,9 +51,11 @@ GC_noop1(GC_word x)
 GC_API void GC_CALL
 GC_noop1_ptr(volatile void *p)
 {
-#if CPP_PTRSZ > CPP_WORDSZ
+#if CPP_PTRSZ > CPP_WORDSZ || defined(CPPCHECK)
 #  if defined(AO_HAVE_store) && defined(THREAD_SANITIZER)
   GC_cptr_store(&GC_noop_sink_ptr, (ptr_t)CAST_AWAY_VOLATILE_PVOID(p));
+#  elif defined(CPPCHECK)
+  GC_noop_sink_ptr = (ptr_t)(/* no volatile */ void *)p;
 #  else
   GC_noop_sink_ptr = (ptr_t)CAST_AWAY_VOLATILE_PVOID(p);
 #  endif

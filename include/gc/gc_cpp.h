@@ -632,6 +632,9 @@ gc_cleanup::cleanup(void *obj, void *displ)
       reinterpret_cast<char *>(obj)
       + static_cast<GC_PTRDIFF_T>(reinterpret_cast<GC_uintptr_t>(displ)))
       ->~gc_cleanup();
+#ifdef CPPCHECK
+  GC_noop1_ptr(displ);
+#endif
 }
 
 inline gc_cleanup::gc_cleanup()

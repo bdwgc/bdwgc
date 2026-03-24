@@ -87,12 +87,15 @@ class A
 public:
   GC_ATTR_EXPLICIT
   A(int iArg) : i(static_cast<A_I_TYPE>(iArg)) {}
+
   void
   Test(int iArg)
   {
     TEST_ASSERT(i == iArg);
   }
+
   virtual ~A() {}
+
   A_I_TYPE i;
 };
 
@@ -102,12 +105,15 @@ class B : public GC_NS_QUALIFY(gc), public A
 public:
   GC_ATTR_EXPLICIT
   B(int j) : A(j) {}
+
   virtual ~B() GC_OVERRIDE { TEST_ASSERT(deleting); }
+
   static void
   Deleting(int on)
   {
     deleting = on;
   }
+
   static int deleting;
 };
 
@@ -165,6 +171,7 @@ public:
       left = right = 0;
     }
   }
+
   ~C() GC_OVERRIDE
   {
     this->A::Test(level);
@@ -175,6 +182,7 @@ public:
     left = right = 0;
     level = -32456;
   }
+
   static void
   Test()
   {
@@ -191,6 +199,7 @@ public:
 
   static int nFreed;
   static int nAllocated;
+
   int level;
   C *left;
   C *right;
@@ -206,6 +215,7 @@ class D : public GC_NS_QUALIFY(gc)
 public:
   GC_ATTR_EXPLICIT
   D(int iArg) : i(iArg) { nAllocated++; }
+
   static void
   CleanUp(void *obj, void *data)
   {
@@ -213,7 +223,11 @@ public:
     nFreed++;
     TEST_ASSERT(static_cast<GC_uintptr_t>(self->i)
                 == reinterpret_cast<GC_uintptr_t>(data));
+#ifdef CPPCHECK
+    GC_noop1_ptr(data);
+#endif
   }
+
   static void
   Test()
   {
@@ -222,9 +236,10 @@ public:
 #endif
   }
 
-  int i;
   static int nFreed;
   static int nAllocated;
+
+  int i;
 };
 
 int D::nFreed = 0;
@@ -262,9 +277,10 @@ public:
     TEST_ASSERT(2 * nFreedF == nFreed);
   }
 
-  E e;
   static int nFreedF;
   static int nAllocatedF;
+
+  E e;
 };
 
 int F::nFreedF = 0;
@@ -273,6 +289,9 @@ int F::nAllocatedF = 0;
 GC_uintptr_t
 Disguise(void *p)
 {
+#ifdef CPPCHECK
+  GC_noop1_ptr(p);
+#endif
   return GC_HIDE_NZ_POINTER(p);
 }
 

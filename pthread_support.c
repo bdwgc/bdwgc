@@ -477,6 +477,9 @@ unsigned __stdcall GC_mark_thread(void *id)
   word id_n = (word)(GC_uintptr_t)id;
   IF_CANCEL(int cancel_state;)
 
+#    ifdef CPPCHECK
+  GC_noop1_ptr(id);
+#    endif
   if (id_n == GC_WORD_MAX)
     return 0; /*< to prevent a compiler warning */
 
