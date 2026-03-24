@@ -396,7 +396,7 @@ GC_ms_push_contents_hdr(ptr_t current, hdr *hhdr, mse *mark_stack_top,
  * maintain a cache for the block address to header mapping, we prefetch
  * when an object is "grayed", etc.
  */
-GC_INNER mse *GC_mark_from(mse *mark_stack_top, mse *mark_stack,
+GC_INNER mse *GC_mark_from(mse *mark_stack_top, const mse *mark_stack,
                            mse *mark_stack_limit);
 
 #define MARK_FROM_MARK_STACK()                                       \

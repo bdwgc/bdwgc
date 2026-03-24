@@ -268,7 +268,7 @@ get_index(word addr)
 }
 
 GC_INNER hdr *
-GC_install_header(struct hblk *h)
+GC_install_header(const struct hblk *h)
 {
   hdr *result;
 
@@ -312,7 +312,7 @@ GC_install_counts(struct hblk *h, size_t sz /* bytes */)
 }
 
 GC_INNER void
-GC_remove_header(struct hblk *h)
+GC_remove_header(const struct hblk *h)
 {
   hdr **ha;
   GET_HDR_ADDR(h, ha);
@@ -321,9 +321,9 @@ GC_remove_header(struct hblk *h)
 }
 
 GC_INNER void
-GC_remove_counts(struct hblk *h, size_t sz /* bytes */)
+GC_remove_counts(const struct hblk *h, size_t sz /* bytes */)
 {
-  struct hblk *hbp;
+  const struct hblk *hbp;
 
   if (sz <= HBLKSIZE)
     return;
@@ -353,7 +353,7 @@ GC_apply_to_all_blocks(GC_walk_hblk_fn fn, void *client_data)
     GC_signed_word j;
 
     for (j = BOTTOM_SZ - 1; j >= 0;) {
-      hdr *hhdr = bi->index[j];
+      const hdr *hhdr = bi->index[j];
 
       if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
         j -= (GC_signed_word)(hhdr != NULL ? ADDR(hhdr) : 1);
@@ -369,7 +369,7 @@ GC_apply_to_all_blocks(GC_walk_hblk_fn fn, void *client_data)
 }
 
 GC_INNER struct hblk *
-GC_next_block(struct hblk *h, GC_bool allow_free)
+GC_next_block(const struct hblk *h, GC_bool allow_free)
 {
   REGISTER bottom_index *bi;
   REGISTER size_t j = (size_t)(ADDR(h) >> LOG_HBLKSIZE) & (BOTTOM_SZ - 1);
@@ -387,7 +387,7 @@ GC_next_block(struct hblk *h, GC_bool allow_free)
 
   for (; bi != NULL; bi = bi->asc_link) {
     while (j < BOTTOM_SZ) {
-      hdr *hhdr = bi->index[j];
+      const hdr *hhdr = bi->index[j];
 
       if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
         j++;
@@ -405,7 +405,7 @@ GC_next_block(struct hblk *h, GC_bool allow_free)
 }
 
 GC_INNER struct hblk *
-GC_prev_block(struct hblk *h)
+GC_prev_block(const struct hblk *h)
 {
   bottom_index *bi;
   GC_signed_word j = (ADDR(h) >> LOG_HBLKSIZE) & (BOTTOM_SZ - 1);
@@ -422,7 +422,7 @@ GC_prev_block(struct hblk *h)
   }
   for (; bi != NULL; bi = bi->desc_link) {
     while (j >= 0) {
-      hdr *hhdr = bi->index[j];
+      const hdr *hhdr = bi->index[j];
 
       if (NULL == hhdr) {
         --j;

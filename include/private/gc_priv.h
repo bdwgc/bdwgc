@@ -2869,14 +2869,14 @@ GC_INNER GC_bool GC_should_collect(void);
  * is managed by the collector.  The block must be in use unless
  * `allow_free` is TRUE.  Return `NULL` if there is no such block.
  */
-GC_INNER struct hblk *GC_next_block(struct hblk *h, GC_bool allow_free);
+GC_INNER struct hblk *GC_next_block(const struct hblk *h, GC_bool allow_free);
 
 /*
  * Get the last (highest address) block whose address is at most `h`.
  * Returned block is managed by the collector, but may or may not be in use.
  * Return `NULL` if there is no such block.
  */
-GC_INNER struct hblk *GC_prev_block(struct hblk *h);
+GC_INNER struct hblk *GC_prev_block(const struct hblk *h);
 
 GC_INNER void GC_mark_init(void);
 
@@ -3557,7 +3557,7 @@ GC_INNER void GC_init_headers(void);
  * Install a header for block `h`.  Return `NULL` on failure, or the
  * uninitialized header otherwise.
  */
-GC_INNER hdr *GC_install_header(struct hblk *h);
+GC_INNER hdr *GC_install_header(const struct hblk *h);
 
 /*
  * Set up forwarding counts for block `h` of size `sz`.  Return `FALSE`
@@ -3566,10 +3566,10 @@ GC_INNER hdr *GC_install_header(struct hblk *h);
 GC_INNER GC_bool GC_install_counts(struct hblk *h, size_t sz);
 
 /* Remove the header for block `h`. */
-GC_INNER void GC_remove_header(struct hblk *h);
+GC_INNER void GC_remove_header(const struct hblk *h);
 
 /* Remove forwarding counts for `h`. */
-GC_INNER void GC_remove_counts(struct hblk *h, size_t sz);
+GC_INNER void GC_remove_counts(const struct hblk *h, size_t sz);
 
 /* A non-macro variant of the header location routine. */
 GC_INNER hdr *GC_find_header(const void *h);
@@ -3851,7 +3851,7 @@ GC_INNER void GC_read_dirty(GC_bool output_unneeded);
  * the pages overlapping `h` are dirty.  This routine may err on the side
  * of labeling pages as dirty (and this implementation does).
  */
-GC_INNER GC_bool GC_page_was_dirty(struct hblk *h);
+GC_INNER GC_bool GC_page_was_dirty(const struct hblk *h);
 
 /*
  * Block `h` is about to be written or allocated shortly.  Ensure that
@@ -4152,7 +4152,7 @@ GC_INNER GC_bool GC_gww_dirty_init(void);
 
 #if defined(CHECKSUMS) || defined(PROC_VDB)
 /* Could any valid GC heap pointer ever have been written to this page? */
-GC_INNER GC_bool GC_page_was_ever_dirty(struct hblk *h);
+GC_INNER GC_bool GC_page_was_ever_dirty(const struct hblk *h);
 #endif
 
 #ifndef GC_NO_DEINIT

@@ -2025,7 +2025,7 @@ STATIC size_t GC_max_root_size = GC_INITIAL_MAX_ROOT_SIZE;
 STATIC GC_bool
 GC_is_malloc_heap_base(const void *p)
 {
-  struct GC_malloc_heap_list *q;
+  const struct GC_malloc_heap_list *q;
 
   for (q = GC_malloc_heap_l; q != NULL; q = q->next) {
     if (q->allocation_base == p)
@@ -3845,7 +3845,7 @@ GC_protect_heap(void)
       GC_bool is_ptrfree = TRUE;
 
       if (ADDR_LT((ptr_t)current, limit)) {
-        hdr *hhdr;
+        const hdr *hhdr;
 
         GET_HDR(current, hhdr);
         if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
@@ -4641,7 +4641,7 @@ GC_is_vdb_for_static_roots(void)
 #  endif
 
 GC_INNER GC_bool
-GC_page_was_dirty(struct hblk *h)
+GC_page_was_dirty(const struct hblk *h)
 {
   size_t index;
 
@@ -4662,7 +4662,7 @@ GC_page_was_dirty(struct hblk *h)
 
 #  if defined(CHECKSUMS) || defined(PROC_VDB)
 GC_INNER GC_bool
-GC_page_was_ever_dirty(struct hblk *h)
+GC_page_was_ever_dirty(const struct hblk *h)
 {
 #    if defined(GWW_VDB) || defined(PROC_VDB) || defined(SOFT_VDB)
   size_t index;

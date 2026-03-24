@@ -694,7 +694,7 @@ GC_signal_mark_stack_overflow(mse *msp)
 
 GC_ATTR_NO_SANITIZE_ADDR_MEM_THREAD
 GC_INNER mse *
-GC_mark_from(mse *mark_stack_top, mse *mark_stack, mse *mark_stack_limit)
+GC_mark_from(mse *mark_stack_top, const mse *mark_stack, mse *mark_stack_limit)
 {
   GC_signed_word credit = HBLKSIZE; /*< remaining credit for marking work */
   word descr;
@@ -1525,6 +1525,8 @@ GC_push_obj_descr(void *obj, GC_word descr)
 
 #ifndef GC_DISABLE_INCREMENTAL
 
+typedef GC_bool (*dirty_func_t)(const struct hblk *);
+
 /*
  * Analogous to `GC_push_all`, but push only those pages `h` with
  * `dirty_fn(h) != 0`.  We use `GC_push_all` to actually push the block.
@@ -1536,7 +1538,7 @@ GC_push_obj_descr(void *obj, GC_word descr)
  * ensuring progress in the event of a stack overflow.)
  */
 STATIC void
-GC_push_selected(ptr_t bottom, ptr_t top, GC_bool (*dirty_fn)(struct hblk *))
+GC_push_selected(ptr_t bottom, ptr_t top, dirty_func_t dirty_fn)
 {
   struct hblk *h;
 
@@ -1545,7 +1547,7 @@ GC_push_selected(ptr_t bottom, ptr_t top, GC_bool (*dirty_fn)(struct hblk *))
   if (ADDR_GE(bottom, top))
     return;
 
-  h = HBLKPTR(bottom + HBLKSIZE);
+  h = HBLKPTR(bottom + HBLKSIZE); /*< round up to the next block */
   if (ADDR_GE((ptr_t)h, top)) {
     if ((*dirty_fn)(h - 1)) {
       GC_push_all(bottom, top);
@@ -1605,7 +1607,7 @@ GC_push_conditional(void *bottom, void *top, int all)
  * in the registered static roots only.  Not used if the manual VDB is on.
  */
 STATIC GC_bool
-GC_static_page_was_dirty(struct hblk *h)
+GC_static_page_was_dirty(const struct hblk *h)
 {
   return get_pht_entry_from_index(GC_grungy_pages, PHT_HASH(h));
 }
@@ -2162,7 +2164,7 @@ GC_push_unconditionally(struct hblk *h, const hdr *hhdr)
 #ifndef GC_DISABLE_INCREMENTAL
 /* Test whether any page in the given block is dirty. */
 STATIC GC_bool
-GC_block_was_dirty(struct hblk *h, const hdr *hhdr)
+GC_block_was_dirty(const struct hblk *h, const hdr *hhdr)
 {
   size_t sz;
   ptr_t p;
@@ -2178,7 +2180,7 @@ GC_block_was_dirty(struct hblk *h, const hdr *hhdr)
   }
 
   for (p = (ptr_t)h; ADDR_LT(p, (ptr_t)h + sz); p += HBLKSIZE) {
-    if (GC_page_was_dirty((struct hblk *)p))
+    if (GC_page_was_dirty((const struct hblk *)p))
       return TRUE;
   }
   return FALSE;
@@ -2192,7 +2194,7 @@ GC_block_was_dirty(struct hblk *h, const hdr *hhdr)
 STATIC struct hblk *
 GC_push_next_marked(struct hblk *h)
 {
-  hdr *hhdr = HDR(h);
+  const hdr *hhdr = HDR(h);
 
   if (UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr))) {
     h = GC_next_block(h, FALSE);
@@ -2214,7 +2216,7 @@ GC_push_next_marked(struct hblk *h)
 STATIC struct hblk *
 GC_push_next_marked_dirty(struct hblk *h)
 {
-  hdr *hhdr;
+  const hdr *hhdr;
 
   GC_ASSERT(I_HOLD_LOCK());
   if (!GC_incremental)
@@ -2264,7 +2266,7 @@ GC_push_next_marked_dirty(struct hblk *h)
 STATIC struct hblk *
 GC_push_next_marked_uncollectable(struct hblk *h)
 {
-  hdr *hhdr = HDR(h);
+  const hdr *hhdr = HDR(h);
 
   for (;;) {
     if (UNLIKELY(IS_FORWARDING_ADDR_OR_NIL(hhdr) || HBLK_IS_FREE(hhdr))) {

@@ -1476,7 +1476,7 @@ GC_stop_init(void)
 {
 #  ifndef NACL
   struct sigaction act;
-  char *str;
+  const char *str;
 
   if (SIGNAL_UNSET == GC_sig_suspend)
     GC_sig_suspend = SIG_SUSPEND;
@@ -1546,7 +1546,7 @@ GC_stop_init(void)
   str = GETENV("GC_RETRY_SIGNALS");
   if (str != NULL) {
     /* Do not retry if the environment variable is set to "0". */
-    GC_retry_signals = *str != '0' || *(str + 1) != '\0';
+    GC_retry_signals = str[0] != '0' || str[1] != '\0';
   }
   if (GC_retry_signals) {
     GC_COND_LOG_PRINTF(

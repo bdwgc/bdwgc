@@ -101,7 +101,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
     de_error("File name argument required");
     return 0;
   } else {
-    char *p = command_line;
+    const char *p = command_line;
 
     while (*p != 0 && !isspace(*(unsigned char *)p))
       p++;
