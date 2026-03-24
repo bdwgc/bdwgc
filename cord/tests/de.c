@@ -487,7 +487,6 @@ do_command(int c)
 {
   int i;
   int need_fix_pos;
-  FILE *out;
 
   if (c == '\r')
     c = '\n';
@@ -602,14 +601,18 @@ do_command(int c)
     case WRITE:
       {
         CORD name = CORD_cat(CORD_from_char_star(arg_file_name), ".new");
+        FILE *out = fopen(CORD_to_const_char_star(name), "wb");
 
-        if ((out = fopen(CORD_to_const_char_star(name), "wb")) == NULL
-            || CORD_put(current, out) == EOF) {
+        if (NULL == out) {
+          de_error("Open file for write failed");
+          need_redisplay = ALL;
+          break;
+        }
+        if (CORD_put(current, out) == EOF) {
           de_error("Write failed");
           need_redisplay = ALL;
-        } else {
-          fclose(out);
         }
+        fclose(out);
       }
       break;
     default:
