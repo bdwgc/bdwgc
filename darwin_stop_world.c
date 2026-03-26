@@ -600,7 +600,6 @@ GC_stop_world(void)
 {
   task_t my_task = current_task();
   mach_port_t my_thread = mach_thread_self();
-  kern_return_t kern_result;
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_thr_initialized);
@@ -640,9 +639,7 @@ GC_stop_world(void)
     prev_list = NULL;
     prevcount = 0;
     do {
-      kern_result = task_threads(my_task, &act_list, &listcount);
-
-      if (kern_result == KERN_SUCCESS) {
+      if (task_threads(my_task, &act_list, &listcount) == KERN_SUCCESS) {
         changed = GC_suspend_thread_list(act_list, listcount, prev_list,
                                          prevcount, my_task, my_thread);
 
@@ -679,6 +676,8 @@ GC_stop_world(void)
       for (p = GC_threads[i]; p != NULL; p = p->tm.next) {
         if ((p->flags & (FINISHED | DO_BLOCKING)) == 0
             && p->mach_thread != my_thread) {
+          kern_return_t kern_result;
+
           GC_acquire_dirty_lock();
           do {
             kern_result = thread_suspend(p->mach_thread);

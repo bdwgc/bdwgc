@@ -304,22 +304,25 @@ GC_gcj_malloc(size_t lb, const void *vtable_ptr)
 GC_INNER void
 GC_mark_thread_local_fls_for(GC_tlfs p)
 {
-  ptr_t q;
-  int kind, j;
+  int j;
 
   for (j = 0; j < GC_TINY_FREELISTS; ++j) {
+    int kind;
+
     for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
       /*
        * Load the pointer atomically as it might be updated concurrently
        * by `GC_FAST_MALLOC_GRANS()`.
        */
-      q = GC_cptr_load((volatile ptr_t *)&p->_freelists[kind][j]);
+      ptr_t q = GC_cptr_load((volatile ptr_t *)&p->_freelists[kind][j]);
+
       if (ADDR(q) > HBLKSIZE)
         GC_set_fl_marks(q);
     }
 #  ifdef GC_GCJ_SUPPORT
     if (LIKELY(j > 0)) {
-      q = GC_cptr_load((volatile ptr_t *)&p->gcj_freelists[j]);
+      ptr_t q = GC_cptr_load((volatile ptr_t *)&p->gcj_freelists[j]);
+
       if (ADDR(q) > HBLKSIZE)
         GC_set_fl_marks(q);
     }
