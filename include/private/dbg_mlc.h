@@ -141,6 +141,9 @@ typedef struct {
  */
 #if defined(SAVE_CALL_CHAIN)
 #  define ADD_CALL_CHAIN(base, ra) GC_save_callers(((oh *)(base))->oh_ci)
+#  ifdef CPPCHECK
+#    undef ADD_CALL_CHAIN_IS_UNSAFE
+#  endif
 #  if defined(REDIRECT_MALLOC)                                     \
       && (defined(DBG_HDRS_ALL) || defined(REDIRECT_MALLOC_DEBUG)) \
       && NARGS == 0 && NFRAMES % 2 == 0 && defined(GC_HAVE_BUILTIN_BACKTRACE)
