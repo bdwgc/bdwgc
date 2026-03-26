@@ -2678,6 +2678,9 @@ main(void)
 #  ifdef THREADS
   UNTESTED(GC_register_altstack);
 #  endif
+#  if !defined(NO_DEBUGGING) && !defined(GC_DLL)
+  (void)GC_n_set_marks; /*< ensure the symbol is not `static` */
+#  endif
 #endif
 
 #ifdef GC_PTHREADS

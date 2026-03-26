@@ -4454,8 +4454,15 @@ GC_INNER word GC_compute_root_size(void);
   } while (0)
 
 #ifndef NO_DEBUGGING
+/*
+ * Return the number of set mark bits in the given header.
+ * Remains externally visible as used by GNU `gcj` currently.
+ */
+unsigned GC_n_set_marks(const hdr *);
+
 /* A flag to generate regular debugging dumps. */
 GC_EXTERN GC_bool GC_dump_regularly;
+
 #  define COND_DUMP                    \
     if (UNLIKELY(GC_dump_regularly)) { \
       GC_dump_named(NULL);             \
