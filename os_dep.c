@@ -4991,7 +4991,6 @@ struct mp_msg_s {
 STATIC void *
 GC_mprotect_thread(void *arg)
 {
-  mach_msg_return_t r;
   /*
    * These two structures contain some private kernel data.  We do not need
    * to access any of it so we do not bother defining a proper structure.
@@ -4999,7 +4998,6 @@ GC_mprotect_thread(void *arg)
    */
   struct mp_reply_s reply;
   struct mp_msg_s msg;
-  mach_msg_id_t id;
 
   if (ADDR(arg) == GC_WORD_MAX)
     return NULL; /*< to prevent a compiler warning */
@@ -5016,14 +5014,14 @@ GC_mprotect_thread(void *arg)
 #  endif
 
   for (;;) {
-    r = mach_msg(
+    mach_msg_return_t r = mach_msg(
         &msg.head,
         MACH_RCV_MSG | MACH_RCV_LARGE
             | (GC_mprotect_state == GC_MP_DISCARDING ? MACH_RCV_TIMEOUT : 0),
         0, sizeof(msg), GC_exception_port,
         GC_mprotect_state == GC_MP_DISCARDING ? 0 : MACH_MSG_TIMEOUT_NONE,
         MACH_PORT_NULL);
-    id = r == MACH_MSG_SUCCESS ? msg.head.msgh_id : -1;
+    mach_msg_id_t id = r == MACH_MSG_SUCCESS ? msg.head.msgh_id : -1;
 
 #  ifdef THREADS
     if (GC_mprotect_state == GC_MP_DISCARDING) {
