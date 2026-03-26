@@ -154,8 +154,6 @@ Cautions:
 #  define GC_NS_QUALIFY(T) T
 #endif
 
-#define GC_cdecl GC_CALLBACK
-
 #if !defined(GC_NO_OPERATOR_NEW_ARRAY)                  \
     && !defined(_ENABLE_ARRAYNEW) /*< Digital Mars */   \
     && (defined(__BORLANDC__) && (__BORLANDC__ < 0x450) \
@@ -307,7 +305,7 @@ public:
   inline virtual ~gc_cleanup();
 
 private:
-  inline static void GC_cdecl cleanup(void *obj, void *clientData);
+  inline static void GC_CALLBACK cleanup(void *obj, void *displ);
 };
 
 extern "C" {
