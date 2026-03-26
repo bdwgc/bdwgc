@@ -2572,7 +2572,7 @@ GC_unix_sbrk_get_mem(size_t bytes)
       goto out;
     }
     if (ofs != 0) {
-      if ((ptr_t)sbrk((SBRK_ARG_T)GC_page_size - ofs) == (ptr_t)(-1)) {
+      if (ADDR(sbrk((SBRK_ARG_T)GC_page_size - ofs)) == GC_WORD_MAX) {
         result = NULL;
         goto out;
       }
