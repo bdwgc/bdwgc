@@ -5753,8 +5753,10 @@ GC_print_callers(struct callinfo info[NFRAMES])
       for (j = 0; j < NARGS; j++) {
         void *p = GC_REVEAL_NZ_POINTER(info[i].ci_arg[j]);
 
+#    if NARGS > 1 /*< for CPPCHECK */
         if (j != 0)
           GC_err_printf(", ");
+#    endif
         GC_err_printf("%ld (%p)", (long)(GC_signed_word)ADDR(p), p);
       }
       GC_err_printf("\n");
@@ -5868,7 +5870,7 @@ GC_print_callers(struct callinfo info[NFRAMES])
           }
           if (strncmp(result_buf, "main",
                       nl != NULL
-                          ? (size_t)(ADDR(nl) /*< CPPCHECK */
+                          ? (size_t)(ADDR(nl) /*< for CPPCHECK */
                                      - COVERT_DATAFLOW(ADDR(result_buf)))
                           : result_len)
               == 0) {
