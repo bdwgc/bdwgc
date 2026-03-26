@@ -1584,6 +1584,8 @@ GC_win32_start_inner(struct GC_stack_base *sb, void *arg)
                 (long)GetCurrentThreadId());
 #  endif
 #  if defined(CPPCHECK)
+  GC_noop1((word)(GC_funcptr_uint)start_routine);
+  GC_noop1_ptr(start_arg);
   GC_noop1_ptr(sb);
 #  endif
   return ret;
