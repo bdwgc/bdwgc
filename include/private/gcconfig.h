@@ -2777,7 +2777,8 @@ EXTERN_C_BEGIN
 #  define USE_TKILL_ON_ANDROID
 #endif
 
-#if defined(MPROTECT_VDB) && defined(__GLIBC__) && !GC_GLIBC_PREREQ(2, 2)
+#if defined(MPROTECT_VDB) && !defined(CPPCHECK) && defined(__GLIBC__) \
+    && !GC_GLIBC_PREREQ(2, 2)
 #  error glibc too old?
 #endif
 

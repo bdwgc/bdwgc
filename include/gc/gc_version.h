@@ -41,9 +41,10 @@
 #  define GC_TMP_VERSION_MICRO 0 /*< 8.3.0 */
 
 #  ifdef GC_VERSION_MAJOR
-#    if GC_TMP_VERSION_MAJOR != GC_VERSION_MAJOR    \
-        || GC_TMP_VERSION_MINOR != GC_VERSION_MINOR \
-        || GC_TMP_VERSION_MICRO != GC_VERSION_MICRO
+#    if (GC_TMP_VERSION_MAJOR != GC_VERSION_MAJOR     \
+         || GC_TMP_VERSION_MINOR != GC_VERSION_MINOR  \
+         || GC_TMP_VERSION_MICRO != GC_VERSION_MICRO) \
+        && !defined(CPPCHECK)
 #   error Inconsistent version info.  Check README.md, configure.ac, include/gc/gc_version.h.
 #    endif
 #  else

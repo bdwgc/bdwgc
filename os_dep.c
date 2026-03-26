@@ -3387,7 +3387,7 @@ async_set_pht_entry_from_index(volatile page_hash_table db, size_t index)
   set_pht_entry_from_index(db, index);
   GC_release_dirty_lock();
 }
-#  else /* THREADS && !NEED_FAULT_HANDLER_LOCK */
+#  elif !defined(CPPCHECK)
 #    error No test_and_set operation: Introduces a race.
 #  endif
 #endif /* !NO_MANUAL_VDB || MPROTECT_VDB */
@@ -5594,8 +5594,8 @@ struct frame {
 #  if defined(GC_HAVE_BUILTIN_BACKTRACE)
 #    ifdef _MSC_VER
 EXTERN_C_BEGIN
-int backtrace(void *addresses[], int count);
-char **backtrace_symbols(void *const addresses[], int count);
+extern int backtrace(void *addresses[], int count);
+extern char **backtrace_symbols(void *const addresses[], int count);
 EXTERN_C_END
 #    else
 #      include <execinfo.h>
