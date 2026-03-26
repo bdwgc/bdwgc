@@ -4028,7 +4028,7 @@ GC_INNER void GC_verbose_log_printf(const char *format, ...)
 #endif
 
 /* Write `s` to `stderr`, but do not buffer, do not add newlines, do not... */
-void GC_err_puts(const char *s);
+GC_INNER void GC_err_puts(const char *s);
 
 /*
  * A handy macro for logging size values (of `word` type) in KiB, rounding
