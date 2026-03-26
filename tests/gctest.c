@@ -1131,7 +1131,7 @@ mktree(int n)
       GC_REGISTER_FINALIZER(result, finalizer, NUMERIC_TO_VPTR(n),
                             (GC_finalization_proc *)0, (void **)0);
       TEST_ASSERT(my_index < MAX_FINALIZED);
-      live_indicators[my_index] = (void *)13;
+      live_indicators[my_index] = (void *)(GC_uintptr_t)13;
       TEST_ASSERT(GC_GENERAL_REGISTER_DISAPPEARING_LINK(
                       &live_indicators[my_index], result)
                   == 0);

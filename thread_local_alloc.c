@@ -211,7 +211,7 @@ GC_malloc_kind(size_t lb, int kind)
   GC_ASSERT(GC_is_thread_tsd_valid(tsd));
   lg = ALLOC_REQUEST_GRANS(lb);
 #  if defined(CPPCHECK)
-#    define MALLOC_KIND_PTRFREE_INIT (void *)1
+#    define MALLOC_KIND_PTRFREE_INIT ((void *)(GC_uintptr_t)1)
 #  else
 #    define MALLOC_KIND_PTRFREE_INIT NULL
 #  endif
