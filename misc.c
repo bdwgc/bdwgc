@@ -2141,7 +2141,7 @@ GC_warn_printf(const char *format, ...)
 
 #endif /* GC_ANDROID_LOG */
 
-void
+GC_INNER void
 GC_err_puts(const char *s)
 {
   /* Note: write errors are ignored. */
