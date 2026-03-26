@@ -315,7 +315,7 @@ EXTERN_C_END
 #        define ElfW(type) Elf32_##type
 #      elif ELFSIZE == 64
 #        define ElfW(type) Elf64_##type
-#      else
+#      elif !defined(CPPCHECK)
 #        error Missing ELFSIZE define
 #      endif
 #    else
