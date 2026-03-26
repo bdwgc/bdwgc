@@ -291,16 +291,22 @@ GC_clear_stack(void *arg)
 #    define CLEARSTACK_LIMIT_MODIFIER /*< empty */
 #  endif
 
+#  if !defined(CPPCHECK) || defined(ASM_CLEAR_CODE)
 EXTERN_C_BEGIN
-void *GC_clear_stack_inner(void *, CLEARSTACK_LIMIT_MODIFIER ptr_t);
+extern void *GC_clear_stack_inner(void *, CLEARSTACK_LIMIT_MODIFIER ptr_t);
 EXTERN_C_END
+#  endif
 
 #  ifndef ASM_CLEAR_CODE
 /*
  * Clear the stack up to about `limit`.  Return `arg`.  This function is
- * not `static` because it could also be erroneously defined in `.S` file,
- * so this error would be caught by the linker.
+ * not `static` (not counting `CPPCHECK` case) because it could also be
+ * erroneously defined in `.S` file, so this error would be caught by the
+ * linker.
  */
+#    ifdef CPPCHECK
+STATIC
+#    endif
 void *
 GC_clear_stack_inner(void *arg, CLEARSTACK_LIMIT_MODIFIER ptr_t limit)
 {
