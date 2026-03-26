@@ -44,7 +44,7 @@
 #    if GC_TMP_VERSION_MAJOR != GC_VERSION_MAJOR    \
         || GC_TMP_VERSION_MINOR != GC_VERSION_MINOR \
         || GC_TMP_VERSION_MICRO != GC_VERSION_MICRO
-#   error Inconsistent version info.  Check README.md, include/gc_version.h and configure.ac.
+#   error Inconsistent version info.  Check README.md, configure.ac, include/gc/gc_version.h.
 #    endif
 #  else
 #    define GC_VERSION_MAJOR GC_TMP_VERSION_MAJOR
