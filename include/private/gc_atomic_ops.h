@@ -40,7 +40,7 @@ typedef size_t AO_t;
 
 #  if !defined(THREAD_SANITIZER) && !defined(GC_PRIVATE_H)
 /* Similar to that in `gcconfig.h` file. */
-#    if defined(__has_feature)
+#    if defined(__has_feature) && !defined(CPPCHECK)
 #      if __has_feature(thread_sanitizer)
 #        define THREAD_SANITIZER
 #      endif
