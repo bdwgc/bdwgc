@@ -3558,7 +3558,7 @@ extern ptr_t GC_data_start;
 #  endif
 #endif /* !GC_WORD_C */
 
-#if defined(__has_feature)
+#if defined(__has_feature) && !defined(CPPCHECK)
 /* `__has_feature()` is supported. */
 #  if __has_feature(address_sanitizer)
 #    define ADDRESS_SANITIZER
