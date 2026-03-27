@@ -383,8 +383,27 @@ main(int argc, const char *argv[])
   if (GC_get_find_leak())
     GC_printf("This test program is not designed for leak detection mode\n");
 
+  // Minimal testing of `address()`, `max_size()`, `construct()`.
+  gc_allocator<int> alloc;
+  gc_allocator_ignore_off_page<int> alloc_io;
+  traceable_allocator<int> alloc_trace;
+  TEST_ASSERT(alloc.max_size() > 100);
+  TEST_ASSERT(alloc_io.max_size() > 100);
+  TEST_ASSERT(alloc_trace.max_size() > 100);
+  int *y = alloc.allocate(1);
+  int *yi = alloc_io.allocate(1);
+  (void)alloc.address(*y);
+  (void)alloc_io.address(*yi);
+#  if !defined(__DMC__)
+  (void)alloc_trace.address(44);
+#  endif
+  alloc.construct(y, 29);
+  alloc_io.construct(yi, 30);
+  TEST_ASSERT(*y == 29);
+  TEST_ASSERT(*yi == 30);
+
   int i, iters, n;
-  int *x = gc_allocator<int>().allocate(1);
+  int *x = alloc.allocate(1);
   const int *xio;
   xio = gc_allocator_ignore_off_page<int>().allocate(1);
   GC_reachable_here(xio);
@@ -392,6 +411,12 @@ main(int argc, const char *argv[])
   *x = 29;
   GC_PTR_STORE_AND_DIRTY(xptr, x);
   x = 0;
+
+  alloc.destroy(y);
+  alloc_io.destroy(yi);
+  alloc.deallocate(y, 1);
+  alloc_io.deallocate(yi, 1);
+
   if (argc != 2 || (n = atoi(argv[1])) <= 0) {
     GC_printf("Usage: cpptest <number_of_iterations>\n"
               "Assuming %d iterations\n",
