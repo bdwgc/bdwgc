@@ -899,7 +899,7 @@ custom_push_current_stack(ptr_t arg, void *context)
     {
       /* TODO: Support real `ps_ofs` here. */
 #    ifdef CPPCHECK
-      size_t ps_ofs = 0;
+      volatile size_t ps_ofs = 0;
 #    else
 #      define ps_ofs 0
 #    endif
