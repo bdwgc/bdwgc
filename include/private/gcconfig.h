@@ -1080,7 +1080,9 @@ extern char etext[];
 #ifdef NEXT
 #  define OS_TYPE "NEXT"
 #  define DATASTART ((ptr_t)get_etext())
-#  define DATAEND /*< not needed */
+#  if !defined(CPPCHECK)
+#    define DATAEND /*< not needed */
+#  endif
 #  undef USE_MUNMAP
 #endif
 
@@ -1593,7 +1595,9 @@ extern int _data_start__[], _bss_end__[];
  * `STACKBOTTOM` and `DATASTART` are handled specially in `os_dep.c`
  * file.  OS/2 actually has the right system call!
  */
-#    define DATAEND /*< not needed */
+#    if !defined(CPPCHECK)
+#      define DATAEND /*< not needed */
+#    endif
 #    undef USE_MUNMAP
 #    define GETPAGESIZE() os2_getpagesize()
 #  endif
