@@ -142,7 +142,11 @@ struct thread_local_freelists {
 };
 typedef struct thread_local_freelists *GC_tlfs;
 
-#  if defined(USE_PTHREAD_SPECIFIC)
+#  if defined(USE_CUSTOM_SPECIFIC) /*< placed first for CPPCHECK */
+EXTERN_C_END
+#    include "specific.h"
+EXTERN_C_BEGIN
+#  elif defined(USE_PTHREAD_SPECIFIC)
 #    define GC_getspecific pthread_getspecific
 #    define GC_setspecific pthread_setspecific
 #    define GC_key_create pthread_key_create
@@ -176,10 +180,6 @@ typedef void *GC_key_t;
 #    define GC_remove_specific(key) (void)GC_setspecific(key, NULL)
 #    define GC_remove_specific_after_fork(key, t) (void)0
 typedef DWORD GC_key_t;
-#  elif defined(USE_CUSTOM_SPECIFIC)
-EXTERN_C_END
-#    include "specific.h"
-EXTERN_C_BEGIN
 #  else
 #    error implement me
 #  endif
