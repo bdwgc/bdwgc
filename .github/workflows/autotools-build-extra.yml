@@ -22,7 +22,7 @@ jobs:
         - os: ubuntu-latest
           conf_options: --disable-atomic-uncollectible --disable-shared --enable-cplusplus --enable-rwlock
         - os: macos-latest
-          cflags_extra: -D TEST_HANDLE_FORK
+          cflags_extra: -D TEST_HANDLE_FORK -D DONT_INCLUDE_LEAK_DETECTOR
         - os: ubuntu-24.04-arm
           conf_options: --disable-disclaim
         - os: ubuntu-latest
