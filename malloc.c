@@ -720,6 +720,11 @@ free(void *p)
 #  endif
 }
 
+EXTERN_C_BEGIN
+extern void freezero(void *p, size_t clear_lb);
+extern void freezeroall(void *p);
+EXTERN_C_END
+
 void
 freezero(void *p, size_t clear_lb)
 {
