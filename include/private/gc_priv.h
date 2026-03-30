@@ -4228,10 +4228,11 @@ GC_INNER void GC_traverse_back_graph(void);
 GC_INNER void *GC_roots_present(ptr_t);
 #endif
 
-#if defined(GC_WIN32_THREADS)
+#ifdef GC_WIN32_THREADS
 /* Same as `GC_push_one` but for a sequence of registers. */
 GC_INNER void GC_push_many_regs(const word *regs, unsigned count);
 
+#  ifdef ANY_MSWIN
 /*
  * Find stack with the lowest address which overlaps the interval
  * [`start`, `limit`).  Return stack bounds in `*plo` and `*phi`.
@@ -4240,6 +4241,7 @@ GC_INNER void GC_push_many_regs(const word *regs, unsigned count);
  */
 GC_INNER void GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo,
                                 ptr_t *phi);
+#  endif
 
 #  if defined(MPROTECT_VDB) && !defined(CYGWIN)
 GC_INNER void GC_set_write_fault_handler(void);
