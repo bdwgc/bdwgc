@@ -1167,6 +1167,7 @@ GC_push_all_stacks(void)
 GC_INNER ptr_t GC_marker_last_stack_min[MAX_MARKERS - 1] = { NULL };
 #  endif
 
+#  ifdef ANY_MSWIN
 GC_INNER void
 GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
 {
@@ -1185,7 +1186,7 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
 
   GC_ASSERT(I_HOLD_LOCK());
   /* First set `current_min`, ignoring `limit`. */
-#  ifndef GC_NO_THREADS_DISCOVERY
+#    ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i, my_max = GC_get_max_thread_index();
 
@@ -1196,14 +1197,14 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
         /* Update address of `last_stack_min`. */
         plast_stack_min = &dll_thread_table[i].crtn->last_stack_min;
         current_min = stack_end;
-#    ifdef CPPCHECK
+#      ifdef CPPCHECK
         /* To avoid a warning that thread is always null. */
         thread = (GC_thread)&dll_thread_table[i];
-#    endif
+#      endif
       }
     }
   } else
-#  endif
+#    endif
   /* else */ {
     int i;
 
@@ -1224,13 +1225,13 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
         }
       }
     }
-#  ifdef PARALLEL_MARK
+#    ifdef PARALLEL_MARK
     for (i = 0; i < GC_markers_m1; ++i) {
       ptr_t s = GC_marker_sp[i];
 
-#    ifdef IA64
+#      ifdef IA64
       /* FIXME: Not implemented. */
-#    endif
+#      endif
       if (ADDR_LT(start, s) && ADDR_LT(s, current_min)) {
         GC_ASSERT(GC_marker_last_stack_min[i] != NULL);
         plast_stack_min = &GC_marker_last_stack_min[i];
@@ -1239,7 +1240,7 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
         thread = NULL;
       }
     }
-#  endif
+#    endif
   }
 
   *phi = current_min;
@@ -1249,13 +1250,13 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
   }
 
   GC_ASSERT(ADDR_LT(start, current_min) && plast_stack_min != NULL);
-#  ifdef MSWINCE
+#    ifdef MSWINCE
   if (GC_dont_query_stack_min) {
     *plo = GC_wince_evaluate_stack_min(current_min);
     /* Keep `last_stack_min` value unmodified. */
     return;
   }
-#  endif
+#    endif
 
   if (ADDR_LT(limit, current_min) && !may_be_in_stack(limit)) {
     /*
@@ -1284,6 +1285,7 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
     GC_win32_unprotect_thread(thread);
   *plast_stack_min = *plo;
 }
+#  endif
 
 #  if defined(PARALLEL_MARK) && !defined(GC_PTHREADS_PARAMARK)
 
