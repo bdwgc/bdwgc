@@ -223,6 +223,10 @@ realloc(void *p, size_t lb)
   return REDIRECT_REALLOC_F(p, lb);
 }
 
+EXTERN_C_BEGIN
+extern void *reallocf(void *p, size_t lb);
+EXTERN_C_END
+
 void *
 reallocf(void *p, size_t lb)
 {
