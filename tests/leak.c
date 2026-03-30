@@ -6,7 +6,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "gc/leak_detector.h"
+#ifdef DONT_INCLUDE_LEAK_DETECTOR /*< for CPPCHECK */
+#  include <string.h>
+#  ifdef GC_REQUIRE_WCSDUP
+#    include <wchar.h>
+#  endif
+#  include "gc.h"
+#  if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER)
+#    ifdef __cplusplus
+extern "C" {
+#    endif
+extern void freezero(void *p, size_t clear_lb);
+extern void freezeroall(void *p);
+extern void *reallocf(void *p, size_t lb);
+#    ifdef __cplusplus
+} /* extern "C" */
+#    endif
+#  endif
+#else
+#  include "gc/leak_detector.h"
+#endif
 
 #define N_TESTS 100
 
@@ -32,6 +51,7 @@ main(void)
   /* FIXME: This is not ideal. */
   GC_INIT();
 
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
   p[0] = (char *)aligned_alloc(8, 50 /* `size` */);
   CHECK_OUT_OF_MEMORY(p[0]);
   free_aligned_sized(p[0], 8, 50);
@@ -39,23 +59,43 @@ main(void)
   p[0] = (char *)_aligned_malloc(70 /* `size` */, 16);
   CHECK_OUT_OF_MEMORY(p[0]);
   _aligned_free(p[0]);
+#endif
 
   p[0] = strdup("abc");
   CHECK_OUT_OF_MEMORY(p[0]);
   for (i = 1; i < N_TESTS; ++i) {
     p[i] = (char *)malloc(sizeof(int) + i);
     CHECK_OUT_OF_MEMORY(p[i]);
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
     (void)malloc_usable_size(p[i]);
+#endif
   }
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
   CHECK_LEAKS();
+#endif
   for (i = 3; i < N_TESTS / 2; ++i) {
-    p[i] = (char *)((i & 1) != 0   ? reallocarray(p[i], i, 43)
-                    : (i & 2) != 0 ? realloc(p[i], i * 16 + 1)
-                                   : reallocf(p[i], i * 32 + 1));
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
+    if ((i & 1) != 0) {
+      p[i] = (char *)reallocarray(p[i], i, 43);
+    } else
+#endif
+#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER) \
+    || !defined(DONT_INCLUDE_LEAK_DETECTOR)
+      /* else */ if ((i & 2) == 0) {
+        p[i] = (char *)reallocf(p[i], i * 32 + 1);
+      } else
+#endif
+      /* else */ {
+        p[i] = (char *)realloc(p[i], i * 16 + 1);
+      }
     CHECK_OUT_OF_MEMORY(p[i]);
   }
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
   CHECK_LEAKS();
+#endif
   for (i = 2; i < N_TESTS; ++i) {
+#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER) \
+    || !defined(DONT_INCLUDE_LEAK_DETECTOR)
     if ((i & 1) != 0) {
       free(p[i]);
     } else if ((i & 2) != 0) {
@@ -63,17 +103,27 @@ main(void)
     } else if ((i & 0x4) != 0) {
       freezeroall(p[i]);
     }
+#else
+    free(p[i]);
+#endif
   }
   for (i = 0; i < N_TESTS / 8; ++i) {
     p[i] = i < 3 || i > 6 ? (char *)malloc(sizeof(int) + i)
                           : strndup("abcd", i);
     CHECK_OUT_OF_MEMORY(p[i]);
-    if (i == 3)
+    if (i == 3) {
+#ifdef DONT_INCLUDE_LEAK_DETECTOR
+      free(p[i]);
+#else
       free_sized(p[i], i /* `strlen(p[i])` */ + 1);
+#endif
+    }
   }
   p[0] = (char *)calloc(3, 16);
   CHECK_OUT_OF_MEMORY(p[0]);
-#if defined(sun) || defined(__sun)
+#ifdef DONT_INCLUDE_LEAK_DETECTOR
+  free(p[0]);
+#elif defined(sun) || defined(__sun)
   cfree(p[0], 3, 16);
 #else
   cfree(p[0]);
@@ -86,9 +136,11 @@ main(void)
     CHECK_OUT_OF_MEMORY(p[0]);
   }
 #endif
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
   CHECK_LEAKS();
   CHECK_LEAKS();
   CHECK_LEAKS();
+#endif
   printf("SUCCEEDED\n");
   return 0;
 }
