@@ -2827,6 +2827,10 @@ EXTERN_C_BEGIN
 #  undef PARALLEL_MARK
 #endif
 
+#if defined(CPPCHECK) && !defined(THREADS)
+#  undef PARALLEL_MARK
+#endif
+
 #ifndef PARALLEL_MARK
 #  undef GC_PTHREADS_PARAMARK /*< just in case it is defined by client */
 #elif defined(GC_PTHREADS) && !defined(GC_PTHREADS_PARAMARK) \
