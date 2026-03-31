@@ -16,9 +16,9 @@
 #    ifdef __cplusplus
 extern "C" {
 #    endif
-extern void freezero(void *p, size_t clear_lb);
-extern void freezeroall(void *p);
-extern void *reallocf(void *p, size_t lb);
+GC_API void freezero(void *p, size_t clear_lb);
+GC_API void freezeroall(void *p);
+GC_API void *reallocf(void *p, size_t lb);
 #    ifdef __cplusplus
 } /* extern "C" */
 #    endif
