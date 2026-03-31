@@ -217,17 +217,17 @@ GC_reallocf(void *p, size_t lb)
 #    define REDIRECT_REALLOCF_F GC_reallocf
 #  endif
 
-void *
+GC_API void *
 realloc(void *p, size_t lb)
 {
   return REDIRECT_REALLOC_F(p, lb);
 }
 
 EXTERN_C_BEGIN
-extern void *reallocf(void *p, size_t lb);
+GC_API void *reallocf(void *p, size_t lb);
 EXTERN_C_END
 
-void *
+GC_API void *
 reallocf(void *p, size_t lb)
 {
   return REDIRECT_REALLOCF_F(p, lb);
@@ -632,7 +632,7 @@ GC_wcsdup(const wchar_t *str)
 
 #  if !defined(wcsdup) && defined(REDIRECT_MALLOC) \
       && !defined(REDIRECT_MALLOC_IN_HEADER)
-wchar_t *
+GC_API wchar_t *
 wcsdup(const wchar_t *str)
 {
   return GC_wcsdup(str);
