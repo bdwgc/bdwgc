@@ -2660,15 +2660,6 @@ GC_get_mem(size_t bytes)
   return HBLKPTR((ptr_t)result + GC_page_size - 1);
 }
 
-#elif defined(MSWIN_XBOX1)
-GC_INNER void *
-GC_get_mem(size_t bytes)
-{
-  if (UNLIKELY(0 == bytes))
-    return NULL;
-  return VirtualAlloc(NULL, bytes, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE);
-}
-
 #elif defined(MSWINCE)
 GC_INNER void *
 GC_get_mem(size_t bytes)
@@ -2733,7 +2724,7 @@ GC_get_mem(size_t bytes)
   return result;
 }
 
-#elif defined(CYGWIN) || defined(MSWIN32)
+#elif defined(CYGWIN) || defined(MSWIN32) || defined(MSWIN_XBOX1)
 #  ifdef USE_GLOBAL_ALLOC
 #    define GLOBAL_ALLOC_TEST TRUE
 #  else
@@ -2747,6 +2738,8 @@ GC_get_mem(size_t bytes)
  * Otherwise all addresses tend to end up in the first 4 GB, hiding bugs.
  */
 DWORD GC_mem_top_down = MEM_TOP_DOWN;
+#  elif defined(MSWIN_XBOX1)
+#    define GC_mem_top_down MEM_TOP_DOWN
 #  else
 #    define GC_mem_top_down 0
 #  endif /* !GC_USE_MEM_TOP_DOWN */
@@ -2791,8 +2784,6 @@ GC_get_mem(size_t bytes)
 #      else
 #        define VIRTUAL_ALLOC_PAD 1
 #      endif
-#    else
-#      define VIRTUAL_ALLOC_PAD 0
 #    endif
     /*
      * Pass `MEM_WRITE_WATCH` only if `GetWriteWatch`-based VDB is
@@ -2800,22 +2791,33 @@ GC_get_mem(size_t bytes)
      * resources or possibly cause `VirtualAlloc()` to fail (observed
      * in Windows 2000 SP2).
      */
-    result = VirtualAlloc(
-        NULL, SIZET_SAT_ADD(bytes, VIRTUAL_ALLOC_PAD),
-        MEM_COMMIT | MEM_RESERVE | GetWriteWatch_alloc_flag | GC_mem_top_down,
-        GC_pages_executable ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE);
+    result = VirtualAlloc(NULL,
+#    ifdef MPROTECT_VDB
+                          SIZET_SAT_ADD(bytes, VIRTUAL_ALLOC_PAD),
+#    else
+                          bytes,
+#    endif
+                          MEM_COMMIT
+#    ifndef MSWIN_XBOX1
+                              | MEM_RESERVE
+#    endif
+                              | GetWriteWatch_alloc_flag | GC_mem_top_down,
+                          GC_pages_executable ? PAGE_EXECUTE_READWRITE
+                                              : PAGE_READWRITE);
 #    undef IGNORE_PAGES_EXECUTABLE
   }
 #  endif
   if (HBLKDISPL(result) != 0)
     ABORT("Bad VirtualAlloc result");
+#  ifndef MSWIN_XBOX1
   if (GC_n_heap_bases >= MAX_HEAP_SECTS)
     ABORT("Too many heap sections");
   if (LIKELY(result != NULL))
     GC_heap_bases[GC_n_heap_bases++] = (ptr_t)result;
+#  endif
   return result;
 }
-#endif /* CYGWIN || MSWIN32 */
+#endif
 
 #if (defined(ANY_MSWIN) || defined(MSWIN_XBOX1)) && !defined(GC_NO_DEINIT)
 GC_API void GC_CALL

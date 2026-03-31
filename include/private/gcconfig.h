@@ -2928,7 +2928,7 @@ EXTERN_C_BEGIN
 #ifndef CYGWIN
 #  undef USE_WINALLOC
 #endif
-#if defined(MSWIN32) || defined(MSWINCE)
+#if defined(MSWIN32) || defined(MSWINCE) || defined(MSWIN_XBOX1)
 #  define USE_WINALLOC 1
 #endif
 
