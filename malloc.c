@@ -332,7 +332,7 @@ GC_API void * GC_CALL GC_malloc_uncollectable(size_t lb)
 # define GC_debug_malloc_replacement(lb) \
         GC_debug_malloc_inner(lb, TRUE /* is_redirect */, GC_DBG_EXTRAS)
 
-void * malloc(size_t lb)
+GC_API void * malloc(size_t lb)
 {
     /* It might help to manually inline the GC_malloc call here.        */
     /* But any decent compiler should reduce the extra procedure call   */
@@ -388,7 +388,7 @@ void * malloc(size_t lb)
   }
 #endif /* GC_LINUX_THREADS */
 
-void * calloc(size_t n, size_t lb)
+GC_API void * calloc(size_t n, size_t lb)
 {
     if ((lb | n) > GC_SQRT_SIZE_MAX /* fast initial test */
         && lb && n > GC_SIZE_MAX / lb)
@@ -416,7 +416,7 @@ void * calloc(size_t n, size_t lb)
 }
 
 #ifndef strdup
-  char *strdup(const char *s)
+  GC_API char *strdup(const char *s)
   {
     size_t lb = strlen(s) + 1;
     char *result = (char *)REDIRECT_MALLOC(lb);
@@ -436,7 +436,7 @@ void * calloc(size_t n, size_t lb)
 
 #ifndef strndup
   /* This is similar to strdup().       */
-  char *strndup(const char *str, size_t size)
+  GC_API char *strndup(const char *str, size_t size)
   {
     char *copy;
     size_t len = strlen(str);
@@ -569,7 +569,7 @@ GC_API void GC_CALL GC_free(void * p)
 #endif
 
 #ifdef REDIRECT_FREE
-  void free(void * p)
+  GC_API void free(void * p)
   {
 #   if defined(GC_LINUX_THREADS) && !defined(USE_PROC_FOR_LIBRARIES)
         {
