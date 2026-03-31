@@ -217,13 +217,13 @@ GC_reallocf(void *p, size_t lb)
 #    define REDIRECT_REALLOCF_F GC_reallocf
 #  endif
 
-void *
+GC_API void *GC_CALL
 realloc(void *p, size_t lb)
 {
   return REDIRECT_REALLOC_F(p, lb);
 }
 
-void *
+GC_API void *GC_CALL
 reallocf(void *p, size_t lb)
 {
   return REDIRECT_REALLOCF_F(p, lb);
