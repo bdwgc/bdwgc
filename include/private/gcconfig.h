@@ -2617,6 +2617,8 @@ extern char __global_base, __heap_base;
          || defined(SN_TARGET_PS3) || defined(SN_TARGET_PSP2)) \
         && defined(GC_THREADS))
 #  define THREADS
+#elif defined(CPPCHECK)
+#  undef THREADS
 #endif
 
 /*
