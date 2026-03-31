@@ -534,7 +534,7 @@ GC_malloc_atomic_uncollectable(size_t lb)
 #    define REDIRECT_MALLOC_F GC_malloc
 #  endif
 
-void *
+GC_API GC_ATTR_MALLOC void *GC_CALL
 malloc(size_t lb)
 {
   /*
@@ -595,7 +595,7 @@ GC_init_lib_bounds(void)
 }
 #  endif
 
-void *
+GC_API GC_ATTR_MALLOC void *GC_CALL
 calloc(size_t n, size_t lb)
 {
   if (UNLIKELY((lb | n) > GC_SQRT_SIZE_MAX) /*< fast initial test */
@@ -633,7 +633,7 @@ calloc(size_t n, size_t lb)
 }
 
 #  ifndef strdup
-char *
+GC_API GC_ATTR_MALLOC char *GC_CALL
 strdup(const char *s)
 {
   size_t lb = strlen(s) + 1;
@@ -658,7 +658,7 @@ strdup(const char *s)
 
 #  ifndef strndup
 /* This is similar to `strdup()`. */
-char *
+GC_API GC_ATTR_MALLOC char *GC_CALL
 strndup(const char *str, size_t size)
 {
   char *copy;
@@ -687,7 +687,7 @@ strndup(const char *str, size_t size)
 #    define REDIRECT_FREEZERO_F GC_freezero
 #  endif
 
-void
+GC_API void GC_CALL
 free(void *p)
 {
 #  if defined(REDIR_MALLOC_AND_LINUX_THREADS) \
@@ -720,7 +720,7 @@ free(void *p)
 #  endif
 }
 
-void
+GC_API void GC_CALL
 freezero(void *p, size_t clear_lb)
 {
   /* We do not expect the caller is in `libdl` or `libpthread`. */
@@ -751,7 +751,7 @@ freezero(void *p, size_t clear_lb)
 #  endif
 }
 
-void
+GC_API void GC_CALL
 freezeroall(void *p)
 {
   freezero(p, GC_SIZE_MAX);
