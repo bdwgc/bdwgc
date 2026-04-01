@@ -2708,8 +2708,8 @@ GC_INNER void *GC_get_mem(size_t lb);
 #  if defined(REDIRECT_MALLOC) && !defined(CPPCHECK)
 #    error Malloc redirection is unsupported
 #  endif
-#  define GET_MEM(lb)                                                  \
-    ((void *)HBLKPTR((ptr_t)calloc(1, SIZET_SAT_ADD(lb, GC_page_size)) \
+#  define GET_MEM(lb)                                                      \
+    ((void *)HBLKPTR((ptr_t)calloc(1, SIZET_SAT_ADD(lb, GC_page_size - 1)) \
                      + GC_page_size - 1))
 #elif !defined(GET_MEM)
 GC_INNER void *GC_unix_get_mem(size_t lb);

@@ -2642,7 +2642,7 @@ GC_get_mem(size_t bytes)
   int retry;
 
   GC_ASSERT(GC_page_size != 0);
-  bytes = SIZET_SAT_ADD(bytes, GC_page_size);
+  bytes = SIZET_SAT_ADD(bytes, GC_page_size - 1);
   for (retry = 0;; retry++) {
     if (DosAllocMem(&result, bytes,
                     (PAG_READ | PAG_WRITE | PAG_COMMIT)
@@ -2657,7 +2657,7 @@ GC_get_mem(size_t bytes)
     if (retry >= 1)
       return NULL;
   }
-  return HBLKPTR((ptr_t)result + GC_page_size - 1);
+  return PTR_ALIGN_UP((ptr_t)result, GC_page_size);
 }
 
 #elif defined(MSWINCE)
@@ -2759,7 +2759,7 @@ GC_get_mem(size_t bytes)
      * There are also unconfirmed rumors of other problems, so we
      * dodge the issue.
      */
-    result = GlobalAlloc(0 /* `flags` */, SIZET_SAT_ADD(bytes, HBLKSIZE));
+    result = GlobalAlloc(0 /* `flags` */, SIZET_SAT_ADD(bytes, HBLKSIZE - 1));
     /* Align it at `HBLKSIZE` boundary (`NULL` value remains unchanged). */
     result = PTR_ALIGN_UP((ptr_t)result, HBLKSIZE);
   } else
