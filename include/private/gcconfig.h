@@ -2655,7 +2655,7 @@
 # undef USE_MMAP
 #endif
 
-#if defined(LINUX) || defined(FREEBSD) || defined(SOLARIS) || defined(IRIX5) \
+#if defined(LINUX) || defined(FREEBSD) || defined(IRIX5) \
     || ((defined(USE_MMAP) || defined(USE_MUNMAP)) && !defined(USE_WINALLOC))
 # define MMAP_SUPPORTED
 #endif
