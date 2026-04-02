@@ -2943,7 +2943,7 @@ EXTERN_C_BEGIN
 #endif
 
 #if defined(ANY_BSD) || defined(DARWIN) || defined(IRIX5) || defined(LINUX) \
-    || defined(SERENITY) || defined(SOLARIS)                                \
+    || defined(SERENITY)                                                    \
     || ((defined(CYGWIN) || defined(USE_MMAP) || defined(USE_MUNMAP))       \
         && !defined(USE_WINALLOC))
 /* Try both `sbrk` and `mmap`, in that order. */
