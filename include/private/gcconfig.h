@@ -2513,7 +2513,7 @@
 # define GC_DISABLE_INCREMENTAL
 #endif
 
-#if defined(LINUX) || defined(FREEBSD) || defined(SOLARIS) || defined(IRIX5) \
+#if defined(LINUX) || defined(FREEBSD) || defined(IRIX5) \
         || ((defined(USE_MMAP) || defined(USE_MUNMAP)) \
         && !defined(MSWIN32) && !defined(MSWINCE))
 # define MMAP_SUPPORTED
