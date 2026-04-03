@@ -2708,9 +2708,12 @@ GC_INNER void *GC_get_mem(size_t lb);
 #  if defined(REDIRECT_MALLOC) && !defined(CPPCHECK)
 #    error Malloc redirection is unsupported
 #  endif
-#  define GET_MEM(lb)                                                      \
-    ((void *)HBLKPTR((ptr_t)calloc(1, SIZET_SAT_ADD(lb, GC_page_size - 1)) \
-                     + GC_page_size - 1))
+#  if defined(MMAP_SUPPORTED) && !defined(CPPCHECK)
+#    error Incorrect definition of MMAP_SUPPORTED
+#  endif
+#  define GET_MEM(lb)                                                        \
+    ((void *)PTR_ALIGN_UP((ptr_t)calloc(1, SIZET_SAT_ADD(lb, HBLKSIZE - 1)), \
+                          HBLKSIZE))
 #elif !defined(GET_MEM)
 GC_INNER void *GC_unix_get_mem(size_t lb);
 #  define GET_MEM(lb) GC_unix_get_mem(lb)
