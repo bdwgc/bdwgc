@@ -188,17 +188,10 @@ typedef char GC_bool;
 #  define REGISTER register
 #endif
 
-#if defined(CPPCHECK)
-#  define MACRO_BLKSTMT_BEGIN {
-#  define MACRO_BLKSTMT_END }
-#  define LOCAL_VAR_INIT_OK = 0 /*< to avoid "uninit var" false positive */
-#else
-#  define MACRO_BLKSTMT_BEGIN do {
-#  define MACRO_BLKSTMT_END \
-    }                       \
-    while (0)
-#  define LOCAL_VAR_INIT_OK /*< empty */
-#endif
+#define MACRO_BLKSTMT_BEGIN do {
+#define MACRO_BLKSTMT_END \
+  }                       \
+  while (0)
 
 #if defined(M68K) && defined(__GNUC__)
 /*
@@ -885,7 +878,7 @@ GC_INNER char *GC_envfile_getenv(const char *name);
 #  define GETENV(name) GC_envfile_getenv(name)
 #elif defined(NO_GETENV) && !defined(CPPCHECK)
 #  define GETENV(name) NULL
-#elif defined(EMPTY_GETENV_RESULTS) && !defined(CPPCHECK)
+#elif defined(EMPTY_GETENV_RESULTS)
 /* Workaround for a reputed Wine bug. */
 GC_INLINE char *
 fixed_getenv(const char *name)
@@ -932,8 +925,7 @@ EXTERN_C_END
 #      define GC_MACH_THREAD_STATE x86_THREAD_STATE64
 #      define GC_MACH_THREAD_STATE_COUNT x86_THREAD_STATE64_COUNT
 #    endif
-#  elif defined(ARM32) && defined(ARM_UNIFIED_THREAD_STATE) \
-      && !defined(CPPCHECK)
+#  elif defined(ARM32) && defined(ARM_UNIFIED_THREAD_STATE)
 #    define GC_THREAD_STATE_T arm_unified_thread_state_t
 #    define GC_MACH_THREAD_STATE ARM_UNIFIED_THREAD_STATE
 #    define GC_MACH_THREAD_STATE_COUNT ARM_UNIFIED_THREAD_STATE_COUNT
@@ -1438,7 +1430,7 @@ struct roots {
 #  define RT_SIZE (1 << LOG_RT_SIZE)
 #endif
 
-#if (!defined(MAX_HEAP_SECTS) || defined(CPPCHECK)) \
+#if !defined(MAX_HEAP_SECTS) \
     && (defined(ANY_MSWIN) || defined(USE_PROC_FOR_LIBRARIES))
 #  ifdef LARGE_CONFIG
 #    if CPP_WORDSZ > 32
@@ -2851,18 +2843,16 @@ GC_INNER ptr_t GC_approx_sp(void);
  * Same as `GC_approx_sp` but a macro.  `sp` should be a local variable
  * of `volatile` `ptr_t` type.
  */
-#if (defined(E2K) && defined(__clang__)         \
-     || (defined(S390) && __clang_major__ < 8)) \
-    && !defined(CPPCHECK)
+#if defined(E2K) && defined(__clang__) \
+    || (defined(S390) && __clang_major__ < 8)
 /*
  * Workaround some bugs in clang:
  *   - "undefined reference to llvm.frameaddress" error (clang-9/e2k);
  *   - a crash in SystemZTargetLowering of libLLVM-3.8 (s390).
  */
 #  define STORE_APPROX_SP_TO(sp) (void)(sp = (ptr_t)(&sp))
-#elif defined(CPPCHECK)                              \
-    || ((__GNUC__ >= 4 /* `GC_GNUC_PREREQ(4, 0)` */) \
-        && !defined(STACK_NOT_SCANNED))
+#elif (__GNUC__ >= 4 /* `GC_GNUC_PREREQ(4, 0)` */) \
+    && !defined(STACK_NOT_SCANNED)
 /* TODO: Use `GC_GNUC_PREREQ` after fixing a bug in cppcheck. */
 /* Note: l-value is passed instead of pointer to `sp` (because of cppcheck). */
 #  define STORE_APPROX_SP_TO(sp) (void)(sp = (ptr_t)__builtin_frame_address(0))
@@ -3131,7 +3121,7 @@ ptr_t GC_save_regs_in_stack(void);
 
 #  define LOAD_PTR_OR_CONTINUE(v, p) \
     {                                \
-      int tag LOCAL_VAR_INIT_OK;     \
+      int tag;                       \
       LOAD_TAGGED_VALUE(v, tag, p);  \
       if (tag != 0)                  \
         continue;                    \
@@ -4413,8 +4403,7 @@ GC_INNER word GC_compute_root_size(void);
 /* Check a compile time assertion at compile time. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1700)
 #  define GC_STATIC_ASSERT(e) static_assert(e, "static assertion failed: " #e)
-#elif defined(static_assert) && !defined(CPPCHECK) \
-    && (__STDC_VERSION__ >= 201112L)
+#elif defined(static_assert) && (__STDC_VERSION__ >= 201112L)
 #  define GC_STATIC_ASSERT(e)                                               \
     do { /* placed in `do`-`while` for proper formatting by clang-format */ \
       static_assert(e, #e);                                                 \
@@ -4581,7 +4570,7 @@ GC_INNER void GC_start_mark_threads_inner(void);
 #  elif (defined(OPENBSD) && !defined(GC_USESIGRT_SIGNALS)) \
       || defined(SERENITY)
 #    define SIG_SUSPEND SIGXFSZ
-#  elif defined(_SIGRTMIN) && !defined(CPPCHECK)
+#  elif defined(_SIGRTMIN)
 #    define SIG_SUSPEND _SIGRTMIN + 6
 #  else
 #    define SIG_SUSPEND SIGRTMIN + 6
@@ -4715,8 +4704,7 @@ extern __thread unsigned char GC_cancel_disable_count;
 #  define LONG_MULT(hprod, lprod, x, y) \
     __asm__ __volatile__("mull %2" : "=a"(lprod), "=d"(hprod) : "r"(y), "0"(x))
 #else
-#  if (defined(__int64) && !defined(__GNUC__) || defined(__BORLANDC__)) \
-      && !defined(CPPCHECK)
+#  if defined(__int64) && !defined(__GNUC__) || defined(__BORLANDC__)
 #    define ULONG_MULT_T unsigned __int64
 #  else
 #    define ULONG_MULT_T unsigned long long

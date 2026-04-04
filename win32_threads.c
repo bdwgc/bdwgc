@@ -1197,10 +1197,6 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
         /* Update address of `last_stack_min`. */
         plast_stack_min = &dll_thread_table[i].crtn->last_stack_min;
         current_min = stack_end;
-#      ifdef CPPCHECK
-        /* To avoid a warning that thread is always null. */
-        thread = (GC_thread)&dll_thread_table[i];
-#      endif
       }
     }
   } else
@@ -1942,7 +1938,7 @@ GC_thr_init(void)
       }
       markers = ncpu;
 #    endif
-#    if defined(GC_MIN_MARKERS) && !defined(CPPCHECK)
+#    ifdef GC_MIN_MARKERS
       /* This is primarily for testing on systems without `getenv()`. */
       if (markers < GC_MIN_MARKERS)
         markers = GC_MIN_MARKERS;

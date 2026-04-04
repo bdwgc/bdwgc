@@ -74,9 +74,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
 #  ifndef NO_INCREMENTAL
   GC_enable_incremental();
 #  endif
-#  if defined(CPPCHECK)
-  GC_noop1((GC_word)(GC_uintptr_t)(&WinMain));
-#  endif
 
   if (!hPrevInstance) {
     wndclass.style = CS_HREDRAW | CS_VREDRAW;

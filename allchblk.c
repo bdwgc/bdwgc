@@ -487,7 +487,7 @@ GC_free_block_ending_at(struct hblk *h)
 {
   struct hblk *p = get_block_ending_at(h);
 
-  if (p /* `!= NULL` */) { /*< CPPCHECK */
+  if (p != NULL) {
     const hdr *hhdr = HDR(p);
 
     if (HBLK_IS_FREE(hhdr)) {
@@ -527,7 +527,7 @@ GC_add_to_fl(struct hblk *h, hdr *hhdr)
   GC_ASSERT(GC_free_bytes[index] <= GC_large_free_bytes);
   hhdr->hb_next = second;
   hhdr->hb_prev = NULL;
-  if (second /* `!= NULL` */) { /*< CPPCHECK */
+  if (second != NULL) {
     hdr *second_hdr;
 
     GET_HDR(second, second_hdr);
@@ -813,7 +813,7 @@ GC_split_block(struct hblk *hbp, hdr *hhdr, struct hblk *last_hbp,
   last_hdr->hb_block = last_hbp;
   last_hdr->hb_sz = hhdr->hb_sz - h_size;
   last_hdr->hb_flags = 0;
-  if (prev /* `!= NULL` */) { /*< CPPCHECK */
+  if (prev != NULL) {
     HDR(prev)->hb_next = last_hbp;
   } else {
     GC_hblkfreelist[index] = last_hbp;
@@ -1047,11 +1047,9 @@ retry:
     size_t size_avail; /*< bytes available in this block */
     size_t align_ofs;
 
-    if (hbp /* `!= NULL` */) {
-      /* CPPCHECK */
-    } else {
+    if (NULL == hbp)
       return NULL;
-    }
+
     GET_HDR(hbp, hhdr); /*< set `hhdr` value */
     size_avail = hhdr->hb_sz;
     if (!may_split && size_avail != size_needed)
@@ -1286,7 +1284,7 @@ GC_freehblk(struct hblk *hbp)
   }
 
   /* Coalesce with predecessor, if possible. */
-  if (prev /* `!= NULL` */) { /*< CPPCHECK */
+  if (prev != NULL) {
     prevhdr = HDR(prev);
     if (IS_MAPPED(prevhdr)
 #ifdef CHERI_PURECAP

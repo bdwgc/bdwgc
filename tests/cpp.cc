@@ -136,9 +136,9 @@ int B::deleting = 0;
 class C : public GC_NS_QUALIFY(gc_cleanup), public A
 {
 public:
+#ifdef CPPCHECK
   // The class uses dynamic memory/resource allocation, so provide both
-  // a copy constructor and an assignment operator to workaround a cppcheck
-  // warning.
+  // a copy constructor and an assignment operator.
   C(const C &c) : A(c.i), level(c.level), left(0), right(0)
   {
     if (level > 0)
@@ -160,6 +160,7 @@ public:
     }
     return *this;
   }
+#endif
 
   GC_ATTR_EXPLICIT
   C(int levelArg) : A(levelArg), level(levelArg)
@@ -321,18 +322,15 @@ WinMain(HINSTANCE /* `instance` */, HINSTANCE /* `prev` */, LPSTR cmd,
   int argc = 0;
   char *argv[3];
 
-#  if defined(CPPCHECK)
-  GC_noop1(static_cast<GC_word>(reinterpret_cast<GC_uintptr_t>(&WinMain)));
-#  endif
-  if (cmd != 0)
+  if (cmd)
     for (argc = 1; argc < static_cast<int>(sizeof(argv) / sizeof(argv[0]));
          argc++) {
       // Parse the command-line string.  Non-reentrant `strtok()` is not used
       // to avoid complains of static analysis tools.  (And, `strtok_r()` is
       // not available on some platforms.)  The code is equivalent to:
       // `if (!(argv[argc] = strtok(argc == 1 ? cmd : 0, " \t"))) break;`.
-      if (NULL == cmd) {
-        argv[argc] = NULL;
+      if (!cmd) {
+        argv[argc] = 0;
         break;
       }
       for (; *cmd != '\0'; cmd++) {
@@ -340,7 +338,7 @@ WinMain(HINSTANCE /* `instance` */, HINSTANCE /* `prev` */, LPSTR cmd,
           break;
       }
       if ('\0' == *cmd) {
-        argv[argc] = NULL;
+        argv[argc] = 0;
         break;
       }
       argv[argc] = cmd;
@@ -351,7 +349,7 @@ WinMain(HINSTANCE /* `instance` */, HINSTANCE /* `prev` */, LPSTR cmd,
       if (*cmd != '\0') {
         *(cmd++) = '\0';
       } else {
-        cmd = NULL;
+        cmd = 0;
       }
     }
 #else
@@ -374,7 +372,7 @@ main(int argc, const char *argv[])
 #  ifdef TEST_MPROTECT_VDB_DISALLOWED
   GC_set_mprotect_vdb_allowed(0);
 #  endif
-#  if !defined(CPPCHECK)
+#  ifndef CPPCHECK
   GC_INIT();
 #  endif
 #  ifndef NO_INCREMENTAL

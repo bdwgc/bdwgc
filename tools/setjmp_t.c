@@ -116,9 +116,6 @@ main(void)
 
   STORE_APPROX_SP_TO(sp);
   printf("This appears to be a %s running %s\n", MACH_TYPE, OS_TYPE);
-#if defined(CPPCHECK)
-  (void)nested_sp(); /*< to workaround a bug in cppcheck */
-#endif
   if (nested_sp_fn() < ADDR(sp)) {
     printf("Stack appears to grow down, which is the default.\n"
            "A good guess for STACKBOTTOM on this machine is 0x%lx.\n",

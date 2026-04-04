@@ -308,11 +308,6 @@ test_gc_collection(void)
   /* The pointed-to objects should still be alive */
   TEST_ASSERT(GC_is_heap_ptr(ptr1));
   TEST_ASSERT(GC_is_heap_ptr(ptr2));
-
-#  ifdef CPPCHECK
-  GC_noop1_ptr(obj1[100]);
-  GC_noop1_ptr(obj2[3999]);
-#  endif
 }
 
 #endif /* !NO_TYPED_TEST */

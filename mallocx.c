@@ -446,7 +446,7 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
     struct hblk *h
         = GC_allochblk(lb_adjusted, kind, 0 /* `flags` */, 0 /* `align_m1` */);
 
-    if (h /* `!= NULL` */) { /*< CPPCHECK */
+    if (h != NULL) {
       if (IS_UNCOLLECTABLE(kind))
         GC_set_hdr_marks(HDR(h));
       GC_bytes_allocd += HBLKSIZE - (HBLKSIZE % lb_adjusted);
@@ -524,10 +524,9 @@ GC_API int GC_CALL
 GC_posix_memalign(void **memptr, size_t align, size_t lb)
 {
   void *p;
-  size_t align_minus_one = align - 1; /*< to workaround a cppcheck warning */
 
   /* Check alignment properly. */
-  if (UNLIKELY(align < sizeof(void *) || (align_minus_one & align) != 0)) {
+  if (UNLIKELY(align < sizeof(void *) || ((align - 1) & align) != 0)) {
 #ifdef MSWINCE
     return ERROR_INVALID_PARAMETER;
 #else

@@ -84,9 +84,7 @@ int GC_nacl_thread_used[MAX_NACL_GC_THREADS];
 #      undef pthread_sigmask
 
 #      ifndef NSIG
-#        ifdef CPPCHECK
-#          define NSIG 32
-#        elif defined(MAXSIG)
+#        if defined(MAXSIG)
 #          define NSIG (MAXSIG + 1)
 #        elif defined(_NSIG)
 #          define NSIG _NSIG
@@ -174,7 +172,7 @@ STATIC GC_bool GC_retry_signals = FALSE;
 #        define SIG_THR_RESTART SIG_SUSPEND
 #      elif defined(HPUX) || defined(NETBSD) || defined(OSF1) \
           || defined(GC_USESIGRT_SIGNALS)
-#        if defined(_SIGRTMIN) && !defined(CPPCHECK)
+#        if defined(_SIGRTMIN)
 #          define SIG_THR_RESTART (_SIGRTMIN + 5)
 #        else
 #          define SIG_THR_RESTART (SIGRTMIN + 5)
@@ -655,7 +653,7 @@ GC_brief_async_signal_safe_sleep(void)
 {
   struct timeval tv;
   tv.tv_sec = 0;
-#      if defined(GC_TIME_LIMIT) && !defined(CPPCHECK)
+#      ifdef GC_TIME_LIMIT
   tv.tv_usec = 1000 * GC_TIME_LIMIT / 2;
 #      else
   tv.tv_usec = 1000 * 15 / 2;

@@ -46,15 +46,12 @@
  * collector library that may be shared between applications, since it
  * affects the ABI (application binary interface) to the library.
  */
-#if defined(CPPCHECK) && GC_GRANULE_BYTES == 1
-#  undef GC_GRANULE_BYTES
-#endif
 #ifdef GC_GRANULE_BYTES
 #  define GC_GRANULE_PTRS (GC_GRANULE_BYTES / GC_SIZEOF_PTR)
 #else
 #  define GC_GRANULE_PTRS 2 /*< in pointers */
 #  define GC_GRANULE_BYTES (GC_GRANULE_PTRS * GC_SIZEOF_PTR)
-#endif /* !GC_GRANULE_BYTES */
+#endif
 
 /** Convert size in pointers to that in granules. */
 #define GC_PTRS_TO_GRANULES(n) ((n) / GC_GRANULE_PTRS)

@@ -2906,11 +2906,9 @@ EXTERN_C_BEGIN
 #  endif
 #endif
 
-#ifndef CPPCHECK
-#  if GC_SIZEOF_PTR * 8 != CPP_PTRSZ
-#    error Bad pointer size
-#  endif
-#endif /* !CPPCHECK */
+#if !defined(CPPCHECK) && GC_SIZEOF_PTR * 8 != CPP_PTRSZ
+#  error Bad pointer size
+#endif
 
 #ifndef ALIGNMENT
 #  define ALIGNMENT (CPP_PTRSZ >> 3)
@@ -3036,7 +3034,7 @@ EXTERN_C_END
 EXTERN_C_BEGIN
 #endif
 
-#if defined(SIGBUS) && !defined(HAVE_SIGBUS) && !defined(CPPCHECK)
+#if defined(SIGBUS) && !defined(HAVE_SIGBUS)
 #  define HAVE_SIGBUS
 #endif
 
@@ -3628,10 +3626,10 @@ extern ptr_t GC_data_start;
 #    define NARGS 0
 #  endif
 /* Number of frames to save.  Even for alignment reasons. */
-#  if !defined(SAVE_CALL_COUNT) || defined(CPPCHECK)
-#    define NFRAMES 6
-#  else
+#  ifdef SAVE_CALL_COUNT
 #    define NFRAMES ((SAVE_CALL_COUNT + 1) & ~1)
+#  else
+#    define NFRAMES 6
 #  endif
 #  define NEED_CALLINFO
 #elif defined(GC_ADD_CALLER)

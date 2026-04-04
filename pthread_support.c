@@ -1889,7 +1889,7 @@ GC_thr_init(void)
          * it is determined based on the number of CPU cores.
          */
         markers = GC_nprocs;
-#      if defined(GC_MIN_MARKERS) && !defined(CPPCHECK)
+#      ifdef GC_MIN_MARKERS
         /* This is primarily for targets without `getenv()`. */
         if (markers < GC_MIN_MARKERS)
           markers = GC_MIN_MARKERS;
@@ -2361,9 +2361,6 @@ GC_call_with_gc_active(GC_fn_type fn, void *client_data)
   READER_LOCK();
   GC_ASSERT(me->crtn == crtn);
   GC_ASSERT(crtn->traced_stack_sect == &stacksect);
-#  ifdef CPPCHECK
-  GC_noop1_ptr(crtn->traced_stack_sect);
-#  endif
   crtn->traced_stack_sect = stacksect.prev;
 #  ifdef E2K
   GC_ASSERT(NULL == crtn->backing_store_end);
@@ -2568,9 +2565,6 @@ GC_register_my_thread(const struct GC_stack_base *sb)
   if (LIKELY(NULL == me)) {
     me = GC_register_my_thread_inner(sb, thread_id_self());
 #  ifdef GC_PTHREADS
-#    ifdef CPPCHECK
-    GC_noop1(me->flags);
-#    endif
     /*
      * Treat as detached, since we do not need to worry about pointer
      * results.

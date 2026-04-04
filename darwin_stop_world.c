@@ -80,9 +80,6 @@ GC_FindTopOfStack(unsigned long stack_start)
     __asm__ __volatile__("mov %0, x29\n" : "=r"(sp_reg));
     frame = (/* no volatile */ StackFrame *)sp_reg;
 #    else
-#      if defined(CPPCHECK)
-    GC_noop1_ptr(&frame);
-#      endif
     ABORT("GC_FindTopOfStack(0) is not implemented");
 #    endif
   }
@@ -93,11 +90,7 @@ GC_FindTopOfStack(unsigned long stack_start)
   while (frame->savedSP != 0) { /*< stop if no more stack frames */
     unsigned long maskedLR;
 
-#    ifdef CPPCHECK
-    GC_noop1(frame->savedCR);
-#    endif
     frame = (StackFrame *)MAKE_CPTR(frame->savedSP);
-
     /*
      * We do these next two checks after going to the next frame because
      * the `savedLR` for the first stack frame in the loop is not set up
@@ -205,19 +198,11 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
       arm_unified_thread_state_t unified_state;
       mach_msg_type_number_t unified_thread_state_count
           = ARM_UNIFIED_THREAD_STATE_COUNT;
-#    if defined(CPPCHECK)
-#      define GC_ARM_UNIFIED_THREAD_STATE 1
-#    else
-#      define GC_ARM_UNIFIED_THREAD_STATE ARM_UNIFIED_THREAD_STATE
-#    endif
-      kern_result = thread_get_state(thread, GC_ARM_UNIFIED_THREAD_STATE,
+      kern_result = thread_get_state(thread, ARM_UNIFIED_THREAD_STATE,
                                      (natural_t *)&unified_state,
                                      &unified_thread_state_count);
-#    if !defined(CPPCHECK)
-      if (unified_state.ash.flavor != ARM_THREAD_STATE32) {
+      if (unified_state.ash.flavor != ARM_THREAD_STATE32)
         ABORT("unified_state flavor should be ARM_THREAD_STATE32");
-      }
-#    endif
       state = unified_state;
     } else
 #  endif
@@ -356,10 +341,6 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
    * `p` is guaranteed to be non-`NULL` regardless of
    * `GC_query_task_threads`.
    */
-#    ifdef CPPCHECK
-  if (NULL == p)
-    ABORT("Bad GC_stack_range_for call");
-#    endif
   crtn = p->crtn;
   *phi = crtn->stack_end;
   if (crtn->altstack != NULL && ADDR_GE(lo, crtn->altstack)
@@ -717,9 +698,6 @@ GC_thread_resume(thread_act_t thread)
   struct thread_basic_info info;
   mach_msg_type_number_t outCount = THREAD_BASIC_INFO_COUNT;
 
-#    ifdef CPPCHECK
-  info.run_state = 0;
-#    endif
   kern_result = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t)&info,
                             &outCount);
   if (kern_result != KERN_SUCCESS)

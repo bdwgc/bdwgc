@@ -27,8 +27,7 @@
 
 #undef GC_BUILD
 
-#if (defined(DBG_HDRS_ALL) || defined(MAKE_BACK_GRAPH)) && !defined(GC_DEBUG) \
-    && !defined(CPPCHECK)
+#if (defined(DBG_HDRS_ALL) || defined(MAKE_BACK_GRAPH)) && !defined(GC_DEBUG)
 #  define GC_DEBUG
 #endif
 
@@ -1915,21 +1914,15 @@ count_reachable_objs(void *plocalcnt)
 static void
 test_long_mult(void)
 {
-#if !defined(CPPCHECK) || !defined(NO_LONGLONG64)
   unsigned32 hp, lp;
 
   LONG_MULT(hp, lp, (unsigned32)0x1234567UL, (unsigned32)0xfedcba98UL);
-#  if defined(CPPCHECK)
-  GC_noop1_ptr(&hp);
-  GC_noop1_ptr(&lp);
-#  endif
   TEST_ASSERT(hp == (unsigned32)0x121fa00UL);
   TEST_ASSERT(lp == (unsigned32)0x23e20b28UL);
 
   LONG_MULT(hp, lp, (unsigned32)0xdeadbeefUL, (unsigned32)0xefcdab12UL);
   TEST_ASSERT(hp == (unsigned32)0xd0971b30UL);
   TEST_ASSERT(lp == (unsigned32)0xbd2411ceUL);
-#endif
 }
 
 #define NUMBER_ROUND_UP(v, bound) \
@@ -2170,9 +2163,7 @@ enable_incremental_mode(void)
   unsigned vdbs = (unsigned)COVERT_DATAFLOW(GC_get_supported_vdbs());
 #endif
 
-#if !defined(CPPCHECK)
   GC_printf("Running on " OS_TYPE "/" MACH_TYPE " target\n");
-#endif
 #ifndef NO_INCREMENTAL
   if (vdbs != GC_VDB_NONE)
     GC_printf(
@@ -2434,18 +2425,12 @@ main(void)
 #endif
 #ifdef RTEMS
   UNUSED_ARG(ignored);
-#  if defined(CPPCHECK)
-  GC_noop1((GC_word)(GC_funcptr_uint)(&Init));
-#  endif
 #elif ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
     && !defined(NO_WINMAIN_ENTRY)
   UNUSED_ARG(instance);
   UNUSED_ARG(prev);
   UNUSED_ARG(cmd);
   UNUSED_ARG(n);
-#  ifdef CPPCHECK
-  GC_noop1((GC_word)(GC_funcptr_uint)(&WinMain));
-#  endif
 #endif
   CRTMEM_CHECK_INIT();
 #ifndef STACK_NOT_SCANNED

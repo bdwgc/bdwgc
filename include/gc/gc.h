@@ -2519,7 +2519,7 @@ typedef int(GC_CALLBACK *GC_has_static_roots_func)(
 GC_API void
     GC_CALL GC_register_has_static_roots_callback(GC_has_static_roots_func);
 
-#if !defined(CPPCHECK) && !defined(GC_WINDOWS_H_INCLUDED) && defined(WINAPI)
+#if !defined(GC_WINDOWS_H_INCLUDED) && defined(WINAPI)
 /* Platform `windows.h` file is included before `gc.h` file. */
 #  define GC_WINDOWS_H_INCLUDED
 #endif
@@ -2763,14 +2763,14 @@ GC_API void *GC_CALL GC_find_limit(void * /* `start` */, int /* `up` */);
  * collector initialization.
  */
 #  define GC_INIT_CONF_MAX_RETRIES (void)(GC_dont_gc = 1)
-#elif defined(GC_MAX_RETRIES) && !defined(CPPCHECK)
+#elif defined(GC_MAX_RETRIES)
 /* Set `GC_max_retries` to the desired value at start-up. */
 #  define GC_INIT_CONF_MAX_RETRIES GC_set_max_retries(GC_MAX_RETRIES)
 #else
 #  define GC_INIT_CONF_MAX_RETRIES (void)0
 #endif
 
-#if defined(GC_ALLOCD_BYTES_PER_FINALIZER) && !defined(CPPCHECK)
+#ifdef GC_ALLOCD_BYTES_PER_FINALIZER
 /* Set `GC_allocd_bytes_per_finalizer` to the desired value at start-up. */
 #  define GC_INIT_CONF_ALLOCD_BYTES_PER_FINALIZER \
     GC_set_allocd_bytes_per_finalizer(GC_ALLOCD_BYTES_PER_FINALIZER)
@@ -2778,7 +2778,7 @@ GC_API void *GC_CALL GC_find_limit(void * /* `start` */, int /* `up` */);
 #  define GC_INIT_CONF_ALLOCD_BYTES_PER_FINALIZER (void)0
 #endif
 
-#if defined(GC_FREE_SPACE_DIVISOR) && !defined(CPPCHECK)
+#ifdef GC_FREE_SPACE_DIVISOR
 /* Set `GC_free_space_divisor` to the desired value at start-up. */
 #  define GC_INIT_CONF_FREE_SPACE_DIVISOR \
     GC_set_free_space_divisor(GC_FREE_SPACE_DIVISOR)
@@ -2786,21 +2786,21 @@ GC_API void *GC_CALL GC_find_limit(void * /* `start` */, int /* `up` */);
 #  define GC_INIT_CONF_FREE_SPACE_DIVISOR (void)0
 #endif
 
-#if defined(GC_FULL_FREQ) && !defined(CPPCHECK)
+#ifdef GC_FULL_FREQ
 /* Set `GC_full_freq` to the desired value at start-up. */
 #  define GC_INIT_CONF_FULL_FREQ GC_set_full_freq(GC_FULL_FREQ)
 #else
 #  define GC_INIT_CONF_FULL_FREQ (void)0
 #endif
 
-#if defined(GC_TIME_LIMIT) && !defined(CPPCHECK)
+#ifdef GC_TIME_LIMIT
 /* Set `GC_time_limit` (in ms) to the desired value at start-up. */
 #  define GC_INIT_CONF_TIME_LIMIT GC_set_time_limit(GC_TIME_LIMIT)
 #else
 #  define GC_INIT_CONF_TIME_LIMIT (void)0
 #endif
 
-#if defined(GC_MARKERS) && defined(GC_THREADS) && !defined(CPPCHECK)
+#if defined(GC_MARKERS) && defined(GC_THREADS)
 /*
  * Set the number of marker threads (including the initiating one) to
  * the desired value at start-up.
@@ -2810,20 +2810,20 @@ GC_API void *GC_CALL GC_find_limit(void * /* `start` */, int /* `up` */);
 #  define GC_INIT_CONF_MARKERS (void)0
 #endif
 
-#if defined(GC_SIG_SUSPEND) && defined(GC_THREADS) && !defined(CPPCHECK)
+#if defined(GC_SIG_SUSPEND) && defined(GC_THREADS)
 #  define GC_INIT_CONF_SUSPEND_SIGNAL GC_set_suspend_signal(GC_SIG_SUSPEND)
 #else
 #  define GC_INIT_CONF_SUSPEND_SIGNAL (void)0
 #endif
 
-#if defined(GC_SIG_THR_RESTART) && defined(GC_THREADS) && !defined(CPPCHECK)
+#if defined(GC_SIG_THR_RESTART) && defined(GC_THREADS)
 #  define GC_INIT_CONF_THR_RESTART_SIGNAL \
     GC_set_thr_restart_signal(GC_SIG_THR_RESTART)
 #else
 #  define GC_INIT_CONF_THR_RESTART_SIGNAL (void)0
 #endif
 
-#if defined(GC_MAXIMUM_HEAP_SIZE) && !defined(CPPCHECK)
+#ifdef GC_MAXIMUM_HEAP_SIZE
 /*
  * Limit the heap size to the desired value (useful for debugging).
  * The limit could be overridden either at the program start-up by
@@ -2843,7 +2843,7 @@ GC_API void *GC_CALL GC_find_limit(void * /* `start` */, int /* `up` */);
 #  define GC_INIT_CONF_IGNORE_WARN (void)0
 #endif
 
-#if defined(GC_INITIAL_HEAP_SIZE) && !defined(CPPCHECK)
+#ifdef GC_INITIAL_HEAP_SIZE
 /* Set heap size to the desired value at start-up. */
 #  define GC_INIT_CONF_INITIAL_HEAP_SIZE                                  \
     {                                                                     \

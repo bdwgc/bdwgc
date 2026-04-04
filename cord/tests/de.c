@@ -63,15 +63,10 @@
 
 #include "de_cmds.h"
 
-#if defined(CPPCHECK)
-#  define MACRO_BLKSTMT_BEGIN {
-#  define MACRO_BLKSTMT_END }
-#else
-#  define MACRO_BLKSTMT_BEGIN do {
-#  define MACRO_BLKSTMT_END \
-    }                       \
-    while (0)
-#endif
+#define MACRO_BLKSTMT_BEGIN do {
+#define MACRO_BLKSTMT_END \
+  }                       \
+  while (0)
 
 #define OUT_OF_MEMORY                 \
   MACRO_BLKSTMT_BEGIN                 \
