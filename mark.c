@@ -1128,9 +1128,6 @@ GC_steal_mark_stack(mse *low, mse *high, mse *local, size_t n_to_get,
     }
   }
   *next = p;
-#  if defined(CPPCHECK)
-  GC_noop1_ptr(local);
-#  endif
   return top;
 }
 

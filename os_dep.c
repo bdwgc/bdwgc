@@ -1502,7 +1502,7 @@ GC_get_main_stack_base(void)
 #      else
     result = (ptr_t)GC_find_limit(sp, TRUE /* `up` */);
 #      endif
-#      if defined(HEURISTIC2_LIMIT) && !defined(CPPCHECK)
+#      ifdef HEURISTIC2_LIMIT
     if (HOTTER_THAN(HEURISTIC2_LIMIT, result)
         && HOTTER_THAN(sp, HEURISTIC2_LIMIT))
       result = HEURISTIC2_LIMIT;
@@ -2259,9 +2259,6 @@ GC_SysVGetDataStart(size_t max_page_size, ptr_t etext_ptr)
       /* Fall back to non-atomic fetch-and-store. */
       char v = *result;
 
-#      ifdef CPPCHECK
-      GC_noop1_ptr(&v);
-#      endif
       *result = v;
 #    endif
     }
@@ -2449,7 +2446,7 @@ GC_register_data_segments(void)
 
 #    ifdef USE_MMAP_ANON
 #      define zero_fd -1
-#      if defined(MAP_ANONYMOUS) && !defined(CPPCHECK)
+#      ifdef MAP_ANONYMOUS
 #        define OPT_MAP_ANON MAP_ANONYMOUS
 #      else
 #        define OPT_MAP_ANON MAP_ANON
@@ -2731,8 +2728,7 @@ GC_get_mem(size_t bytes)
 #    define GLOBAL_ALLOC_TEST GC_no_win32_dlls
 #  endif
 
-#  if (defined(GC_USE_MEM_TOP_DOWN) && defined(USE_WINALLOC)) \
-      || defined(CPPCHECK)
+#  if defined(GC_USE_MEM_TOP_DOWN) && defined(USE_WINALLOC)
 /*
  * Use `GC_USE_MEM_TOP_DOWN` for better 64-bit testing.
  * Otherwise all addresses tend to end up in the first 4 GB, hiding bugs.
@@ -3054,7 +3050,7 @@ GC_remap(ptr_t start, size_t bytes)
       ABORT_ON_REMAP_FAIL("remap: mmap", start_addr, len);
     if (result != start_addr)
       ABORT("remap: mmap() result differs from start_addr");
-#      if defined(CPPCHECK) || defined(LINT2)
+#      if defined(LINT2)
     GC_noop1_ptr(result);
 #      endif
 #      undef IGNORE_PAGES_EXECUTABLE
@@ -5886,10 +5882,6 @@ GC_print_callers(struct callinfo info[NFRAMES])
                          (unsigned long)ADDR(info[i].ci_pc));
           result_buf[sizeof(result_buf) - 1] = '\0';
         }
-#    if defined(CPPCHECK)
-        GC_noop1((unsigned char)name[0]);
-        /* The value of name computed previously is discarded. */
-#    endif
         name = result_buf;
       } while (0);
 #  endif

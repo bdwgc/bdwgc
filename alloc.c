@@ -130,7 +130,7 @@ GC_is_incremental_mode(void)
 int GC_parallel = FALSE; /*< parallel collection is off by default */
 #endif
 
-#if defined(GC_FULL_FREQ) && !defined(CPPCHECK)
+#ifdef GC_FULL_FREQ
 int GC_full_freq = GC_FULL_FREQ;
 #else
 /*
@@ -205,7 +205,7 @@ int GC_dont_expand = TRUE;
 int GC_dont_expand = FALSE;
 #endif
 
-#if defined(GC_FREE_SPACE_DIVISOR) && !defined(CPPCHECK)
+#ifdef GC_FREE_SPACE_DIVISOR
 word GC_free_space_divisor = GC_FREE_SPACE_DIVISOR; /*< must be positive */
 #else
 word GC_free_space_divisor = 3;
@@ -217,7 +217,7 @@ GC_never_stop_func(void)
   return FALSE;
 }
 
-#if defined(GC_TIME_LIMIT) && !defined(CPPCHECK)
+#ifdef GC_TIME_LIMIT
 /*
  * We try to keep pause times from exceeding this by much.
  * In milliseconds.
@@ -1273,15 +1273,10 @@ GC_compute_heap_usage_percent(void)
 {
   word used = GC_composite_in_use + GC_atomic_in_use + GC_bytes_allocd;
   word heap_sz = GC_heapsize - GC_unmapped_bytes;
-#if defined(CPPCHECK)
-  word limit = (GC_WORD_MAX >> 1) / 50; /*< to avoid a false positive */
-#else
-  const word limit = GC_WORD_MAX / 100;
-#endif
 
-  return used >= heap_sz ? 0
-         : used < limit  ? (int)((used * 100) / heap_sz)
-                         : (int)(used / (heap_sz / 100));
+  return used >= heap_sz            ? 0
+         : used < GC_WORD_MAX / 100 ? (int)((used * 100) / heap_sz)
+                                    : (int)(used / (heap_sz / 100));
 }
 
 #define GC_DBGLOG_PRINT_HEAP_IN_USE()                                        \
@@ -1845,7 +1840,7 @@ GC_expand_hp(size_t bytes)
  * which triggers the collection instead heap expansion.  Has no effect
  * in the incremental mode.
  */
-#if defined(GC_ALLOCD_BYTES_PER_FINALIZER) && !defined(CPPCHECK)
+#ifdef GC_ALLOCD_BYTES_PER_FINALIZER
 STATIC word GC_allocd_bytes_per_finalizer = GC_ALLOCD_BYTES_PER_FINALIZER;
 #else
 STATIC word GC_allocd_bytes_per_finalizer = 10000;

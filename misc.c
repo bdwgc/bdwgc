@@ -321,14 +321,10 @@ GC_clear_stack_inner(void *arg, CLEARSTACK_LIMIT_MODIFIER ptr_t limit)
    * Make sure the recursive call is not a tail call, and the `bzero` call
    * is not recognized as dead code.
    */
-#    if defined(CPPCHECK)
-  GC_noop1(ADDR(dummy[0]));
-#    else
   GC_noop1(COVERT_DATAFLOW(ADDR(dummy)));
-#    endif
   return arg;
 }
-#  endif /* !ASM_CLEAR_CODE */
+#  endif
 
 #  ifdef THREADS
 /* Used to occasionally clear a bigger chunk. */
@@ -1051,7 +1047,7 @@ GC_init(void)
   }
 #endif
 
-#if defined(GC_INITIAL_HEAP_SIZE) && !defined(CPPCHECK)
+#ifdef GC_INITIAL_HEAP_SIZE
   initial_heap_sz = GC_INITIAL_HEAP_SIZE;
 #else
   initial_heap_sz = MINHINCR * HBLKSIZE;
@@ -1413,31 +1409,29 @@ GC_init(void)
 #  endif
   }
 #endif
-#if !defined(CPPCHECK)
   GC_STATIC_ASSERT(sizeof(size_t) <= sizeof(ptrdiff_t));
-#  ifdef AO_HAVE_store
+#ifdef AO_HAVE_store
   /*
    * As of now, `hb_descr`, `mse_descr` and `hb_marks[i]` might be treated
    * as variables of `word` type but might be accessed atomically.
    */
   GC_STATIC_ASSERT(sizeof(AO_t) == sizeof(word));
-#  endif
+#endif
   GC_STATIC_ASSERT(sizeof(ptrdiff_t) == sizeof(word));
   GC_STATIC_ASSERT(sizeof(GC_signed_word) == sizeof(word));
   GC_STATIC_ASSERT(sizeof(word) * 8 == CPP_WORDSZ);
   GC_STATIC_ASSERT(sizeof(ptr_t) * 8 == CPP_PTRSZ);
   GC_STATIC_ASSERT(sizeof(ptr_t) == sizeof(GC_uintptr_t));
   GC_STATIC_ASSERT(sizeof(GC_oom_func) == sizeof(GC_funcptr_uint));
-#  ifdef FUNCPTR_IS_DATAPTR
+#ifdef FUNCPTR_IS_DATAPTR
   GC_STATIC_ASSERT(sizeof(ptr_t) == sizeof(GC_funcptr_uint));
-#  endif
+#endif
   GC_STATIC_ASSERT((word)(-1) > (word)0); /*< `word` should be unsigned */
   /*
    * We no longer check for `(void *)-1 > NULL` since all pointers
    * are explicitly cast to `word` in every less/greater comparison.
    */
   GC_STATIC_ASSERT((GC_signed_word)(-1) < (GC_signed_word)0);
-#endif
   GC_STATIC_ASSERT(sizeof(struct hblk) == HBLKSIZE);
 #ifndef THREADS
   GC_ASSERT(!HOTTER_THAN(GC_stackbottom, GC_approx_sp()));
@@ -1796,7 +1790,7 @@ GC_CreateLogFile(void)
 
 #  else
   TCHAR *logPath;
-#    if defined(NO_GETENV_WIN32) && defined(CPPCHECK)
+#    ifdef NO_GETENV_WIN32
 #      define appendToFile FALSE
 #    else
   BOOL appendToFile = FALSE;
@@ -2629,9 +2623,6 @@ GC_do_blocking_inner(ptr_t data, void *context)
             ->fn(((struct blocking_data *)data)->client_data);
 
   GC_ASSERT(GC_blocked_sp != NULL);
-#  if defined(CPPCHECK)
-  GC_noop1_ptr(GC_blocked_sp);
-#  endif
   GC_blocked_sp = NULL;
 }
 

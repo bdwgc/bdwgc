@@ -210,15 +210,10 @@ GC_malloc_kind(size_t lb, int kind)
   GC_ASSERT(GC_is_initialized);
   GC_ASSERT(GC_is_thread_tsd_valid(tsd));
   lg = ALLOC_REQUEST_GRANS(lb);
-#  if defined(CPPCHECK)
-#    define MALLOC_KIND_PTRFREE_INIT ((void *)(GC_uintptr_t)1)
-#  else
-#    define MALLOC_KIND_PTRFREE_INIT NULL
-#  endif
-  GC_FAST_MALLOC_GRANS(result, lg, ((GC_tlfs)tsd)->_freelists[kind],
-                       DIRECT_GRANULES, kind, GC_malloc_kind_global(lb, kind),
-                       (void)(kind == PTRFREE ? MALLOC_KIND_PTRFREE_INIT
-                                              : (obj_link(result) = NULL)));
+  GC_FAST_MALLOC_GRANS(
+      result, lg, ((GC_tlfs)tsd)->_freelists[kind], DIRECT_GRANULES, kind,
+      GC_malloc_kind_global(lb, kind),
+      (void)(kind == PTRFREE ? NULL : (obj_link(result) = NULL)));
 #  ifdef LOG_ALLOCS
   GC_log_printf("GC_malloc_kind(%lu, %d) returned %p, recent GC #%lu\n",
                 (unsigned long)lb, kind, result, (unsigned long)GC_gc_no);

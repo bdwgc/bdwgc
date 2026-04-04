@@ -252,11 +252,7 @@ GC_generic_malloc_inner(size_t lb, int kind, unsigned flags)
 }
 
 #ifdef GC_COLLECT_AT_MALLOC
-#  if defined(CPPCHECK)
-size_t GC_dbg_collect_at_malloc_min_lb = 16 * 1024; /*< some value */
-#  else
 size_t GC_dbg_collect_at_malloc_min_lb = (GC_COLLECT_AT_MALLOC);
-#  endif
 #endif
 
 GC_INNER void *
@@ -274,9 +270,7 @@ GC_generic_malloc_aligned(size_t lb, int kind, unsigned flags, size_t align_m1)
     result = GC_generic_malloc_inner_small(lb, kind);
     UNLOCK();
   } else {
-#ifdef THREADS
     size_t lg;
-#endif
     size_t lb_adjusted;
     GC_bool init;
 
@@ -290,10 +284,6 @@ GC_generic_malloc_aligned(size_t lb, int kind, unsigned flags, size_t align_m1)
     } else
 #endif
     /* else */ {
-#ifndef THREADS
-      size_t lg; /*< CPPCHECK */
-#endif
-
       if (UNLIKELY(0 == lb))
         lb = 1;
       lg = ALLOC_REQUEST_GRANS(lb);
@@ -474,7 +464,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
   } else {
     op = GC_generic_malloc_aligned(lb, kind, 0 /* `flags` */,
                                    0 /* `align_m1` */);
-    if (op /* `!= NULL` */) { /*< CPPCHECK */
+    if (op != NULL) {
       hdr *hhdr;
 
       GC_ASSERT(HBLKDISPL(op) == 0); /*< large block */
@@ -827,10 +817,8 @@ GC_free(void *p)
 {
   const hdr *hhdr;
 
-  if (p /* `!= NULL` */) {
-    /* CPPCHECK */
-  } else {
-    /* Required by ANSI.  It is not my fault... */
+  if (UNLIKELY(NULL == p)) {
+    /* Required by ANSI. */
     return;
   }
 

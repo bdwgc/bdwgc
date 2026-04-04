@@ -95,7 +95,7 @@ operator delete(void *obj, const std::nothrow_t &) GC_NOEXCEPT
 }
 #  endif // GC_OPERATOR_NEW_NOTHROW
 
-#  if defined(GC_OPERATOR_NEW_ARRAY) && !defined(CPPCHECK)
+#  ifdef GC_OPERATOR_NEW_ARRAY
 void *
 operator new[](GC_SIZE_T size) GC_DECL_NEW_THROW
 {
@@ -143,7 +143,7 @@ operator delete(void *obj, GC_SIZE_T) GC_NOEXCEPT
   GC_FREE(obj);
 }
 
-#    if defined(GC_OPERATOR_NEW_ARRAY) && !defined(CPPCHECK)
+#    ifdef GC_OPERATOR_NEW_ARRAY
 void
 operator delete[](void *obj, GC_SIZE_T) GC_NOEXCEPT
 {

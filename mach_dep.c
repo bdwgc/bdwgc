@@ -74,9 +74,6 @@ GC_with_callee_saves_pushed(GC_with_callee_saves_func fn, ptr_t arg)
    */
   unsigned short old_fcw;
 
-#          if defined(CPPCHECK)
-  GC_noop1_ptr(&old_fcw);
-#          endif
   __asm__ __volatile__("fstcw %0" : "=m"(*&old_fcw));
 #        else
   int except_mask = fegetexcept();
