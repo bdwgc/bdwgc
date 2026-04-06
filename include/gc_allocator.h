@@ -156,7 +156,12 @@ public:
     new(__p) GC_Tp(__val);
   }
 
-  GC_CONSTEXPR void destroy(pointer __p) { __p->~GC_Tp(); }
+  GC_CONSTEXPR void destroy(pointer __p) {
+#   if defined(__BORLANDC__)
+      (void)__p;
+#   endif
+    __p->~GC_Tp();
+  }
 };
 
 template<>
@@ -237,7 +242,12 @@ public:
     new(__p) GC_Tp(__val);
   }
 
-  GC_CONSTEXPR void destroy(pointer __p) { __p->~GC_Tp(); }
+  GC_CONSTEXPR void destroy(pointer __p) {
+#   if defined(__BORLANDC__)
+      (void)__p;
+#   endif
+    __p->~GC_Tp();
+  }
 };
 
 template<>
