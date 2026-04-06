@@ -801,6 +801,10 @@ EXTERN_C_BEGIN
              & ~((GC_uintptr_t)(b) - (GC_uintptr_t)1)))
 #endif
 
+#ifdef CPPCHECK
+#  undef DATASTART_USES_XGETDATASTART
+#endif
+
 /*
  * If available, we can use `__builtin_unwind_init()` to push the relevant
  * registers onto the stack.
@@ -1382,6 +1386,7 @@ extern char etext[];
 #  ifdef SOLARIS
 extern int _etext[];
 #    define DATASTART GC_SysVGetDataStart(0x10000, (ptr_t)_etext)
+#    define DATASTART_USES_XGETDATASTART
 #    define PROC_VDB
 /*
  * `getpagesize()` appeared to be missing from at least one Solaris 5.4
@@ -1393,6 +1398,7 @@ extern int _etext[];
 #    define OS_TYPE "DRSNX"
 extern int etext[];
 #    define DATASTART GC_SysVGetDataStart(0x10000, (ptr_t)etext)
+#    define DATASTART_USES_XGETDATASTART
 #    define MPROTECT_VDB
 #    define STACKBOTTOM MAKE_CPTR(0xdfff0000)
 #    define DYNAMIC_LOADING
@@ -1404,6 +1410,7 @@ extern int _etext[];
 #    else
 #      define DATASTART GC_SysVGetDataStart(0x10000, (ptr_t)_etext)
 #    endif
+#    define DATASTART_USES_XGETDATASTART
 #  endif
 #  ifdef OPENBSD
 /* Nothing specific. */
@@ -1469,6 +1476,7 @@ extern int etext[];
 #  ifdef SOLARIS
 extern int _etext[];
 #    define DATASTART GC_SysVGetDataStart(0x1000, (ptr_t)_etext)
+#    define DATASTART_USES_XGETDATASTART
 #    define PROC_VDB
 #  endif
 #  ifdef SCO
@@ -2089,6 +2097,7 @@ extern int etext[];
 #    define OS_TYPE "UTS4"
 extern int _etext[], _end[];
 #    define DATASTART GC_SysVGetDataStart(0x10000, (ptr_t)_etext)
+#    define DATASTART_USES_XGETDATASTART
 #    define DATAEND ((ptr_t)_end)
 #    define HEURISTIC2
 #  endif
@@ -2426,6 +2435,7 @@ extern int _end[];
 #    define ELF_CLASS ELFCLASS64
 extern int _etext[];
 #    define DATASTART GC_SysVGetDataStart(0x1000, (ptr_t)_etext)
+#    define DATASTART_USES_XGETDATASTART
 #    define PROC_VDB
 #  endif
 #  ifdef CYGWIN
@@ -2739,7 +2749,11 @@ extern int __end__[];
     || (defined(LINUX) && defined(SPARC))
 /* OS has SVR4 generic features.  Probably others also qualify. */
 #  define SVR4
-#  define DATASTART_USES_XGETDATASTART
+#endif
+
+#if !defined(DYNAMIC_LOADING) && defined(GC_DONT_REGISTER_MAIN_STATIC_DATA) \
+    || (defined(OPENBSD) && defined(CPPCHECK))
+#  undef DATASTART_USES_XGETDATASTART
 #endif
 
 #if defined(HAVE_SYS_TYPES_H)                                      \
