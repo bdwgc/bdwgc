@@ -198,6 +198,9 @@ public:
   GC_CONSTEXPR void
   destroy(pointer __p)
   {
+#if defined(__BORLANDC__)
+    (void)__p;
+#endif
     __p->~GC_Tp();
   }
 };
@@ -315,6 +318,9 @@ public:
   GC_CONSTEXPR void
   destroy(pointer __p)
   {
+#if defined(__BORLANDC__)
+    (void)__p;
+#endif
     __p->~GC_Tp();
   }
 };
