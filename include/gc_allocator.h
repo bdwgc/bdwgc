@@ -157,7 +157,12 @@ public:
     { return size_t(-1) / sizeof(GC_Tp); }
 
   void construct(pointer __p, const GC_Tp& __val) { new(__p) GC_Tp(__val); }
-  void destroy(pointer __p) { __p->~GC_Tp(); }
+  void destroy(pointer __p) {
+#   if defined(__BORLANDC__)
+      (void)__p;
+#   endif
+    __p->~GC_Tp();
+  }
 };
 
 template<>
@@ -234,7 +239,12 @@ public:
     { return size_t(-1) / sizeof(GC_Tp); }
 
   void construct(pointer __p, const GC_Tp& __val) { new(__p) GC_Tp(__val); }
-  void destroy(pointer __p) { __p->~GC_Tp(); }
+  void destroy(pointer __p) {
+#   if defined(__BORLANDC__)
+      (void)__p;
+#   endif
+    __p->~GC_Tp();
+  }
 };
 
 template<>
