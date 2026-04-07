@@ -795,10 +795,23 @@ GC_API void GC_CALL GC_debug_end_stubborn_change(const void *)
  */
 GC_API void *GC_CALL GC_base(void * /* `displaced_pointer` */);
 
+#ifdef __cplusplus
+#  define GC_CAST_AWAY_CONST_PVOID(p) \
+    reinterpret_cast</* no const */ void *>(reinterpret_cast<GC_uintptr_t>(p))
+#else
+#  define GC_CAST_AWAY_CONST_PVOID(p) \
+    ((/* no const */ void *)(GC_uintptr_t)(p))
+#endif
+
+/**
+ * Same as `GC_base()` but accepts and returns a pointer to `const` object.
+ */
+#define GC_base_C(p) ((const void *)GC_base(GC_CAST_AWAY_CONST_PVOID(p)))
+
 /**
  * Return 1 (true) if the argument points to somewhere in the garbage
  * collected heap, 0 otherwise.  Primary use is as a fast alternative to
- * `GC_base()` to check whether the given object is allocated by the
+ * `GC_base_C()` to check whether the given object is allocated by the
  * collector or not.  It is assumed that the collector is already initialized.
  */
 GC_API int GC_CALL GC_is_heap_ptr(const void *);
@@ -1395,14 +1408,6 @@ GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
 GC_API /* `realloc` attribute */ GC_ATTR_ALLOC_SIZE(2) void *GC_CALL
     GC_debug_reallocf_replacement(void * /* `obj` */,
                                   size_t /* `size_in_bytes` */);
-
-#ifdef __cplusplus
-#  define GC_CAST_AWAY_CONST_PVOID(p) \
-    reinterpret_cast</* no const */ void *>(reinterpret_cast<GC_uintptr_t>(p))
-#else
-#  define GC_CAST_AWAY_CONST_PVOID(p) \
-    ((/* no const */ void *)(GC_uintptr_t)(p))
-#endif
 
 /**
  * Convenient macros for disappearing links registration working both

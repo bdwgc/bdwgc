@@ -1635,18 +1635,18 @@ run_one_test(void)
   }
 #  ifndef GC_NO_VALLOC
   {
-    void *p = checkOOM(GC_valloc(78));
+    const void *p = checkOOM(GC_valloc(78));
 
     AO_fetch_and_add1(&collectable_count);
     TEST_ASSERT((ADDR(p) & 0x1ff /* at least */) == 0);
-    TEST_ASSERT(0 == *(int *)p);
-    TEST_ASSERT(GC_base(p) == p);
+    TEST_ASSERT(0 == *(const int *)p);
+    TEST_ASSERT(GC_base_C(p) == p);
 
     p = checkOOM(GC_pvalloc(123));
     AO_fetch_and_add1(&collectable_count);
     TEST_ASSERT((ADDR(p) & 0x1ff) == 0);
-    TEST_ASSERT(0 == *(int *)p);
-    TEST_ASSERT(GC_base(p) == p);
+    TEST_ASSERT(0 == *(const int *)p);
+    TEST_ASSERT(GC_base_C(p) == p);
     TEST_ASSERT((GC_size(p) & 0x1e0 /* at least */) == 0);
   }
 #  endif
