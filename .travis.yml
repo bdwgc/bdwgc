@@ -27,7 +27,7 @@ jobs:
   - os: freebsd
     env:
     - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2"
-    - CONF_OPTIONS="--enable-cplusplus --enable-gc-assertions --enable-redirect-malloc --enable-rwlock"
+    - CONF_OPTIONS="--enable-cplusplus --enable-gc-assertions --enable-gc-debug --enable-rwlock"
     - MAKE_NPROC=8
     - NO_CLONE_LIBATOMIC_OPS=true
   - os: freebsd
