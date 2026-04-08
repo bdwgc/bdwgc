@@ -224,6 +224,8 @@ realloc(void *p, size_t lb)
 }
 
 EXTERN_C_BEGIN
+GC_API void *aligned_alloc(size_t align, size_t lb);
+GC_API void free_aligned_sized(void *p, size_t align, size_t lb);
 GC_API void *reallocf(void *p, size_t lb);
 EXTERN_C_END
 
@@ -231,6 +233,24 @@ GC_API void *
 reallocf(void *p, size_t lb)
 {
   return REDIRECT_REALLOCF_F(p, lb);
+}
+
+GC_API void *
+aligned_alloc(size_t align, size_t lb)
+{
+  return GC_memalign(align, lb);
+}
+
+GC_API void
+free_aligned_sized(void *p, size_t align, size_t lb)
+{
+  UNUSED_ARG(align);
+  UNUSED_ARG(lb);
+#  ifdef IGNORE_FREE
+  UNUSED_ARG(p);
+#  else
+  GC_free(p); /*< non-debug */
+#  endif
 }
 #endif
 
