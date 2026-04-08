@@ -711,9 +711,17 @@ free(void *p)
 }
 
 EXTERN_C_BEGIN
+GC_API void free_sized(void *p, size_t lb);
 GC_API void freezero(void *p, size_t clear_lb);
 GC_API void freezeroall(void *p);
 EXTERN_C_END
+
+GC_API void
+free_sized(void *p, size_t lb)
+{
+  UNUSED_ARG(lb);
+  free(p);
+}
 
 GC_API void
 freezero(void *p, size_t clear_lb)

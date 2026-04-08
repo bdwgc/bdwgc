@@ -16,6 +16,9 @@
 #    ifdef __cplusplus
 extern "C" {
 #    endif
+GC_API void *aligned_alloc(size_t align, size_t lb);
+GC_API void free_aligned_sized(void *p, size_t align, size_t lb);
+GC_API void free_sized(void *p, size_t lb);
 GC_API void freezero(void *p, size_t clear_lb);
 GC_API void freezeroall(void *p);
 GC_API void *reallocf(void *p, size_t lb);
@@ -51,11 +54,14 @@ main(void)
   /* FIXME: This is not ideal. */
   GC_INIT();
 
-#ifndef DONT_INCLUDE_LEAK_DETECTOR
+#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER) \
+    || !defined(DONT_INCLUDE_LEAK_DETECTOR)
   p[0] = (char *)aligned_alloc(8, 50 /* `size` */);
   CHECK_OUT_OF_MEMORY(p[0]);
   free_aligned_sized(p[0], 8, 50);
+#endif
 
+#ifndef DONT_INCLUDE_LEAK_DETECTOR
   p[0] = (char *)_aligned_malloc(70 /* `size` */, 16);
   CHECK_OUT_OF_MEMORY(p[0]);
   _aligned_free(p[0]);
@@ -112,10 +118,11 @@ main(void)
                           : strndup("abcd", i);
     CHECK_OUT_OF_MEMORY(p[i]);
     if (i == 3) {
-#ifdef DONT_INCLUDE_LEAK_DETECTOR
-      free(p[i]);
-#else
+#if defined(REDIRECT_MALLOC) && !defined(REDIRECT_MALLOC_IN_HEADER) \
+    || !defined(DONT_INCLUDE_LEAK_DETECTOR)
       free_sized(p[i], i /* `strlen(p[i])` */ + 1);
+#else
+      free(p[i]);
 #endif
     }
   }
