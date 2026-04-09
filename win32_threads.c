@@ -499,11 +499,27 @@ GC_suspend(GC_thread t)
       return;
     }
 
+    if (SuspendThread(t->handle) == (DWORD)-1) {
+#    ifndef GC_NO_THREADS_DISCOVERY
+      if (GC_win32_dll_threads
+          && (GetLastError() == ERROR_ACCESS_DENIED
+              || GetLastError() == ERROR_NO_MORE_ITEMS)) {
+        GC_release_dirty_lock();
+        /*
+         * The thread has been just terminated.  Same as above, a race with
+         * `GC_DllMain()` in setting the flags is fine.
+         */
+        GC_has_pending_delete_threads = TRUE;
+        t->pending_delete_thread = TRUE;
+        return;
+      }
+#    endif
 #    ifndef RETRY_GET_THREAD_CONTEXT
-    if (SuspendThread(t->handle) == (DWORD)-1)
       ABORT("SuspendThread failed");
-#    else
-    if (SuspendThread(t->handle) != (DWORD)-1) {
+#    endif
+    } /* else */
+#    ifdef RETRY_GET_THREAD_CONTEXT
+    else {
       CONTEXT context;
 
       /*
