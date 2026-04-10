@@ -658,6 +658,33 @@ GC_stop_world(void)
 #  endif
 }
 
+#  if !defined(GC_NO_THREADS_DISCOVERY) && !defined(SMALL_CONFIG)
+GC_ATTR_NOINLINE
+GC_INNER void
+GC_win32_dll_resume_all_threads(void)
+{
+  if (GC_win32_dll_threads) {
+    /*
+     * Note: we do not check `GC_please_stop` here because in an abort
+     * situation (fatal error), the safest approach is to always iterate
+     * through the table resuming all suspended threads, if any.
+     * The overhead is negligible since we are about to abort anyway.
+     */
+    int i, my_max = GC_get_max_thread_index();
+
+    for (i = 0; i <= my_max; i++) {
+      GC_thread p = (GC_thread)(dll_thread_table + i);
+
+      if (UNLIKELY((p->flags & IS_SUSPENDED) != 0)) {
+        (void)ResumeThread(p->handle);
+        /* Ignore errors as we are aborting anyway. */
+        p->flags &= (unsigned char)~IS_SUSPENDED;
+      }
+    }
+  }
+}
+#  endif
+
 GC_INNER void
 GC_start_world(void)
 {
