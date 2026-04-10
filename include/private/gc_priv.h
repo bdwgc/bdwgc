@@ -738,6 +738,19 @@ GC_INNER void GC_start_world(void);
 #  define START_WORLD()
 #endif
 
+#if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
+    && !defined(SMALL_CONFIG) && defined(GC_BUILD)
+/*
+ * Resume all suspended threads, if any.  Called right before `GC_on_abort()`
+ * to avoid a potential deadlock if there is a suspended `DllMain` thread
+ * holding the Windows loader lock.  Otherwise, in particular, `MessageBoxA()`
+ * call is unsafe.
+ */
+GC_INNER void GC_win32_dll_resume_all_threads(void);
+#else
+#  define GC_win32_dll_resume_all_threads() (void)0
+#endif
+
 /* Abandon ship. */
 #ifdef SMALL_CONFIG
 #  define GC_on_abort(msg) (void)0 /*< be silent on abort */
@@ -745,10 +758,11 @@ GC_INNER void GC_start_world(void);
 GC_API_PRIV GC_abort_func GC_on_abort;
 #endif
 #if defined(CPPCHECK)
-#  define ABORT(msg)    \
-    {                   \
-      GC_on_abort(msg); \
-      abort();          \
+#  define ABORT(msg)                     \
+    {                                    \
+      GC_win32_dll_resume_all_threads(); \
+      GC_on_abort(msg);                  \
+      abort();                           \
     }
 #else
 #  if defined(MSWIN_XBOX1) && !defined(DebugBreak)
@@ -769,21 +783,24 @@ GC_API_PRIV GC_abort_func GC_on_abort;
  * A more user-friendly abort after showing fatal message.
  * Exit on error without running "at-exit" callbacks.
  */
-#    define ABORT(msg) (GC_on_abort(msg), _exit(-1))
+#    define ABORT(msg) \
+      (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), _exit(-1))
 #  elif defined(MSWINCE) && defined(NO_DEBUGGING)
 #    define ABORT(msg) (GC_on_abort(msg), ExitProcess(-1))
 #  elif defined(MSWIN32) || defined(MSWINCE)
 #    if defined(_CrtDbgBreak) && defined(_DEBUG) && defined(_MSC_VER)
 #      define ABORT(msg)                          \
         {                                         \
+          GC_win32_dll_resume_all_threads();      \
           GC_on_abort(msg);                       \
           _CrtDbgBreak() /*< `__debugbreak()` */; \
         }
 #    else
-#      define ABORT(msg)    \
-        {                   \
-          GC_on_abort(msg); \
-          DebugBreak();     \
+#      define ABORT(msg)                     \
+        {                                    \
+          GC_win32_dll_resume_all_threads(); \
+          GC_on_abort(msg);                  \
+          DebugBreak();                      \
         }
 /*
  * Note: on a WinCE box, this could be silently ignored (i.e., the program
@@ -791,7 +808,8 @@ GC_API_PRIV GC_abort_func GC_on_abort;
  */
 #    endif
 #  else /* !MSWIN32 */
-#    define ABORT(msg) (GC_on_abort(msg), abort())
+#    define ABORT(msg) \
+      (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), abort())
 #  endif
 #endif /* !CPPCHECK */
 
