@@ -2459,12 +2459,12 @@ main(void)
      * e.g. when `malloc` redirection is on.
      */
     GC_clear_exclusion_table();
-#if defined(THREADS) && !defined(GC_NO_THREADS_DISCOVERY)    \
-    && !defined(THREAD_LOCAL_ALLOC)                          \
-    && (defined(DARWIN) && !defined(DARWIN_DONT_PARSE_STACK) \
-        || (defined(GC_WIN32_THREADS) && defined(GC_DLL)     \
+#if defined(THREADS) && !defined(TEST_NO_THREADS_DISCOVERY)              \
+    && !defined(GC_NO_THREADS_DISCOVERY) && !defined(THREAD_LOCAL_ALLOC) \
+    && (defined(DARWIN) && !defined(DARWIN_DONT_PARSE_STACK)             \
+        || (defined(GC_WIN32_THREADS) && defined(GC_DLL)                 \
             && !defined(MSWINCE)))
-    /* Test with implicit thread registration if possible. */
+    /* Test with implicit thread registration. */
     GC_use_threads_discovery();
 #  ifdef DARWIN
     GC_printf("Using Darwin task-threads-based world stop and push\n");
