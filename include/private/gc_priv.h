@@ -751,19 +751,15 @@ GC_INNER void GC_win32_dll_resume_all_threads(void);
 #  define GC_win32_dll_resume_all_threads() (void)0
 #endif
 
-/* Abandon ship. */
 #ifdef SMALL_CONFIG
 #  define GC_on_abort(msg) (void)0 /*< be silent on abort */
 #else
 GC_API_PRIV GC_abort_func GC_on_abort;
 #endif
+
 #if defined(CPPCHECK)
-#  define ABORT(msg)                     \
-    {                                    \
-      GC_win32_dll_resume_all_threads(); \
-      GC_on_abort(msg);                  \
-      abort();                           \
-    }
+#  define ABORT_ACT() abort()
+#  define ABORT_IS_STMT
 #else
 #  if defined(MSWIN_XBOX1) && !defined(DebugBreak)
 #    define DebugBreak() __debugbreak()
@@ -783,35 +779,37 @@ GC_API_PRIV GC_abort_func GC_on_abort;
  * A more user-friendly abort after showing fatal message.
  * Exit on error without running "at-exit" callbacks.
  */
-#    define ABORT(msg) \
-      (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), _exit(-1))
+#    define ABORT_ACT() _exit(-1)
 #  elif defined(MSWINCE) && defined(NO_DEBUGGING)
-#    define ABORT(msg) (GC_on_abort(msg), ExitProcess(-1))
+#    define ABORT_ACT() ExitProcess(-1)
 #  elif defined(MSWIN32) || defined(MSWINCE)
 #    if defined(_CrtDbgBreak) && defined(_DEBUG) && defined(_MSC_VER)
-#      define ABORT(msg)                          \
-        {                                         \
-          GC_win32_dll_resume_all_threads();      \
-          GC_on_abort(msg);                       \
-          _CrtDbgBreak() /*< `__debugbreak()` */; \
-        }
+#      define ABORT_ACT() _CrtDbgBreak() /*< `__debugbreak()` */
 #    else
-#      define ABORT(msg)                     \
-        {                                    \
-          GC_win32_dll_resume_all_threads(); \
-          GC_on_abort(msg);                  \
-          DebugBreak();                      \
-        }
+#      define ABORT_ACT() DebugBreak()
 /*
  * Note: on a WinCE box, this could be silently ignored (i.e., the program
  * is not aborted); `DebugBreak()` is a statement in some toolchains.
  */
 #    endif
+#    define ABORT_IS_STMT
 #  else /* !MSWIN32 */
-#    define ABORT(msg) \
-      (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), abort())
+#    define ABORT_ACT() abort()
 #  endif
 #endif /* !CPPCHECK */
+
+/* Abandon ship. */
+#ifdef ABORT_IS_STMT
+#  define ABORT(msg)                     \
+    {                                    \
+      GC_win32_dll_resume_all_threads(); \
+      GC_on_abort(msg);                  \
+      ABORT_ACT();                       \
+    }
+#else
+#  define ABORT(msg) \
+    (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), ABORT_ACT())
+#endif
 
 /*
  * For the abort message with 1 .. 3 arguments.  `C_msg` and `C_fmt`
