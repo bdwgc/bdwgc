@@ -560,6 +560,19 @@ EXTERN_C_BEGIN
   GC_EXTERN GC_on_thread_event_proc GC_on_thread_event;
 #endif
 
+#if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
+    && (defined(GC_DLL) || defined(GC_INSIDE_DLL)) \
+    && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC) \
+    && !defined(GC_PTHREADS) && !defined(SMALL_CONFIG) && defined(GC_BUILD)
+  /* Resume all suspended threads, if any.  Called right before     */
+  /* GC_on_abort() to avoid a potential deadlock if there is        */
+  /* a suspended DllMain thread holding the Windows loader lock.    */
+  /* Otherwise, in particular, MessageBoxA() call is unsafe.        */
+  GC_INNER void GC_win32_dll_resume_all_threads(void);
+#else
+#  define GC_win32_dll_resume_all_threads() (void)0
+#endif
+
 /* Abandon ship */
 # if defined(SMALL_CONFIG) || defined(PCR)
 #   define GC_on_abort(msg) (void)0 /* be silent on abort */
@@ -567,7 +580,8 @@ EXTERN_C_BEGIN
     GC_API_PRIV GC_abort_func GC_on_abort;
 # endif
 # if defined(CPPCHECK)
-#   define ABORT(msg) { GC_on_abort(msg); abort(); }
+#   define ABORT(msg) { GC_win32_dll_resume_all_threads(); \
+                        GC_on_abort(msg); abort(); }
 # elif defined(PCR)
 #   define ABORT(s) PCR_Base_Panic(s)
 # else
@@ -584,22 +598,26 @@ EXTERN_C_BEGIN
 #   endif
 #   if defined(MSWIN32) && (defined(NO_DEBUGGING) || defined(LINT2))
       /* A more user-friendly abort after showing fatal message.        */
-#     define ABORT(msg) (GC_on_abort(msg), _exit(-1))
+#     define ABORT(msg) \
+        (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), _exit(-1))
                 /* Exit on error without running "at-exit" callbacks.   */
 #   elif defined(MSWINCE) && defined(NO_DEBUGGING)
 #     define ABORT(msg) (GC_on_abort(msg), ExitProcess(-1))
 #   elif defined(MSWIN32) || defined(MSWINCE)
 #     if defined(_CrtDbgBreak) && defined(_DEBUG) && defined(_MSC_VER)
-#       define ABORT(msg) { GC_on_abort(msg); \
+#       define ABORT(msg) { GC_win32_dll_resume_all_threads(); \
+                            GC_on_abort(msg); \
                             _CrtDbgBreak() /* __debugbreak() */; }
 #     else
-#       define ABORT(msg) { GC_on_abort(msg); DebugBreak(); }
+#       define ABORT(msg) { GC_win32_dll_resume_all_threads(); \
+                            GC_on_abort(msg); DebugBreak(); }
                 /* Note that: on a WinCE box, this could be silently    */
                 /* ignored (i.e., the program is not aborted);          */
                 /* DebugBreak is a statement in some toolchains.        */
 #     endif
 #   else
-#     define ABORT(msg) (GC_on_abort(msg), abort())
+#     define ABORT(msg) \
+        (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), abort())
 #   endif /* !MSWIN32 */
 # endif /* !PCR */
 
