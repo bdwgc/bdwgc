@@ -499,6 +499,19 @@ typedef char * ptr_t;   /* A generic pointer to which we can add        */
 #   endif
 # endif
 
+#if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
+    && (defined(GC_DLL) || defined(GC_INSIDE_DLL)) \
+    && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC) \
+    && !defined(GC_PTHREADS) && !defined(SMALL_CONFIG) && defined(GC_BUILD)
+  /* Resume all suspended threads, if any.  Called right before     */
+  /* GC_on_abort() to avoid a potential deadlock if there is        */
+  /* a suspended DllMain thread holding the Windows loader lock.    */
+  /* Otherwise, in particular, MessageBoxA() call is unsafe.        */
+  GC_INNER void GC_win32_dll_resume_all_threads(void);
+#else
+#  define GC_win32_dll_resume_all_threads() (void)0
+#endif
+
 /* Abandon ship */
 # ifdef PCR
 #   define ABORT(s) PCR_Base_Panic(s)
@@ -519,17 +532,20 @@ typedef char * ptr_t;   /* A generic pointer to which we can add        */
 #   endif /* !SMALL_CONFIG */
 #   if defined(MSWIN32) && (defined(NO_DEBUGGING) || defined(LINT2))
       /* A more user-friendly abort after showing fatal message.        */
-#     define ABORT(msg) (GC_on_abort(msg), _exit(-1))
+#     define ABORT(msg) \
+        (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), _exit(-1))
                 /* Exit on error without running "at-exit" callbacks.   */
 #   elif defined(MSWINCE) && defined(NO_DEBUGGING)
 #     define ABORT(msg) (GC_on_abort(msg), ExitProcess(-1))
 #   elif defined(MSWIN32) || defined(MSWINCE)
-#     define ABORT(msg) { GC_on_abort(msg); DebugBreak(); }
+#     define ABORT(msg) { GC_win32_dll_resume_all_threads(); \
+                          GC_on_abort(msg); DebugBreak(); }
                 /* Note that: on a WinCE box, this could be silently    */
                 /* ignored (i.e., the program is not aborted);          */
                 /* DebugBreak is a statement in some toolchains.        */
 #   else
-#     define ABORT(msg) (GC_on_abort(msg), abort())
+#     define ABORT(msg) \
+        (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), abort())
 #   endif /* !MSWIN32 */
 # endif /* !PCR */
 
