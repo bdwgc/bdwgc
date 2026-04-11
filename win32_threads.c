@@ -53,6 +53,11 @@ static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext);
  * number of threads.
  */
 
+#    ifndef GC_INSIDE_DLL
+#      define GC_DllMain DllMain
+BOOL WINAPI GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved);
+#    endif
+
 /*
  * `GC_DISCOVER_TASK_THREADS` should be used if `DllMain`-based thread
  * registration is required but it is impossible to call
@@ -2035,8 +2040,6 @@ GC_thr_init(void)
 #    ifdef GC_INSIDE_DLL
 /* Export only if needed by client. */
 GC_API
-#    else
-#      define GC_DllMain DllMain
 #    endif
 BOOL WINAPI
 GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
