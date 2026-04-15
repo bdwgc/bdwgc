@@ -7,7 +7,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    name: ${{ matrix.ttriple }} ${{ matrix.linkage }} cpp:${{ matrix.enable_cplusplus }} thr:${{ matrix.enable_threads }}
+    name: ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -84,14 +84,12 @@ jobs:
           x86_64-macos-none,
           x86_64-windows-gnu,
         ]
-        enable_cplusplus: [ false, true ]
+        enable_cplusplus: [ true ]
         enable_threads: [ false, true ]
         linkage: [ static, dynamic ]
         exclude:
         - enable_threads: true
           ttriple: wasm32-wasi-musl
-        - enable_cplusplus: false # excluded to speedup this workflow
-          linkage: static
         - linkage: dynamic # FIXME: SPARCv8 does not handle f128 in calls
           ttriple: sparc-linux-gnu
         - linkage: dynamic # FIXME: recompile with -fPIC
