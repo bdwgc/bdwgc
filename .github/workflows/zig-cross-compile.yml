@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: [ "0.15.2" ]
+        zig_version: [ "0.16.0" ]
         # Some of the triples are commented out just to speedup this workflow.
         ttriple: [
           aarch64-linux-gnu,
@@ -23,7 +23,7 @@ jobs:
           #aarch64_be-linux-gnu,
           aarch64_be-linux-musl,
           #arc-linux-gnu, # FIXME: __linux__ macro is not predefined
-          #arm-linux-gnueabi,
+          arm-linux-gnueabi,
           arm-linux-gnueabihf,
           arm-linux-musleabi,
           #arm-linux-musleabihf,
@@ -31,8 +31,8 @@ jobs:
           #armeb-linux-gnueabihf,
           #armeb-linux-musleabi,
           armeb-linux-musleabihf,
-          #loongarch64-linux-gnu,
-          loongarch64-linux-gnusf,
+          loongarch64-linux-gnu,
+          #loongarch64-linux-gnusf, # FIXME: LLVM error in memmoveFast
           loongarch64-linux-musl,
           #m68k-linux-gnu, # FIXME: No available targets compatible with triple
           #m68k-linux-musl, # FIXME: No available targets compatible with triple
@@ -102,16 +102,10 @@ jobs:
           ttriple: x86_64-linux-muslx32
         - linkage: dynamic # FIXME: not stable yet
           ttriple: wasm32-wasi-musl
-        - enable_cplusplus: true # FIXME: ignoring -fno-PIC option
+        - linkage: static # FIXME: ignoring -fno-PIC option
           ttriple: mips64-linux-muslabi64
-        - enable_cplusplus: true # FIXME: ignoring -fno-PIC option
+        - linkage: static # FIXME: ignoring -fno-PIC option
           ttriple: mips64el-linux-muslabi64
-        # The following ones have some zig link issue.
-        - enable_cplusplus: false
-          ttriple: x86-linux-musl
-        - enable_cplusplus: true
-          linkage: dynamic
-          ttriple: x86-linux-musl
 
     steps:
     - uses: actions/checkout@v6
