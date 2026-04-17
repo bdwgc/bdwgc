@@ -1721,7 +1721,7 @@ struct _GC_arrays {
 #define GC_scratch_end_addr GC_arrays._scratch_end_addr
   word _scratch_end_addr; /*< the end point of the current scratch area */
 
-#if defined(IRIX5) || (defined(USE_PROC_FOR_LIBRARIES) && !defined(LINUX))
+#if defined(USE_PROC_FOR_LIBRARIES) && !defined(LINUX) || defined(IRIX5)
 #  define USE_SCRATCH_LAST_END_PTR
   /*
    * The address of the end point of the last obtained scratch area.
@@ -2536,7 +2536,7 @@ struct _GC_arrays {
 #define GC_heap_sects GC_arrays._heap_sects
   struct HeapSect *_heap_sects;
 
-#if defined(USE_PROC_FOR_LIBRARIES)
+#ifdef USE_PROC_FOR_LIBRARIES
   /* All `GET_MEM`-allocated memory.  Includes block headers and the like. */
 #  define GC_our_memory GC_arrays._our_memory
   struct HeapSect _our_memory[MAX_HEAP_SECTS];
@@ -4291,14 +4291,13 @@ GC_find_starting_hblk(struct hblk *h, hdr **phhdr)
 }
 #endif /* !NOT_GCBUILD */
 
-#if (defined(PARALLEL_MARK)                                      \
-     && !defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG)       \
-     && (defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID)               \
-         || defined(HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID)         \
-         || defined(HAVE_PTHREAD_SET_NAME_NP)))                  \
-    || (defined(DYNAMIC_LOADING)                                 \
-        && ((defined(USE_PROC_FOR_LIBRARIES) && !defined(LINUX)) \
-            || defined(DARWIN) || defined(IRIX5)))               \
+#if (defined(PARALLEL_MARK)                                              \
+     && !defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG)               \
+     && (defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID)                       \
+         || defined(HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID)                 \
+         || defined(HAVE_PTHREAD_SET_NAME_NP)))                          \
+    || (defined(DYNAMIC_LOADING) && (defined(DARWIN) || defined(IRIX5))) \
+    || (defined(USE_PROC_FOR_LIBRARIES) && !defined(LINUX))              \
     || defined(PROC_VDB) || defined(SOFT_VDB)
 /*
  * A function to convert a long integer value `lv` to a string adding
@@ -4371,10 +4370,10 @@ GC_INNER void GC_init_linux_data_start(void);
 #endif
 
 #ifdef NEED_PROC_MAPS
-#  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES) \
-      || defined(IA64) || defined(INCLUDE_LINUX_THREAD_DESCR)     \
-      || (defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB))       \
-      || defined(REDIR_MALLOC_AND_LINUX_THREADS)
+#  if defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB)        \
+      || defined(INCLUDE_LINUX_THREAD_DESCR) || defined(IA64) \
+      || defined(REDIR_MALLOC_AND_LINUX_THREADS)              \
+      || defined(USE_PROC_FOR_LIBRARIES)
 /*
  * Assign various fields of the first line in `maps_ptr` to `*p_start`,
  * `*p_end`, `*p_prot`, `*p_maj_dev` and `*p_mapping_name`.

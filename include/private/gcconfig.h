@@ -2720,6 +2720,10 @@ extern char __global_base, __heap_base;
 #  define USE_PROC_FOR_LIBRARIES
 #endif
 
+#ifndef DYNAMIC_LOADING
+#  undef USE_PROC_FOR_LIBRARIES
+#endif
+
 #ifndef OS_TYPE
 #  define OS_TYPE ""
 #endif
