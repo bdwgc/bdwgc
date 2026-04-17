@@ -634,7 +634,7 @@ GC_skip_hole_openbsd(ptr_t p, ptr_t bound)
        * with `volatile`-qualified left operand.
        */
       result = result + pgsz;
-      GC_noop1((word)(unsigned char)(*result));
+      CHECK_MEMORY_READ(result);
     }
   }
 
@@ -1140,7 +1140,7 @@ GC_find_limit_with_bound(ptr_t p, GC_bool up, ptr_t bound)
         /* See the notes for the case when `up` is `TRUE`. */
         result = result - MIN_PAGE_SIZE;
       }
-      GC_noop1((word)(unsigned char)(*result));
+      CHECK_MEMORY_READ(result);
     }
   }
   GC_reset_fault_handler();
@@ -2244,23 +2244,11 @@ GC_SysVGetDataStart(size_t max_page_size, ptr_t etext_ptr)
      * another thread.
      */
     for (; ADDR_LT(next_page, DATAEND); next_page += max_page_size) {
-      GC_noop1((word)(*(volatile unsigned char *)next_page));
+      CHECK_MEMORY_READ(next_page);
     }
 #  else
     result = next_page + (ADDR(result) & ((word)max_page_size - 1));
-    /* Try writing to the address. */
-    {
-#    ifdef AO_HAVE_fetch_and_add
-      volatile AO_t zero = 0;
-
-      (void)AO_fetch_and_add((volatile AO_t *)result, zero);
-#    else
-      /* Fall back to non-atomic fetch-and-store. */
-      char v = *result;
-
-      *result = v;
-#    endif
-    }
+    CHECK_MEMORY_WRITE(result);
 #  endif
     GC_reset_fault_handler();
   } else {
