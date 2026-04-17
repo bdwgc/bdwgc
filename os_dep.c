@@ -306,10 +306,10 @@ GC_get_maps(void)
  * offsets anywhere, which is safer anyway.
  */
 
-#  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES) \
-      || defined(IA64) || defined(INCLUDE_LINUX_THREAD_DESCR)     \
-      || (defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB))       \
-      || defined(REDIR_MALLOC_AND_LINUX_THREADS)
+#  if defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB)        \
+      || defined(INCLUDE_LINUX_THREAD_DESCR) || defined(IA64) \
+      || defined(REDIR_MALLOC_AND_LINUX_THREADS)              \
+      || defined(USE_PROC_FOR_LIBRARIES)
 GC_INNER const char *
 GC_parse_map_entry(const char *maps_ptr, ptr_t *p_start, ptr_t *p_end,
                    const char **p_prot, unsigned *p_maj_dev,
@@ -365,7 +365,7 @@ GC_parse_map_entry(const char *maps_ptr, ptr_t *p_start, ptr_t *p_end,
   }
   return (const char *)p;
 }
-#  endif /* REDIRECT_MALLOC || DYNAMIC_LOADING || IA64 || ... */
+#  endif
 
 #  if defined(IA64) || defined(INCLUDE_LINUX_THREAD_DESCR) \
       || (defined(CHECK_SOFT_VDB) && defined(MPROTECT_VDB))
@@ -576,8 +576,7 @@ __asan_default_options(void)
       /* Use its own `SIGBUS` and `SIGSEGV` handlers. */
       "allow_user_segv_handler=1:"
 #  endif
-#  if defined(DYNAMIC_LOADING) && defined(USE_PROC_FOR_LIBRARIES) \
-      && defined(LINUX)
+#  if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
       /*
        * Decorate sanitizer mappings in `/proc/self/maps` to filter them out
        * in `GC_register_map_entries()`.
