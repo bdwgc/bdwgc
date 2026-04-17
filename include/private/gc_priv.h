@@ -4188,6 +4188,35 @@ void GC_record_fault(struct hblk *h);
 void GC_check_dirty(void);
 #endif
 
+/*
+ * Try reading memory addressed by the given pointer.  If not accessible,
+ * then a `SIGSEGV` or `SIGBUS` should occur.
+ */
+#define CHECK_MEMORY_READ(p) GC_noop1(*(volatile unsigned char *)(p))
+
+/*
+ * Try dummy writing to memory addressed by the given pointer.
+ * If not accessible or not writable, then a `SIGSEGV` or `SIGBUS` should
+ * occur.
+ */
+#ifdef AO_HAVE_fetch_and_add
+#  define CHECK_MEMORY_WRITE(p)                           \
+    do {                                                  \
+      volatile AO_t zero = 0;                             \
+                                                          \
+      (void)AO_fetch_and_add((volatile AO_t *)(p), zero); \
+    } while (0)
+#else
+/* Fall back to non-atomic fetch-and-store. */
+#  define CHECK_MEMORY_WRITE(p)                 \
+    do {                                        \
+      volatile char *pp = (volatile char *)(p); \
+      char v = *pp;                             \
+                                                \
+      *pp = v;                                  \
+    } while (0)
+#endif
+
 GC_INNER void GC_setpagesize(void);
 
 #ifndef NO_ALL_INTERIOR_POINTERS
