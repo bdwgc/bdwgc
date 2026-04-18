@@ -292,7 +292,12 @@ GC_API void GC_CALL GC_clear_roots(void)
 }
 
 /* Internal use only; lock held.        */
-STATIC void GC_remove_root_at_pos(int i)
+#ifdef USE_PROC_FOR_LIBRARIES
+  GC_INNER
+#else
+  STATIC
+#endif
+void GC_remove_root_at_pos(int i)
 {
 #   ifdef DEBUG_ADD_DEL_ROOTS
       GC_log_printf("Remove data root section at %d: %p .. %p%s\n",
@@ -911,10 +916,17 @@ GC_INNER void GC_push_roots(GC_bool all, ptr_t cold_gc_frame GC_ATTR_UNUSED)
 
      /* Mark everything in static data areas                             */
        for (i = 0; i < n_root_sets; i++) {
+#        if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+            /* Record the index of the static data root to push. */
+            GC_push_root_idx_p1 = GC_static_roots[i].r_tmp ? i + 1 : 0;
+#        endif
          GC_push_conditional_with_exclusions(
                              GC_static_roots[i].r_start,
                              GC_static_roots[i].r_end, all);
        }
+#      if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+          GC_push_root_idx_p1 = 0; /* reset */
+#      endif
 
      /* Mark all free list header blocks, if those were allocated from  */
      /* the garbage collected heap.  This makes sure they don't         */
