@@ -3157,7 +3157,8 @@ EXTERN_C_BEGIN
 #endif
 
 #if (defined(MSWIN32) || defined(MSWINCE) \
-        || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS))) \
+     || (defined(USE_PROC_FOR_LIBRARIES) \
+         && !defined(SINGLE_THREADED_PROCESS))) \
     && !defined(NO_CRT) && !defined(NO_WRAP_MARK_SOME)
   /* Under rare conditions, we may end up marking from nonexistent      */
   /* memory.  Hence we need to be prepared to recover by running        */
