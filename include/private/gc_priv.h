@@ -2331,6 +2331,11 @@ struct _GC_arrays {
 #define n_root_sets GC_arrays._n_root_sets
   size_t _n_root_sets;
 
+#if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+#  define GC_push_root_idx_p1 GC_arrays._push_root_idx_p1
+  volatile size_t _push_root_idx_p1; /*< zero means unset */
+#endif
+
 #define GC_excl_table_entries GC_arrays._excl_table_entries
   size_t _excl_table_entries; /*< number of entries in use */
 
@@ -2949,16 +2954,16 @@ GC_INNER void GC_push_all_stack(void *b, void *t);
 #  define GC_push_all_stack(b, t) GC_push_all_eager(b, t)
 #endif
 
-#ifdef NO_VDB_FOR_STATIC_ROOTS
-#  define GC_push_conditional_static(b, t, all) \
-    ((void)(all), GC_push_all(b, t))
-#else
+#if !defined(NO_VDB_FOR_STATIC_ROOTS) || defined(USE_PROC_FOR_LIBRARIES)
 /*
  * Same as `GC_push_conditional` (does either of `GC_push_all` or
  * `GC_push_selected` depending on the third argument) but the caller
  * guarantees the region belongs to the registered static roots.
  */
 GC_INNER void GC_push_conditional_static(void *b, void *t, GC_bool all);
+#else
+#  define GC_push_conditional_static(b, t, all) \
+    ((void)(all), GC_push_all(b, t))
 #endif
 
 #if defined(WRAP_MARK_SOME) && defined(PARALLEL_MARK)
@@ -3219,13 +3224,17 @@ void GC_check_fl_marks(void **);
  */
 GC_INNER void GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp);
 
-#if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
+#ifdef USE_PROC_FOR_LIBRARIES
+GC_INNER void GC_remove_root_at_pos(size_t i);
+
+#  ifdef LINUX
 /*
  * Remove given range from every static root which intersects with the range.
  * `GC_remove_tmp_roots` is assumed to be called before this function is
  * called (repeatedly) by `GC_register_map_entries`.
  */
 GC_INNER void GC_remove_roots_subregion(ptr_t b, ptr_t e);
+#  endif
 #endif
 
 /*
