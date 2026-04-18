@@ -464,10 +464,16 @@ handle_ex:
 #   endif
       /* We have bad roots on the stack.  Discard mark stack.   */
       /* Rescan from marked objects.  Redetermine roots.        */
-#     ifdef REGISTER_LIBRARIES_EARLY
-        START_WORLD();
-        GC_cond_register_dynamic_libraries();
-        STOP_WORLD();
+#     ifdef USE_PROC_FOR_LIBRARIES
+        {
+          size_t idx_p1 = GC_push_root_idx_p1;
+
+          if (0 == idx_p1)
+            ABORT("SIGSEGV occurred outside"
+                  " GC_push_conditional_with_exclusions");
+          GC_remove_root_at_pos((int)idx_p1 - 1);
+          GC_push_root_idx_p1 = 0;
+        }
 #     endif
       GC_invalidate_mark_state();
       GC_scan_ptr = NULL;
@@ -1284,8 +1290,7 @@ GC_API void GC_CALL GC_push_all(void *bottom, void *top)
     }
   }
 
-# ifndef NO_VDB_FOR_STATIC_ROOTS
-#   ifndef PROC_VDB
+# if !defined(NO_VDB_FOR_STATIC_ROOTS) && !defined(PROC_VDB)
       /* Same as GC_page_was_dirty but h is allowed to point to some    */
       /* page in the registered static roots only.  Not used if         */
       /* manual VDB is on.                                              */
@@ -1293,27 +1298,7 @@ GC_API void GC_CALL GC_push_all(void *bottom, void *top)
       {
         return get_pht_entry_from_index(GC_grungy_pages, PHT_HASH(h));
       }
-#   endif
-
-    GC_INNER void GC_push_conditional_static(void *bottom, void *top,
-                                             GC_bool all)
-    {
-#     ifdef PROC_VDB
-        /* Just redirect to the generic routine because PROC_VDB        */
-        /* implementation gets the dirty bits map for the whole         */
-        /* process memory.                                              */
-        GC_push_conditional(bottom, top, all);
-#     else
-        if (all || !GC_is_vdb_for_static_roots()) {
-          GC_push_all(bottom, top);
-        } else {
-          GC_push_selected((ptr_t)bottom, (ptr_t)top,
-                           GC_static_page_was_dirty);
-        }
-#     endif
-    }
-# endif /* !NO_VDB_FOR_STATIC_ROOTS */
-
+# endif
 #else
   GC_API void GC_CALL GC_push_conditional(void *bottom, void *top,
                                           int all GC_ATTR_UNUSED)
@@ -1321,6 +1306,35 @@ GC_API void GC_CALL GC_push_all(void *bottom, void *top)
     GC_push_all(bottom, top);
   }
 #endif /* GC_DISABLE_INCREMENTAL */
+
+#if !defined(NO_VDB_FOR_STATIC_ROOTS) || defined(USE_PROC_FOR_LIBRARIES)
+    GC_INNER void GC_push_conditional_static(void *bottom, void *top,
+                                             GC_bool all GC_ATTR_UNUSED)
+    {
+#     if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+        if (EXPECT((word)bottom < (word)top, TRUE)) {
+          GC_noop1(*(volatile unsigned char *)bottom);
+          GC_noop1(*(volatile unsigned char *)((ptr_t)top - 1));
+        }
+#     endif
+#     ifdef PROC_VDB
+        /* Just redirect to the generic routine because PROC_VDB        */
+        /* implementation gets the dirty bits map for the whole         */
+        /* process memory.                                              */
+        GC_push_conditional(bottom, top, all);
+#     else
+#       ifndef NO_VDB_FOR_STATIC_ROOTS
+          if (!all && GC_is_vdb_for_static_roots()) {
+            GC_push_selected((ptr_t)bottom, (ptr_t)top,
+                             GC_static_page_was_dirty);
+          } else
+#       endif
+        /* else */ {
+          GC_push_all(bottom, top);
+        }
+#     endif
+    }
+#endif /* !NO_VDB_FOR_STATIC_ROOTS */
 
 #if defined(AMIGA) || defined(MACOS) || defined(GC_DARWIN_THREADS)
   void GC_push_one(word p)
