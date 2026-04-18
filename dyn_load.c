@@ -456,8 +456,9 @@ GC_register_map_entries(const char *maps)
       /*
        * This may fail, since a thread may already be unregistered, but
        * its thread stack may still be there.  That can fail because the
-       * stack may disappear while we are marking.  Thus the marker is,
-       * and has to be prepared to recover from segmentation faults.
+       * stack just appeared or may disappear while we are marking.
+       * Thus the marker is, and has to be prepared to recover from
+       * segmentation faults.
        */
 
       if (GC_segment_is_thread_stack(my_start, my_end)) {

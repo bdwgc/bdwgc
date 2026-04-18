@@ -3307,8 +3307,9 @@ extern ptr_t GC_data_start;
 #  define SUSPEND_HANDLER_NO_CONTEXT
 #endif
 
-#if (defined(MSWIN32) || defined(MSWINCE)                      \
-     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS))) \
+#if (defined(MSWIN32) || defined(MSWINCE)       \
+     || (defined(USE_PROC_FOR_LIBRARIES)        \
+         && !defined(SINGLE_THREADED_PROCESS))) \
     && !defined(NO_CRT) && !defined(NO_WRAP_MARK_SOME)
 /*
  * Under rare conditions, we may end up marking from nonexistent memory.

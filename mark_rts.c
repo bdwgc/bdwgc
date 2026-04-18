@@ -243,7 +243,12 @@ GC_clear_roots(void)
   UNLOCK();
 }
 
-STATIC void
+#ifdef USE_PROC_FOR_LIBRARIES
+GC_INNER
+#else
+STATIC
+#endif
+void
 GC_remove_root_at_pos(size_t i)
 {
   GC_ASSERT(I_HOLD_LOCK());
@@ -991,9 +996,16 @@ GC_push_roots(GC_bool all, ptr_t cold_gc_frame)
 
   /* Mark everything in static data areas. */
   for (i = 0; i < n_root_sets; i++) {
+#if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+    /* Record the index of the static data root to push. */
+    GC_push_root_idx_p1 = GC_static_roots[i].r_tmp ? i + 1 : 0;
+#endif
     GC_push_conditional_with_exclusions(GC_static_roots[i].r_start,
                                         GC_static_roots[i].r_end, all);
   }
+#if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+  GC_push_root_idx_p1 = 0; /*< reset */
+#endif
 
   /*
    * Mark all free-list header blocks, if those were allocated from
