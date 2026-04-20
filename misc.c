@@ -2350,6 +2350,31 @@ GC_disable_inner(void)
   GC_dont_gc++;
 }
 
+GC_API void GC_CALL
+GC_disable(void)
+{
+  LOCK();
+  GC_disable_inner();
+  UNLOCK();
+}
+
+GC_API void GC_CALL
+GC_finish_and_disable(void)
+{
+  LOCK();
+  while (GC_incremental && GC_collection_in_progress()) {
+    GC_collect_a_little_inner(1000);
+  }
+  GC_disable_inner();
+  UNLOCK();
+}
+
+GC_API int GC_CALL
+GC_is_disabled(void)
+{
+  return GC_dont_gc != 0;
+}
+
 GC_INNER void
 GC_enable_inner(void)
 {
@@ -2370,20 +2395,6 @@ GC_enable(void)
   LOCK();
   GC_enable_inner();
   UNLOCK();
-}
-
-GC_API void GC_CALL
-GC_disable(void)
-{
-  LOCK();
-  GC_disable_inner();
-  UNLOCK();
-}
-
-GC_API int GC_CALL
-GC_is_disabled(void)
-{
-  return GC_dont_gc != 0;
 }
 
 /* Helper procedures for new kind creation. */
