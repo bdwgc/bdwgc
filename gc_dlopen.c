@@ -54,7 +54,7 @@ disable_gc_for_dlopen(void)
   while (GC_incremental && GC_collection_in_progress()) {
     GC_collect_a_little_inner(1000);
   }
-  ++GC_dont_gc;
+  GC_disable_inner();
   UNLOCK();
 }
 #  endif

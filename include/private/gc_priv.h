@@ -2881,6 +2881,10 @@ GC_INNER ptr_t GC_approx_sp(void);
 #  define STORE_APPROX_SP_TO(sp) (void)(sp = (ptr_t)(&sp))
 #endif
 
+/* Routines to update `GC_dont_gc` in a consistent way. */
+GC_INNER void GC_disable_inner(void);
+GC_INNER void GC_enable_inner(void);
+
 /* Have we allocated enough to amortize a collection? */
 GC_INNER GC_bool GC_should_collect(void);
 

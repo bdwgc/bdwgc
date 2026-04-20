@@ -2397,9 +2397,8 @@ GC_unregister_my_thread_inner(GC_thread me)
    * Handle `DISABLED_GC` flag which is set by the intercepted
    * `pthread_cancel()` or `pthread_exit()`.
    */
-  if ((me->flags & DISABLED_GC) != 0) {
-    GC_dont_gc--;
-  }
+  if ((me->flags & DISABLED_GC) != 0)
+    GC_enable_inner();
 #    endif
   if ((me->flags & DETACHED) == 0) {
     me->flags |= FINISHED;
@@ -2477,7 +2476,7 @@ GC_wrap_pthread_cancel(pthread_t thread)
    */
   if (t != NULL && (t->flags & DISABLED_GC) == 0) {
     t->flags |= DISABLED_GC;
-    GC_dont_gc++;
+    GC_disable_inner();
   }
   UNLOCK();
 #    endif
@@ -2502,7 +2501,7 @@ GC_wrap_pthread_exit(void *retval)
    */
   if (me != NULL && (me->flags & DISABLED_GC) == 0) {
     me->flags |= DISABLED_GC;
-    GC_dont_gc++;
+    GC_disable_inner();
   }
   UNLOCK();
 
