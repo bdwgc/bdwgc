@@ -1179,6 +1179,11 @@ GC_API GC_word GC_CALL GC_get_memory_use(void);
 GC_API void GC_CALL GC_disable(void);
 
 /**
+ * Similar to `GC_disable()` but finishes any ongoing collection first.
+ */
+GC_API void GC_CALL GC_finish_and_disable(void);
+
+/**
  * Return 1 (true) if the garbage collection is disabled (i.e., the
  * value of `GC_dont_gc` is nonzero), 0 otherwise.  Does not acquire
  * the allocator lock.

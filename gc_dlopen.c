@@ -37,29 +37,6 @@
 #  endif
 
 /*
- * Make sure we are not in the middle of a collection, and make sure we
- * do not start any.  This is invoked prior to a `dlopen` call to avoid
- * synchronization issues.  We cannot just acquire the allocator lock,
- * since startup code in `dlopen` may try to allocate.  This solution
- * risks heap growth (or, even, heap overflow) in the presence of many
- * `dlopen` calls in either a multi-threaded environment, or if the
- * library initialization code allocates substantial amounts of garbage
- * collected memory.
- */
-#  ifndef USE_PROC_FOR_LIBRARIES
-static void
-disable_gc_for_dlopen(void)
-{
-  LOCK();
-  while (GC_incremental && GC_collection_in_progress()) {
-    GC_collect_a_little_inner(1000);
-  }
-  GC_disable_inner();
-  UNLOCK();
-}
-#  endif
-
-/*
  * Redefine `dlopen` to guarantee mutual exclusion with
  * `GC_register_dynamic_libraries()`.  Should probably happen for
  * other operating systems, too.
@@ -83,14 +60,19 @@ GC_wrap_dlopen(const char *path, int mode)
 
 #  ifndef USE_PROC_FOR_LIBRARIES
   /*
-   * Disable collections.  This solution risks heap growth (or, even,
-   * heap overflow) but there seems no better solutions.
+   * Make sure we are not in the middle of a collection, then disable
+   * collections.  This is invoked prior to a `dlopen` call to avoid
+   * synchronization issues.  We cannot just acquire the allocator lock,
+   * since startup code in `dlopen` may try to allocate.
+   * This solution risks heap growth (or, even, heap overflow) in the
+   * presence of many `dlopen` calls in either a multi-threaded environment,
+   * or if the library initialization code allocates substantial amounts of
+   * garbage-collected memory.  But there seems no better solutions.
    */
-  disable_gc_for_dlopen();
+  GC_finish_and_disable();
 #  endif
   result = REAL_DLFUNC(dlopen)(path, mode);
 #  ifndef USE_PROC_FOR_LIBRARIES
-  /* This undoes `disable_gc_for_dlopen()`. */
   GC_enable();
 #  endif
   return result;

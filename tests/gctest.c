@@ -2613,7 +2613,9 @@ main(void)
   (void)GC_get_is_visible_print_proc();
   (void)GC_get_pages_executable();
   (void)GC_get_warn_proc();
+  GC_finish_and_disable();
   (void)GC_is_disabled();
+  GC_enable();
   GC_set_allocd_bytes_per_finalizer(GC_get_allocd_bytes_per_finalizer());
   GC_set_disable_automatic_collection(GC_get_disable_automatic_collection());
   GC_set_dont_expand(GC_get_dont_expand());
