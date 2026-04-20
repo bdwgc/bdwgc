@@ -2340,18 +2340,35 @@ GC_snprintf_s_ld_s(char *buf, size_t buf_sz, const char *prefix, long lv,
 }
 #endif /* NEED_SNPRINTF_SLDS */
 
-GC_API void GC_CALL
-GC_enable(void)
+GC_INNER void
+GC_disable_inner(void)
 {
-  LOCK();
+#ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
+  if (!GC_dont_gc)
+    GC_heapsize_on_gc_disable = GC_heapsize;
+#endif
+  GC_dont_gc++;
+}
+
+GC_INNER void
+GC_enable_inner(void)
+{
   /* Ensure no counter underflow. */
   GC_ASSERT(GC_dont_gc != 0);
+
   GC_dont_gc--;
 #ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
   if (!GC_dont_gc && GC_heapsize > GC_heapsize_on_gc_disable)
     WARN("Heap grown by %" WARN_PRIuPTR " KiB while GC was disabled\n",
          (GC_heapsize - GC_heapsize_on_gc_disable) >> 10);
 #endif
+}
+
+GC_API void GC_CALL
+GC_enable(void)
+{
+  LOCK();
+  GC_enable_inner();
   UNLOCK();
 }
 
@@ -2359,11 +2376,7 @@ GC_API void GC_CALL
 GC_disable(void)
 {
   LOCK();
-#ifndef NO_WARN_HEAP_GROW_WHEN_GC_DISABLED
-  if (!GC_dont_gc)
-    GC_heapsize_on_gc_disable = GC_heapsize;
-#endif
-  GC_dont_gc++;
+  GC_disable_inner();
   UNLOCK();
 }
 
