@@ -575,7 +575,7 @@ GC_start_mark_threads_inner(void)
   GC_ASSERT(I_HOLD_LOCK());
   ASSERT_CANCEL_DISABLED();
   if (GC_available_markers_m1 <= 0 || GC_parallel) {
-    /* Skip if parallel markers disabled or already started. */
+    /* Skip if parallel markers disabled or already started (or starting). */
     return;
   }
   GC_wait_for_gc_completion(TRUE);
@@ -600,7 +600,7 @@ GC_start_mark_threads_inner(void)
 #    endif
 
   GC_ASSERT(0 == GC_fl_builder_count);
-  INIT_REAL_SYMS(); /*< for `pthread_create` */
+  INIT_REAL_SYMS(); /*< for `pthread_sigmask` and `pthread_create` */
 
   if (pthread_attr_init(&attr) != 0)
     ABORT("pthread_attr_init failed");
@@ -651,14 +651,30 @@ GC_start_mark_threads_inner(void)
   GC_markers_m1 = GC_available_markers_m1;
 
   for (i = 0; i < GC_available_markers_m1; ++i) {
+    int res;
     pthread_t new_thread;
 
 #    ifdef GC_WIN32_THREADS
     GC_marker_last_stack_min[i] = ADDR_LIMIT;
 #    endif
-    if (UNLIKELY(REAL_FUNC(pthread_create)(&new_thread, &attr, GC_mark_thread,
-                                           NUMERIC_TO_VPTR(i))
-                 != 0)) {
+#    ifdef REDIRECT_MALLOC
+    /*
+     * Real `pthread_create()` could call our `calloc()` redirecting
+     * to `GC_generic_malloc_uncollectable()`, thus we should release
+     * the allocator lock temporarily.  As a consequence, we need to
+     * prevent usage of the markers till `GC_wait_for_markers_init()`
+     * completion - the easiest way is to disable collection temporarily.
+     */
+    GC_disable_inner();
+    UNLOCK();
+#    endif
+    res = REAL_FUNC(pthread_create)(&new_thread, &attr, GC_mark_thread,
+                                    NUMERIC_TO_VPTR(i));
+#    ifdef REDIRECT_MALLOC
+    LOCK();
+    GC_enable_inner();
+#    endif
+    if (UNLIKELY(res != 0)) {
       WARN("Marker thread %" WARN_PRIdPTR " creation failed\n",
            (GC_signed_word)i);
       /* Do not try to create other marker threads. */
