@@ -2446,6 +2446,24 @@ GC_unregister_my_thread(void)
   return GC_SUCCESS;
 }
 
+#  if (!defined(GC_NO_PTHREAD_CANCEL) && defined(GC_PTHREADS) \
+       && defined(CANCEL_SAFE))                               \
+      || defined(GC_HAVE_PTHREAD_EXIT)
+/*
+ * Disables collection and sets the corresponding flag for the given thread.
+ * Does nothing if the argument is `NULL` or the flag (`DISABLED_GC`)
+ * is already set.
+ */
+static void
+disable_gc_for_pthread(GC_thread t)
+{
+  if (t != NULL && (t->flags & DISABLED_GC) == 0) {
+    t->flags |= DISABLED_GC;
+    GC_disable_inner();
+  }
+}
+#  endif
+
 #  if !defined(GC_NO_PTHREAD_CANCEL) && defined(GC_PTHREADS)
 /*
  * We should deal with the fact that apparently on Solaris and, probably,
@@ -2461,23 +2479,11 @@ GC_unregister_my_thread(void)
 GC_API int
 GC_wrap_pthread_cancel(pthread_t thread)
 {
-#    ifdef CANCEL_SAFE
-  GC_thread t;
-#    endif
-
   INIT_REAL_SYMS();
 #    ifdef CANCEL_SAFE
   LOCK();
-  t = GC_lookup_by_pthread(thread);
-  /*
-   * We test `DISABLED_GC` because `pthread_exit` could be called at
-   * the same time.  (If `t` is `NULL`, then `pthread_cancel()` should
-   * return `ESRCH`.)
-   */
-  if (t != NULL && (t->flags & DISABLED_GC) == 0) {
-    t->flags |= DISABLED_GC;
-    GC_disable_inner();
-  }
+  disable_gc_for_pthread(GC_lookup_by_pthread(thread));
+  /* Note: if not found, then real `pthread_cancel` should return `ESRCH`. */
   UNLOCK();
 #    endif
   return REAL_FUNC(pthread_cancel)(thread);
@@ -2490,21 +2496,10 @@ GC_wrap_pthread_cancel(pthread_t thread)
 GC_API GC_PTHREAD_EXIT_ATTRIBUTE void
 GC_wrap_pthread_exit(void *retval)
 {
-  GC_thread me;
-
   INIT_REAL_SYMS();
   LOCK();
-  me = GC_self_thread_inner();
-  /*
-   * We test `DISABLED_GC` because someone else could call `pthread_cancel()`
-   * at the same time.
-   */
-  if (me != NULL && (me->flags & DISABLED_GC) == 0) {
-    me->flags |= DISABLED_GC;
-    GC_disable_inner();
-  }
+  disable_gc_for_pthread(GC_self_thread_inner());
   UNLOCK();
-
   REAL_FUNC(pthread_exit)(retval);
 }
 #    undef GC_wrap_pthread_exit
