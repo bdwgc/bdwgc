@@ -410,8 +410,11 @@ GC_INNER void GC_start_mark_threads_inner(void)
 
     GC_ASSERT(I_HOLD_LOCK());
     ASSERT_CANCEL_DISABLED();
-    if (available_markers_m1 <= 0 || GC_parallel) return;
-                /* Skip if parallel markers disabled or already started. */
+    if (available_markers_m1 <= 0 || GC_parallel) {
+      /* Skip if parallel markers disabled or already started (or   */
+      /* starting).                                                 */
+      return;
+    }
     GC_wait_for_gc_completion(TRUE);
 
 #   ifdef CAN_HANDLE_FORK
@@ -429,7 +432,7 @@ GC_INNER void GC_start_mark_threads_inner(void)
 #   endif
 
     GC_ASSERT(GC_fl_builder_count == 0);
-    INIT_REAL_SYMS(); /* for pthread_create */
+    INIT_REAL_SYMS(); /* for pthread_sigmask and pthread_create */
     if (0 != pthread_attr_init(&attr)) ABORT("pthread_attr_init failed");
     if (0 != pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED))
         ABORT("pthread_attr_setdetachstate failed");
@@ -476,8 +479,26 @@ GC_INNER void GC_start_mark_threads_inner(void)
     GC_markers_m1 = available_markers_m1;
 
     for (i = 0; i < available_markers_m1; ++i) {
-      if (0 != REAL_FUNC(pthread_create)(GC_mark_threads + i, &attr,
-                              GC_mark_thread, (void *)(word)i)) {
+      int res;
+
+#     ifdef REDIRECT_MALLOC
+        /* Real pthread_create() could call our calloc()            */
+        /* redirecting to GC_generic_malloc_uncollectable(), thus   */
+        /* we should release the allocator lock temporarily.        */
+        /* As a consequence, we need to prevent usage of the        */
+        /* markers till GC_wait_for_markers_init() completion - the */
+        /* easiest way is to disable collection temporarily.        */
+        GC_dont_gc++;
+        UNLOCK();
+#     endif
+      res = REAL_FUNC(pthread_create)(GC_mark_threads + i, &attr,
+                                      GC_mark_thread, (void *)(word)i);
+#     ifdef REDIRECT_MALLOC
+        LOCK();
+        GC_ASSERT(GC_dont_gc != 0);
+        GC_dont_gc--;
+#     endif
+      if (res != 0) {
         WARN("Marker thread creation failed\n", 0);
         /* Don't try to create other marker threads.    */
         GC_markers_m1 = i;
