@@ -1,6 +1,5 @@
 # This workflow uses Zig and its excellent cross-compilation support to test
-# compiling for multiple platforms. No tests are actually run since it would
-# require emulation.
+# compiling for multiple Linux-based platforms; no runtime tests are executed.
 name: zig cross-compile
 
 on: [ push, pull_request ]
@@ -14,51 +13,48 @@ jobs:
       fail-fast: false
       matrix:
         zig_version: [ "0.16.0" ]
-        # Some of the triples are commented out just to speedup this workflow.
         ttriple: [
           aarch64-linux-gnu,
-          #aarch64-linux-musl,
-          aarch64-macos-none,
-          aarch64-windows-gnu,
-          #aarch64_be-linux-gnu,
+          aarch64-linux-musl,
+          aarch64_be-linux-gnu,
           aarch64_be-linux-musl,
           arc-linux-gnu,
           arm-linux-gnueabi,
           arm-linux-gnueabihf,
           arm-linux-musleabi,
-          #arm-linux-musleabihf,
+          arm-linux-musleabihf,
           armeb-linux-gnueabi,
-          #armeb-linux-gnueabihf,
-          #armeb-linux-musleabi,
+          armeb-linux-gnueabihf,
+          armeb-linux-musleabi,
           armeb-linux-musleabihf,
           loongarch64-linux-gnu,
           loongarch64-linux-gnusf,
           loongarch64-linux-musl,
           m68k-linux-gnu,
           m68k-linux-musl,
-          #mips-linux-gnueabi,
-          #mips-linux-gnueabihf,
+          mips-linux-gnueabi,
+          mips-linux-gnueabihf,
           mips-linux-musleabi,
           mips-linux-musleabihf,
           mips64-linux-gnuabi64,
-          #mips64-linux-gnuabin32,
+          mips64-linux-gnuabin32,
           mips64-linux-muslabi64,
           mips64-linux-muslabin32,
-          #mips64el-linux-gnuabi64,
+          mips64el-linux-gnuabi64,
           mips64el-linux-gnuabin32,
           mips64el-linux-muslabi64,
-          #mips64el-linux-muslabin32,
+          mips64el-linux-muslabin32,
           mipsel-linux-gnueabi,
-          #mipsel-linux-gnueabihf,
+          mipsel-linux-gnueabihf,
           mipsel-linux-musleabi,
           mipsel-linux-musleabihf,
-          #powerpc-linux-gnueabi,
+          powerpc-linux-gnueabi,
           powerpc-linux-gnueabihf,
-          #powerpc-linux-musleabi,
+          powerpc-linux-musleabi,
           powerpc-linux-musleabihf,
           powerpc64-linux-gnu,
-          #powerpc64-linux-musl,
-          #powerpc64le-linux-gnu,
+          powerpc64-linux-musl,
+          powerpc64le-linux-gnu,
           powerpc64le-linux-musl,
           riscv32-linux-gnu,
           riscv32-linux-musl,
@@ -69,27 +65,20 @@ jobs:
           sparc-linux-gnu,
           sparc64-linux-gnu,
           thumb-linux-musleabi,
-          #thumb-linux-musleabihf,
-          thumb-windows-gnu,
-          #thumbeb-linux-musleabi,
+          thumb-linux-musleabihf,
+          thumbeb-linux-musleabi,
           thumbeb-linux-musleabihf,
-          wasm32-wasi-musl,
-          #x86-linux-gnu,
+          x86-linux-gnu,
           x86-linux-musl,
-          x86-windows-gnu,
           x86_64-linux-gnu.2.27, # test with a glibc version
           x86_64-linux-gnux32,
-          #x86_64-linux-musl,
+          x86_64-linux-musl,
           x86_64-linux-muslx32,
-          x86_64-macos-none,
-          x86_64-windows-gnu,
         ]
         enable_cplusplus: [ true ]
         enable_threads: [ false, true ]
         linkage: [ static, dynamic ]
         exclude:
-        - enable_threads: true
-          ttriple: wasm32-wasi-musl
         # FIXME: SPARCv8 does not handle f128 in calls
         - linkage: dynamic
           ttriple: sparc-linux-gnu
@@ -100,9 +89,6 @@ jobs:
           ttriple: x86_64-linux-gnux32
         - linkage: dynamic
           ttriple: x86_64-linux-muslx32
-        # FIXME: not stable yet
-        - linkage: dynamic
-          ttriple: wasm32-wasi-musl
         # FIXME: ignoring -fno-PIC option
         - linkage: static
           ttriple: mips64-linux-muslabi64

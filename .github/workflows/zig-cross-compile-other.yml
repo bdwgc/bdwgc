@@ -1,0 +1,48 @@
+# This workflow uses Zig to cross-compile to multiple non-Linux platforms.
+name: zig cross-compile other
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    name: ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        zig_version: [ "0.16.0" ]
+        ttriple: [
+          aarch64-macos-none,
+          aarch64-windows-gnu,
+          thumb-windows-gnu,
+          wasm32-wasi-musl,
+          x86-windows-gnu,
+          x86_64-macos-none,
+          x86_64-windows-gnu,
+        ]
+        enable_cplusplus: [ false, true ]
+        enable_threads: [ false, true ]
+        linkage: [ static, dynamic ]
+        exclude:
+        - enable_threads: true
+          ttriple: wasm32-wasi-musl
+        # FIXME: not stable yet
+        - linkage: dynamic
+          ttriple: wasm32-wasi-musl
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: mlugg/setup-zig@v2
+      with:
+        version: ${{ matrix.zig_version }}
+
+    - name: Build
+      run: >
+        zig build
+        -Dtarget=${{ matrix.ttriple }}
+        -Dlinkage=${{ matrix.linkage }}
+        -Denable_cplusplus=${{ matrix.enable_cplusplus }}
+        -Denable_threads=${{ matrix.enable_threads }}
+        -Denable_werror
