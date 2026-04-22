@@ -2501,11 +2501,7 @@ extern int __data_start[] __attribute__((__weak__));
 #  define MACH_TYPE "HEXAGON"
 #  define CPP_WORDSZ 32
 #  ifdef LINUX
-#    if defined(__GLIBC__)
-#      define SEARCH_FOR_DATA_START
-#    elif !defined(CPPCHECK)
-#      error Unknown Hexagon libc configuration
-#    endif
+#    define SEARCH_FOR_DATA_START
 #  endif
 #endif /* HEXAGON */
 
