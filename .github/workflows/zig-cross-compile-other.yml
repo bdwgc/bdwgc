@@ -13,23 +13,94 @@ jobs:
       matrix:
         zig_version: [ "0.16.0" ]
         ttriple: [
+          aarch64-freebsd-none,
+          aarch64-maccatalyst-none,
           aarch64-macos-none,
+          aarch64-netbsd-none,
+          aarch64-openbsd-none,
           aarch64-windows-gnu,
+          aarch64_be-netbsd-none,
+          arm-freebsd-eabihf,
+          arm-netbsd-eabi,
+          arm-netbsd-eabihf,
+          arm-openbsd-eabi,
+          armeb-netbsd-eabi,
+          armeb-netbsd-eabihf,
+          m68k-netbsd-none,
+          mips-netbsd-eabi,
+          mips-netbsd-eabihf,
+          mips64-openbsd-none,
+          mips64el-openbsd-none,
+          mipsel-netbsd-eabi,
+          mipsel-netbsd-eabihf,
+          powerpc-netbsd-eabi,
+          powerpc-netbsd-eabihf,
+          powerpc-openbsd-eabihf,
+          powerpc64-freebsd-none,
+          powerpc64-openbsd-none,
+          powerpc64le-freebsd-none,
+          riscv64-freebsd-none,
+          riscv64-openbsd-none,
+          sparc-netbsd-none,
+          sparc64-netbsd-none,
+          sparc64-openbsd-none,
           thumb-windows-gnu,
           wasm32-wasi-musl,
+          x86-freebsd-none,
+          x86-netbsd-none,
+          x86-openbsd-none,
           x86-windows-gnu,
+          x86_64-dragonfly,
+          x86_64-freebsd-none,
+          x86_64-haiku,
+          x86_64-maccatalyst-none,
           x86_64-macos-none,
+          x86_64-netbsd-none,
+          x86_64-openbsd-none,
+          x86_64-serenity,
           x86_64-windows-gnu,
         ]
-        enable_cplusplus: [ false, true ]
+        enable_cplusplus: [ true ]
         enable_threads: [ false, true ]
         linkage: [ static, dynamic ]
         exclude:
         - enable_threads: true
           ttriple: wasm32-wasi-musl
+        # FIXME: undefined hidden symbol `__guard_local`
+        - linkage: dynamic
+          ttriple: aarch64-openbsd-none
+        - linkage: dynamic
+          ttriple: arm-openbsd-eabi
+        - linkage: dynamic
+          ttriple: mips64-openbsd-none
+        - linkage: dynamic
+          ttriple: mips64el-openbsd-none
+        - linkage: dynamic
+          ttriple: powerpc-openbsd-eabihf
+        - linkage: dynamic
+          ttriple: powerpc64-openbsd-none
+        - linkage: dynamic
+          ttriple: riscv64-openbsd-none
+        - linkage: dynamic
+          ttriple: sparc64-openbsd-none
+        - linkage: dynamic
+          ttriple: x86-openbsd-none
+        - linkage: dynamic
+          ttriple: x86_64-openbsd-none
+        # FIXME: SPARCv8 does not handle f128 in calls
+        - linkage: dynamic
+          ttriple: sparc-netbsd-none
+        - linkage: dynamic
+          ttriple: sparc64-netbsd-none
         # FIXME: not stable yet
         - linkage: dynamic
           ttriple: wasm32-wasi-musl
+        # FIXME: no available compatible targets
+        - ttriple: m68k-netbsd-none
+        # FIXME: `stdlib.h` file not found
+        - ttriple: x86_64-dragonfly
+        - ttriple: x86_64-haiku
+        - ttriple: x86_64-serenity
 
     steps:
     - uses: actions/checkout@v6
