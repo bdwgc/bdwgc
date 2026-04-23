@@ -1205,8 +1205,8 @@ GC_dyld_name_for_hdr(const struct GC_MACH_HEADER *phdr)
  * `getsectiondata` (introduced in macOS 10.7) is used instead, if exists.
  * Define `USE_GETSECTBYNAME` macro to use the deprecated symbol, if needed.
  */
-#    if !defined(USE_GETSECTBYNAME)       \
-        && (MAC_OS_X_VERSION_MIN_REQUIRED \
+#    if !defined(USE_GETSECTBYNAME) && !defined(TARGET_OS_MACCATALYST) \
+        && (MAC_OS_X_VERSION_MIN_REQUIRED                              \
             < 1070 /* `MAC_OS_X_VERSION_10_7` */)
 #      define USE_GETSECTBYNAME
 #    endif
