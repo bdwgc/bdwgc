@@ -1320,7 +1320,7 @@ STATIC const char *GC_dyld_name_for_hdr(const struct GC_MACH_HEADER *hdr)
 /* getsectbynamefromheader is deprecated (first time in macOS 13.0),    */
 /* getsectiondata (introduced in macOS 10.7) is used instead if exists. */
 /* Define USE_GETSECTBYNAME to use the deprecated symbol, if needed.    */
-#if !defined(USE_GETSECTBYNAME) \
+#if !defined(USE_GETSECTBYNAME) && !defined(TARGET_OS_MACCATALYST) \
     && (MAC_OS_X_VERSION_MIN_REQUIRED < 1070 /*MAC_OS_X_VERSION_10_7*/)
 # define USE_GETSECTBYNAME
 #endif
