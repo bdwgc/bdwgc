@@ -567,7 +567,7 @@ GC_API void * GC_CALL GC_debug_malloc_atomic_ignore_off_page(size_t lb,
         return(0);
     }
     result = GC_store_debug_info_inner(base, (word)lb, "INTERNAL", 0);
-    ADD_CALL_CHAIN(base, GC_RETURN_ADDR);
+    ADD_CALL_CHAIN_SAFE(base, GC_RETURN_ADDR);
     return result;
   }
 
