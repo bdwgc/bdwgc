@@ -3002,7 +3002,7 @@
 # undef USE_MMAP
 #endif
 
-#if defined(LINUX) || defined(FREEBSD) || defined(SOLARIS) || defined(IRIX5) \
+#if defined(LINUX) || defined(FREEBSD) || defined(IRIX5) \
     || ((defined(USE_MMAP) || defined(USE_MUNMAP)) && !defined(USE_WINALLOC))
 # define MMAP_SUPPORTED
 #endif
@@ -3068,6 +3068,11 @@
     && !defined(GWW_VDB) && !defined(MANUAL_VDB) \
     && !defined(GC_DISABLE_INCREMENTAL)
 # define DEFAULT_VDB
+#endif
+
+#if !defined(PROC_VDB) && !defined(NO_VDB_FOR_STATIC_ROOTS)
+  /* Cannot determine whether a static root page is dirty?      */
+# define NO_VDB_FOR_STATIC_ROOTS
 #endif
 
 #if ((defined(UNIX_LIKE) && (defined(DARWIN) || defined(HAIKU) \

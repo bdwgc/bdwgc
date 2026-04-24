@@ -22,7 +22,7 @@
 # include "config.h"
 #endif
 
-#ifndef GC_BUILD
+#if !defined(GC_BUILD) && !defined(NOT_GCBUILD)
 # define GC_BUILD
 #endif
 
@@ -531,6 +531,19 @@ typedef char * ptr_t;   /* A generic pointer to which we can add        */
   GC_EXTERN GC_on_thread_event_proc GC_on_thread_event;
 #endif
 
+#if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
+    && (defined(GC_DLL) || defined(GC_INSIDE_DLL)) \
+    && !defined(MSWINCE) && !defined(THREAD_LOCAL_ALLOC) \
+    && !defined(GC_PTHREADS) && !defined(SMALL_CONFIG) && defined(GC_BUILD)
+  /* Resume all suspended threads, if any.  Called right before     */
+  /* GC_on_abort() to avoid a potential deadlock if there is        */
+  /* a suspended DllMain thread holding the Windows loader lock.    */
+  /* Otherwise, in particular, MessageBoxA() call is unsafe.        */
+  GC_INNER void GC_win32_dll_resume_all_threads(void);
+#else
+#  define GC_win32_dll_resume_all_threads() (void)0
+#endif
+
 /* Abandon ship */
 # if defined(SMALL_CONFIG) || defined(PCR)
 #   define GC_on_abort(msg) (void)0 /* be silent on abort */
@@ -538,7 +551,8 @@ typedef char * ptr_t;   /* A generic pointer to which we can add        */
     GC_API_PRIV GC_abort_func GC_on_abort;
 # endif
 # if defined(CPPCHECK)
-#   define ABORT(msg) { GC_on_abort(msg); abort(); }
+#   define ABORT(msg) { GC_win32_dll_resume_all_threads(); \
+                        GC_on_abort(msg); abort(); }
 # elif defined(PCR)
 #   define ABORT(s) PCR_Base_Panic(s)
 # else
@@ -553,17 +567,20 @@ typedef char * ptr_t;   /* A generic pointer to which we can add        */
 #   endif
 #   if defined(MSWIN32) && (defined(NO_DEBUGGING) || defined(LINT2))
       /* A more user-friendly abort after showing fatal message.        */
-#     define ABORT(msg) (GC_on_abort(msg), _exit(-1))
+#     define ABORT(msg) \
+        (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), _exit(-1))
                 /* Exit on error without running "at-exit" callbacks.   */
 #   elif defined(MSWINCE) && defined(NO_DEBUGGING)
 #     define ABORT(msg) (GC_on_abort(msg), ExitProcess(-1))
 #   elif defined(MSWIN32) || defined(MSWINCE)
-#     define ABORT(msg) { GC_on_abort(msg); DebugBreak(); }
+#     define ABORT(msg) { GC_win32_dll_resume_all_threads(); \
+                          GC_on_abort(msg); DebugBreak(); }
                 /* Note that: on a WinCE box, this could be silently    */
                 /* ignored (i.e., the program is not aborted);          */
                 /* DebugBreak is a statement in some toolchains.        */
 #   else
-#     define ABORT(msg) (GC_on_abort(msg), abort())
+#     define ABORT(msg) \
+        (GC_win32_dll_resume_all_threads(), GC_on_abort(msg), abort())
 #   endif /* !MSWIN32 */
 # endif /* !PCR */
 
@@ -1281,6 +1298,10 @@ struct _GC_arrays {
 # endif
 # define GC_noop_sink GC_arrays._noop_sink
   volatile word _noop_sink;
+# if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+#   define GC_push_root_idx_p1 GC_arrays._push_root_idx_p1
+    volatile size_t _push_root_idx_p1; /* zero means unset */
+# endif
   GC_mark_proc _mark_procs[MAX_MARK_PROCS];
         /* Table of user-defined mark procedures.  There is     */
         /* a small number of these, which can be referenced     */
@@ -1706,6 +1727,16 @@ GC_INNER void GC_push_all_stack(ptr_t b, ptr_t t);
                                     /* As GC_push_all but consider      */
                                     /* interior pointers as valid.      */
 
+#if !defined(NO_VDB_FOR_STATIC_ROOTS) || defined(USE_PROC_FOR_LIBRARIES)
+  /* Same as GC_push_conditional (does either of GC_push_all or         */
+  /* GC_push_selected depending on the third argument) but the caller   */
+  /* guarantees the region belongs to the registered static roots.      */
+  GC_INNER void GC_push_conditional_static(char *b, char *t, GC_bool all);
+#else
+# define GC_push_conditional_static(b, t, all) \
+                ((void)(all), GC_push_all(b, t))
+#endif
+
   /* In the threads case, we push part of the current thread stack      */
   /* with GC_push_all_eager when we push the registers.  This gets the  */
   /* callee-save registers that may disappear.  The remainder of the    */
@@ -1774,8 +1805,11 @@ GC_INNER void GC_set_fl_marks(ptr_t p);
                                     /* set.  Abort if not.              */
 #endif
 void GC_add_roots_inner(ptr_t b, ptr_t e, GC_bool tmp);
-#if defined(USE_PROC_FOR_LIBRARIES) && defined(LINUX)
-  GC_INNER void GC_remove_roots_subregion(ptr_t b, ptr_t e);
+#ifdef USE_PROC_FOR_LIBRARIES
+  GC_INNER void GC_remove_root_at_pos(int i);
+# ifdef LINUX
+    GC_INNER void GC_remove_roots_subregion(ptr_t b, ptr_t e);
+# endif
 #endif
 GC_INNER void GC_exclude_static_roots_inner(void *start, void *finish);
 #if defined(DYNAMIC_LOADING) || defined(MSWIN32) || defined(MSWINCE) \

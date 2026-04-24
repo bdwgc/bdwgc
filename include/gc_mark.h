@@ -57,7 +57,7 @@
 /* case correctly somehow.                                              */
 #define GC_PROC_BYTES 100
 
-#ifdef GC_BUILD
+#if defined(GC_BUILD) || defined(NOT_GCBUILD)
   struct GC_ms_entry;
 #else
   struct GC_ms_entry { void *opaque; };

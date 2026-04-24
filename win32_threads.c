@@ -1316,11 +1316,25 @@ STATIC void GC_suspend(GC_thread t)
         return;
       }
 
-#     ifndef RETRY_GET_THREAD_CONTEXT
-        if (SuspendThread(t -> handle) == (DWORD)-1)
+      if (SuspendThread(t -> handle) == (DWORD)-1) {
+#       ifndef GC_NO_THREADS_DISCOVERY
+          if (GC_win32_dll_threads
+              && (GetLastError() == ERROR_ACCESS_DENIED
+                  || GetLastError() == ERROR_NO_MORE_ITEMS)) {
+            GC_release_dirty_lock();
+            /* The thread has been just terminated.  Same as above,     */
+            /* a race with GC_DllMain() in setting the flags is fine.   */
+            GC_has_pending_delete_threads = TRUE;
+            t -> pending_delete_thread = TRUE;
+            return;
+          }
+#       endif
+#       ifndef RETRY_GET_THREAD_CONTEXT
           ABORT("SuspendThread failed");
-#     else
-        if (SuspendThread(t->handle) != (DWORD)-1) {
+#       endif
+      } /* else */
+#     ifdef RETRY_GET_THREAD_CONTEXT
+        else {
           CONTEXT context;
 
           context.ContextFlags = GET_THREAD_CONTEXT_FLAGS;
@@ -1443,6 +1457,32 @@ GC_INNER void GC_stop_world(void)
       GC_release_mark_lock();
 # endif
 }
+
+#if !defined(GC_NO_THREADS_DISCOVERY) && !defined(SMALL_CONFIG)
+  GC_ATTR_NOINLINE
+  GC_INNER void GC_win32_dll_resume_all_threads(void)
+  {
+    if (GC_win32_dll_threads) {
+      /* Note: we do not check GC_please_stop here because in an abort  */
+      /* situation (fatal error), the safest approach is to always      */
+      /* iterate through the table resuming all suspended threads,      */
+      /* if any.  The overhead is negligible since we are about to      */
+      /* abort anyway.                                                  */
+      int i;
+      LONG my_max = GC_get_max_thread_index();
+
+      for (i = 0; i <= my_max; i++) {
+        GC_thread p = (GC_thread)(dll_thread_table + i);
+
+        if (EXPECT(p -> suspended, FALSE)) {
+          (void)ResumeThread(p -> handle);
+          /* Ignore errors as we are aborting anyway. */
+          p -> suspended = FALSE;
+        }
+      }
+    }
+  }
+#endif
 
 GC_INNER void GC_start_world(void)
 {

@@ -591,10 +591,16 @@ handle_ex:
 #   endif
       /* We have bad roots on the stack.  Discard mark stack.   */
       /* Rescan from marked objects.  Redetermine roots.        */
-#     ifdef REGISTER_LIBRARIES_EARLY
-        START_WORLD();
-        GC_cond_register_dynamic_libraries();
-        STOP_WORLD();
+#     ifdef USE_PROC_FOR_LIBRARIES
+        {
+          size_t idx_p1 = GC_push_root_idx_p1;
+
+          if (0 == idx_p1)
+            ABORT("SIGSEGV occurred outside"
+                  " GC_push_conditional_with_exclusions");
+          GC_remove_root_at_pos((int)idx_p1 - 1);
+          GC_push_root_idx_p1 = 0;
+        }
 #     endif
       GC_invalidate_mark_state();
       scan_ptr = 0;
@@ -1416,6 +1422,7 @@ GC_API void GC_CALL GC_push_all(char *bottom, char *top)
       }
     }
   }
+
 #else
   GC_API void GC_CALL GC_push_conditional(char *bottom, char *top,
                                           int all GC_ATTR_UNUSED)
@@ -1423,6 +1430,27 @@ GC_API void GC_CALL GC_push_all(char *bottom, char *top)
     GC_push_all(bottom, top);
   }
 #endif /* GC_DISABLE_INCREMENTAL */
+
+#if !defined(NO_VDB_FOR_STATIC_ROOTS) || defined(USE_PROC_FOR_LIBRARIES)
+    GC_INNER void GC_push_conditional_static(char *bottom, char *top,
+                                             GC_bool all GC_ATTR_UNUSED)
+    {
+#     if defined(USE_PROC_FOR_LIBRARIES) && defined(WRAP_MARK_SOME)
+        if (EXPECT((word)bottom < (word)top, TRUE)) {
+          GC_noop1(*(volatile unsigned char *)bottom);
+          GC_noop1(*(volatile unsigned char *)(top - 1));
+        }
+#     endif
+#     ifdef PROC_VDB
+        /* Just redirect to the generic routine because PROC_VDB        */
+        /* implementation gets the dirty bits map for the whole         */
+        /* process memory.                                              */
+        GC_push_conditional(bottom, top, all);
+#     else
+        GC_push_all(bottom, top);
+#     endif
+    }
+#endif /* !NO_VDB_FOR_STATIC_ROOTS */
 
 #if defined(MSWIN32) || defined(MSWINCE)
   void __cdecl GC_push_one(word p)
