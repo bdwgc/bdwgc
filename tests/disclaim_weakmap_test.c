@@ -26,6 +26,7 @@
 #include "gc_disclaim.h" /* includes gc.h */
 
 #if defined(GC_PTHREADS) || defined(LINT2)
+# define NOT_GCBUILD
 # include "private/gc_priv.h"
 
   GC_ATTR_NO_SANITIZE_THREAD
