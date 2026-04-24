@@ -29,6 +29,7 @@
 #include "gc_disclaim.h"
 
 #if defined(GC_PTHREADS) || defined(LINT2)
+# define NOT_GCBUILD
 # include "private/gc_priv.h"
 
   static int GC_rand(void) /* nearly identical to GC_random */
