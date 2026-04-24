@@ -619,7 +619,7 @@ STATIC void * GC_debug_generic_malloc(size_t lb, int knd, GC_EXTRA_PARAMS)
         GC_start_debugging_inner();
     }
     result = GC_store_debug_info_inner(base, (word)lb, "INTERNAL", 0);
-    ADD_CALL_CHAIN(base, GC_RETURN_ADDR);
+    ADD_CALL_CHAIN_SAFE(base, GC_RETURN_ADDR);
     return result;
   }
 
