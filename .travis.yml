@@ -324,6 +324,7 @@ jobs:
     - CFLAGS_EXTRA="-m32"
     - NO_CLONE_LIBATOMIC_OPS=true
   - compiler: gcc
+    dist: focal
     env:
     - CONF_OPTIONS="--enable-redirect-malloc --enable-gc-debug --enable-cplusplus --enable-gc-assertions"
   - compiler: clang
