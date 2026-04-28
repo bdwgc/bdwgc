@@ -1,3 +1,146 @@
+2026-04-24  Ivan Maidanski <ivmai@mail.ru>
+
+	* dbg_mlc.c [DBG_HDRS_ALL] (GC_debug_generic_malloc_inner): Call
+	`ADD_CALL_CHAIN_SAFE()` instead of `ADD_CALL_CHAIN()`.
+
+2026-04-18  Ivan Maidanski <ivmai@mail.ru>
+
+	* dyn_load.c [DYNAMIC_LOADING && !MSWIN32 && !MSWINCE && !CYGWIN32
+	&& (SCO_ELF || DGUX || HURD || __ELF__ && (LINUX
+	|| FREEBSD || NETBSD || OPENBSD)) && USE_PROC_FOR_LIBRARIES && THREADS]
+	(GC_register_map_entries): Update comment.
+	* include/private/gc_priv.h [USE_PROC_FOR_LIBRARIES && WRAP_MARK_SOME]
+	(GC_arrays._push_root_idx_p1): New `volatile` field.
+	* include/private/gc_priv.h [NO_VDB_FOR_STATIC_ROOTS
+	&& USE_PROC_FOR_LIBRARIES] (GC_push_conditional_static): Declare as
+	`GC_INNER` function (instead of a macro).
+	* include/private/gc_priv.h [USE_PROC_FOR_LIBRARIES]
+	(GC_remove_root_at_pos): Declare function.
+	* mark.c [REGISTER_LIBRARIES_EARLY] (GC_mark_some): Do not call
+	`GC_cond_register_dynamic_libraries()` (and do not call
+	`START_WORLD()`, `STOP_WORLD()`).
+	* mark.c [USE_PROC_FOR_LIBRARIES] (GC_mark_some): In fault handler,
+	if `GC_push_root_idx_p1` is zero then abort, else
+	call `GC_remove_root_at_pos()` and clear `GC_push_root_idx_p1`.
+	* mark.c [GC_DISABLE_INCREMENTAL] (GC_push_conditional): Move
+	definition upper (to be before `GC_push_conditional_static()`).
+	* mark.c [NO_VDB_FOR_STATIC_ROOTS
+	&& USE_PROC_FOR_LIBRARIES] (GC_push_conditional_static): Implement.
+	* mark.c [USE_PROC_FOR_LIBRARIES && WRAP_MARK_SOME]
+	(GC_push_conditional_static): Dereference `bottom` and `top - 1` as
+	`volatile char` pointers.
+	* mark_rts.c [USE_PROC_FOR_LIBRARIES] (GC_remove_root_at_pos): Define
+	as `GC_INNER` instead of `STATIC`.
+	* mark_rts.c [USE_PROC_FOR_LIBRARIES && WRAP_MARK_SOME]
+	(GC_remove_root_at_pos): Set `GC_push_root_idx_p1` before
+	`GC_push_conditional_with_exclusions()` call, and clear the variable
+	after the call.
+
+2026-04-10  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_priv.h (GC_win32_dll_resume_all_threads): Define
+	(or declare as `GC_INNER` function).
+	* include/private/gc_priv.h [!PCR && !SMALL_CONFIG] (ABORT): Call
+	`GC_win32_dll_resume_all_threads()`.
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY && !SMALL_CONFIG]
+	(GC_win32_dll_resume_all_threads): Implement `GC_INNER` function.
+
+2026-04-09  Ivan Maidanski <ivmai@mail.ru>
+
+	* win32_threads.c [!MSWINCE] (GC_suspend): Code refactoring to have
+	`SuspendThread()` call in a single place.
+	* win32_threads.c [!MSWINCE && !GC_NO_THREADS_DISCOVERY] (GC_suspend):
+	If `SuspendThread()` failed with `ERROR_ACCESS_DENIED` or
+	`ERROR_NO_MORE_ITEMS`, then assume the thread has been just terminated
+	(set `t->pending_delete_thread` and return).
+
+2026-04-06  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc_allocator.h [__BORLANDC__] (gc_allocator::destroy,
+	gc_allocator_ignore_off_page::destroy): Cast `__p` argument to `void`.
+
+2026-04-02  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gcconfig.h (MMAP_SUPPORTED): Do not check `SOLARIS`
+	macro (i.e. `MMAP_SUPPORTED` is defined for Solaris only if
+	`USE_MMAP`).
+
+2026-03-31  fcrwr <262846459+fcrwr@users.noreply.github.com>
+
+	* malloc.c [REDIRECT_MALLOC] (malloc, calloc): Add `GC_API`.
+	* malloc.c [REDIRECT_MALLOC && !strdup] (strdup): Likewise.
+	* malloc.c [REDIRECT_MALLOC && !strndup] (strndup): Likewise.
+	* malloc.c [REDIRECT_FREE] (free): Likewise.
+	* mallocx.c [REDIRECT_REALLOC] (realloc): Likewise.
+
+2026-03-24  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/de.c (do_command): Reduce scope of `out` local variable
+	definition; change error message for the case of `fopen()` failure;
+	call `fclose()` for the case of `CORD_put()` failure.
+
+2023-08-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gcconfig.h [!GC_H && HAVE_CONFIG_H]: Include
+	config.h.
+	* include/private/gcconfig.h [!GC_H]: Include gc.h.
+
+2022-10-19  Ivan Maidanski <ivmai@mail.ru>
+
+	* malloc.c [REDIRECT_MALLOC && GC_LINUX_THREADS] (GC_init_lib_bounds):
+	Do not call WARN to report missing libpthread.so if not defined
+	__GLIBC__ or glibc version is 2.34 or above; add comment and TODO
+	item.
+
+2021-08-25  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/private/gc_priv.h (GC_push_conditional_static): Declare (as
+	a macro or function).
+	* include/private/gcconfig.h [!PROC_VDB] (NO_VDB_FOR_STATIC_ROOTS): New
+	macro; add comment.
+	* mark.c [!GC_DISABLE_INCREMENTAL && !NO_VDB_FOR_STATIC_ROOTS]
+	(GC_push_conditional_static): New function.
+	* include/private/gc_priv.h (GC_PUSH_CONDITIONAL): Use
+	GC_push_conditional_static(); do not test GC_DISABLE_INCREMENTAL
+	directly.
+	* mark_rts.c (GC_push_conditional_with_exclusions): Remove
+	GC_ATTR_UNUSED for "all" argument.
+
+2019-06-25  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc_mark.h [NOT_GCBUILD] (GC_ms_entry): Declare (instead of
+	an opaque struct definition).
+	* include/private/gc_priv.h [!GC_BUILD && NOT_GCBUILD] (GC_BUILD): Do
+	not define.
+	* extra/setjmp_t.c (NOT_GCBUILD): Likewise.
+	* tests/test.c (NOT_GCBUILD): Likewise.
+
+2012-06-02  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc_mark.h (GC_push_all, GC_push_conditional): Expose
+	function as a part of public API (use GC_API and GC_CALL); replace
+	internal ptr_t and GC_bool type to char* and int, respectively; add
+	comment.
+	* mark.c (GC_push_all, GC_push_conditional): Likewise.
+	* include/private/gc_priv.h (GC_push_all, GC_push_conditional): Remove
+	GC_API_PRIV function declaration.
+	* include/private/gc_priv.h (GC_PUSH_CONDITIONAL): New macro used
+	internally instead of GC_push_conditional (defined depending on
+	GC_DISABLE_INCREMENTAL).
+	* include/private/gc_priv.h (GC_PUSH_CONDITIONAL, GC_push_all_stack):
+	Update comment.
+	* mark.c (GC_push_conditional): Define for GC_DISABLE_INCREMENTAL case
+	(redirect to GC_push_all).
+	* mark_rts.c (GC_push_conditional_with_exclusions): Use
+	GC_PUSH_CONDITIONAL() instead of GC_push_conditional().
+	* mark_rts.c (GC_push_roots): Reformat the comment.
+
+2012-03-25  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/gc_mark.h (GC_ms_entry): Define structure as opaque unless
+	GC_BUILD (otherwise remains as declaration which is defined in
+	private/gc_pmark.h).
+
 2026-03-02  Ivan Maidanski <ivmai@mail.ru>
 
 	* dbg_mlc.c (ADD_DEBUG_BYTES, ADD_DEBUG_UNCOLLECTABLE_BYTES): New
