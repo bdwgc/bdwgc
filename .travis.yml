@@ -549,7 +549,7 @@ jobs:
 before_install:
 - if [[ "$CPPCHECK_ENABLE" != "" ]]; then
     CPPCHECK_VER=2.4.1;
-    git clone --depth=1 https://github.com/danmar/cppcheck.git
+    git clone --depth=1 https://github.com/cppcheck-opensource/cppcheck.git
             ~/cppcheck -b $CPPCHECK_VER;
     make --directory ~/cppcheck -j8 CXXFLAGS="-O3 -march=native -D NDEBUG";
   fi
