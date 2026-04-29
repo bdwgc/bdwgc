@@ -4,6 +4,7 @@
 # are:
 # - `cpu=AMD64` to target x64;
 # - `cpu=i386` to target x86;
+# - `cpu=ARM64` to target arm64;
 # - `enable_static=1` to build it as a static library;
 # - `nodebug=1` to produce the release variant of the library;
 # - `disable_threads=1` to build the library without multi-threading support.
@@ -19,6 +20,8 @@ CPU = $(PROCESSOR_ARCHITECTURE)
 CPU = i386
 !ELSEIF "$(CPU)" == "X64" || "$(CPU)" == "x64" || "$(CPU)" == "amd64"
 CPU = AMD64
+!ELSEIF "$(CPU)" == "AARCH64" || "$(CPU)" == "aarch64" || "$(CPU)" == "arm64"
+CPU = ARM64
 !ENDIF
 
 !IF !DEFINED(NMAKE_WINVER)
@@ -30,6 +33,8 @@ cflags = $(cflags) -c -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -GS -D_WINNT -W4
 cflags = $(cflags) -D_X86_=1  -DWIN32 -D_WIN32
 !ELSEIF "$(CPU)" == "AMD64"
 cflags = $(cflags) -D_AMD64_=1 -DWIN64 -D_WIN64  -DWIN32 -D_WIN32
+!ELSEIF "$(CPU)" == "ARM64"
+cflags = $(cflags) -D_ARM64_=1 -DWIN64 -D_WIN64  -DWIN32 -D_WIN32
 !ENDIF
 cflags = $(cflags) -D_WIN32_WINNT=$(NMAKE_WINVER) -DWINVER=$(NMAKE_WINVER)
 
@@ -49,6 +54,8 @@ ldebug = /DEBUG /DEBUGTYPE:cv
 CVTRES_CPU=X86
 !ELSEIF "$(CPU)" == "AMD64"
 CVTRES_CPU=X64
+!ELSE
+CVTRES_CPU=$(CPU)
 !ENDIF
 
 !IFNDEF NODEBUG
