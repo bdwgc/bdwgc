@@ -45,7 +45,7 @@ jobs:
     - name: Download and make cppcheck
       if: steps.cache-cppcheck.outputs.cache-hit != 'true'
       run: |
-        git clone --depth=1 https://github.com/danmar/cppcheck.git ~/cppcheck -b ${{ steps.version.outputs.version }}
+        git clone --depth=1 https://github.com/cppcheck-opensource/cppcheck.git ~/cppcheck -b ${{ steps.version.outputs.version }}
         make --directory ~/cppcheck -j8 CXXFLAGS="-O3 -march=native -D NDEBUG" FILESDIR=~/cppcheck-install PREFIX=~/cppcheck-install install
 
     - name: Checkout libatomic_ops repository
