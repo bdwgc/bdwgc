@@ -1038,9 +1038,27 @@ GC_set_and_save_fault_handler(GC_fault_handler_t h)
 #      endif
 #    endif /* !IRIX5 || !THREADS */
 #  else
-  old_segv_hand = signal(SIGSEGV, h);
+  /*
+   * Under Windows when compiling with zig/clang, 'signal'
+   * indirectly calls 'RtlAllocateHeap' which uses mutual
+   * exclusion when accessing the heap. If some other thread
+   * was in the middle of calling 'RtlAllocateHeap' when it
+   * was suspended (stop the world), this ends up in a
+   * deadlock. Using 'SetUnhandledExceptionFilter' instead of
+   * 'signal' solves the deadlock issue, but this function is
+   * extremely slow when compiled with zig/clang. So do not
+   * set fault handler in that case when threads have already
+   * been created.
+   */
+#    if defined(GC_WIN32_THREADS) && defined(__clang__)
+  if (!GC_need_to_lock) {
+#    endif
+    old_segv_hand = signal(SIGSEGV, h);
 #    ifdef HAVE_SIGBUS
-  old_bus_hand = signal(SIGBUS, h);
+    old_bus_hand = signal(SIGBUS, h);
+#    endif
+#    if defined(GC_WIN32_THREADS) && defined(__clang__)
+  }
 #    endif
 #  endif /* !USE_SEGV_SIGACT */
 #  if defined(CPPCHECK) && defined(ADDRESS_SANITIZER)
@@ -1081,9 +1099,15 @@ GC_reset_fault_handler(void)
   (void)sigaction(SIGBUS, &old_bus_act, NULL);
 #    endif
 #  else
-  (void)signal(SIGSEGV, old_segv_hand);
+#    if defined(GC_WIN32_THREADS) && defined(__clang__)
+  if (!GC_need_to_lock) {
+#    endif
+    (void)signal(SIGSEGV, old_segv_hand);
 #    ifdef HAVE_SIGBUS
-  (void)signal(SIGBUS, old_bus_hand);
+    (void)signal(SIGBUS, old_bus_hand);
+#    endif
+#    if defined(GC_WIN32_THREADS) && defined(__clang__)
+  }
 #    endif
 #  endif
 }
