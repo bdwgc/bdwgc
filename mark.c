@@ -619,7 +619,7 @@ GC_mark_some(ptr_t cold_gc_frame)
 #  endif
   }
 
-#  if defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS)
+#  if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY)
   /*
    * With `DllMain`-based thread tracking, a thread may have started
    * while we were marking.  This is logically equivalent to the
@@ -646,7 +646,7 @@ handle_ex:
       warned_gc_no = GC_gc_no;
     }
   }
-#  if defined(GC_WIN32_THREADS) && !defined(GC_PTHREADS)
+#  if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY)
 handle_thr_start:
 #  endif
   /*

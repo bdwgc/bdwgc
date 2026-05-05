@@ -4294,7 +4294,7 @@ GC_INNER void GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo,
 #  if defined(MPROTECT_VDB) && !defined(CYGWIN)
 GC_INNER void GC_set_write_fault_handler(void);
 #  endif
-#  if defined(WRAP_MARK_SOME) && !defined(GC_PTHREADS)
+#  if defined(WRAP_MARK_SOME) && !defined(GC_NO_THREADS_DISCOVERY)
 /*
  * Did we invalidate mark phase with an unexpected thread start?
  * Return `TRUE` if a thread was attached since we last asked or since

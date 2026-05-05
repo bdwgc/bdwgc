@@ -156,17 +156,16 @@ GC_use_threads_discovery(void)
 #  endif
 }
 
-#  if defined(WRAP_MARK_SOME) && !defined(GC_PTHREADS)
+#  if defined(WRAP_MARK_SOME) && !defined(GC_NO_THREADS_DISCOVERY)
 GC_INNER GC_bool
 GC_started_thread_while_stopped(void)
 {
-#    ifndef GC_NO_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
-#      ifdef AO_HAVE_compare_and_swap_release
+#    ifdef AO_HAVE_compare_and_swap_release
     if (AO_compare_and_swap_release(&GC_attached_thread, TRUE,
                                     FALSE /* stored */))
       return TRUE;
-#      else
+#    else
     /* Prior heap reads need to complete earlier. */
     AO_nop_full();
 
@@ -174,12 +173,11 @@ GC_started_thread_while_stopped(void)
       AO_store(&GC_attached_thread, FALSE);
       return TRUE;
     }
-#      endif
-  }
 #    endif
+  }
   return FALSE;
 }
-#  endif /* WRAP_MARK_SOME */
+#  endif
 
 #  ifndef GC_NO_THREADS_DISCOVERY
 /*
