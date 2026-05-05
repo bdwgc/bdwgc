@@ -420,8 +420,8 @@ GC_get_on_mark_stack_empty(void)
 
 #ifdef WRAP_MARK_SOME
 /*
- * For Win32, this is called after we establish a structured exception
- * (or signal) handler, in case Windows unmaps one of our root segments.
+ * This is called after we establish a structured exception or signal
+ * handler, in case of a root segment is unmapped by the OS asynchronously.
  * Note that this code should never generate an incremental GC write fault.
  */
 STATIC GC_bool
@@ -573,16 +573,20 @@ GC_mark_some(ptr_t cold_gc_frame)
     ret_val = GC_mark_some_inner(cold_gc_frame);
   } else {
     /*
-     * Windows appears to asynchronously create and remove writable
-     * memory mappings, for reasons we have not yet understood.
-     * Since we look for writable regions to determine the root set, we
-     * may try to mark from an address range that disappeared since we
-     * started the collection.  Thus we have to recover from faults here.
-     * This code seems to be necessary for WinCE (at least in the case
+     * Windows appears to asynchronously create and remove writable memory
+     * mappings, in particular in case of `DllMain`-based thread tracking.
+     * Since we look for writable regions to determine the root set, we may
+     * try to mark from an address range that disappeared since we started
+     * the collection.  Thus we have to recover from faults here.
+     * This code also seems to be necessary for WinCE (at least in the case
      * we would decide to add `MEM_PRIVATE` sections to data roots in
-     * `GC_register_dynamic_libraries`).  It is conceivable that this is
-     * the same issue as with terminating threads that we see with Linux
-     * and `USE_PROC_FOR_LIBRARIES`.
+     * `GC_register_dynamic_libraries`).
+     *
+     * If `USE_PROC_FOR_LIBRARIES` is defined, then we are handling the case
+     * in which `/proc` is used for root finding, and we have threads.
+     * We may find a stack for a thread that is in the process of exiting,
+     * and disappears while we are marking it.  This seems extremely
+     * difficult to avoid otherwise.
      */
 #  ifndef NO_SEH_AVAILABLE
     __try {
@@ -593,13 +597,6 @@ GC_mark_some(ptr_t cold_gc_frame)
       goto handle_ex;
     }
 #  else
-    /*
-     * If `USE_PROC_FOR_LIBRARIES`, then we are handling the case in
-     * which `/proc` is used for root finding, and we have threads.
-     * We may find a stack for a thread that is in the process of
-     * exiting, and disappears while we are marking it.
-     * This seems extremely difficult to avoid otherwise.
-     */
     GC_setup_temporary_fault_handler();
     if (SETJMP(GC_jmp_buf) != 0)
       goto handle_ex;
