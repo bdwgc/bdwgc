@@ -593,17 +593,6 @@ GC_mark_some(ptr_t cold_gc_frame)
       goto handle_ex;
     }
 #  else
-#    if defined(USE_PROC_FOR_LIBRARIES) && !defined(DEFAULT_VDB)
-    if (GC_auto_incremental) {
-      static GC_bool is_warned = FALSE;
-
-      if (!is_warned) {
-        is_warned = TRUE;
-        WARN("Incremental GC incompatible with /proc roots\n", 0);
-      }
-      /* Unclear if this could still work... */
-    }
-#    endif
     /*
      * If `USE_PROC_FOR_LIBRARIES`, then we are handling the case in
      * which `/proc` is used for root finding, and we have threads.
