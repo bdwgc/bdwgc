@@ -1884,6 +1884,13 @@ struct _GC_arrays {
   unsigned char _pointer_shift;
 #endif
 
+#if defined(WRAP_MARK_SOME) && defined(USE_WINDOWS_VEH)
+#  define GC_veh_handle GC_arrays._veh_handle
+#  define GC_veh_fault_handler_active GC_arrays._veh_fault_handler_active
+  PVOID _veh_handle;
+  GC_bool _veh_fault_handler_active;
+#endif
+
 #ifdef THREADS
 #  ifdef USE_SPIN_LOCK
 #    define GC_allocate_lock GC_arrays._allocate_lock
@@ -4685,25 +4692,38 @@ void *GC_find_limit(void *p, int up);
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(UNIX_LIKE) && !defined(NO_DEBUGGING))        \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
-    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
+    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
+        && !defined(USE_WINDOWS_VEH))
 typedef void (*GC_fault_handler_t)(int);
 GC_INNER void GC_set_and_save_fault_handler(GC_fault_handler_t);
 #endif
 
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
-    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
+    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
+        && !defined(USE_WINDOWS_VEH))
 GC_EXTERN JMP_BUF GC_jmp_buf;
 
 /*
- * Set up a handler for address faults which will `longjmp`
- * to `GC_jmp_buf`.
+ * Set up a handler for a potential memory fault which will `longjmp`
+ * using `GC_jmp_buf`.
  */
 GC_INNER void GC_setup_temporary_fault_handler(void);
 
 /* Undo the effect of `GC_setup_temporary_fault_handler`. */
 GC_INNER void GC_reset_fault_handler(void);
-#endif /* NEED_FIND_LIMIT || USE_PROC_FOR_LIBRARIES || WRAP_MARK_SOME */
+
+#elif defined(WRAP_MARK_SOME) && defined(USE_WINDOWS_VEH)
+GC_EXTERN JMP_BUF GC_jmp_buf;
+
+/* See also `initialize_temporary_fault_handler()`. */
+#  define GC_setup_temporary_fault_handler()   \
+    do {                                       \
+      GC_ASSERT(!GC_veh_fault_handler_active); \
+      GC_veh_fault_handler_active = TRUE;      \
+    } while (0)
+#  define GC_reset_fault_handler() (GC_veh_fault_handler_active = FALSE)
+#endif
 
 /* Some convenience macros for cancellation support. */
 #ifdef CANCEL_SAFE

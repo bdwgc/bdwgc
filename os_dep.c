@@ -986,8 +986,8 @@ GC_get_stack_base(struct GC_stack_base *sb)
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(UNIX_LIKE) && !defined(NO_DEBUGGING))        \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
-    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
-
+    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
+        && !defined(USE_WINDOWS_VEH))
 #  include <signal.h>
 
 #  ifdef USE_SEGV_SIGACT
@@ -1047,13 +1047,18 @@ GC_set_and_save_fault_handler(GC_fault_handler_t h)
   GC_noop1((word)(GC_funcptr_uint)(&__asan_default_options));
 #  endif
 }
-#endif /* NEED_FIND_LIMIT || UNIX_LIKE || WRAP_MARK_SOME */
+#endif
 
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
     || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
 GC_INNER JMP_BUF GC_jmp_buf;
+#endif
 
+#if defined(NEED_FIND_LIMIT)                                 \
+    || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
+    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
+        && !defined(USE_WINDOWS_VEH))
 STATIC void
 GC_fault_handler(int sig)
 {
@@ -1087,7 +1092,7 @@ GC_reset_fault_handler(void)
 #    endif
 #  endif
 }
-#endif /* NEED_FIND_LIMIT || USE_PROC_FOR_LIBRARIES || WRAP_MARK_SOME */
+#endif
 
 #if defined(NEED_FIND_LIMIT) \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS))

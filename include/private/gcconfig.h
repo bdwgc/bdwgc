@@ -3312,7 +3312,7 @@ extern ptr_t GC_data_start;
 #if (defined(MSWIN32) || defined(MSWINCE)       \
      || (defined(USE_PROC_FOR_LIBRARIES)        \
          && !defined(SINGLE_THREADED_PROCESS))) \
-    && !defined(NO_CRT) && !defined(NO_WRAP_MARK_SOME)
+    && !defined(NO_WRAP_MARK_SOME)
 /*
  * Under rare conditions, we may end up marking from nonexistent memory.
  * Hence we need to be prepared to recover by running `GC_mark_some` with
@@ -3323,8 +3323,14 @@ extern ptr_t GC_data_start;
 #endif
 
 #if !defined(MSWIN32) && !defined(MSWINCE) || defined(__GNUC__) \
-    || defined(NO_CRT)
+    || defined(NO_CRT) || defined(USE_WINDOWS_VEH)
 #  define NO_SEH_AVAILABLE
+#endif
+
+#if defined(ANY_MSWIN) && defined(NO_SEH_AVAILABLE) \
+    && !defined(USE_WINDOWS_VEH) && !defined(DONT_USE_WINDOWS_VEH)
+/* Use Vectored Exception Handler (VEH) to catch faults in `GC_mark_some`. */
+#  define USE_WINDOWS_VEH
 #endif
 
 #ifdef GC_WIN32_THREADS

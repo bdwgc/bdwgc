@@ -860,6 +860,32 @@ maybe_install_looping_handler(void)
 #  define maybe_install_looping_handler()
 #endif
 
+#if defined(WRAP_MARK_SOME) && defined(USE_WINDOWS_VEH)
+static LONG CALLBACK
+veh_fault_handler(PEXCEPTION_POINTERS pExcInfo)
+{
+  if (GC_veh_fault_handler_active
+      && pExcInfo->ExceptionRecord->ExceptionCode
+             == EXCEPTION_ACCESS_VIOLATION) {
+    LONGJMP(GC_jmp_buf, 1);
+    /* Unreachable. */
+  }
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void
+initialize_temporary_fault_handler(void)
+{
+  /* Add it as the first handler to ensure we catch exceptions early. */
+  GC_veh_handle
+      = AddVectoredExceptionHandler(1 /* first */, veh_fault_handler);
+  if (NULL == GC_veh_handle)
+    ABORT("AddVectoredExceptionHandler failed");
+}
+#else
+#  define initialize_temporary_fault_handler() (void)0
+#endif
+
 #define GC_DEFAULT_STDERR_FD 2
 #ifdef KOS
 #  define GC_DEFAULT_STDOUT_FD GC_DEFAULT_STDERR_FD
@@ -1461,6 +1487,7 @@ GC_init(void)
 
   GC_bl_init();
   GC_mark_init();
+  initialize_temporary_fault_handler();
   {
     const char *str = GETENV("GC_INITIAL_HEAP_SIZE");
 
@@ -1653,7 +1680,12 @@ GC_deinit(void)
   if (!GC_is_initialized)
     return;
 
-  BZERO(&GC_arrays, sizeof(GC_arrays)); /*< clears GC_is_initialized */
+#  if defined(WRAP_MARK_SOME) && defined(USE_WINDOWS_VEH)
+  (void)RemoveVectoredExceptionHandler(GC_veh_handle);
+#  endif
+  /* Clear `GC_is_initialized`, `GC_veh_handle`, etc. */
+  BZERO(&GC_arrays, sizeof(GC_arrays));
+
   GC_gc_no = 0;
   GC_dont_gc = FALSE;
   GC_non_gc_bytes = 0;
