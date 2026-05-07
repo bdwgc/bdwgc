@@ -315,7 +315,7 @@ Undisguise(GC_uintptr_t v)
 
 #if ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
     && !defined(NO_WINMAIN_ENTRY)
-int APIENTRY
+int WINAPI
 WinMain(HINSTANCE /* `instance` */, HINSTANCE /* `prev` */, LPSTR cmd,
         int /* `cmdShow` */)
 {

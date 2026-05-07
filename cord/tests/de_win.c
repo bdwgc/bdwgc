@@ -61,7 +61,7 @@ de_error(const char *s)
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam,
                                 LPARAM lParam);
 
-int APIENTRY
+int WINAPI
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
         int nCmdShow)
 {
