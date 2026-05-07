@@ -50,9 +50,22 @@ jobs:
           c_compiler: gcc
           shared_libs: off
           cmake_options: -Denable_threads=off
+        - os: windows-latest
+          build_type: Debug
+          c_compiler: cl
+          shared_libs: on
+          cmake_options: -Denable_cplusplus=on -DCFLAGS_EXTRA='-DLINT2 -analyze'
 
     steps:
     - uses: actions/checkout@v6
+
+    - name: Checkout libatomic_ops repository
+      # Only if the compiler does not support GCC atomic intrinsics.
+      if: ${{ matrix.c_compiler == 'cl' }}
+      uses: actions/checkout@v6
+      with:
+        repository: bdwgc/libatomic_ops
+        path: libatomic_ops
 
     - name: Configure CMake
       # Configure CMake in a build subdirectory.
@@ -79,6 +92,4 @@ jobs:
 
     - name: Test enforcing mprotect-based VDB
       working-directory: ${{ github.workspace }}/build
-      run: >
-        GC_USE_GETWRITEWATCH=0
-        ctest --build-config ${{ matrix.build_type }} --verbose
+      run: sh -c 'GC_USE_GETWRITEWATCH=0 ctest --build-config ${{ matrix.build_type }} --verbose'
