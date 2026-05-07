@@ -91,13 +91,13 @@ GetSymHandle(void)
   return symHandle;
 }
 
-static void *CALLBACK
+static void *WINAPI
 FunctionTableAccess(HANDLE hProcess, ULONG_ADDR dwAddrBase)
 {
   return SymFunctionTableAccess(hProcess, dwAddrBase);
 }
 
-static ULONG_ADDR CALLBACK
+static ULONG_ADDR WINAPI
 GetModuleBase(HANDLE hProcess, ULONG_ADDR dwAddress)
 {
   MEMORY_BASIC_INFORMATION memoryInfo;
