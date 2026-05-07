@@ -594,8 +594,13 @@ EXTERN_C_END
 #      define NS_FRAC_TIME_DIFF(a, b) \
         ((unsigned long)(((a) - (b)) % 1000000UL))
 #    else
-#      define CLOCK_TYPE DWORD
-#      define GET_TIME(x) (void)(x = GetTickCount())
+#      if defined(GC_WINNT) && (_WIN32_WINNT >= 0x0600)
+#        define CLOCK_TYPE ULONGLONG
+#        define GET_TIME(x) (void)(x = GetTickCount64())
+#      else
+#        define CLOCK_TYPE DWORD
+#        define GET_TIME(x) (void)(x = GetTickCount())
+#      endif
 #      define MS_TIME_DIFF(a, b) ((unsigned long)((a) - (b)))
 #      define NS_FRAC_TIME_DIFF(a, b) 0UL
 #    endif /* !WINXP_USE_PERF_COUNTER */
@@ -4066,15 +4071,6 @@ GC_EXTERN GC_bool GC_force_unmap_on_gcollect;
 #endif
 
 #ifdef MSWIN32
-#  if (defined(_MSC_VER) && _MSC_VER >= 1800 || defined(_WIN64) \
-       || defined(MSWINRT_FLAVOR))                              \
-      && !defined(GC_WINNT)
-/*
- * MS Visual Studio 2013 deprecates `GetVersion`, but on the other hand
- * it cannot be used to target pre-Win2K.
- */
-#    define GC_WINNT
-#  endif
 #  ifdef GC_WINNT
 #    define GC_no_win32_dlls FALSE
 #    define GC_wnt TRUE

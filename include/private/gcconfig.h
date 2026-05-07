@@ -3309,6 +3309,16 @@ extern ptr_t GC_data_start;
 #  define SUSPEND_HANDLER_NO_CONTEXT
 #endif
 
+#if defined(MSWIN32) && !defined(GC_WINNT)                       \
+    && (defined(_MSC_VER) && _MSC_VER >= 1800 || defined(_WIN64) \
+        || defined(MSWINRT_FLAVOR))
+/*
+ * MS Visual Studio 2013 deprecates `GetVersion`, but on the other hand
+ * it cannot be used to target pre-Win2K.
+ */
+#  define GC_WINNT
+#endif
+
 #if (defined(MSWIN32) || defined(MSWINCE)       \
      || (defined(USE_PROC_FOR_LIBRARIES)        \
          && !defined(SINGLE_THREADED_PROCESS))) \
