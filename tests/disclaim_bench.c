@@ -93,7 +93,7 @@ testobj_new(int type)
 #define ALLOC_CNT (2 * 1024 * 1024)
 #define KEEP_CNT (32 * 1024)
 
-static char const *type_str[3]
+static const char *const type_str[]
     = { "regular finalization", "finalize on reclaim", "no finalization" };
 
 int
