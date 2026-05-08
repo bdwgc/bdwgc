@@ -685,21 +685,23 @@ GC_merge_unmapped(void)
       next = (struct hblk *)((ptr_t)h + size);
       GET_HDR(next, nexthdr);
       /* Coalesce with successor, if possible. */
-      if (NULL == nexthdr || !HBLK_IS_FREE(nexthdr)
-          || BLOCKS_MERGE_OVERFLOW(hhdr, nexthdr)) {
-        /* Not mergeable with the successor. */
-        h = hhdr->hb_next;
-        continue;
-      }
-
-      next_size = nexthdr->hb_sz;
+      {
+        struct hblk *hb_next = hhdr->hb_next; /*< read ahead for `LINT2` */
+        if (NULL == nexthdr || !HBLK_IS_FREE(nexthdr)
+            || BLOCKS_MERGE_OVERFLOW(hhdr, nexthdr)) {
+          /* Not mergeable with the successor. */
+          h = hb_next;
+          continue;
+        }
+        next_size = nexthdr->hb_sz;
 #  ifdef CHERI_PURECAP
-      /* FIXME: Coalesce with super-capability. */
-      if (!CAPABILITY_COVERS_RANGE(h, ADDR(next), ADDR(next) + nextsize)) {
-        h = hhdr->hb_next;
-        continue;
-      }
+        /* FIXME: Coalesce with super-capability. */
+        if (!CAPABILITY_COVERS_RANGE(h, ADDR(next), ADDR(next) + nextsize)) {
+          h = hb_next;
+          continue;
+        }
 #  endif
+      }
 
       /*
        * Note that we usually try to avoid adjacent free blocks that are
