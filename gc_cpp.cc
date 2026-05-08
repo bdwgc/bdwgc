@@ -47,6 +47,7 @@
 #    define GC_ALLOCATOR_THROW_OR_ABORT() throw std::bad_alloc()
 #  endif
 
+GC_OPERATOR_NEW_ATTR(size)
 void *
 operator new(GC_SIZE_T size) GC_DECL_NEW_THROW
 {
@@ -58,9 +59,10 @@ operator new(GC_SIZE_T size) GC_DECL_NEW_THROW
 
 #  ifdef _MSC_VER
 // This operator `new` is used by VC++ in case of `Debug` builds.
-void *
-operator new(GC_SIZE_T size, int /* `nBlockUse` */, const char *szFileName,
-             int nLine)
+_Check_return_
+GC_OPERATOR_NEW_ATTR(size) void *
+operator new(_In_ GC_SIZE_T size, _In_ int /* `nBlockUse` */,
+             _In_z_ const char *szFileName, _In_ int nLine)
 {
 #    ifdef GC_DEBUG
   void *obj = GC_debug_malloc_uncollectable(size, szFileName, nLine);
@@ -82,6 +84,7 @@ operator delete(void *obj) GC_NOEXCEPT
 }
 
 #  ifdef GC_OPERATOR_NEW_NOTHROW
+GC_OPERATOR_NOTHROW_NEW_ATTR(size)
 void *
 operator new(GC_SIZE_T size, const std::nothrow_t &) GC_NOEXCEPT
 {
@@ -96,6 +99,7 @@ operator delete(void *obj, const std::nothrow_t &) GC_NOEXCEPT
 #  endif // GC_OPERATOR_NEW_NOTHROW
 
 #  ifdef GC_OPERATOR_NEW_ARRAY
+GC_OPERATOR_NEW_ATTR(size)
 void *
 operator new[](GC_SIZE_T size) GC_DECL_NEW_THROW
 {
@@ -107,9 +111,10 @@ operator new[](GC_SIZE_T size) GC_DECL_NEW_THROW
 
 #    ifdef _MSC_VER
 // This operator `new` is used by VC++ 7 (or later) in `Debug` builds.
-void *
-operator new[](GC_SIZE_T size, int nBlockUse, const char *szFileName,
-               int nLine)
+_Check_return_
+GC_OPERATOR_NEW_ATTR(size) void *
+operator new[](_In_ GC_SIZE_T size, _In_ int nBlockUse,
+               _In_z_ const char *szFileName, _In_ int nLine)
 {
   return operator new(size, nBlockUse, szFileName, nLine);
 }
@@ -122,6 +127,7 @@ operator delete[](void *obj) GC_NOEXCEPT
 }
 
 #    ifdef GC_OPERATOR_NEW_NOTHROW
+GC_OPERATOR_NOTHROW_NEW_ATTR(size)
 void *
 operator new[](GC_SIZE_T size, const std::nothrow_t &) GC_NOEXCEPT
 {

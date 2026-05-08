@@ -255,6 +255,7 @@
     "mallocx",
     "MAXHINCR",
     "MAXOBJGRANULES",
+    "maybenull",
     "memalign",
     "memcpy",
     "memsz",

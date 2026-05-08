@@ -344,10 +344,41 @@ inline void operator delete(void *, GC_NS_QUALIFY(GCPlacement),
                             GC_NS_QUALIFY(GCCleanUpFunc), void *) GC_NOEXCEPT;
 #endif
 
+// MS SAL annotations for `operator new`.
+#ifdef _MSC_VER
+#  ifndef _Check_return_
+#    define _Check_return_
+#  endif
+#  ifndef _In_
+#    define _In_
+#  endif
+#  ifndef _In_z_
+#    define _In_z_
+#  endif
+#  ifndef _Ret_maybenull_
+#    define _Ret_maybenull_
+#  endif
+#  ifndef _Ret_notnull_
+#    define _Ret_notnull_
+#  endif
+#  ifndef _Post_writable_byte_size_
+#    define _Post_writable_byte_size_(s)
+#  endif
+#  ifndef _Success_
+#    define _Success_(b)
+#  endif
+#  define GC_OPERATOR_NEW_ATTR(s) _Ret_notnull_ _Post_writable_byte_size_(s)
+#  define GC_OPERATOR_NOTHROW_NEW_ATTR(s) \
+    _Ret_maybenull_ _Success_(return != NULL) _Post_writable_byte_size_(s)
+#else
+#  define GC_OPERATOR_NEW_ATTR(s)         /*< empty */
+#  define GC_OPERATOR_NOTHROW_NEW_ATTR(s) /* `GC_ATTR_MALLOC` */
+#endif
+
 #ifdef GC_INLINE_STD_NEW
 
 #  ifdef GC_OPERATOR_NEW_ARRAY
-inline void *
+inline GC_OPERATOR_NEW_ATTR(size) void *
 operator new[](GC_SIZE_T size) GC_DECL_NEW_THROW
 {
   void *obj = GC_MALLOC_UNCOLLECTABLE(size);
@@ -362,7 +393,7 @@ operator delete[](void *obj) GC_NOEXCEPT
 }
 
 #    ifdef GC_OPERATOR_NEW_NOTHROW
-inline /* `GC_ATTR_MALLOC` */ void *
+inline GC_OPERATOR_NOTHROW_NEW_ATTR(size) void *
 operator new[](GC_SIZE_T size, const std::nothrow_t &) GC_NOEXCEPT
 {
   return GC_MALLOC_UNCOLLECTABLE(size);
@@ -376,7 +407,7 @@ operator delete[](void *obj, const std::nothrow_t &) GC_NOEXCEPT
 #    endif
 #  endif // GC_OPERATOR_NEW_ARRAY
 
-inline void *
+inline GC_OPERATOR_NEW_ATTR(size) void *
 operator new(GC_SIZE_T size) GC_DECL_NEW_THROW
 {
   void *obj = GC_MALLOC_UNCOLLECTABLE(size);
@@ -391,7 +422,7 @@ operator delete(void *obj) GC_NOEXCEPT
 }
 
 #  ifdef GC_OPERATOR_NEW_NOTHROW
-inline /* `GC_ATTR_MALLOC` */ void *
+inline GC_OPERATOR_NOTHROW_NEW_ATTR(size) void *
 operator new(GC_SIZE_T size, const std::nothrow_t &) GC_NOEXCEPT
 {
   return GC_MALLOC_UNCOLLECTABLE(size);
@@ -422,9 +453,10 @@ operator delete[](void *obj, GC_SIZE_T) GC_NOEXCEPT
 
 #  ifdef _MSC_VER
 // This new operator is used by VC++ in case of Debug builds.
-inline void *
-operator new(GC_SIZE_T size, int /* `nBlockUse` */, const char *szFileName,
-             int nLine)
+inline _Check_return_
+GC_OPERATOR_NEW_ATTR(size) void *
+operator new(_In_ GC_SIZE_T size, _In_ int /* `nBlockUse` */,
+             _In_z_ const char *szFileName, _In_ int nLine)
 {
 #    ifdef GC_DEBUG
   void *obj = GC_debug_malloc_uncollectable(size, szFileName, nLine);
@@ -439,9 +471,10 @@ operator new(GC_SIZE_T size, int /* `nBlockUse` */, const char *szFileName,
 
 #    ifdef GC_OPERATOR_NEW_ARRAY
 // This new operator is used by VC++ 7+ in Debug builds.
-inline void *
-operator new[](GC_SIZE_T size, int nBlockUse, const char *szFileName,
-               int nLine)
+inline _Check_return_
+GC_OPERATOR_NEW_ATTR(size) void *
+operator new[](_In_ GC_SIZE_T size, _In_ int nBlockUse,
+               _In_z_ const char *szFileName, _In_ int nLine)
 {
   return operator new(size, nBlockUse, szFileName, nLine);
 }
@@ -456,34 +489,42 @@ operator new[](GC_SIZE_T size, int nBlockUse, const char *szFileName,
 // There seems to be no way to redirect new in this environment without
 // including this everywhere.
 #  ifdef GC_OPERATOR_NEW_ARRAY
-void *operator new[](GC_SIZE_T) GC_DECL_NEW_THROW;
+GC_OPERATOR_NEW_ATTR(size)
+void *operator new[](GC_SIZE_T size) GC_DECL_NEW_THROW;
+
 void operator delete[](void *) GC_NOEXCEPT;
 #    ifdef GC_OPERATOR_NEW_NOTHROW
-/* `GC_ATTR_MALLOC` */ void *
-operator new[](GC_SIZE_T, const std::nothrow_t &) GC_NOEXCEPT;
+GC_OPERATOR_NOTHROW_NEW_ATTR(size)
+void *operator new[](GC_SIZE_T size, const std::nothrow_t &) GC_NOEXCEPT;
+
 void operator delete[](void *, const std::nothrow_t &) GC_NOEXCEPT;
 #    endif
 #    ifdef GC_OPERATOR_SIZED_DELETE
 void operator delete[](void *, GC_SIZE_T) GC_NOEXCEPT;
 #    endif
 
-void *operator new[](GC_SIZE_T, int /* `nBlockUse` */,
-                     const char * /* `szFileName` */, int /* `nLine` */);
+_Check_return_ GC_OPERATOR_NEW_ATTR(size) void *
+operator new[](_In_ GC_SIZE_T size, _In_ int /* `nBlockUse` */,
+               _In_z_ const char * /* `szFileName` */, _In_ int /* `nLine` */);
 #  endif // GC_OPERATOR_NEW_ARRAY
 
-void *operator new(GC_SIZE_T) GC_DECL_NEW_THROW;
+GC_OPERATOR_NEW_ATTR(size)
+void *operator new(GC_SIZE_T size) GC_DECL_NEW_THROW;
+
 void operator delete(void *) GC_NOEXCEPT;
 #  ifdef GC_OPERATOR_NEW_NOTHROW
-/* GC_ATTR_MALLOC */ void *operator new(GC_SIZE_T,
-                                        const std::nothrow_t &) GC_NOEXCEPT;
+GC_OPERATOR_NOTHROW_NEW_ATTR(size)
+void *operator new(GC_SIZE_T size, const std::nothrow_t &) GC_NOEXCEPT;
+
 void operator delete(void *, const std::nothrow_t &) GC_NOEXCEPT;
 #  endif
 #  ifdef GC_OPERATOR_SIZED_DELETE
 void operator delete(void *, GC_SIZE_T) GC_NOEXCEPT;
 #  endif
 
-void *operator new(GC_SIZE_T, int /* `nBlockUse` */,
-                   const char * /* `szFileName` */, int /* `nLine` */);
+_Check_return_ GC_OPERATOR_NEW_ATTR(size) void *
+operator new(_In_ GC_SIZE_T size, _In_ int /* `nBlockUse` */,
+             _In_z_ const char * /* `szFileName` */, _In_ int /* `nLine` */);
 
 #endif // GC_NO_INLINE_STD_NEW && _MSC_VER
 
