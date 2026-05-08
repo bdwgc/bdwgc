@@ -2389,8 +2389,15 @@ rtems_task
 Init(rtems_task_argument ignored)
 #elif ((defined(MSWIN32) && !defined(__MINGW32__)) || defined(MSWINCE)) \
     && !defined(NO_WINMAIN_ENTRY)
+#  ifndef _In_
+#    define _In_
+#  endif
+#  ifndef _In_opt_
+#    define _In_opt_
+#  endif
 int WINAPI
-WinMain(HINSTANCE instance, HINSTANCE prev, WINMAIN_LPTSTR cmd, int n)
+WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
+        _In_ WINMAIN_LPTSTR cmd, _In_ int n)
 #else
 int
 main(void)

@@ -61,9 +61,15 @@ de_error(const char *s)
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam,
                                 LPARAM lParam);
 
+#  ifndef _In_
+#    define _In_
+#  endif
+#  ifndef _In_opt_
+#    define _In_opt_
+#  endif
 int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR command_line,
-        int nCmdShow)
+WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
+        _In_ LPSTR command_line, _In_ int nCmdShow)
 {
   MSG msg;
   WNDCLASS wndclass;
