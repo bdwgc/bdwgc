@@ -161,6 +161,9 @@ main(int argc, const char *argv[])
              type_str[type], free_count / (double)ALLOC_CNT, t,
              t / free_count);
     } else {
+#ifdef LINT2
+      TEST_ASSERT((unsigned)type < sizeof(type_str) / sizeof(type_str[0]));
+#endif
       printf("%20s: %12.4f " PRINTF_SPEC_12g " %12s\n", type_str[type], 0.0, t,
              "N/A");
     }
