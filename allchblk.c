@@ -411,6 +411,10 @@ setup_header(hdr *hhdr, struct hblk *block, size_t lb_adjusted, int kind,
       hhdr->hb_map = NULL;
       return FALSE;
     }
+#  ifdef LINT2
+    if (lg > MAXOBJGRANULES && (hhdr->hb_flags & LARGE_BLOCK) == 0)
+      ABORT("Invalid GC_obj_map index");
+#  endif
     hhdr->hb_map = GC_obj_map[(hhdr->hb_flags & LARGE_BLOCK) != 0 ? 0 : lg];
   }
 #endif
