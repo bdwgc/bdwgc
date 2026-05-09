@@ -169,7 +169,10 @@ GC_print_all_errors(void)
   printing_errors = TRUE;
 #  ifndef NO_FIND_LEAK
   n_leaked = GC_n_leaked;
-  if (n_leaked > 0) {
+#    if !defined(LINT2)
+  if (n_leaked > 0)
+#    endif
+  {
     GC_ASSERT(n_leaked <= MAX_LEAKED);
     BCOPY(GC_leaked, leaked, n_leaked * sizeof(ptr_t));
     GC_n_leaked = 0;
