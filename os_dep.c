@@ -2900,6 +2900,13 @@ block_unmap_inner(ptr_t start_addr, size_t len)
         != sizeof(mem_info))
       ABORT("Weird VirtualQuery result");
     free_len = (len < mem_info.RegionSize) ? len : mem_info.RegionSize;
+#    if defined(_MSC_VER) && defined(LINT2)
+    /*
+     * `MEM_DECOMMIT` is intentional here because `GC_remap()` is supposed
+     * to be called later on exactly the same memory range.
+     */
+#      pragma warning(suppress : 6250)
+#    endif
     if (!VirtualFree(start_addr, free_len, MEM_DECOMMIT))
       ABORT("VirtualFree failed");
     GC_unmapped_bytes += free_len;
