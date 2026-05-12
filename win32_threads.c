@@ -1422,6 +1422,10 @@ GC_start_mark_threads_inner(void)
   /* Adjust `GC_markers_m1` (and free unused resources) if failed. */
   while (GC_markers_m1 > i) {
     GC_markers_m1--;
+#    if defined(_MSC_VER) && defined(LINT2)
+    /* Workaround a false positive that `GC_marker_cv[1]` is uninitialized. */
+#      pragma warning(suppress : 6001)
+#    endif
     CloseHandle(GC_marker_cv[GC_markers_m1]);
   }
   GC_wait_for_markers_init();
