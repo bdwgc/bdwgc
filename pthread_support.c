@@ -757,7 +757,11 @@ GC_INNER void
 GC_win32_unprotect_thread(GC_thread t)
 {
   GC_ASSERT(I_HOLD_LOCK());
-  if (!GC_win32_dll_threads && GC_auto_incremental) {
+  if (GC_auto_incremental
+#    ifndef GC_NO_THREADS_DISCOVERY /*< for `LINT2` */
+      && !GC_win32_dll_threads
+#    endif
+  ) {
     GC_stack_context_t crtn = t->crtn;
 
     if (crtn != &first_crtn) {
