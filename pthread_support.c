@@ -1010,7 +1010,10 @@ GC_thread_is_registered(void)
   /* TODO: Use `GC_get_tlfs()` instead. */
   GC_thread me = GC_self_thread();
 
-  return me != NULL && !KNOWN_FINISHED(me);
+  if (NULL == me)
+    return FALSE; /*< for `LINT2` */
+
+  return !KNOWN_FINISHED(me);
 }
 
 GC_API void GC_CALL
