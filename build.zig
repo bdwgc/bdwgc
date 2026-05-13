@@ -368,11 +368,7 @@ pub fn build(b: *std.Build) void {
     // `-U GC_NO_SIGSETJMP`
     flags.append(b.allocator, "-D HAVE_SYS_TYPES_H") catch unreachable;
 
-    if (t.abi == .msvc) {
-        // To workaround "extension used" error reported
-        // for `__try`/`__finally`.
-        flags.append(b.allocator, "-D NO_SEH_AVAILABLE") catch unreachable;
-    } else {
+    if (t.abi != .msvc) {
         flags.append(b.allocator, "-D HAVE_UNISTD_H") catch unreachable;
     }
 

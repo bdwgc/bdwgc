@@ -1615,6 +1615,10 @@ GC_win32_start_inner(struct GC_stack_base *sb, void *arg)
    */
 #  ifndef NO_SEH_AVAILABLE
   ret = NULL; /*< to avoid "might be uninitialized" compiler warning */
+#    if GC_CLANG_PREREQ(3, 6)
+#      pragma GCC diagnostic push
+#      pragma GCC diagnostic ignored "-Wlanguage-extension-token"
+#    endif
   __try
 #  endif
   {
@@ -1622,6 +1626,9 @@ GC_win32_start_inner(struct GC_stack_base *sb, void *arg)
   }
 #  ifndef NO_SEH_AVAILABLE
   __finally
+#    if GC_CLANG_PREREQ(3, 6)
+#      pragma GCC diagnostic pop
+#    endif
 #  endif
   {
     (void)GC_unregister_my_thread();

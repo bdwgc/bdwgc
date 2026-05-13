@@ -589,6 +589,10 @@ GC_mark_some(ptr_t cold_gc_frame)
      * difficult to avoid otherwise.
      */
 #  ifndef NO_SEH_AVAILABLE
+#    if GC_CLANG_PREREQ(3, 6)
+#      pragma GCC diagnostic push
+#      pragma GCC diagnostic ignored "-Wlanguage-extension-token"
+#    endif
     __try {
       ret_val = GC_mark_some_inner(cold_gc_frame);
     } __except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION
@@ -596,6 +600,9 @@ GC_mark_some(ptr_t cold_gc_frame)
                     : EXCEPTION_CONTINUE_SEARCH) {
       goto handle_ex;
     }
+#    if GC_CLANG_PREREQ(3, 6)
+#      pragma GCC diagnostic pop
+#    endif
 #  else
     GC_setup_temporary_fault_handler();
     if (SETJMP(GC_jmp_buf) != 0)
