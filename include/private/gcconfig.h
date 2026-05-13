@@ -652,8 +652,8 @@ EXTERN_C_BEGIN
  *   - `TILEGX`: Tilera TILE-Gx 32/64-bit (running `LINUX`);
  *   - `TILEPRO`: Tilera TILEPro (running `LINUX`);
  *   - `VAX`: DEC VAX (running `BSD`, `ULTRIX`);
- *   - `WEBASSEMBLY`: WebAssembly/Wasm (running `EMSCRIPTEN` environment,
- *     `WASI` environment);
+ *   - `WEBASSEMBLY`: WebAssembly/Wasm 32/64-bit (running `EMSCRIPTEN`
+ *     environment, `WASI` environment);
  *   - `X86_64`: AMD x86-64 ILP32/64-bit (running `COSMO` environment,
  *     `CYGWIN` environment, `DARWIN` (macOS), `FREEBSD`, `HAIKU`, `HURD`,
  *     `LINUX`, `MSWIN32`, `MSWIN_XBOX1`, `NETBSD`, `OPENBSD`,
@@ -2625,10 +2625,11 @@ extern char **environ;
 
 #ifdef WEBASSEMBLY
 #  define MACH_TYPE "WEBASSEMBLY"
-#  if defined(__wasm64__) && !defined(CPPCHECK)
-#    error 64-bit WebAssembly is not yet supported
+#  if defined(__wasm64__)
+#    define CPP_WORDSZ 64
+#  else
+#    define CPP_WORDSZ 32
 #  endif
-#  define CPP_WORDSZ 32
 /*
  * Emscripten does emulate `mmap` and `munmap`, but those should not be
  * used in the collector, since WebAssembly lacks the native support of
