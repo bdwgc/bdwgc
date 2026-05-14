@@ -195,6 +195,8 @@ typedef DWORD GC_key_t;
 #    ifdef USE_CUSTOM_SPECIFIC
 #      define GC_update_specific_after_fork(key, v) \
         ((void)(v), GC_update_specific_after_fork_inner(key))
+#    elif defined(USE_PTHREAD_SPECIFIC)
+#      define GC_update_specific_after_fork(key, v) ((void)(key), (void)(v))
 #    else
 /*
  * Some TLS implementations (e.g., in Cygwin) might be not `fork`-friendly,
