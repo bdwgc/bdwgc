@@ -2263,7 +2263,6 @@ EXTERN_C_BEGIN
 #   endif
 #   ifdef DARWIN
       /* OS X, iOS */
-#     undef DARWIN_PARSE_STACK
 #     define STACKBOTTOM ((ptr_t)0x16fdfffff)
 #     if TARGET_OS_IPHONE
         /* MPROTECT_VDB causes use of non-public API like exc_server,   */
@@ -2997,6 +2996,11 @@ EXTERN_C_BEGIN
 # undef MPROTECT_VDB
   /* For a test purpose only.   */
 # undef SOFT_VDB
+#endif
+
+#ifdef DARWIN_PARSE_STACK
+  /* FIXME: SIGSEGV occurs sometimes if task-based threads discovery. */
+# undef MPROTECT_VDB
 #endif
 
 #if defined(MPROTECT_VDB) && !defined(MSWIN32) && !defined(MSWINCE)
