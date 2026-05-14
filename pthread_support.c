@@ -1492,22 +1492,7 @@ GC_remove_all_threads_but_me(void)
   store_to_threads_table(THREAD_TABLE_INDEX(me->id), me);
 
 #    ifdef THREAD_LOCAL_ALLOC
-#      ifdef USE_CUSTOM_SPECIFIC
-  GC_update_specific_after_fork(GC_thread_key);
-#      else
-  /*
-   * Some TLS implementations (e.g., in Cygwin) might be not `fork`-friendly,
-   * so we re-assign thread-local pointer to `tlfs` for safety instead of the
-   * assertion check (again, it is OK to call `GC_destroy_thread_local()` and
-   * `GC_free_internal()` before).
-   */
-  {
-    int res = GC_setspecific(GC_thread_key, &me->tlfs);
-
-    if (COVERT_DATAFLOW(res) != 0)
-      ABORT("GC_setspecific failed (in child)");
-  }
-#      endif
+  GC_update_specific_after_fork(GC_thread_key, &me->tlfs);
 #    endif
 #    undef pthread_id
 }

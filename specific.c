@@ -161,7 +161,7 @@ GC_remove_specific_after_fork(tsd *key, pthread_t t)
 
 #  ifdef CAN_HANDLE_FORK
 GC_INNER void
-GC_update_specific_after_fork(tsd *key)
+GC_update_specific_after_fork_inner(tsd *key)
 {
   unsigned hash_val = TS_HASH(GC_parent_pthread_self);
   tse *entry;

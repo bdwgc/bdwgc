@@ -128,12 +128,7 @@ GC_INNER int GC_setspecific(tsd *key, void *value);
 GC_INNER void GC_remove_specific_after_fork(tsd *key, pthread_t t);
 
 #ifdef CAN_HANDLE_FORK
-/*
- * Update thread-specific data for the survived thread of the child process.
- * Should be called once after removing thread-specific data for other
- * threads.
- */
-GC_INNER void GC_update_specific_after_fork(tsd *key);
+GC_INNER void GC_update_specific_after_fork_inner(tsd *key);
 #endif
 
 /*

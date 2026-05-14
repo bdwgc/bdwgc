@@ -184,6 +184,31 @@ typedef DWORD GC_key_t;
 #    error implement me
 #  endif
 
+#  ifdef CAN_HANDLE_FORK
+/*
+ * Update thread-specific data for the survived thread of the child process.
+ * Should be called once after removing thread-specific data for other threads.
+ * Note: it is OK to call `GC_destroy_thread_local()` and `GC_free_internal()`
+ * before this function is called.
+ */
+#    ifdef USE_CUSTOM_SPECIFIC
+#      define GC_update_specific_after_fork(key, v) \
+        ((void)(v), GC_update_specific_after_fork_inner(key))
+#    else
+/*
+ * Some TLS implementations (e.g., in Cygwin) might be not `fork`-friendly,
+ * so we re-assign thread-local value for safety.
+ */
+#      define GC_update_specific_after_fork(key, v)    \
+        do {                                           \
+          int res = GC_setspecific(key, v);            \
+                                                       \
+          if (COVERT_DATAFLOW(res) != 0)               \
+            ABORT("GC_setspecific failed (in child)"); \
+        } while (0)
+#    endif
+#  endif
+
 /*
  * Each thread structure must be initialized.  This call must be made from
  * the new thread.  Caller should hold the allocator lock.
