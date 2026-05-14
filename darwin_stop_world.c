@@ -49,11 +49,16 @@
 
 #  ifdef DARWIN_PARSE_STACK
 typedef struct StackFrame {
+#    if defined(AARCH64)
+  word prevFP;  /*< previous frame pointer */
+  word savedIP; /*< return address */
+#    else
   word savedSP;
   word savedCR;
   word savedLR;
   /* `word reserved[2];` */
   /* `word savedRTOC;` */
+#    endif
 } StackFrame;
 
 GC_INNER ptr_t
@@ -69,10 +74,7 @@ GC_FindTopOfStack(word stack_start)
     __asm__ __volatile__("ld %0,0(r1)" : "=r"(frame));
 #      endif
 #    elif defined(AARCH64)
-    volatile ptr_t sp_reg;
-
-    __asm__ __volatile__("mov %0, x29\n" : "=r"(sp_reg));
-    frame = (/* no volatile */ StackFrame *)sp_reg;
+    frame = (StackFrame *)__builtin_frame_address(0);
 #    else
     ABORT("GC_FindTopOfStack(0) is not implemented");
 #    endif
@@ -81,6 +83,12 @@ GC_FindTopOfStack(word stack_start)
 #    ifdef DEBUG_THREADS_EXTRA
   GC_log_printf("FindTopOfStack start at sp= %p\n", (void *)frame);
 #    endif
+#    if defined(AARCH64)
+  /* Walk the frame pointer chain. */
+  while (frame->prevFP > ADDR(frame)) {
+    frame = (StackFrame *)MAKE_CPTR(frame->prevFP);
+  }
+#    else
   while (frame->savedSP != 0) { /*< stop if no more stack frames */
     word maskedLR;
 
@@ -96,6 +104,7 @@ GC_FindTopOfStack(word stack_start)
       break;
     }
   }
+#    endif
 #    ifdef DEBUG_THREADS_EXTRA
   GC_log_printf("FindTopOfStack finish at sp= %p\n", (void *)frame);
 #    endif

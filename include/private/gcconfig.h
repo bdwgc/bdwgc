@@ -891,6 +891,10 @@ extern int _end[];
 #  ifndef TARGET_OS_VISION
 #    define TARGET_OS_VISION 0
 #  endif
+#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(THREADS)
+/* FIXME: task-threads-based stop and push does not work correctly. */
+#    define GC_NO_THREADS_DISCOVERY
+#  endif
 #endif /* DARWIN */
 
 #ifdef EMBOX
@@ -2164,7 +2168,6 @@ extern int __data_start[] __attribute__((__weak__));
 #  ifdef DARWIN
 /* OS X, iOS, visionOS */
 #    define STACKBOTTOM MAKE_CPTR(0x16fdfffff)
-#    undef DARWIN_PARSE_STACK
 #    if (TARGET_OS_IPHONE || TARGET_OS_XR || TARGET_OS_VISION)
 /*
  * `MPROTECT_VDB` causes use of non-public API like `exc_server`, this
