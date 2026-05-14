@@ -49,11 +49,16 @@
 
 #  ifdef DARWIN_PARSE_STACK
 typedef struct StackFrame {
+#    if defined(AARCH64)
+  word prevFP;  /* previous frame pointer */
+  word savedIP; /* return address */
+#    else
   unsigned long savedSP;
   unsigned long savedCR;
   unsigned long savedLR;
   unsigned long reserved[2];
   unsigned long savedRTOC;
+#    endif
 } StackFrame;
 
 GC_INNER ptr_t GC_FindTopOfStack(unsigned long stack_start)
@@ -72,9 +77,7 @@ GC_INNER ptr_t GC_FindTopOfStack(unsigned long stack_start)
         __asm__ __volatile__ ("mov %0, r7\n" : "=r" (sp_reg));
         frame = (StackFrame *)sp_reg;
 #   elif defined(AARCH64)
-        volatile ptr_t sp_reg;
-        __asm__ __volatile__ ("mov %0, x29\n" : "=r" (sp_reg));
-        frame = (StackFrame *)sp_reg;
+        frame = (StackFrame *)__builtin_frame_address(0);
 #   else
 #     if defined(CPPCHECK)
         GC_noop1((word)&frame);
@@ -86,18 +89,25 @@ GC_INNER ptr_t GC_FindTopOfStack(unsigned long stack_start)
 # ifdef DEBUG_THREADS_EXTRA
     GC_log_printf("FindTopOfStack start at sp= %p\n", (void *)frame);
 # endif
-  while (frame->savedSP != 0) { /* stop if no more stack frames */
-    unsigned long maskedLR;
+# if defined(AARCH64)
+    /* Walk the frame pointer chain. */
+    while (frame->prevFP > (word)frame) {
+      frame = (StackFrame*)frame->prevFP;
+    }
+# else
+    while (frame->savedSP != 0) { /* stop if no more stack frames */
+      unsigned long maskedLR;
 
-    frame = (StackFrame*)frame->savedSP;
+      frame = (StackFrame*)frame->savedSP;
 
     /* we do these next two checks after going to the next frame
        because the LR for the first stack frame in the loop
        is not set up on purpose, so we shouldn't check it. */
-    maskedLR = frame -> savedLR & ~0x3UL;
-    if (0 == maskedLR || ~0x3UL == maskedLR)
-      break; /* if the next LR is bogus, stop */
-  }
+      maskedLR = frame -> savedLR & ~0x3UL;
+      if (0 == maskedLR || ~0x3UL == maskedLR)
+        break; /* if the next LR is bogus, stop */
+    }
+# endif
 # ifdef DEBUG_THREADS_EXTRA
     GC_log_printf("FindTopOfStack finish at sp= %p\n", (void *)frame);
 # endif
