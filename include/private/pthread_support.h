@@ -585,7 +585,7 @@ GC_INNER_PTHRSTART void GC_thread_exit_proc(void *);
 
 #  ifdef DARWIN
 #    ifndef DARWIN_DONT_PARSE_STACK
-GC_INNER ptr_t GC_FindTopOfStack(unsigned long);
+GC_INNER ptr_t GC_FindTopOfStack(word);
 #    endif
 #    if defined(PARALLEL_MARK) && !defined(GC_NO_THREADS_DISCOVERY)
 /* Note: this is used only by `GC_suspend_thread_list()`. */

@@ -50,15 +50,15 @@
 #  ifndef DARWIN_DONT_PARSE_STACK
 
 typedef struct StackFrame {
-  unsigned long savedSP;
-  unsigned long savedCR;
-  unsigned long savedLR;
-  /* `unsigned long reserved[2];` */
-  /* `unsigned long savedRTOC;` */
+  word savedSP;
+  word savedCR;
+  word savedLR;
+  /* `word reserved[2];` */
+  /* `word savedRTOC;` */
 } StackFrame;
 
 GC_INNER ptr_t
-GC_FindTopOfStack(unsigned long stack_start)
+GC_FindTopOfStack(word stack_start)
 {
   StackFrame *frame = (StackFrame *)MAKE_CPTR(stack_start);
 
@@ -83,7 +83,7 @@ GC_FindTopOfStack(unsigned long stack_start)
   GC_log_printf("FindTopOfStack start at sp= %p\n", (void *)frame);
 #    endif
   while (frame->savedSP != 0) { /*< stop if no more stack frames */
-    unsigned long maskedLR;
+    word maskedLR;
 
     frame = (StackFrame *)MAKE_CPTR(frame->savedSP);
     /*
@@ -91,8 +91,8 @@ GC_FindTopOfStack(unsigned long stack_start)
      * the `savedLR` for the first stack frame in the loop is not set up
      * on purpose, so we should not check it.
      */
-    maskedLR = frame->savedLR & ~0x3UL;
-    if (0 == maskedLR || ~0x3UL == maskedLR) {
+    maskedLR = frame->savedLR & ~(word)0x3;
+    if (0 == maskedLR || ~(word)0x3 == maskedLR) {
       /* The next `savedLR` is bogus, stop. */
       break;
     }
