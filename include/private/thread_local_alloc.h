@@ -160,16 +160,17 @@ EXTERN_C_BEGIN
 typedef pthread_key_t GC_key_t;
 #  elif defined(USE_COMPILER_TLS) || defined(USE_WIN32_COMPILER_TLS)
 #    define GC_getspecific(x) (x)
-#    define GC_setspecific(key, v) ((key) = (v), 0)
-#    define GC_key_create(key, d) 0
-/* Just to clear the pointer to `tlfs`. */
-#    define GC_remove_specific(key) (void)GC_setspecific(key, NULL)
+/*
+ * Do not define `GC_setspecific()` (which is a simple assignment operator)
+ * and `GC_key_create()` (which is no-op).
+ */
+#    define GC_remove_specific(key) (void)((key) = NULL)
 #    define GC_remove_specific_after_fork(key, t) (void)0
 typedef void *GC_key_t;
 #  elif defined(USE_WIN32_SPECIFIC)
 #    define GC_getspecific TlsGetValue
 /* Note: we assume that zero means success, Win32 API does the opposite. */
-#    define GC_setspecific(key, v) !TlsSetValue(key, v)
+#    define GC_setspecific(key, v) (!TlsSetValue(key, v))
 #    ifndef TLS_OUT_OF_INDEXES
 /* This is currently missing in WinCE. */
 #      define TLS_OUT_OF_INDEXES (DWORD)0xFFFFFFFF
@@ -199,13 +200,15 @@ typedef DWORD GC_key_t;
  * Some TLS implementations (e.g., in Cygwin) might be not `fork`-friendly,
  * so we re-assign thread-local value for safety.
  */
-#      define GC_update_specific_after_fork(key, v)    \
-        do {                                           \
-          int res = GC_setspecific(key, v);            \
-                                                       \
-          if (COVERT_DATAFLOW(res) != 0)               \
-            ABORT("GC_setspecific failed (in child)"); \
-        } while (0)
+#      if !defined(USE_COMPILER_TLS) && !defined(USE_WIN32_COMPILER_TLS)
+#        define GC_update_specific_after_fork(key, v)    \
+          do {                                           \
+            if (GC_setspecific(key, v) != 0)             \
+              ABORT("GC_setspecific failed (in child)"); \
+          } while (0)
+#      else
+#        define GC_update_specific_after_fork(key, v) (void)((key) = (v))
+#      endif
 #    endif
 #  endif
 

@@ -29,13 +29,17 @@ __declspec(thread) GC_ATTR_TLS_FAST
 #  endif
     GC_key_t GC_thread_key;
 
+#  if !defined(USE_COMPILER_TLS) && !defined(USE_WIN32_COMPILER_TLS)
 static GC_bool keys_initialized;
+#  endif
 
 #  ifndef GC_NO_DEINIT
 GC_INNER void
 GC_reset_thread_local_initialization(void)
 {
+#    if !defined(USE_COMPILER_TLS) && !defined(USE_WIN32_COMPILER_TLS)
   keys_initialized = FALSE;
+#    endif
   /* TODO: Dispose resources associated with `GC_thread_key`. */
 }
 #  endif
@@ -113,24 +117,24 @@ reset_thread_key(void *v)
 GC_INNER void
 GC_init_thread_local(GC_tlfs p)
 {
-  int kind, j, res;
+  int kind, j;
 
+#  if !defined(USE_COMPILER_TLS) && !defined(USE_WIN32_COMPILER_TLS)
   GC_ASSERT(I_HOLD_LOCK());
   if (UNLIKELY(!keys_initialized)) {
-#  ifdef USE_CUSTOM_SPECIFIC
+#    ifdef USE_CUSTOM_SPECIFIC
     /* Ensure proper alignment of a "pushed" GC symbol. */
     ASSERT_ALIGNMENT(&GC_thread_key);
-#  endif
-    res = GC_key_create(&GC_thread_key, reset_thread_key);
-    if (COVERT_DATAFLOW(res) != 0) {
+#    endif
+    if (GC_key_create(&GC_thread_key, reset_thread_key) != 0)
       ABORT("Failed to create key for local allocator");
-    }
     keys_initialized = TRUE;
   }
-  res = GC_setspecific(GC_thread_key, p);
-  if (COVERT_DATAFLOW(res) != 0) {
+  if (GC_setspecific(GC_thread_key, p) != 0)
     ABORT("Failed to set thread specific allocation pointers");
-  }
+#  else
+  GC_thread_key = p;
+#  endif
   for (j = 0; j < GC_TINY_FREELISTS; ++j) {
     for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
       p->_freelists[kind][j] = NUMERIC_TO_VPTR(1);
@@ -173,7 +177,12 @@ GC_destroy_thread_local(GC_tlfs p)
 STATIC void *
 GC_get_tlfs(void)
 {
-#  if !defined(USE_PTHREAD_SPECIFIC) && !defined(USE_WIN32_SPECIFIC)
+#  if defined(USE_PTHREAD_SPECIFIC) || defined(USE_WIN32_SPECIFIC)
+  if (UNLIKELY(!keys_initialized))
+    return NULL;
+
+  return GC_getspecific(GC_thread_key);
+#  else
   GC_key_t k = GC_thread_key;
 
   if (UNLIKELY(0 == k)) {
@@ -184,11 +193,6 @@ GC_get_tlfs(void)
     return NULL;
   }
   return GC_getspecific(k);
-#  else
-  if (UNLIKELY(!keys_initialized))
-    return NULL;
-
-  return GC_getspecific(GC_thread_key);
 #  endif
 }
 
