@@ -69,11 +69,6 @@ GC_FindTopOfStack(unsigned long stack_start)
 #      else
     __asm__ __volatile__("ld %0,0(r1)" : "=r"(frame));
 #      endif
-#    elif defined(ARM32)
-    volatile ptr_t sp_reg;
-
-    __asm__ __volatile__("mov %0, r7\n" : "=r"(sp_reg));
-    frame = (/* no volatile */ StackFrame *)sp_reg;
 #    elif defined(AARCH64)
     volatile ptr_t sp_reg;
 
@@ -297,9 +292,6 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 
 #  elif defined(ARM32)
     lo = (ptr_t)state.THREAD_FLD(sp);
-#    ifndef DARWIN_DONT_PARSE_STACK
-    *phi = GC_FindTopOfStack(state.THREAD_FLD(r[7])); /*< `fp` */
-#    endif
     {
       int j;
       for (j = 0; j < 7; j++)
