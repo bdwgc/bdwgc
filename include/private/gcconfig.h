@@ -1265,6 +1265,10 @@ extern int etext[];
 #      define CPP_WORDSZ 32
 #      define STACKBOTTOM MAKE_CPTR(0xc0000000)
 #    endif
+#    ifdef __xlC__
+/* The stack-frame-walking is broken if the IBM XLC compiler is used. */
+#      define DARWIN_DONT_PARSE_STACK 1
+#    endif
 #    define MPROTECT_VDB
 #    if defined(USE_PPC_PREFETCH) && defined(__GNUC__)
 /* The performance impact of prefetches is untested. */
