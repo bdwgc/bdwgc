@@ -106,7 +106,7 @@ typedef struct GC_Thread_Rep {
     ptr_t stack;                /* The start and size of the normal     */
                                 /* stack (set by GC_register_altstack). */
     word stack_size;
-#   if defined(GC_DARWIN_THREADS) && !defined(DARWIN_DONT_PARSE_STACK)
+#   if defined(GC_DARWIN_THREADS) && defined(DARWIN_PARSE_STACK)
       ptr_t topOfStack;         /* Result of GC_FindTopOfStack(0);      */
                                 /* valid only if the thread is blocked; */
                                 /* non-NULL value means already set.    */

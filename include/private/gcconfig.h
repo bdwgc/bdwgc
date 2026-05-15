@@ -1281,7 +1281,7 @@ EXTERN_C_BEGIN
 #     ifdef __xlC__
         /* The stack-frame-walking is broken if the IBM XLC     */
         /* compiler is used.                                    */
-#       define DARWIN_DONT_PARSE_STACK 1
+#       undef DARWIN_PARSE_STACK
 #     endif
 #     define MPROTECT_VDB
 #     if defined(USE_PPC_PREFETCH) && defined(__GNUC__)
@@ -1755,8 +1755,8 @@ EXTERN_C_BEGIN
 #     define USE_MMAP_ANON
 #   endif
 #   ifdef DARWIN
-#     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0xc0000000)
+#     undef DARWIN_PARSE_STACK
 #     define MPROTECT_VDB
 #   endif /* DARWIN */
 # endif
@@ -2263,7 +2263,7 @@ EXTERN_C_BEGIN
 #   endif
 #   ifdef DARWIN
       /* OS X, iOS */
-#     define DARWIN_DONT_PARSE_STACK 1
+#     undef DARWIN_PARSE_STACK
 #     define STACKBOTTOM ((ptr_t)0x16fdfffff)
 #     if TARGET_OS_IPHONE
         /* MPROTECT_VDB causes use of non-public API like exc_server,   */
@@ -2346,8 +2346,8 @@ EXTERN_C_BEGIN
 #   endif
 #   ifdef DARWIN
       /* iOS */
-#     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0x30000000)
+#     undef DARWIN_PARSE_STACK
       /* MPROTECT_VDB causes use of non-public API.     */
 #   endif
 #   ifdef OPENBSD
@@ -2501,8 +2501,8 @@ EXTERN_C_BEGIN
 #       endif
 #   endif
 #   ifdef DARWIN
-#     define DARWIN_DONT_PARSE_STACK 1
 #     define STACKBOTTOM ((ptr_t)0x7fff5fc00000)
+#     undef DARWIN_PARSE_STACK
 #     define MPROTECT_VDB
 #   endif
 #   ifdef FREEBSD
@@ -3233,7 +3233,7 @@ EXTERN_C_BEGIN
 #endif
 
 #if defined(GC_PTHREADS) && !defined(E2K) && !defined(IA64) \
-    && (!defined(DARWIN) || defined(DARWIN_DONT_PARSE_STACK)) \
+    && !(defined(DARWIN) && defined(DARWIN_PARSE_STACK)) \
     && !defined(SN_TARGET_PSP2) && !defined(REDIRECT_MALLOC)
   /* Note: unimplemented in case of redirection of malloc() because     */
   /* the client-provided function might call some pthreads primitive    */

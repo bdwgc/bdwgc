@@ -483,10 +483,10 @@ ENABLE_TRACE    Enables the GC_TRACE=addr environment setting to do its job.
   By default this is not supported in order to keep the marker as fast as
   possible.
 
-DARWIN_DONT_PARSE_STACK         Causes the Darwin port to discover thread
-  stack bounds in the same way as other pthread ports, without trying to
-  walk the frames on the stack.  This is recommended only as a fall-back for
-  applications that don't support proper stack unwinding.
+DARWIN_PARSE_STACK      Causes the Darwin port to discover thread stack
+  bounds by walking the stack frames (if supported), instead of using the
+  same approach as other pthreads ports.  Might be needed to make
+  task-threads-based thread registration possible.
 
 GC_NO_THREADS_DISCOVERY (Darwin and Win32+DLL only)     Exclude DllMain-based
   (on Windows) and task-threads-based (on Darwin) thread registration support.
