@@ -5323,9 +5323,8 @@ $as_echo "#define DARWIN_DONT_PARSE_STACK 1" >>confdefs.h
 
 fi
 
-# XLC neither requires nor tolerates the unnecessary assembler goop.
-# Similar for the Sun C compiler.
- if test $compiler_xlc = yes -o $compiler_suncc = yes; then
+# Sun C compiler neither requires nor tolerates the unnecessary assembler goop.
+ if test $compiler_suncc = yes; then
   ASM_WITH_CPP_UNSUPPORTED_TRUE=
   ASM_WITH_CPP_UNSUPPORTED_FALSE='#'
 else
