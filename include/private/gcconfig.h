@@ -1267,7 +1267,7 @@ extern int etext[];
 #    endif
 #    ifdef __xlC__
 /* The stack-frame-walking is broken if the IBM XLC compiler is used. */
-#      define DARWIN_DONT_PARSE_STACK 1
+#      undef DARWIN_PARSE_STACK
 #    endif
 #    define MPROTECT_VDB
 #    if defined(USE_PPC_PREFETCH) && defined(__GNUC__)
@@ -1696,8 +1696,8 @@ extern char *_STACKTOP;
 #    define GETPAGESIZE() 4096
 #  endif
 #  ifdef DARWIN
-#    define DARWIN_DONT_PARSE_STACK 1
 #    define STACKBOTTOM MAKE_CPTR(0xc0000000)
+#    undef DARWIN_PARSE_STACK
 #    define MPROTECT_VDB
 #  endif
 #endif /* I386 */
@@ -2163,8 +2163,8 @@ extern int __data_start[] __attribute__((__weak__));
 #  endif
 #  ifdef DARWIN
 /* OS X, iOS, visionOS */
-#    define DARWIN_DONT_PARSE_STACK 1
 #    define STACKBOTTOM MAKE_CPTR(0x16fdfffff)
+#    undef DARWIN_PARSE_STACK
 #    if (TARGET_OS_IPHONE || TARGET_OS_XR || TARGET_OS_VISION)
 /*
  * `MPROTECT_VDB` causes use of non-public API like `exc_server`, this
@@ -2243,8 +2243,8 @@ extern char **__environ;
 #  endif
 #  ifdef DARWIN
 /* iOS */
-#    define DARWIN_DONT_PARSE_STACK 1
 #    define STACKBOTTOM MAKE_CPTR(0x30000000)
+#    undef DARWIN_PARSE_STACK
 /* `MPROTECT_VDB` causes use of non-public API. */
 #  endif
 #  ifdef NETBSD
@@ -2406,8 +2406,8 @@ EXTERN_C_BEGIN
 /* Nothing specific. */
 #  endif
 #  ifdef DARWIN
-#    define DARWIN_DONT_PARSE_STACK 1
 #    define STACKBOTTOM MAKE_CPTR(0x7fff5fc00000)
+#    undef DARWIN_PARSE_STACK
 #    define MPROTECT_VDB
 #  endif
 #  ifdef FREEBSD
@@ -3402,7 +3402,7 @@ extern ptr_t GC_data_start;
 #ifndef GC_NO_THREADS_DISCOVERY
 #  if defined(DARWIN) && defined(THREADS)
 /* Task-based thread registration requires stack-frame-walking code. */
-#    if defined(DARWIN_DONT_PARSE_STACK)
+#    ifndef DARWIN_PARSE_STACK
 #      define GC_NO_THREADS_DISCOVERY
 #    endif
 #  elif defined(GC_WIN32_THREADS)
@@ -3476,8 +3476,8 @@ extern ptr_t GC_data_start;
 #  define HAVE_CLOCK_GETTIME 1
 #endif
 
-#if defined(GC_PTHREADS) && !defined(E2K) && !defined(IA64)   \
-    && (!defined(DARWIN) || defined(DARWIN_DONT_PARSE_STACK)) \
+#if defined(GC_PTHREADS) && !defined(E2K) && !defined(IA64) \
+    && !(defined(DARWIN) && defined(DARWIN_PARSE_STACK))    \
     && !defined(SN_TARGET_PSP2) && !defined(REDIRECT_MALLOC)
 /*
  * Note: unimplemented in case of redirection of `malloc()` because

@@ -2468,7 +2468,7 @@ main(void)
     GC_clear_exclusion_table();
 #if defined(THREADS) && !defined(TEST_NO_THREADS_DISCOVERY)              \
     && !defined(GC_NO_THREADS_DISCOVERY) && !defined(THREAD_LOCAL_ALLOC) \
-    && (defined(DARWIN) && !defined(DARWIN_DONT_PARSE_STACK)             \
+    && (defined(DARWIN)                                                  \
         || (defined(GC_WIN32_THREADS) && defined(GC_DLL)                 \
             && !defined(MSWINCE)))
     /* Test with implicit thread registration. */

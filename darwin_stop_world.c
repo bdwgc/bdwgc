@@ -47,8 +47,7 @@
 #    endif
 #  endif
 
-#  ifndef DARWIN_DONT_PARSE_STACK
-
+#  ifdef DARWIN_PARSE_STACK
 typedef struct StackFrame {
   word savedSP;
   word savedCR;
@@ -102,8 +101,7 @@ GC_FindTopOfStack(word stack_start)
 #    endif
   return (ptr_t)frame;
 }
-
-#  endif /* !DARWIN_DONT_PARSE_STACK */
+#  endif
 
 /*
  * `GC_query_task_threads` controls whether to obtain the list of the
@@ -148,7 +146,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
                    mach_port_t my_thread, ptr_t *paltstack_lo,
                    ptr_t *paltstack_hi, GC_bool *pfound_me)
 {
-#  ifdef DARWIN_DONT_PARSE_STACK
+#  ifndef DARWIN_PARSE_STACK
   GC_stack_context_t crtn;
 #  endif
   ptr_t lo;
@@ -157,13 +155,13 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
   if (thread == my_thread) {
     GC_ASSERT(NULL == p || (p->flags & DO_BLOCKING) == 0);
     lo = GC_approx_sp();
-#  ifndef DARWIN_DONT_PARSE_STACK
+#  ifdef DARWIN_PARSE_STACK
     *phi = GC_FindTopOfStack(0);
 #  endif
     *pfound_me = TRUE;
   } else if (p != NULL && (p->flags & DO_BLOCKING) != 0) {
     lo = p->crtn->stack_ptr;
-#  ifndef DARWIN_DONT_PARSE_STACK
+#  ifdef DARWIN_PARSE_STACK
     *phi = p->crtn->topOfStack;
 #  endif
 
@@ -219,7 +217,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 
 #  if defined(I386)
     lo = (ptr_t)state.THREAD_FLD(esp);
-#    ifndef DARWIN_DONT_PARSE_STACK
+#    ifdef DARWIN_PARSE_STACK
     *phi = GC_FindTopOfStack(state.THREAD_FLD(esp));
 #    endif
     GC_push_one(state.THREAD_FLD(eax));
@@ -232,7 +230,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 
 #  elif defined(X86_64)
     lo = (ptr_t)state.THREAD_FLD(rsp);
-#    ifndef DARWIN_DONT_PARSE_STACK
+#    ifdef DARWIN_PARSE_STACK
     *phi = GC_FindTopOfStack(state.THREAD_FLD(rsp));
 #    endif
     GC_push_one(state.THREAD_FLD(rax));
@@ -254,7 +252,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 
 #  elif defined(POWERPC)
     lo = (ptr_t)(state.THREAD_FLD(r1) - PPC_RED_ZONE_SIZE);
-#    ifndef DARWIN_DONT_PARSE_STACK
+#    ifdef DARWIN_PARSE_STACK
     *phi = GC_FindTopOfStack(state.THREAD_FLD(r1));
 #    endif
     GC_push_one(state.THREAD_FLD(r0));
@@ -306,7 +304,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 
 #  elif defined(AARCH64)
     lo = (ptr_t)state.THREAD_FLD(sp);
-#    ifndef DARWIN_DONT_PARSE_STACK
+#    ifdef DARWIN_PARSE_STACK
     *phi = GC_FindTopOfStack(state.THREAD_FLD(fp));
 #    endif
     {
@@ -325,8 +323,8 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 #  endif
   }
 
-#  ifndef DARWIN_DONT_PARSE_STACK
-  /* TODO: Determine `p` and handle `altstack` if `!DARWIN_DONT_PARSE_STACK` */
+#  ifdef DARWIN_PARSE_STACK
+  /* TODO: Determine `p` and handle `altstack`. */
   UNUSED_ARG(paltstack_hi);
 #  else
   /*
@@ -346,7 +344,7 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
   /* else */ {
     *paltstack_lo = NULL;
   }
-#  if defined(STACKPTR_CORRECTOR_AVAILABLE) && defined(DARWIN_DONT_PARSE_STACK)
+#  if defined(STACKPTR_CORRECTOR_AVAILABLE) && !defined(DARWIN_PARSE_STACK)
   if (GC_sp_corrector != 0)
     GC_sp_corrector((void **)&lo, THREAD_ID_TO_VPTR(p->id));
 #  endif
@@ -370,7 +368,7 @@ GC_push_all_stacks(void)
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_thr_initialized);
 
-#  ifndef DARWIN_DONT_PARSE_STACK
+#  ifdef DARWIN_PARSE_STACK
   if (GC_query_task_threads) {
     int i;
     kern_return_t kern_result;
@@ -400,7 +398,7 @@ GC_push_all_stacks(void)
     vm_deallocate(my_task, (vm_address_t)act_list,
                   sizeof(thread_t) * listcount);
   } else
-#  endif /* !DARWIN_DONT_PARSE_STACK */
+#  endif
   /* else */ {
     int i;
 

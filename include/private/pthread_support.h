@@ -100,7 +100,7 @@ struct GC_StackContext_Rep {
    */
   ptr_t initial_stack_base;
 #    endif
-#  elif defined(DARWIN) && !defined(DARWIN_DONT_PARSE_STACK)
+#  elif defined(DARWIN) && defined(DARWIN_PARSE_STACK)
   /*
    * Result of `GC_FindTopOfStack(0)`; valid only if the thread is blocked;
    * non-`NULL` value means already set.
@@ -584,7 +584,7 @@ GC_INNER_PTHRSTART void GC_thread_exit_proc(void *);
 #  endif /* GC_PTHREADS */
 
 #  ifdef DARWIN
-#    ifndef DARWIN_DONT_PARSE_STACK
+#    ifdef DARWIN_PARSE_STACK
 GC_INNER ptr_t GC_FindTopOfStack(word);
 #    endif
 #    if defined(PARALLEL_MARK) && !defined(GC_NO_THREADS_DISCOVERY)

@@ -512,10 +512,10 @@ are assumed to be zeros regardless of the latter two macros).
 job.  By default this is not supported in order to keep the marker as fast as
 possible.
 
-`DARWIN_DONT_PARSE_STACK` - Causes the Darwin port to discover thread
-stack bounds in the same way as other `pthreads` ports, without trying to
-walk the frames on the stack.  This is recommended only as a fall-back for
-applications that do not support proper stack unwinding.
+`DARWIN_PARSE_STACK` - Causes the Darwin port to discover thread stack bounds
+by walking the stack frames (if supported), instead of using the same approach
+as other `pthreads` ports.  Might be needed to make task-threads-based thread
+registration possible.
 
 `GC_NO_THREADS_DISCOVERY` (Darwin and Win32+DLL only) - Excludes DllMain-based
 (on Windows) and task-threads-based (on Darwin) thread registration support.
