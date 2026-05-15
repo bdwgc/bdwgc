@@ -44,6 +44,30 @@ GC_reset_thread_local_initialization(void)
 }
 #  endif
 
+/* Initialize all the free lists of a thread-local storage structure. */
+static void
+init_freelists(GC_tlfs p)
+{
+  int kind, j;
+
+  for (j = 0; j < GC_TINY_FREELISTS; ++j) {
+    for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
+      p->_freelists[kind][j] = NUMERIC_TO_VPTR(1);
+    }
+#  ifdef GC_GCJ_SUPPORT
+    p->gcj_freelists[j] = NUMERIC_TO_VPTR(1);
+#  endif
+  }
+  /*
+   * The zero-sized free list is handled like the regular free list, to
+   * ensure that the explicit deallocation works.  However, an allocation
+   * of a `gcj` object with the zero size is always an error.
+   */
+#  ifdef GC_GCJ_SUPPORT
+  p->gcj_freelists[0] = MAKE_CPTR(ERROR_FL);
+#  endif
+}
+
 /*
  * Return a single nonempty free list `fl` to the global one pointed to
  * by `gfl`.
@@ -117,8 +141,6 @@ reset_thread_key(void *v)
 GC_INNER void
 GC_init_thread_local(GC_tlfs p)
 {
-  int kind, j;
-
 #  if !defined(USE_COMPILER_TLS) && !defined(USE_WIN32_COMPILER_TLS)
   GC_ASSERT(I_HOLD_LOCK());
   if (UNLIKELY(!keys_initialized)) {
@@ -130,26 +152,13 @@ GC_init_thread_local(GC_tlfs p)
       ABORT("Failed to create key for local allocator");
     keys_initialized = TRUE;
   }
+#  endif
+  init_freelists(p);
+#  if !defined(USE_COMPILER_TLS) && !defined(USE_WIN32_COMPILER_TLS)
   if (GC_setspecific(GC_thread_key, p) != 0)
     ABORT("Failed to set thread specific allocation pointers");
 #  else
   GC_thread_key = p;
-#  endif
-  for (j = 0; j < GC_TINY_FREELISTS; ++j) {
-    for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
-      p->_freelists[kind][j] = NUMERIC_TO_VPTR(1);
-    }
-#  ifdef GC_GCJ_SUPPORT
-    p->gcj_freelists[j] = NUMERIC_TO_VPTR(1);
-#  endif
-  }
-  /*
-   * The zero-sized free list is handled like the regular free list, to
-   * ensure that the explicit deallocation works.  However, an allocation
-   * of a `gcj` object with the zero size is always an error.
-   */
-#  ifdef GC_GCJ_SUPPORT
-  p->gcj_freelists[0] = MAKE_CPTR(ERROR_FL);
 #  endif
 }
 
