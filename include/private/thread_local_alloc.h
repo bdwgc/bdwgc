@@ -45,6 +45,8 @@ EXTERN_C_BEGIN
 #        else
 #          define USE_COMPILER_TLS
 #        endif
+#      elif GC_GNUC_PREREQ(4, 9) || GC_CLANG_PREREQ(8, 0)
+#        define USE_COMPILER_TLS
 #      elif defined(__GNUC__) || defined(MSWINCE)
 #        define USE_WIN32_SPECIFIC
 #      else
