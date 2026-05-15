@@ -40,8 +40,7 @@ EXTERN_C_BEGIN
       && !defined(USE_CUSTOM_SPECIFIC)
 #    if defined(GC_WIN32_THREADS)
 #      if defined(CYGWIN) && GC_GNUC_PREREQ(4, 0)
-#        if defined(__clang__)
-/* As of Cygwin clang-3.5.2, thread-local storage is unsupported. */
+#        if defined(__clang__) && !GC_CLANG_PREREQ(8, 0)
 #          define USE_PTHREAD_SPECIFIC
 #        else
 #          define USE_COMPILER_TLS
