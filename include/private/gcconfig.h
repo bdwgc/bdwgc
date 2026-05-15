@@ -1278,6 +1278,11 @@ EXTERN_C_BEGIN
 #       define ALIGNMENT 4
 #       define STACKBOTTOM ((ptr_t)0xc0000000)
 #     endif
+#     ifdef __xlC__
+        /* The stack-frame-walking is broken if the IBM XLC     */
+        /* compiler is used.                                    */
+#       define DARWIN_DONT_PARSE_STACK 1
+#     endif
 #     define MPROTECT_VDB
 #     if defined(USE_PPC_PREFETCH) && defined(__GNUC__)
         /* The performance impact of prefetches is untested */

@@ -366,9 +366,6 @@ case "$host" in
       # Turn on the workaround described in pthread_start.c.
       AS_IF([test "$THREADS" = posix], [pthread_start_standalone=yes])
       ;;
-  powerpc-*-darwin*)
-      powerpc_darwin=true
-      ;;
   *-*-solaris*)
       if test "$GCC" != yes; then
         # Solaris SunCC
@@ -407,18 +404,6 @@ if test "$GCC" = yes; then
         [WPEDANTIC="-Wpedantic -Wno-long-long"])
   CFLAGS="-Wall $WEXTRA $WPEDANTIC $CFLAGS"
   CXXFLAGS="-Wall $WEXTRA $WPEDANTIC $CXXFLAGS"
-fi
-
-AC_MSG_CHECKING(for xlc)
-AC_TRY_COMPILE([],[
- #ifndef __xlC__
- # error
- #endif
-], [compiler_xlc=yes], [compiler_xlc=no])
-AC_MSG_RESULT($compiler_xlc)
-if test $compiler_xlc = yes -a "$powerpc_darwin" = true; then
-  # the darwin stack-frame-walking code is completely broken on xlc
-  AC_DEFINE([DARWIN_DONT_PARSE_STACK], 1, [See doc/README.macros.])
 fi
 
 # Sun C compiler neither requires nor tolerates the unnecessary assembler goop.
