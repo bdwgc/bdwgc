@@ -32,7 +32,7 @@ struct thread_stop_info {
   ptr_t stack_ptr; /* Valid only when thread is in a "blocked" state.   */
 };
 
-#ifndef DARWIN_DONT_PARSE_STACK
+#ifdef DARWIN_PARSE_STACK
   GC_INNER ptr_t GC_FindTopOfStack(unsigned long);
 #endif
 

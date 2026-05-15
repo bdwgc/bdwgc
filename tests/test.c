@@ -2399,7 +2399,7 @@ int main(void)
         pthread_win32_thread_attach_np ();
 #   endif
 #   if defined(GC_DARWIN_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
-        && !defined(DARWIN_DONT_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
+        && defined(DARWIN_PARSE_STACK) && !defined(THREAD_LOCAL_ALLOC)
       /* Test with the Darwin implicit thread registration. */
       if (!GC_is_init_called()) {
         GC_use_threads_discovery();

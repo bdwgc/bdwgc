@@ -1636,7 +1636,7 @@ static GC_bool do_blocking_enter(GC_thread me)
 #   else
         me -> stop_info.stack_ptr = GC_approx_sp();
 #   endif
-#   if defined(GC_DARWIN_THREADS) && !defined(DARWIN_DONT_PARSE_STACK)
+#   if defined(GC_DARWIN_THREADS) && defined(DARWIN_PARSE_STACK)
         if (me -> topOfStack == NULL) {
             /* GC_do_blocking_inner is not called recursively,  */
             /* so topOfStack should be computed now.            */
@@ -1671,7 +1671,7 @@ static void do_blocking_leave(GC_thread me, GC_bool topOfStackUnset)
         me -> backing_store_ptr = NULL;
         me -> backing_store_end = NULL;
 #   endif
-#   if defined(GC_DARWIN_THREADS) && !defined(DARWIN_DONT_PARSE_STACK)
+#   if defined(GC_DARWIN_THREADS) && defined(DARWIN_PARSE_STACK)
         if (topOfStackUnset)
             me -> topOfStack = NULL; /* make topOfStack unset again */
 #   else
