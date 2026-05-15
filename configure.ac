@@ -435,10 +435,8 @@ if test $compiler_xlc = yes -a "$powerpc_darwin" = true; then
   AC_DEFINE([DARWIN_DONT_PARSE_STACK], 1, [See doc/README.macros.])
 fi
 
-# XLC neither requires nor tolerates the unnecessary assembler goop.
-# Similar for the Sun C compiler.
-AM_CONDITIONAL([ASM_WITH_CPP_UNSUPPORTED],
-    [test $compiler_xlc = yes -o $compiler_suncc = yes])
+# Sun C compiler neither requires nor tolerates the unnecessary assembler goop.
+AM_CONDITIONAL([ASM_WITH_CPP_UNSUPPORTED], [test $compiler_suncc = yes])
 
 if test "$GCC" = yes; then
   # Disable aliasing optimization unless forced to.
