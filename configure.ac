@@ -482,10 +482,8 @@ if test $compiler_xlc = yes -a "$powerpc_darwin" = true; then
              to walk the frames on the stack.])
 fi
 
-# XLC neither requires nor tolerates the unnecessary assembler goop.
-# Similar for the Sun C compiler.
-AM_CONDITIONAL([ASM_WITH_CPP_UNSUPPORTED],
-    [test $compiler_xlc = yes -o $compiler_suncc = yes])
+# Sun C compiler neither requires nor tolerates the unnecessary assembler goop.
+AM_CONDITIONAL([ASM_WITH_CPP_UNSUPPORTED], [test $compiler_suncc = yes])
 
 # Check for `getcontext` (e.g., uClibc can be configured without it)
 AC_CHECK_FUNC([getcontext], [],
