@@ -4130,7 +4130,7 @@ GC_EXTERN GC_bool GC_win32_dll_threads;
 /* This returns `FALSE` until a thread is created (or attached), at least. */
 #  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
 #    define GC_has_running_threads() \
-      (GC_win32_dll_threads ? GC_max_thread_index > 1 : GC_need_to_lock_real)
+      (GC_win32_dll_threads ? GC_max_thread_index > 0 : GC_need_to_lock_real)
 #  else
 #    define GC_has_running_threads() GC_need_to_lock_real
 #  endif
