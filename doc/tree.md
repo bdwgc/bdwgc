@@ -57,7 +57,7 @@ to distinct `bottom_index` structures. If no address with the corresponding
 high bits is part of the heap, then the entry points to `GC_all_nils`,
 a single `bottom_index` structure consisting only of `NULL` `hdr` pointers.
 
-`Bottom_index` structures contain slightly more information than just `hdr`
+`bottom_index` structures contain slightly more information than just `hdr`
 pointers. The `asc_link` field is used to link all `bottom_index` structures
 in ascending order for fast traversal. This list is pointed to be
 `GC_all_bottom_indices`. It is maintained with the aid of `key` field that
