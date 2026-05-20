@@ -234,7 +234,7 @@
 * Do not compile unsupported parallel markers if GC_DISCOVER_TASK_THREADS
 * Do not count time spent processing toggle-refs in stopped_mark
 * Do not decrement ecos_gc_brk pointer in tiny_sbrk (refactoring)
-* Do not define GC_max_thread_index variable if GC_NO_THREADS_DISCOVERY
+* Do not define GC_max_thread_index_p1 variable if GC_NO_THREADS_DISCOVERY
 * Do not define GC_pthread_start/exit for Orbis and Sony PSP (refactoring)
 * Do not define GETPAGESIZE on Win32 (refactoring)
 * Do not define SIG_HNDLR_PTR on Darwin unless really used

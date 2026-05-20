@@ -2323,9 +2323,12 @@ struct _GC_arrays {
 #endif
 
 #if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
-  /* Largest index in `dll_thread_table` that was ever used. */
-#  define GC_max_thread_index GC_arrays._max_thread_index
-  volatile LONG _max_thread_index;
+  /*
+   * The largest index in `dll_thread_table` that was ever used plus one;
+   * zero if `GC_win32_dll_threads` is false.
+   */
+#  define GC_max_thread_index_p1 GC_arrays._max_thread_index_p1
+  volatile LONG _max_thread_index_p1;
 #endif
 
   /* Total size of registered root sections. */
@@ -4129,8 +4132,9 @@ GC_EXTERN GC_bool GC_win32_dll_threads;
 
 /* This returns `FALSE` until a thread is created (or attached), at least. */
 #  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
-#    define GC_has_running_threads() \
-      (GC_win32_dll_threads ? GC_max_thread_index > 0 : GC_need_to_lock_real)
+#    define GC_has_running_threads()                     \
+      (GC_win32_dll_threads ? GC_max_thread_index_p1 > 1 \
+                            : GC_need_to_lock_real)
 #  else
 #    define GC_has_running_threads() GC_need_to_lock_real
 #  endif
