@@ -252,21 +252,21 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
         ABORT("Too many threads");
     }
     /*
-     * Update `GC_max_thread_index` if necessary.  The following is safe,
+     * Update `GC_max_thread_index_p1` if necessary.  The following is safe,
      * and unlike `CompareExchange`-based solutions seems to work on all
-     * Windows 95 and later platforms.  Note that `GC_max_thread_index`
+     * Windows 95 and later platforms.  Note that `GC_max_thread_index_p1`
      * may be temporarily out of bounds, so readers have to compensate.
      */
-    while (i > GC_max_thread_index) {
-      InterlockedIncrement((LONG *)&GC_max_thread_index);
+    while (i >= GC_max_thread_index_p1) {
+      InterlockedIncrement((LONG *)&GC_max_thread_index_p1);
       /* Cast away `volatile` for older versions of Win32 headers. */
     }
-    if (UNLIKELY(GC_max_thread_index >= MAX_THREADS)) {
+    if (UNLIKELY(GC_max_thread_index_p1 > MAX_THREADS)) {
       /*
        * We overshot due to simultaneous increments.
-       * Setting it to `MAX_THREADS - 1` is always safe.
+       * Setting it to `MAX_THREADS` is always safe.
        */
-      GC_max_thread_index = MAX_THREADS - 1;
+      GC_max_thread_index_p1 = MAX_THREADS;
     }
     me = (GC_thread)(dll_thread_table + i);
     me->crtn = &dll_crtn_table[i];
@@ -330,13 +330,13 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
 
 #  ifndef GC_NO_THREADS_DISCOVERY
 /*
- * `GC_max_thread_index` may temporarily be larger than `MAX_THREADS`.
+ * `GC_max_thread_index_p1` may temporarily be larger than `MAX_THREADS`.
  * To avoid subscript errors, we check it on access.
  */
 GC_INLINE int
 GC_get_max_thread_index(void)
 {
-  int my_max = (int)GC_max_thread_index;
+  int my_max = (int)GC_max_thread_index_p1 - 1;
 
   return LIKELY(my_max < MAX_THREADS) ? my_max : MAX_THREADS - 1;
 }
@@ -346,7 +346,6 @@ GC_win32_dll_lookup_thread(thread_id_t id)
 {
   int i, my_max = GC_get_max_thread_index();
 
-  GC_ASSERT(GC_win32_dll_threads);
   for (i = 0; i <= my_max; i++) {
     if (AO_load_acquire(&dll_thread_table[i].tm.in_use)
         && dll_thread_table[i].id == id) {
@@ -666,23 +665,21 @@ GC_ATTR_NOINLINE
 GC_INNER void
 GC_win32_dll_resume_all_threads(void)
 {
-  if (GC_win32_dll_threads) {
-    /*
-     * Note: we do not check `GC_please_stop` here because in an abort
-     * situation (fatal error), the safest approach is to always iterate
-     * through the table resuming all suspended threads, if any.
-     * The overhead is negligible since we are about to abort anyway.
-     */
-    int i, my_max = GC_get_max_thread_index();
+  /*
+   * Note: we do not check `GC_please_stop` here because in an abort
+   * situation (fatal error), the safest approach is to always iterate
+   * through the table resuming all suspended threads, if any.
+   * The overhead is negligible since we are about to abort anyway.
+   */
+  int i, my_max = GC_get_max_thread_index();
 
-    for (i = 0; i <= my_max; i++) {
-      GC_thread p = (GC_thread)(dll_thread_table + i);
+  for (i = 0; i <= my_max; i++) {
+    GC_thread p = (GC_thread)(dll_thread_table + i);
 
-      if (UNLIKELY((p->flags & IS_SUSPENDED) != 0)) {
-        (void)ResumeThread(p->handle);
-        /* Ignore errors as we are aborting anyway. */
-        p->flags &= (unsigned char)~IS_SUSPENDED;
-      }
+    if (UNLIKELY((p->flags & IS_SUSPENDED) != 0)) {
+      (void)ResumeThread(p->handle);
+      /* Ignore errors as we are aborting anyway. */
+      p->flags &= (unsigned char)~IS_SUSPENDED;
     }
   }
 }
@@ -2125,7 +2122,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
 
   case DLL_PROCESS_DETACH:
     /* Do nothing on process exit, all handles will be closed automatically. */
-    if (GC_win32_dll_threads && NULL == reserved) {
+    if (NULL == reserved) {
       int i, my_max = GC_get_max_thread_index();
 
       for (i = 0; i <= my_max; ++i) {
@@ -2133,7 +2130,8 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
           GC_delete_thread((GC_thread)&dll_thread_table[i]);
       }
 #    ifndef GC_NO_DEINIT
-      GC_deinit();
+      if (my_max >= 0)
+        GC_deinit();
 #    endif
     }
     break;
