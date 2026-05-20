@@ -144,10 +144,13 @@ cmake_install.cmake
 *.tds
 gc.def
 
-# Stuff from VS build system and IDE
+# Stuff from VS build system and IDE:
 *.vcproj.*.user
 .vs/
 .vscode/
+
+# AI agents:
+/.workspace_rag/
 
 # Code analysis tools:
 *.c.gcov
