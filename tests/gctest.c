@@ -2127,6 +2127,7 @@ check_heap_stats(void)
   (void)GC_get_size_map_at(1);
 #endif
   TEST_ASSERT(GC_size(NULL) == 0);
+  TEST_ASSERT(GC_get_hblk_size() == HBLKSIZE);
   test_long_mult();
 
 #ifndef NO_CLOCK
@@ -2615,7 +2616,6 @@ main(void)
   /* Dummy checking of various getters and setters. */
   (void)GC_get_bytes_since_gc();
   (void)GC_get_free_bytes();
-  (void)GC_get_hblk_size();
   (void)GC_get_is_valid_displacement_print_proc();
   (void)GC_get_is_visible_print_proc();
   (void)GC_get_pages_executable();
