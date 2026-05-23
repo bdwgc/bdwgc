@@ -74,6 +74,13 @@ GC_get_full_gc_total_time(void)
 }
 
 GC_API unsigned long GC_CALL
+GC_get_full_gc_total_ns_frac(void)
+{
+  /* Note: the result type matches the type of `GC_timeval_s.tv_nsec`. */
+  return GC_full_gc_total_ns_frac;
+}
+
+GC_API unsigned long GC_CALL
 GC_get_stopped_mark_total_time(void)
 {
   return GC_stopped_mark_total_time;

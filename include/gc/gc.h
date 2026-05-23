@@ -517,6 +517,16 @@ GC_API void GC_CALL GC_start_performance_measurement(void);
 GC_API unsigned long GC_CALL GC_get_full_gc_total_time(void);
 
 /**
+ * Get the fractional nanosecond part of the total time value returned by
+ * `GC_get_full_gc_total_time()`.  The result is always less than 1000000.
+ * In the multi-threaded mode, the client should use
+ * `GC_call_with_reader_lock()` to get a consistent total time value.
+ * Defined only if the library has been compiled without `NO_CLOCK`
+ * macro defined.
+ */
+GC_API unsigned long GC_CALL GC_get_full_gc_total_ns_frac(void);
+
+/**
  * Same as `GC_get_full_gc_total_time` but takes into account all mark
  * phases with the world stopped and nothing else.
  */
