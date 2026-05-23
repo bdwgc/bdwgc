@@ -2652,6 +2652,7 @@ main(void)
   GC_set_thr_restart_signal(GC_get_thr_restart_signal());
 #endif
 #ifndef NO_CLOCK
+  TEST_ASSERT(GC_get_full_gc_total_ns_frac() < 1000UL * 1000);
   GC_set_time_limit_tv(GC_get_time_limit_tv());
 #endif
 #ifndef GC_NO_FINALIZATION
