@@ -727,7 +727,7 @@ GC_INNER void
 GC_push_thread_structures(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     /*
      * Unlike the other threads implementations, the thread table here
@@ -758,7 +758,7 @@ GC_win32_unprotect_thread(GC_thread t)
 {
   GC_ASSERT(I_HOLD_LOCK());
   if (GC_auto_incremental
-#    ifndef GC_NO_THREADS_DISCOVERY /*< for `LINT2` */
+#    ifdef HAS_WIN32_THREADS_DISCOVERY /*< for `LINT2` */
       && !GC_win32_dll_threads
 #    endif
   ) {
@@ -780,12 +780,12 @@ GC_win32_unprotect_thread(GC_thread t)
 STATIC int
 GC_count_threads(void)
 {
-  int i;
-  int count = 0;
+  int i, count = 0;
 
-#    if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#    ifdef HAS_WIN32_THREADS_DISCOVERY
+  /* TODO: Not implemented. */
   if (GC_win32_dll_threads)
-    return -1; /*< not implemented */
+    return -1;
 #    endif
   GC_ASSERT(I_HOLD_READER_LOCK());
   for (i = 0; i < THREAD_TABLE_SZ; ++i) {
@@ -869,7 +869,7 @@ GC_delete_thread(GC_thread t)
 #  if defined(GC_WIN32_THREADS) && !defined(MSWINCE)
   CloseHandle(t->handle);
 #  endif
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     /*
      * This is intended to be lock-free.  In this branch asynchronous changes
@@ -925,7 +925,7 @@ GC_lookup_thread(thread_id_t id)
 {
   GC_thread p;
 
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads)
     return GC_win32_dll_lookup_thread(id);
 #  endif
@@ -1783,8 +1783,7 @@ GC_record_stack_base(GC_stack_context_t crtn, const struct GC_stack_base *sb)
 #  endif
 }
 
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS) \
-      || !defined(DONT_USE_ATEXIT)
+#  if !defined(DONT_USE_ATEXIT) || defined(HAS_WIN32_THREADS_DISCOVERY)
 GC_INNER_WIN32THREAD thread_id_t GC_main_thread_id;
 #  endif
 
@@ -2008,7 +2007,7 @@ GC_init_parallel(void)
   GC_init_thread_local(&me->tlfs);
   UNLOCK();
 #  endif
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     /*
      * Cannot intercept thread creation.  Hence we do not know if other
@@ -2434,7 +2433,7 @@ GC_unregister_my_thread(void)
    * Client should not unregister the thread explicitly
    * if it is registered by `DllMain`, except for the main thread.
    */
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   GC_ASSERT(!GC_win32_dll_threads
             || THREAD_ID_EQUAL(GC_main_thread_id, thread_id_self()));
 #  endif

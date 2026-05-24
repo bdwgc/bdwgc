@@ -77,7 +77,7 @@ struct GC_StackContext_Rep {
    * On Windows: 0 means entry invalid; not `in_use` implies `stack_end`
    * is zero.
    */
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   volatile
 #  endif
       ptr_t stack_end;
@@ -171,7 +171,7 @@ typedef pthread_t thread_id_t;
 
 struct GC_Thread_Rep {
   union {
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
     /*
      * Updated without a lock.  We assert that each unused entry has
      * invalid `id` of zero and zero `stack_end`.
@@ -255,7 +255,7 @@ struct GC_Thread_Rep {
 #    define IS_SUSPENDED 0x40
 #  endif
 
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   /*
    * Thread should be deleted by `GC_start_world()`.  It is OK not to scan
    * the stack of the thread.  Could be set to `TRUE` only when holding
@@ -463,11 +463,11 @@ GC_INNER void GC_delete_thread(GC_thread);
 GC_INNER void GC_setup_atfork(void);
 #    endif
 
-#    if !defined(DONT_USE_ATEXIT) || !defined(GC_NO_THREADS_DISCOVERY)
+#    if !defined(DONT_USE_ATEXIT) || defined(HAS_WIN32_THREADS_DISCOVERY)
 GC_EXTERN thread_id_t GC_main_thread_id;
 #    endif
 
-#    ifndef GC_NO_THREADS_DISCOVERY
+#    ifdef HAS_WIN32_THREADS_DISCOVERY
 /*
  * Search in `dll_thread_table` and return the `GC_thread[]` entity
  * corresponding to the given thread `id`.
