@@ -41,7 +41,7 @@ GC_INNER CRITICAL_SECTION GC_allocate_ml;
 
 static ptr_t copy_ptr_regs(word *regs, const CONTEXT *pcontext);
 
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
 /*
  * This code operates in two distinct modes, depending on the setting
  * of `GC_win32_dll_threads`.  If `GC_win32_dll_threads`, then all
@@ -104,7 +104,7 @@ STATIC GC_bool GC_has_pending_delete_threads = FALSE;
 STATIC volatile GC_bool GC_please_stop = FALSE;
 #  elif defined(GC_ASSERTIONS)
 STATIC GC_bool GC_please_stop = FALSE;
-#  endif /* GC_NO_THREADS_DISCOVERY && GC_ASSERTIONS */
+#  endif
 
 /*
  * If not `GC_win32_dll_threads` (or the collector is built without `GC_DLL`
@@ -131,15 +131,7 @@ STATIC GC_bool GC_please_stop = FALSE;
 GC_API void GC_CALL
 GC_use_threads_discovery(void)
 {
-#  ifdef GC_NO_THREADS_DISCOVERY
-  /*
-   * `GC_use_threads_discovery()` is currently incompatible with
-   * `pthreads` and WinCE.  It might be possible to get `DllMain`-based
-   * thread registration to work with Cygwin, but if you try it then
-   * you are on your own.
-   */
-  ABORT("GC DllMain-based thread registration unsupported");
-#  else
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   /* Turn on `GC_win32_dll_threads`. */
   GC_ASSERT(!GC_is_initialized);
   /*
@@ -153,10 +145,18 @@ GC_use_threads_discovery(void)
 #    ifdef CPPCHECK
   GC_noop1((word)(GC_funcptr_uint)(&GC_DllMain));
 #    endif
+#  else
+  /*
+   * `GC_use_threads_discovery()` is currently incompatible with `pthreads`
+   * and WinCE.  It might be possible to get `DllMain`-based thread
+   * registration to work with Cygwin, but if you try it, then you are on
+   * your own.
+   */
+  ABORT("GC DllMain-based thread registration unsupported");
 #  endif
 }
 
-#  if defined(WRAP_MARK_SOME) && !defined(GC_NO_THREADS_DISCOVERY)
+#  if defined(WRAP_MARK_SOME) && defined(HAS_WIN32_THREADS_DISCOVERY)
 GC_INNER GC_bool
 GC_started_thread_while_stopped(void)
 {
@@ -179,7 +179,7 @@ GC_started_thread_while_stopped(void)
 }
 #  endif
 
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
 /*
  * The thread table used if `GC_win32_dll_threads`.  This is a fixed-size
  * array.  Since we use runtime conditionals, both variants are always
@@ -203,7 +203,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
 {
   GC_thread me;
 
-#  ifdef GC_NO_THREADS_DISCOVERY
+#  if !defined(HAS_WIN32_THREADS_DISCOVERY)
   GC_ASSERT(I_HOLD_LOCK());
 #  endif
   /*
@@ -219,7 +219,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
     GC_set_write_fault_handler();
 #  endif
 
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i;
     /*
@@ -306,7 +306,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
    * `GC_win32_dll_lookup_thread` as reserved but invalid.
    */
   ((volatile struct GC_Thread_Rep *)me)->id = self_id;
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     if (GC_please_stop) {
       AO_store(&GC_attached_thread, TRUE);
@@ -328,7 +328,7 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
   return me;
 }
 
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
 /*
  * `GC_max_thread_index_p1` may temporarily be larger than `MAX_THREADS`.
  * To avoid subscript errors, we check it on access.
@@ -358,7 +358,7 @@ GC_win32_dll_lookup_thread(thread_id_t id)
   }
   return i <= my_max ? (GC_thread)(dll_thread_table + i) : NULL;
 }
-#  endif /* !GC_NO_THREADS_DISCOVERY */
+#  endif
 
 #  ifdef GC_PTHREADS
 /*
@@ -481,7 +481,7 @@ GC_suspend(GC_thread t)
        * as `pthread_join` is guaranteed to only see user threads.
        */
 #    else
-#      ifndef GC_NO_THREADS_DISCOVERY
+#      ifdef HAS_WIN32_THREADS_DISCOVERY
       if (GC_win32_dll_threads) {
         /*
          * `pending_delete_thread` might already be set (or be about to) by
@@ -502,7 +502,7 @@ GC_suspend(GC_thread t)
     }
 
     if (SuspendThread(t->handle) == (DWORD)-1) {
-#    ifndef GC_NO_THREADS_DISCOVERY
+#    ifdef HAS_WIN32_THREADS_DISCOVERY
       if (GC_win32_dll_threads
           && (GetLastError() == ERROR_ACCESS_DENIED
               || GetLastError() == ERROR_NO_MORE_ITEMS)) {
@@ -601,7 +601,7 @@ GC_stop_world(void)
 #    endif
 #  endif
 
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i, my_max;
 
@@ -660,7 +660,7 @@ GC_stop_world(void)
 #  endif
 }
 
-#  if !defined(GC_NO_THREADS_DISCOVERY) && !defined(SMALL_CONFIG)
+#  if defined(HAS_WIN32_THREADS_DISCOVERY) && !defined(SMALL_CONFIG)
 GC_ATTR_NOINLINE
 GC_INNER void
 GC_win32_dll_resume_all_threads(void)
@@ -693,7 +693,7 @@ GC_start_world(void)
 #  endif
 
   GC_ASSERT(I_HOLD_LOCK());
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i, my_max = GC_get_max_thread_index();
     GC_bool pending_delete;
@@ -932,7 +932,7 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
   GC_ASSERT(I_HOLD_LOCK());
   if (UNLIKELY(NULL == stack_end))
     return 0;
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   /*
    * If the thread is scheduled for deletion, do not scan its stack.
    * A race with `GC_DllMain()` in accessing `pending_delete_thread` is fine.
@@ -1163,7 +1163,7 @@ GC_push_all_stacks(void)
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_thr_initialized);
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i, my_max = GC_get_max_thread_index();
 
@@ -1229,7 +1229,7 @@ GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo, ptr_t *phi)
 
   GC_ASSERT(I_HOLD_LOCK());
   /* First set `current_min`, ignoring `limit`. */
-#    ifndef GC_NO_THREADS_DISCOVERY
+#    ifdef HAS_WIN32_THREADS_DISCOVERY
   if (GC_win32_dll_threads) {
     int i, my_max = GC_get_max_thread_index();
 
@@ -1924,7 +1924,7 @@ GC_thr_init(void)
 #  ifdef GC_ASSERTIONS
   GC_thr_initialized = TRUE;
 #  endif
-#  if !defined(DONT_USE_ATEXIT) || !defined(GC_NO_THREADS_DISCOVERY)
+#  if !defined(DONT_USE_ATEXIT) || defined(HAS_WIN32_THREADS_DISCOVERY)
   GC_main_thread_id = self_id;
 #  endif
 #  ifdef CAN_HANDLE_FORK
@@ -2033,7 +2033,7 @@ GC_thr_init(void)
   GC_register_my_thread_inner(&sb, self_id);
 }
 
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
 /*
  * We avoid acquiring locks here, since this does not seem to be preemptible.
  * This may run with an uninitialized collector, in which case we do not
@@ -2138,7 +2138,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
   }
   return TRUE;
 }
-#  endif /* !GC_NO_THREADS_DISCOVERY */
+#  endif
 
 #  ifndef GC_NO_THREAD_REDIRECTS
 /* Restore thread calls redirection. */

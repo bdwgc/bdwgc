@@ -3427,6 +3427,12 @@ extern ptr_t GC_data_start;
 #  error Defined both GC_DISCOVER_TASK_THREADS and GC_NO_THREADS_DISCOVERY
 #endif
 
+#if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY)
+#  define HAS_WIN32_THREADS_DISCOVERY
+#elif defined(CPPCHECK)
+#  undef HAS_WIN32_THREADS_DISCOVERY
+#endif
+
 #if defined(PARALLEL_MARK) && !defined(DEFAULT_STACK_MAYBE_SMALL) \
     && (defined(DGUX) || defined(HPUX)                            \
         || defined(NO_GETCONTEXT) /* e.g. musl */)

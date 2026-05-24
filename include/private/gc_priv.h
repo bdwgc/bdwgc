@@ -743,8 +743,8 @@ GC_INNER void GC_start_world(void);
 #  define START_WORLD()
 #endif
 
-#if defined(GC_WIN32_THREADS) && !defined(GC_NO_THREADS_DISCOVERY) \
-    && !defined(SMALL_CONFIG) && defined(GC_BUILD)
+#if defined(HAS_WIN32_THREADS_DISCOVERY) && !defined(SMALL_CONFIG) \
+    && defined(GC_BUILD)
 /*
  * Resume all suspended threads, if any.  Called right before `GC_on_abort()`
  * to avoid a potential deadlock if there is a suspended `DllMain` thread
@@ -1900,7 +1900,7 @@ struct _GC_arrays {
 #    define GC_fault_handler_lock GC_arrays._fault_handler_lock
   volatile AO_TS_t _fault_handler_lock;
 #  endif
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
 #    define GC_dll_main_detach_thread_lock \
       GC_arrays._dll_main_detach_thread_lock
   volatile AO_TS_t _dll_main_detach_thread_lock;
@@ -2322,7 +2322,7 @@ struct _GC_arrays {
   unsigned32 _stopped_mark_total_ns_frac;
 #endif
 
-#if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#ifdef HAS_WIN32_THREADS_DISCOVERY
   /*
    * The largest index in `dll_thread_table` that was ever used plus one;
    * zero if `GC_win32_dll_threads` is false.
@@ -4116,7 +4116,7 @@ GC_EXTERN GC_bool GC_write_disabled;
 #  endif
 
 #  ifdef GC_WIN32_THREADS
-#    ifdef GC_NO_THREADS_DISCOVERY
+#    if !defined(HAS_WIN32_THREADS_DISCOVERY)
 #      define GC_win32_dll_threads FALSE
 #    elif defined(GC_DISCOVER_TASK_THREADS)
 #      define GC_win32_dll_threads TRUE
@@ -4131,7 +4131,7 @@ GC_EXTERN GC_bool GC_win32_dll_threads;
 #  endif
 
 /* This returns `FALSE` until a thread is created (or attached), at least. */
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_WIN32_THREADS)
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
 #    define GC_has_running_threads()                     \
       (GC_win32_dll_threads ? GC_max_thread_index_p1 > 1 \
                             : GC_need_to_lock_real)
@@ -4294,7 +4294,7 @@ GC_INNER void GC_get_next_stack(ptr_t start, ptr_t limit, ptr_t *plo,
 #  if defined(MPROTECT_VDB) && !defined(CYGWIN)
 GC_INNER void GC_set_write_fault_handler(void);
 #  endif
-#  if defined(WRAP_MARK_SOME) && !defined(GC_NO_THREADS_DISCOVERY)
+#  if defined(WRAP_MARK_SOME) && defined(HAS_WIN32_THREADS_DISCOVERY)
 /*
  * Did we invalidate mark phase with an unexpected thread start?
  * Return `TRUE` if a thread was attached since we last asked or since
