@@ -35,69 +35,6 @@
 
 EXTERN_C_BEGIN
 
-#  if !defined(USE_PTHREAD_SPECIFIC) && !defined(USE_WIN32_SPECIFIC)    \
-      && !defined(USE_WIN32_COMPILER_TLS) && !defined(USE_COMPILER_TLS) \
-      && !defined(USE_CUSTOM_SPECIFIC)
-#    if defined(GC_WIN32_THREADS)
-#      if defined(CYGWIN) && GC_GNUC_PREREQ(4, 0)
-#        if defined(__clang__) && !GC_CLANG_PREREQ(8, 0)
-#          define USE_PTHREAD_SPECIFIC
-#        else
-#          define USE_COMPILER_TLS
-#        endif
-#      elif GC_GNUC_PREREQ(4, 9) || GC_CLANG_PREREQ(8, 0)
-#        define USE_COMPILER_TLS
-#      elif defined(__GNUC__) || defined(MSWINCE)
-#        define USE_WIN32_SPECIFIC
-#      else
-#        define USE_WIN32_COMPILER_TLS
-#      endif /* !GNU */
-
-#    elif defined(HOST_ANDROID)
-#      if defined(ARM32) \
-          && (GC_GNUC_PREREQ(4, 6) || GC_CLANG_PREREQ_FULL(3, 8, 256229))
-#        define USE_COMPILER_TLS
-#      elif !defined(__clang__) && !defined(ARM32)
-/* TODO: Support clang/arm64. */
-#        define USE_COMPILER_TLS
-#      else
-#        define USE_PTHREAD_SPECIFIC
-#      endif
-
-#    elif defined(LINUX) && GC_GNUC_PREREQ(3, 3) /* `&& !HOST_ANDROID` */
-#      if defined(ARM32) || defined(AVR32)
-/* TODO: Change to USE_COMPILER_TLS on Linux/arm. */
-#        define USE_PTHREAD_SPECIFIC
-#      elif defined(AARCH64) && defined(__clang__) && !GC_CLANG_PREREQ(8, 0)
-/* To avoid "R_AARCH64_ABS64 used with TLS symbol" linker warnings. */
-#        define USE_PTHREAD_SPECIFIC
-#      else
-#        define USE_COMPILER_TLS
-#      endif
-
-#    elif (defined(COSMO) || defined(FREEBSD)                                 \
-           || (defined(NETBSD) && __NetBSD_Version__ >= 600000000 /* 6.0 */)) \
-        && (GC_GNUC_PREREQ(4, 4) || GC_CLANG_PREREQ(3, 9))
-#      define USE_COMPILER_TLS
-
-#    elif defined(HPUX)
-#      ifdef __GNUC__
-/* Empirically, as of gcc-3.3, USE_COMPILER_TLS does not work. */
-#        define USE_PTHREAD_SPECIFIC
-#      else
-#        define USE_COMPILER_TLS
-#      endif
-
-#    elif defined(IRIX5) || defined(OPENBSD) || defined(SOLARIS) \
-        || defined(NINTENDO_SWITCH) || defined(NN_PLATFORM_CTR)
-/* Use our own. */
-#      define USE_CUSTOM_SPECIFIC
-
-#    else
-#      define USE_PTHREAD_SPECIFIC
-#    endif
-#  endif /* !USE_x_SPECIFIC */
-
 #  ifndef THREAD_FREELISTS_KINDS
 #    ifdef ENABLE_DISCLAIM
 #      define THREAD_FREELISTS_KINDS (NORMAL + 2)
@@ -217,15 +154,21 @@ typedef DWORD GC_key_t;
 
 /*
  * Each thread structure must be initialized.  This call must be made from
- * the new thread.  Caller should hold the allocator lock.
+ * the new thread.  The implementation is lock-free if the compiler TLS is
+ * used, otherwise the caller should hold the allocator lock.
  */
 GC_INNER void GC_init_thread_local(GC_tlfs p);
 
 /*
- * Called when a thread is unregistered, or exits.  Caller should hold
- * the allocator lock.
+ * Called when a thread is unregistered, or exits.  The caller should hold
+ * the allocator lock unless `is_async`.
  */
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
+GC_INNER void GC_destroy_thread_local_async(GC_tlfs p, GC_bool is_async);
+#    define GC_destroy_thread_local(p) GC_destroy_thread_local_async(p, FALSE)
+#  else
 GC_INNER void GC_destroy_thread_local(GC_tlfs p);
+#  endif
 
 /*
  * The multi-threading support layer must arrange to mark thread-local free

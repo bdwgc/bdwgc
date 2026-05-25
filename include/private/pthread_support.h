@@ -476,6 +476,14 @@ GC_EXTERN thread_id_t GC_main_thread_id;
  * from the thread itself.
  */
 GC_INNER GC_thread GC_win32_dll_lookup_thread(thread_id_t id);
+
+#      ifdef THREAD_LOCAL_ALLOC
+/*
+ * Invoked from `GC_mark_thread_local_free_lists()` to explicitly mark `tlfs`
+ * field of `dll_thread_table[]`.
+ */
+GC_INNER void GC_mark_dll_thread_tlfs(void);
+#      endif
 #    endif
 
 #    ifdef MPROTECT_VDB

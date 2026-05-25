@@ -299,6 +299,12 @@ GC_mark_thread_local_free_lists(void)
   int i;
   GC_thread p;
 
+#    ifdef HAS_WIN32_THREADS_DISCOVERY
+  if (GC_win32_dll_threads) {
+    GC_mark_dll_thread_tlfs();
+    return;
+  }
+#    endif
   for (i = 0; i < THREAD_TABLE_SZ; ++i) {
     for (p = GC_threads[i]; p != NULL; p = p->tm.next) {
       if (!KNOWN_FINISHED(p))
@@ -318,6 +324,11 @@ GC_check_tls(void)
   int i;
   GC_thread p;
 
+#      ifdef HAS_WIN32_THREADS_DISCOVERY
+  /* TODO: Not implemented. */
+  if (GC_win32_dll_threads)
+    return;
+#      endif
   for (i = 0; i < THREAD_TABLE_SZ; ++i) {
     for (p = GC_threads[i]; p != NULL; p = p->tm.next) {
       if (!KNOWN_FINISHED(p))
@@ -2002,7 +2013,7 @@ GC_init_parallel(void)
   GC_thread me;
 
   GC_ASSERT(GC_is_initialized);
-  LOCK();
+  LOCK(); /*< redundant in case of `DllMain`-based thread registration */
   me = GC_self_thread_inner();
   GC_init_thread_local(&me->tlfs);
   UNLOCK();
@@ -2392,7 +2403,7 @@ GC_unregister_my_thread_inner(GC_thread me)
                 THREAD_ID_TO_VPTR(me->id), (void *)me, GC_count_threads());
 #  endif
   GC_ASSERT(!KNOWN_FINISHED(me));
-#  if defined(THREAD_LOCAL_ALLOC)
+#  ifdef THREAD_LOCAL_ALLOC
   GC_destroy_thread_local(&me->tlfs);
 #  endif
 #  ifdef NACL

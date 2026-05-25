@@ -2467,11 +2467,9 @@ main(void)
      * e.g. when `malloc` redirection is on.
      */
     GC_clear_exclusion_table();
-#if defined(THREADS) && !defined(TEST_NO_THREADS_DISCOVERY)              \
-    && !defined(GC_NO_THREADS_DISCOVERY) && !defined(THREAD_LOCAL_ALLOC) \
-    && (defined(DARWIN)                                                  \
-        || (defined(GC_WIN32_THREADS) && defined(GC_DLL)                 \
-            && !defined(MSWINCE)))
+#if defined(THREADS) && !defined(TEST_NO_THREADS_DISCOVERY) \
+    && (defined(DARWIN) || defined(GC_WIN32_THREADS))       \
+    && !defined(GC_NO_THREADS_DISCOVERY)
     /* Test with implicit thread registration. */
     GC_use_threads_discovery();
 #  ifdef DARWIN

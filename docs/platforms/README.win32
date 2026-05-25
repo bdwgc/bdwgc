@@ -176,10 +176,7 @@ We generally recommend avoiding this if possible, since it seems to
 be less than 100% reliable.
 
 To build the collector as a dynamic library which handles threads similarly
-to other platforms, type "nmake -f NT_MAKEFILE".  If automatic tracking of
-threads attached to the collector DLL (i.e. support of both kinds of thread
-tracking) is needed then delete "-D THREAD_LOCAL_ALLOC" from NT_MAKEFILE
-manually before the build.
+to other platforms, type "nmake -f NT_MAKEFILE".
 
 The incremental collection is supported only if it is enabled before any
 additional threads are created.
