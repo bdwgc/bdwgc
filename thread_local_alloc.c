@@ -122,6 +122,26 @@ return_freelists(void **fl, void **gfl)
   }
 }
 
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
+static void
+return_freelists_async(void **fl, void **gfl, GC_bool is_async)
+{
+  if (is_async) {
+    int i;
+
+    /* TODO: For now these objects will be collected during the next GC. */
+    for (i = 1; i < GC_TINY_FREELISTS; ++i) {
+      /* Clear `fl[i]`, in a way that is likely to trap if we access it. */
+      fl[i] = (ptr_t)NUMERIC_TO_VPTR(HBLKSIZE);
+    }
+  } else {
+    return_freelists(fl, gfl);
+  }
+}
+#  else
+#    define return_freelists_async(fl, gfl, a) return_freelists(fl, gfl)
+#  endif
+
 #  ifdef USE_PTHREAD_SPECIFIC
 /*
  * Re-set the TLS value on thread cleanup to allow thread-local allocations
@@ -163,23 +183,33 @@ GC_init_thread_local(GC_tlfs p)
 }
 
 GC_INNER void
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
+GC_destroy_thread_local_async(GC_tlfs p, GC_bool is_async)
+#  else
 GC_destroy_thread_local(GC_tlfs p)
+#  endif
 {
   int kind;
 
+#  ifdef HAS_WIN32_THREADS_DISCOVERY
+  GC_ASSERT(is_async || I_HOLD_LOCK());
+#  else
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_getspecific(GC_thread_key) == p);
-  /* We currently only do this from the thread itself. */
+  /* We do this from the thread itself. */
+#  endif
   GC_STATIC_ASSERT(THREAD_FREELISTS_KINDS <= MAXOBJKINDS);
   for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
     if (kind == (int)GC_n_kinds) {
       /* The kind is not created. */
       break;
     }
-    return_freelists(p->_freelists[kind], GC_obj_kinds[kind].ok_freelist);
+    return_freelists_async(p->_freelists[kind], GC_obj_kinds[kind].ok_freelist,
+                           is_async);
   }
 #  ifdef GC_GCJ_SUPPORT
-  return_freelists(p->gcj_freelists, (void **)GC_gcjobjfreelist);
+  return_freelists_async(p->gcj_freelists, (void **)GC_gcjobjfreelist,
+                         is_async);
 #  endif
 }
 

@@ -139,6 +139,13 @@ pub fn build(b: *std.Build) void {
         if (enable_parallel_mark) {
             flags.append(b.allocator, "-D PARALLEL_MARK") catch unreachable;
         }
+        if (enable_thread_local_alloc) {
+            flags.append(b.allocator, "-D THREAD_LOCAL_ALLOC") catch unreachable;
+            source_files.appendSlice(b.allocator, &.{
+                "specific.c",
+                "thread_local_alloc.c",
+            }) catch unreachable;
+        }
         if (t.os.tag != .windows) { // assume `pthreads`
             // TODO: support cygwin when supported by zig
             // Zig comes with clang which supports GCC atomic intrinsics.
@@ -157,25 +164,13 @@ pub fn build(b: *std.Build) void {
             // Common defines for POSIX platforms.
             flags.append(b.allocator, "-D _REENTRANT") catch unreachable;
             // TODO: some targets might need `_PTHREADS` defined too.
-            if (enable_thread_local_alloc) {
-                flags.append(b.allocator, "-D THREAD_LOCAL_ALLOC") catch unreachable;
-                source_files.appendSlice(b.allocator, &.{
-                    "specific.c",
-                    "thread_local_alloc.c",
-                }) catch unreachable;
-            }
-            // Message for clients: Explicit `GC_INIT` call may be required.
+            // Message for clients: Explicit `GC_INIT()` calls may be required.
             if (enable_handle_fork and !disable_handle_fork) {
                 flags.append(b.allocator, "-D HANDLE_FORK") catch unreachable;
             }
         } else {
             // Assume the GCC atomic intrinsics are supported.
             flags.append(b.allocator, "-D GC_BUILTIN_ATOMIC") catch unreachable;
-            if (enable_thread_local_alloc and (enable_parallel_mark or linkage != .dynamic)) {
-                // Imply `THREAD_LOCAL_ALLOC` unless `GC_DLL`.
-                flags.append(b.allocator, "-D THREAD_LOCAL_ALLOC") catch unreachable;
-                source_files.append(b.allocator, "thread_local_alloc.c") catch unreachable;
-            }
             flags.append(b.allocator, "-D EMPTY_GETENV_RESULTS") catch unreachable;
             source_files.appendSlice(b.allocator, &.{
                 // Add `pthread_start.c` file just in case client defines

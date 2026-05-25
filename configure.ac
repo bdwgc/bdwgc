@@ -339,11 +339,7 @@ case "$THREADS" in
   mcf | win32)
     AC_DEFINE(GC_THREADS)
     use_parallel_mark=$enable_parallel_mark
-    if test "${enable_parallel_mark}" != no \
-            -o "${enable_shared}" != yes -o "${enable_static}" != no; then
-      # Imply `THREAD_LOCAL_ALLOC` unless `GC_DLL`.
-      use_thread_local_alloc=$enable_thread_local_alloc
-    fi
+    use_thread_local_alloc=$enable_thread_local_alloc
     if test "${enable_win32_dllmain}" = yes; then
       AC_DEFINE(GC_INSIDE_DLL, 1,
                 [Enable Win32 `DllMain`-based approach of threads

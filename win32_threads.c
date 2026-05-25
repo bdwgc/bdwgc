@@ -234,7 +234,9 @@ GC_register_my_thread_inner(const struct GC_stack_base *sb,
      * be OK.  (But this has not been tested across all Win32 versions.)
      */
     for (i = 0;
-         InterlockedExchange(&dll_thread_table[i].tm.long_in_use, 1) != 0;
+         InterlockedExchange(
+             (/* no volatile */ LONG *)&dll_thread_table[i].tm.long_in_use, 1)
+         != 0;
          i++) {
       /*
        * Compare-and-swap would make this cleaner, but that is not
@@ -358,6 +360,22 @@ GC_win32_dll_lookup_thread(thread_id_t id)
   }
   return i <= my_max ? (GC_thread)(dll_thread_table + i) : NULL;
 }
+
+#    ifdef THREAD_LOCAL_ALLOC
+GC_INNER void
+GC_mark_dll_thread_tlfs(void)
+{
+  int i, my_max = GC_get_max_thread_index();
+
+  for (i = 0; i <= my_max; i++) {
+    if (AO_load_acquire(&dll_thread_table[i].tm.in_use)) {
+      GC_thread p = (/* no volatile */ GC_thread)(dll_thread_table + i);
+
+      GC_mark_thread_local_fls_for(&p->tlfs);
+    }
+  }
+}
+#    endif
 #  endif
 
 #  ifdef GC_PTHREADS
@@ -730,6 +748,9 @@ GC_start_world(void)
 
         if (p->pending_delete_thread) {
           p->pending_delete_thread = FALSE;
+#    ifdef THREAD_LOCAL_ALLOC
+          GC_destroy_thread_local(&p->tlfs);
+#    endif
           GC_delete_thread(p);
         }
       }
@@ -989,8 +1010,9 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
 #  endif
       }
     }
-#  ifdef THREAD_LOCAL_ALLOC
-    GC_ASSERT((thread->flags & IS_SUSPENDED) != 0 || !GC_world_stopped);
+#  if defined(THREAD_LOCAL_ALLOC) && !defined(GC_DISCOVER_TASK_THREADS)
+    GC_ASSERT((thread->flags & IS_SUSPENDED) != 0 || !GC_world_stopped
+              || GC_win32_dll_threads);
 #  endif
 
 #  ifndef WOW64_THREAD_CONTEXT_WORKAROUND
@@ -2081,6 +2103,7 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
     /* This may run with the collector uninitialized. */
     self_id = GetCurrentThreadId();
     if (GC_is_initialized && GC_main_thread_id != self_id) {
+      GC_thread me;
       struct GC_stack_base sb;
       /* Do not lock here. */
 #    ifdef GC_ASSERTIONS
@@ -2088,7 +2111,12 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
 #    endif
           GC_get_stack_base(&sb);
       GC_ASSERT(sb_result == GC_SUCCESS);
-      GC_register_my_thread_inner(&sb, self_id);
+      me = GC_register_my_thread_inner(&sb, self_id);
+#    ifdef THREAD_LOCAL_ALLOC
+      GC_init_thread_local(&me->tlfs); /*< lock-free */
+#    else
+      (void)me;
+#    endif
     } else {
       /* We already did it during `GC_thr_init()`, called by `GC_init()`. */
     }
@@ -2114,8 +2142,12 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
          * while holding the lock.
          */
         DETACH_THREAD_UNLOCK();
-        if (LIKELY(t != NULL))
+        if (LIKELY(t != NULL)) {
+#    ifdef THREAD_LOCAL_ALLOC
+          GC_destroy_thread_local_async(&t->tlfs, TRUE);
+#    endif
           GC_delete_thread(t);
+        }
       }
     }
     break;

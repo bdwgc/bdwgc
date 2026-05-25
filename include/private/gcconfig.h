@@ -3402,19 +3402,84 @@ extern ptr_t GC_data_start;
 #  undef GC_ENABLE_SUSPEND_THREAD
 #endif
 
+#if defined(THREAD_LOCAL_ALLOC) && !defined(USE_PTHREAD_SPECIFIC)       \
+    && !defined(USE_WIN32_SPECIFIC) && !defined(USE_WIN32_COMPILER_TLS) \
+    && !defined(USE_COMPILER_TLS) && !defined(USE_CUSTOM_SPECIFIC)
+#  if defined(GC_WIN32_THREADS)
+#    if defined(CYGWIN) && GC_GNUC_PREREQ(4, 0)
+#      if defined(__clang__) && !GC_CLANG_PREREQ(8, 0)
+#        define USE_PTHREAD_SPECIFIC
+#      else
+#        define USE_COMPILER_TLS
+#      endif
+#    elif GC_GNUC_PREREQ(4, 9) || GC_CLANG_PREREQ(8, 0)
+#      define USE_COMPILER_TLS
+#    elif defined(__GNUC__) || defined(MSWINCE)
+#      define USE_WIN32_SPECIFIC
+#    else
+#      define USE_WIN32_COMPILER_TLS
+#    endif /* !GNU */
+
+#  elif defined(HOST_ANDROID)
+#    if defined(ARM32) \
+        && (GC_GNUC_PREREQ(4, 6) || GC_CLANG_PREREQ_FULL(3, 8, 256229))
+#      define USE_COMPILER_TLS
+#    elif !defined(__clang__) && !defined(ARM32)
+/* TODO: Support clang/arm64. */
+#      define USE_COMPILER_TLS
+#    else
+#      define USE_PTHREAD_SPECIFIC
+#    endif
+
+#  elif defined(LINUX) && GC_GNUC_PREREQ(3, 3) /* `&& !HOST_ANDROID` */
+#    if defined(ARM32) || defined(AVR32)
+/* TODO: Change to USE_COMPILER_TLS on Linux/arm. */
+#      define USE_PTHREAD_SPECIFIC
+#    elif defined(AARCH64) && defined(__clang__) && !GC_CLANG_PREREQ(8, 0)
+/* To avoid "R_AARCH64_ABS64 used with TLS symbol" linker warnings. */
+#      define USE_PTHREAD_SPECIFIC
+#    else
+#      define USE_COMPILER_TLS
+#    endif
+
+#  elif (defined(COSMO) || defined(FREEBSD)                                 \
+         || (defined(NETBSD) && __NetBSD_Version__ >= 600000000 /* 6.0 */)) \
+      && (GC_GNUC_PREREQ(4, 4) || GC_CLANG_PREREQ(3, 9))
+#    define USE_COMPILER_TLS
+
+#  elif defined(HPUX)
+#    ifdef __GNUC__
+/* Empirically, as of gcc-3.3, USE_COMPILER_TLS does not work. */
+#      define USE_PTHREAD_SPECIFIC
+#    else
+#      define USE_COMPILER_TLS
+#    endif
+
+#  elif defined(IRIX5) || defined(OPENBSD) || defined(SOLARIS) \
+      || defined(NINTENDO_SWITCH) || defined(NN_PLATFORM_CTR)
+/* Use our own. */
+#    define USE_CUSTOM_SPECIFIC
+
+#  else
+#    define USE_PTHREAD_SPECIFIC
+#  endif
+#endif
+
 #ifndef GC_NO_THREADS_DISCOVERY
 #  if defined(DARWIN) && defined(THREADS)
 /* Task-based thread registration requires stack-frame-walking code. */
-#    ifndef DARWIN_PARSE_STACK
+#    if !defined(DARWIN_PARSE_STACK) || defined(THREAD_LOCAL_ALLOC)
 #      define GC_NO_THREADS_DISCOVERY
 #    endif
 #  elif defined(GC_WIN32_THREADS)
 /*
  * `DllMain`-based thread registration is currently incompatible with
- * thread-local allocation, `pthreads` and WinCE.
+ * `pthreads` and WinCE.
  */
-#    if (!defined(GC_DLL) && !defined(GC_INSIDE_DLL)) || defined(GC_PTHREADS) \
-        || defined(MSWINCE) || defined(NO_CRT) || defined(THREAD_LOCAL_ALLOC)
+#    if !defined(GC_DLL) && !defined(GC_INSIDE_DLL) || defined(GC_PTHREADS) \
+        || defined(NO_CRT) || defined(MSWINCE)                              \
+        || (defined(THREAD_LOCAL_ALLOC) && !defined(USE_COMPILER_TLS)       \
+            && !defined(USE_WIN32_COMPILER_TLS))
 #      define GC_NO_THREADS_DISCOVERY
 #    endif
 #  else
