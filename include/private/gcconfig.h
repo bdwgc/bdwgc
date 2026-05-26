@@ -891,7 +891,7 @@ extern int _end[];
 #  ifndef TARGET_OS_VISION
 #    define TARGET_OS_VISION 0
 #  endif
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(THREADS)
+#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_THREADS)
 /* FIXME: task-threads-based stop and push does not work correctly. */
 #    define GC_NO_THREADS_DISCOVERY
 #  endif
