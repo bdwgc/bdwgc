@@ -313,13 +313,16 @@ STATIC ptr_t GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 #   endif
   } /* thread != my_thread */
 
-# ifdef DARWIN_DONT_PARSE_STACK
-    /* p is guaranteed to be non-NULL regardless of GC_query_task_threads. */
-    *phi = (p->flags & MAIN_THREAD) != 0 ? GC_stackbottom : p->stack_end;
-# endif
+# ifndef DARWIN_DONT_PARSE_STACK
+  if ((word)(*phi) < (word)lo) {
+    /* FIXME: Frame pointer walk fail is ignored. */
+    *phi = lo;
+  }
+  /* TODO: Determine p and handle altstack. */
+# else
+  /* p is guaranteed to be non-NULL regardless of GC_query_task_threads. */
+  *phi = (p->flags & MAIN_THREAD) != 0 ? GC_stackbottom : p->stack_end;
 
-  /* TODO: Determine p and handle altstack if !DARWIN_DONT_PARSE_STACK */
-# ifdef DARWIN_DONT_PARSE_STACK
   if (p->altstack != NULL && (word)p->altstack <= (word)lo
       && (word)lo <= (word)p->altstack + p->altstack_size) {
     *paltstack_lo = lo;
