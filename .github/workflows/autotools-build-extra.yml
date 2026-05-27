@@ -21,8 +21,6 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-latest
           conf_options: --disable-atomic-uncollectible --disable-shared --enable-cplusplus --enable-rwlock
-        - os: macos-latest
-          cflags_extra: -D TEST_HANDLE_FORK -D DARWIN_PARSE_STACK -D DONT_INCLUDE_LEAK_DETECTOR
         - os: ubuntu-24.04-arm
           conf_options: --disable-disclaim
         - os: ubuntu-latest
@@ -58,6 +56,9 @@ jobs:
         - os: ubuntu-latest
           conf_options: --disable-munmap --disable-threads --enable-checksums --enable-cplusplus
           c_compiler: gcc
+        - os: macos-latest
+          conf_options: --disable-thread-local-alloc --enable-gc-assertions
+          cflags_extra: -D DARWIN_PARSE_STACK -D DONT_INCLUDE_LEAK_DETECTOR -D TEST_HANDLE_FORK
         - os: ubuntu-latest
           conf_options: --enable-gc-assertions --enable-gc-debug --enable-threads=pthreads --host=x86_64-w64-mingw32 --without-libatomic-ops
           c_compiler: x86_64-w64-mingw32-gcc
