@@ -333,6 +333,10 @@ GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
   }
 
 #  ifdef DARWIN_PARSE_STACK
+  if (ADDR_LT(*phi, lo)) {
+    /* FIXME: Frame pointer walk fail is ignored. */
+    *phi = lo;
+  }
   /* TODO: Determine `p` and handle `altstack`. */
   UNUSED_ARG(paltstack_hi);
 #  else
