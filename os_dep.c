@@ -4107,13 +4107,20 @@ GC_proc_read_dirty(GC_bool output_unneeded)
   for (i = 0; i < nmaps; i++) {
     struct prasmap *map = (struct prasmap *)bufp;
     ptr_t vaddr, limit;
-    unsigned long npages = 0;
+    unsigned long npages;
     unsigned pagesize;
 
+    /*
+     * Ensure `prasmap` layout physically fits within the remaining read
+     * limit.
+     */
+    if ((size_t)(bufp - GC_proc_buf) + sizeof(struct prasmap)
+        > (size_t)pagedata_len)
+      ABORT("Truncated /proc payload: prasmap goes out of bounds");
+
     bufp += sizeof(struct prasmap);
-    /* Ensure no buffer overrun. */
-    if (bufp - GC_proc_buf < pagedata_len)
-      npages = (unsigned long)map->pr_npage;
+    npages = (unsigned long)map->pr_npage;
+    /* Verify trailing modification page bit tracking array bounds match. */
     if (bufp - GC_proc_buf > pagedata_len - (ssize_t)npages)
       ABORT("Wrong pr_nmap or pr_npage read from /proc");
 
