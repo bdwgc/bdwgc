@@ -11,9 +11,6 @@
  * modified is included with the above copyright notice.
  */
 
-#ifndef GC_TINY_FL_H
-#define GC_TINY_FL_H
-
 /*
  * Constants and data structures for "tiny" free lists.
  * These are used for thread-local allocation and inlined allocators.
@@ -26,6 +23,13 @@
  * may invalidate clients, and such changes should be avoided.
  * Hence we keep this as simple as possible.
  */
+
+#ifndef GC_TINY_FL_H
+#define GC_TINY_FL_H
+
+#ifndef GC_H
+#  include "gc.h"
+#endif
 
 /*
  * We always set `GC_GRANULE_BYTES` to twice the length of a pointer.
