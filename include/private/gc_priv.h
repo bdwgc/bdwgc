@@ -4307,7 +4307,7 @@ GC_INNER GC_bool GC_started_thread_while_stopped(void);
 #if defined(MPROTECT_VDB) && defined(DARWIN) && defined(THREADS)
 GC_INNER void GC_mprotect_stop(void);
 GC_INNER void GC_mprotect_resume(void);
-#  ifndef GC_NO_THREADS_DISCOVERY
+#  ifdef DARWIN_PARSE_STACK
 GC_INNER void GC_darwin_register_self_mach_handler(void);
 #  endif
 #endif

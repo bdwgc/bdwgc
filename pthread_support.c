@@ -368,7 +368,7 @@ GC_INNER_WIN32THREAD ptr_t GC_marker_sp[MAX_MARKERS - 1] = { NULL };
 static ptr_t marker_bsp[MAX_MARKERS - 1] = { NULL };
 #    endif
 
-#    if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY)
+#    if defined(DARWIN) && defined(DARWIN_PARSE_STACK)
 static mach_port_t marker_mach_threads[MAX_MARKERS - 1] = { 0 };
 
 GC_INNER GC_bool
@@ -381,7 +381,7 @@ GC_is_mach_marker(thread_act_t thread)
   }
   return FALSE;
 }
-#    endif /* DARWIN && !GC_NO_THREADS_DISCOVERY */
+#    endif
 
 #    ifdef HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG
 /* For NetBSD. */
@@ -511,7 +511,7 @@ unsigned __stdcall GC_mark_thread(void *id)
 #    if defined(IA64) && defined(USE_PROC_FOR_LIBRARIES)
   marker_bsp[id_n] = GC_save_regs_in_stack();
 #    endif
-#    if defined(DARWIN) && !defined(GC_NO_THREADS_DISCOVERY)
+#    if defined(DARWIN) && defined(DARWIN_PARSE_STACK)
   marker_mach_threads[id_n] = mach_thread_self();
 #    endif
 #    if !defined(GC_PTHREADS_PARAMARK)

@@ -514,16 +514,15 @@ possible.
 
 `DARWIN_PARSE_STACK` - Causes the Darwin port to discover thread stack bounds
 by walking the stack frames (if supported), instead of using the same approach
-as other `pthreads` ports.  Might be needed to make task-threads-based thread
-registration possible.
+as other `pthreads` ports.  Also, causes the Darwin port to use task-based
+threads discovery during stop-the-world.
 
-`GC_NO_THREADS_DISCOVERY` (Darwin and Win32+DLL only) - Excludes DllMain-based
-(on Windows) and task-threads-based (on Darwin) thread registration support.
+`GC_NO_THREADS_DISCOVERY` (Win32+DLL only) - Excludes DllMain-based thread
+registration support.
 
-`GC_DISCOVER_TASK_THREADS` (Darwin and Win32+DLL only) - Forces to compile
-the collector with the implicitly turned on task-threads-based (on Darwin) or
-DllMain-based (on Windows) approach of threads registering.  Only for
-compatibility and for the case when it is not possible to call
+`GC_DISCOVER_TASK_THREADS` (Win32+DLL only) - Forces to compile the collector
+with the implicitly turned on DllMain-based approach of threads registering.
+Only for compatibility and for the case when it is not possible to call
 `GC_use_threads_discovery()` early (before other garbage collector calls).
 
 `USE_PROC_FOR_LIBRARIES` (Linux and Solaris only) - Causes the collector to
