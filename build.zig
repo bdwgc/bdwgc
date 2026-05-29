@@ -62,7 +62,6 @@ pub fn build(b: *std.Build) void {
     const enable_threads = b.option(bool, "enable_threads", "Support threads") orelse default_enable_threads;
     const enable_parallel_mark = b.option(bool, "enable_parallel_mark", "Parallelize marking and free list construction") orelse true;
     const enable_thread_local_alloc = b.option(bool, "enable_thread_local_alloc", "Turn on thread-local allocation optimization") orelse true;
-    const enable_threads_discovery = b.option(bool, "enable_threads_discovery", "Support for threads discovery") orelse true;
     const enable_rwlock = b.option(bool, "enable_rwlock", "Enable reader mode of the allocator lock") orelse false;
     const enable_throw_bad_alloc_library = b.option(bool, "enable_throw_bad_alloc_library", "Turn on C++ gctba library build") orelse true;
     const enable_gcj_support = b.option(bool, "enable_gcj_support", "Support for gcj") orelse true;
@@ -280,10 +279,6 @@ pub fn build(b: *std.Build) void {
 
     if (enable_gc_assertions) {
         flags.append(b.allocator, "-D GC_ASSERTIONS") catch unreachable;
-    }
-
-    if (!enable_threads_discovery) {
-        flags.append(b.allocator, "-D GC_NO_THREADS_DISCOVERY") catch unreachable;
     }
 
     if (enable_sigrt_signals) {

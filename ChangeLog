@@ -501,7 +501,7 @@
 * Refactoring of GC_n_set_marks and GC_print_block_descr
 * Refactoring of GC_protect_heap
 * Refactoring of rt_hash()
-* Refine '--enable-redirect-malloc', '--enable-threads-discovery' messages
+* Refine '--enable-redirect-malloc' messages
 * Refine README for autoconf and cmake
 * Refine README.win32 about builds by bcc/dmc/wcc
 * Refine WARN message in GC_proc_read_dirty regarding buffer size
