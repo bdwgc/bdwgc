@@ -112,17 +112,6 @@ GC_FindTopOfStack(word stack_start)
 }
 #  endif
 
-GC_API void GC_CALL
-GC_use_threads_discovery(void)
-{
-#  ifndef DARWIN_PARSE_STACK
-  ABORT("Darwin task-threads-based stop and push unsupported");
-#  else
-  GC_ASSERT(!GC_need_to_lock_real);
-  GC_init();
-#  endif
-}
-
 #  ifndef kCFCoreFoundationVersionNumber_iOS_8_0
 #    define kCFCoreFoundationVersionNumber_iOS_8_0 1140.1
 #  endif

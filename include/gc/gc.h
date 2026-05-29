@@ -2103,15 +2103,14 @@ GC_API void *GC_CALL GC_call_with_stack_base(GC_stack_base_func /* fn */,
  */
 GC_API void GC_CALL GC_start_mark_threads(void);
 
-#if defined(GC_DARWIN_THREADS) || defined(GC_WIN32_THREADS)
+#ifdef GC_WIN32_THREADS
 /**
- * Use implicit thread registration and processing (via Win32 `DllMain`
- * or Darwin `task_threads`).  Deprecated.  Must be called before
- * `GC_INIT()` and other GC routines (or, at least, before going
- * multi-threaded).  Performs the collector initialization.  Should be
- * avoided if `GC_pthread_create`, `GC_beginthreadex` (or `GC_CreateThread`),
- * or `GC_register_my_thread` could be used instead.  Disables parallelized
- * garbage collection on Win32.
+ * Use implicit threads registration and processing on Win32 via `DllMain`.
+ * Should be called before `GC_INIT()` and other GC routines (or, at least,
+ * before going multi-threaded).  Performs the collector initialization.
+ * Should be avoided if `GC_beginthreadex` (or `GC_CreateThread`), or
+ * `GC_register_my_thread` could be used instead.  Disables parallelized
+ * garbage collection.
  */
 GC_API void GC_CALL GC_use_threads_discovery(void);
 #endif
@@ -2171,8 +2170,8 @@ GC_API void GC_CALL GC_allow_register_threads(void);
  * creation function.  Nonetheless, thread cleanup routines (e.g.,
  * `pthreads` key destructor) typically require manual thread
  * registering (and unregistering) if pointers to GC-allocated objects
- * are manipulated inside.  It is also always done implicitly on some
- * platforms if `GC_use_threads_discovery()` is called at start-up.
+ * are manipulated inside.  It is also always done implicitly on Win32
+ * platform if `GC_use_threads_discovery()` is called at start-up.
  * Except for the latter case, the explicit call is normally required
  * for threads created by third-party libraries.  A manually registered
  * thread requires manual unregistering.  Returns `GC_SUCCESS` on
