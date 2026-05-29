@@ -2,6 +2,7 @@
 
 # Binary files (in root dir, cord, tests):
 *.a
+*.dSYM/
 *.dbg
 *.dll
 *.dylib
