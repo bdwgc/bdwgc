@@ -201,8 +201,13 @@ STATIC ptr_t GC_stack_range_for(ptr_t *phi, thread_act_t thread, GC_thread p,
 #   ifdef DEBUG_THREADS
       GC_log_printf("thread_get_state returns value = %d\n", kern_result);
 #   endif
-    if (kern_result != KERN_SUCCESS)
+    if (kern_result != KERN_SUCCESS) {
+#     ifndef DARWIN_DONT_PARSE_STACK
+        if (kern_result == MACH_SEND_INVALID_DEST)
+          return NULL; /* thread already terminated */
+#     endif
       ABORT("thread_get_state failed");
+    }
 
 #   if defined(I386)
       lo = (void *)state.THREAD_FLD(esp);
