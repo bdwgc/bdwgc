@@ -68,7 +68,6 @@ option(enable_docs "Build and install documentation" ON)
 option(enable_threads "Support threads" ${default_enable_threads})
 option(enable_parallel_mark "Parallelize marking and free list construction" ON)
 option(enable_thread_local_alloc "Turn on thread-local allocation optimization" ON)
-option(enable_threads_discovery "Support for threads discovery" ON)
 option(enable_rwlock "Enable reader mode of the allocator lock" OFF)
 option(enable_throw_bad_alloc_library "Turn on C++ gctba library build" ON)
 option(enable_gcj_support "Support for gcj" ON)
@@ -382,10 +381,6 @@ if (enable_gc_assertions)
   add_definitions("-DGC_ASSERTIONS")
   # TODO: pass `-Wno-missing-prototypes` (if supported) to turn off the clang
   # warning for `STATIC` functions.
-endif()
-
-if (NOT enable_threads_discovery)
-  add_definitions("-DGC_NO_THREADS_DISCOVERY")
 endif()
 
 if (enable_sigrt_signals)
