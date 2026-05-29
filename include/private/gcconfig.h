@@ -891,10 +891,6 @@ extern int _end[];
 #  ifndef TARGET_OS_VISION
 #    define TARGET_OS_VISION 0
 #  endif
-#  if !defined(GC_NO_THREADS_DISCOVERY) && defined(GC_THREADS)
-/* FIXME: task-threads-based stop and push does not work correctly. */
-#    define GC_NO_THREADS_DISCOVERY
-#  endif
 #endif /* DARWIN */
 
 #ifdef EMBOX
@@ -3055,6 +3051,11 @@ EXTERN_C_BEGIN
 #  undef SOFT_VDB
 #endif
 
+#ifdef DARWIN_PARSE_STACK
+/* FIXME: `SIGSEGV` occurs sometimes if task-based threads discovery. */
+#  undef MPROTECT_VDB
+#endif
+
 #if defined(MPROTECT_VDB) && !defined(MSWIN32) && !defined(MSWINCE)
 EXTERN_C_END
 #  include <signal.h> /*< for `SA_SIGINFO`, `SIGBUS` */
@@ -3466,12 +3467,7 @@ extern ptr_t GC_data_start;
 #endif
 
 #ifndef GC_NO_THREADS_DISCOVERY
-#  if defined(DARWIN) && defined(THREADS)
-/* Task-based thread registration requires stack-frame-walking code. */
-#    if !defined(DARWIN_PARSE_STACK) || defined(THREAD_LOCAL_ALLOC)
-#      define GC_NO_THREADS_DISCOVERY
-#    endif
-#  elif defined(GC_WIN32_THREADS)
+#  ifdef GC_WIN32_THREADS
 /*
  * `DllMain`-based thread registration is currently incompatible with
  * `pthreads` and WinCE.

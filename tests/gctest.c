@@ -2467,16 +2467,11 @@ main(void)
      * e.g. when `malloc` redirection is on.
      */
     GC_clear_exclusion_table();
-#if defined(THREADS) && !defined(TEST_NO_THREADS_DISCOVERY) \
-    && (defined(DARWIN) || defined(GC_WIN32_THREADS))       \
+#if defined(GC_WIN32_THREADS) && !defined(TEST_NO_THREADS_DISCOVERY) \
     && !defined(GC_NO_THREADS_DISCOVERY)
     /* Test with implicit thread registration. */
     GC_use_threads_discovery();
-#  ifdef DARWIN
-    GC_printf("Using Darwin task-threads-based world stop and push\n");
-#  else
     GC_printf("Using DllMain to track threads\n");
-#  endif
 #endif
   }
 #ifdef THREADS

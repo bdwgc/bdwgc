@@ -591,15 +591,13 @@ GC_start_rtn_prepare_thread(void *(**pstart)(void *), void **pstart_arg,
 GC_INNER_PTHRSTART void GC_thread_exit_proc(void *);
 #  endif /* GC_PTHREADS */
 
-#  ifdef DARWIN
-#    ifdef DARWIN_PARSE_STACK
+#  if defined(DARWIN) && defined(DARWIN_PARSE_STACK)
 GC_INNER ptr_t GC_FindTopOfStack(word);
-#    endif
-#    if defined(PARALLEL_MARK) && !defined(GC_NO_THREADS_DISCOVERY)
+#    ifdef PARALLEL_MARK
 /* Note: this is used only by `GC_suspend_thread_list()`. */
 GC_INNER GC_bool GC_is_mach_marker(thread_act_t);
 #    endif
-#  endif /* DARWIN */
+#  endif
 
 #  ifdef PTHREAD_STOP_WORLD_IMPL
 GC_INNER void GC_stop_init(void);

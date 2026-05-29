@@ -5008,7 +5008,7 @@ GC_mprotect_thread(void *arg)
 #  if defined(HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID)
   (void)pthread_setname_np("GC-mprotect");
 #  endif
-#  if defined(THREADS) && !defined(GC_NO_THREADS_DISCOVERY)
+#  if defined(THREADS) && defined(DARWIN_PARSE_STACK)
   GC_darwin_register_self_mach_handler();
 #  endif
 
