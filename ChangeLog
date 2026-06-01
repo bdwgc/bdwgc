@@ -1,3 +1,9 @@
+2026-05-15  Ivan Maidanski <ivmai@mail.ru>
+
+	* configure: Regenerate.
+	* configure.ac [$compiler_xlc==yes] (ASM_WITH_CPP_UNSUPPORTED): Do not
+	define AM conditional; update comment.
+
 2026-04-24  Ivan Maidanski <ivmai@mail.ru>
 
 	* dbg_mlc.c [DBG_HDRS_ALL] (GC_debug_generic_malloc_inner): Call
