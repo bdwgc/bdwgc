@@ -495,7 +495,7 @@ AM_CONDITIONAL(AVOID_CPP_LIB,test $avoid_cpp_lib = yes)
 AC_CHECK_HEADER([execinfo.h], [],
     [AC_DEFINE([GC_MISSING_EXECINFO_H], [1], [Missing `execinfo.h` header.])])
 
-# extra `LD` flags which are required for targets.
+# Extra `LD` flags which are required for targets.
 case "${host}" in
   *-*-darwin*)
     extra_ldflags_libgc=-Wl,-single_module
@@ -882,7 +882,13 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <wchar.h>],
 CFLAGS="$old_CFLAGS"
 
 # `pthread_setname_np`, if available, may have 1, 2 or 3 arguments.
-AS_IF([test "$THREADS" = posix],
+ac_is_darwin=no
+case "${host}" in
+  *-*-darwin*)
+    ac_is_darwin=yes
+    ;;
+esac
+AS_IF([test "$THREADS" = posix -o $ac_is_darwin = yes],
   [AC_MSG_CHECKING(for pthread_setname_np)
    old_CFLAGS="$CFLAGS"
    CFLAGS="$CFLAGS $CFLAGS_EXTRA -Werror"

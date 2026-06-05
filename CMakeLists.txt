@@ -585,7 +585,7 @@ if (HAVE_WCSLEN)
 endif()
 
 # `pthread_setname_np`, if available, may have 1, 2 or 3 arguments.
-if (enable_threads AND CMAKE_USE_PTHREADS_INIT)
+if (enable_threads AND CMAKE_USE_PTHREADS_INIT OR APPLE)
   check_c_source_compiles("
 #define _GNU_SOURCE 1\n
 #include <pthread.h>\n
