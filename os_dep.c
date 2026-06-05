@@ -1827,7 +1827,7 @@ typedef UINT(WINAPI *GetWriteWatch_type)(DWORD, PVOID,
 static FARPROC GetWriteWatch_func;
 static DWORD GetWriteWatch_alloc_flag;
 
-#    define GC_GWW_AVAILABLE() (GetWriteWatch_func != 0)
+#    define IS_NON_MPROTECT_VDB() (GetWriteWatch_func != 0)
 
 static void
 detect_GetWriteWatch(void)
@@ -2763,7 +2763,7 @@ GC_get_mem(size_t bytes)
      * the collector initialization).
      */
 #      ifdef GWW_VDB
-#        define VIRTUAL_ALLOC_PAD (GC_GWW_AVAILABLE() ? 0 : 1)
+#        define VIRTUAL_ALLOC_PAD (IS_NON_MPROTECT_VDB() ? 0 : 1)
 #      else
 #        define VIRTUAL_ALLOC_PAD 1
 #      endif
@@ -3247,7 +3247,7 @@ GC_gww_dirty_init(void)
 {
   /* No assumption about the allocator lock. */
   detect_GetWriteWatch();
-  return GC_GWW_AVAILABLE();
+  return IS_NON_MPROTECT_VDB();
 }
 
 GC_INLINE void
@@ -3337,10 +3337,11 @@ GC_gww_read_dirty(GC_bool output_unneeded)
 
 #elif defined(SOFT_VDB)
 static int clear_refs_fd = -1;
-#  define GC_GWW_AVAILABLE() (clear_refs_fd != -1)
+#  define IS_NON_MPROTECT_VDB() (clear_refs_fd != -1)
+
 #else
-#  define GC_GWW_AVAILABLE() FALSE
-#endif /* !GWW_VDB && !SOFT_VDB */
+#  define IS_NON_MPROTECT_VDB() FALSE
+#endif
 
 #ifdef DEFAULT_VDB
 /*
@@ -3917,7 +3918,7 @@ GC_handle_protected_regions_limit(void)
    * incremental collection mode (based on `mprotect`) once the number
    * of pages in the heap reaches that limit.
    */
-  if (GC_auto_incremental && !GC_GWW_AVAILABLE()
+  if (GC_auto_incremental && !IS_NON_MPROTECT_VDB()
       && (GC_signed_word)(GC_heapsize / (word)GC_page_size)
              >= ((GC_signed_word)GC_UNMAPPED_REGIONS_SOFT_LIMIT
                  - GC_num_unmapped_regions)
@@ -4600,7 +4601,7 @@ GC_read_dirty(GC_bool output_unneeded)
 #  endif
   if (GC_manual_vdb
 #  if defined(MPROTECT_VDB)
-      || !GC_GWW_AVAILABLE()
+      || !IS_NON_MPROTECT_VDB()
 #  endif
   ) {
     if (!output_unneeded)
@@ -4635,7 +4636,7 @@ GC_is_vdb_for_static_roots(void)
     return FALSE;
 #    if defined(MPROTECT_VDB)
   /* Currently used only in conjunction with `SOFT_VDB`. */
-  return GC_GWW_AVAILABLE();
+  return IS_NON_MPROTECT_VDB();
 #    else
 #      ifndef LINT2
   GC_ASSERT(GC_incremental);
@@ -4673,7 +4674,7 @@ GC_page_was_ever_dirty(const struct hblk *h)
   size_t index;
 
 #      ifdef MPROTECT_VDB
-  if (!GC_GWW_AVAILABLE())
+  if (!IS_NON_MPROTECT_VDB())
     return TRUE;
 #      endif
 #      if defined(PROC_VDB)
@@ -4714,7 +4715,7 @@ GC_remove_protection(struct hblk *h, size_t nblocks, GC_bool is_ptrfree)
   if (is_ptrfree)
     return;
 #    endif
-  if (!GC_auto_incremental || GC_GWW_AVAILABLE())
+  if (!GC_auto_incremental || IS_NON_MPROTECT_VDB())
     return;
   GC_ASSERT(GC_page_size != 0);
   h_trunc = HBLK_PAGE_ALIGNED(h);
@@ -5457,7 +5458,7 @@ GC_incremental_protection_needs(void)
 #ifdef MPROTECT_VDB
 #  if defined(GWW_VDB) || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB))
   /* Only if the incremental mode is already switched on. */
-  if (GC_GWW_AVAILABLE())
+  if (IS_NON_MPROTECT_VDB())
     return GC_PROTECTS_NONE;
 #  endif
 #  ifndef DONT_PROTECT_PTRFREE
@@ -5481,11 +5482,11 @@ GC_get_actual_vdb(void)
 #  endif
 #  ifdef MPROTECT_VDB
 #    ifdef GWW_VDB
-    if (GC_GWW_AVAILABLE())
+    if (IS_NON_MPROTECT_VDB())
       return GC_VDB_GWW;
 #    endif
 #    ifdef SOFT_VDB
-    if (GC_GWW_AVAILABLE())
+    if (IS_NON_MPROTECT_VDB())
       return GC_VDB_SOFT;
 #    endif
     return GC_VDB_MPROTECT;
