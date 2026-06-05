@@ -509,7 +509,7 @@ if (NOT HAVE_SIGSETJMP)
 endif()
 
 # pthread_setname_np, if available, may have 1, 2 or 3 arguments.
-if (CMAKE_USE_PTHREADS_INIT)
+if (CMAKE_USE_PTHREADS_INIT OR APPLE)
   check_c_source_compiles("
 #define _GNU_SOURCE 1\n
 #include <pthread.h>\n
