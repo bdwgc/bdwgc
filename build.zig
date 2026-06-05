@@ -382,11 +382,13 @@ pub fn build(b: *std.Build) void {
     // `pthread_setname_np`, if available, may have 1, 2 or 3 arguments.
     if (t.os.tag.isDarwin()) {
         flags.append(b.allocator, "-D HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID") catch unreachable;
-    } else if (t.os.tag == .linux) {
-        flags.append(b.allocator, "-D HAVE_PTHREAD_SETNAME_NP_WITH_TID") catch unreachable;
-    } else {
-        // TODO: support `HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG`
-        // and `HAVE_PTHREAD_SET_NAME_NP` targets.
+    } else if (enable_threads) {
+        if (t.os.tag == .linux) {
+            flags.append(b.allocator, "-D HAVE_PTHREAD_SETNAME_NP_WITH_TID") catch unreachable;
+        } else {
+            // TODO: support `HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG`
+            // and `HAVE_PTHREAD_SET_NAME_NP` targets.
+        }
     }
 
     if (t.os.tag != .windows) {
