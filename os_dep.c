@@ -3887,8 +3887,7 @@ GC_INLINE void GC_proc_read_dirty(GC_bool output_unneeded)
     buf[sizeof(buf) - 1] = '\0';
     f = open(buf, mode);
     if (-1 == f) {
-      WARN("/proc/self/%s open failed; cannot enable GC incremental mode\n",
-           proc_filename);
+      WARN("/proc/self/%s open failed\n", proc_filename);
     } else if (fcntl(f, F_SETFD, FD_CLOEXEC) == -1) {
       WARN("Could not set FD_CLOEXEC for /proc\n", 0);
     }
