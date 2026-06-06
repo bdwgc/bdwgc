@@ -4184,8 +4184,7 @@ open_proc_fd(pid_t pid, const char *slash_filename, int mode)
   GC_snprintf_s_ld_s(buf, sizeof(buf), "/proc/", (long)pid, slash_filename);
   f = open(buf, mode);
   if (-1 == f) {
-    WARN("/proc/self%s open failed; cannot enable GC incremental mode\n",
-         slash_filename);
+    WARN("/proc/self%s open failed\n", slash_filename);
   } else if (fcntl(f, F_SETFD, FD_CLOEXEC) == -1) {
     WARN("Could not set FD_CLOEXEC for /proc\n", 0);
   }
