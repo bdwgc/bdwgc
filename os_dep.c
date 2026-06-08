@@ -3236,6 +3236,25 @@ GC_or_pages(page_hash_table pht1, const word *pht2)
 }
 #endif /* CHECKSUMS && GWW_VDB || PROC_VDB */
 
+#if defined(MPROTECT_VDB) && defined(DARWIN)
+static GC_bool
+create_detached_thread(void *(*start_routine)(void *))
+{
+  int res;
+  pthread_t thread;
+  pthread_attr_t attr;
+
+  if (pthread_attr_init(&attr) != 0)
+    ABORT("pthread_attr_init failed");
+  if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0)
+    ABORT("pthread_attr_setdetachedstate failed");
+  /* This will call the real `pthreads` routine, not our wrapper. */
+  res = GC_inner_pthread_create(&thread, &attr, start_routine, NULL);
+  (void)pthread_attr_destroy(&attr);
+  return 0 == res;
+}
+#endif
+
 #ifdef GWW_VDB
 
 #  ifndef MPROTECT_VDB
@@ -5114,15 +5133,13 @@ GC_darwin_sigbus(int num, siginfo_t *sip, void *context)
   GC_sigbus_count++;
   WARN("Ignoring SIGBUS\n", 0);
 }
-#  endif /* BROKEN_EXCEPTION_HANDLING */
+#  endif
 
 GC_INNER GC_bool
 GC_dirty_init(void)
 {
   kern_return_t r;
   mach_port_t me;
-  pthread_t thread;
-  pthread_attr_t attr;
   exception_mask_t mask;
 
   GC_ASSERT(I_HOLD_LOCK());
@@ -5188,14 +5205,27 @@ GC_dirty_init(void)
   if (r != KERN_SUCCESS)
     ABORT("task_set_exception_ports failed");
 
-  if (pthread_attr_init(&attr) != 0)
-    ABORT("pthread_attr_init failed");
-  if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0)
-    ABORT("pthread_attr_setdetachedstate failed");
-  /* This will call the real `pthreads` routine, not our wrapper. */
-  if (GC_inner_pthread_create(&thread, &attr, GC_mprotect_thread, NULL) != 0)
-    ABORT("pthread_create failed");
-  (void)pthread_attr_destroy(&attr);
+  if (UNLIKELY(!create_detached_thread(GC_mprotect_thread))) {
+    WARN("Cannot turn on GC incremental (failed to create thread)\n", 0);
+    /* Restore the old task exception ports. */
+    if (GC_old_exc_ports.count > 0) {
+      if (task_set_exception_ports(GC_task_self, GC_old_exc_ports.masks[0],
+                                   GC_old_exc_ports.ports[0],
+                                   GC_old_exc_ports.behaviors[0],
+                                   GC_old_exc_ports.flavors[0])
+          != KERN_SUCCESS)
+        ABORT("task_set_exception_ports failed (if pthread_create failed)");
+    }
+#  ifdef THREADS
+    mach_port_deallocate(GC_reply_port, me);
+#  endif
+    r = mach_port_mod_refs(me, GC_exception_port, MACH_PORT_RIGHT_SEND, -1);
+    if (r != KERN_SUCCESS)
+      ABORT("mach_port_mod_refs failed");
+    mach_port_deallocate(GC_exception_port, me);
+    GC_task_self = 0;
+    return FALSE;
+  }
 
   /* Setup the handler for ignoring the meaningless `SIGBUS` signals. */
 #  ifdef BROKEN_EXCEPTION_HANDLING
@@ -5211,7 +5241,7 @@ GC_dirty_init(void)
       GC_VERBOSE_LOG_PRINTF("Replaced other SIGBUS handler\n");
     }
   }
-#  endif /* BROKEN_EXCEPTION_HANDLING */
+#  endif
   return TRUE;
 }
 
