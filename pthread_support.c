@@ -637,19 +637,13 @@ GC_start_mark_threads_inner(void)
 
 #    ifndef NO_MARKER_SPECIAL_SIGMASK
   /*
-   * Apply special signal mask to GC marker threads, and do not drop
-   * user-defined signals by the marker threads.
+   * Apply special signal mask to the GC marker threads, and do not steal
+   * user-defined signals by the marker threads.  Note: no need to delete
+   * the thread suspend and restart signals from the set as we do not
+   * suspend the marker threads.
    */
   if (sigfillset(&set) != 0)
     ABORT("sigfillset failed");
-
-#      ifdef SIGNAL_BASED_STOP_WORLD
-  /* These are used by GC to stop and restart the world. */
-  if (sigdelset(&set, GC_get_suspend_signal()) != 0
-      || sigdelset(&set, GC_get_thr_restart_signal()) != 0)
-    ABORT("sigdelset failed");
-#      endif
-
   if (UNLIKELY(REAL_FUNC(pthread_sigmask)(SIG_BLOCK, &set, &oldset) != 0)) {
     WARN("pthread_sigmask set failed, no markers started\n", 0);
     GC_markers_m1 = 0;
