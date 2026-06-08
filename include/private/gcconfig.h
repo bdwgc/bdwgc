@@ -3377,6 +3377,19 @@ extern ptr_t GC_data_start;
 #  endif
 #endif /* GC_WIN32_THREADS */
 
+#if (defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID)             \
+     && (defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG) \
+         || defined(HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID))) \
+    || (defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG)  \
+        && defined(HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID))
+#  if !defined(CPPCHECK)
+#    error Multiple HAVE_PTHREAD_SETNAME_NP_* defined
+#  endif
+#  undef HAVE_PTHREAD_SETNAME_NP_WITH_TID
+#  undef HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG
+#  undef HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID
+#endif
+
 #if !defined(GC_PTHREADS) && !defined(GC_PTHREADS_PARAMARK)
 #  undef HAVE_PTHREAD_SETNAME_NP_WITH_TID
 #  undef HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG

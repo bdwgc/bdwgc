@@ -354,6 +354,17 @@ GC_check_tls(void)
 #    define GC_INNER_WIN32THREAD STATIC
 #  endif
 
+#  if defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID) && defined(PARALLEL_MARK)
+STATIC void
+GC_pthread_setname_np_checked(const char *name)
+{
+  GC_ASSERT(strlen(name) < 16);
+  /* `pthread_setname_np()` may fail for longer names. */
+  if (UNLIKELY(pthread_setname_np(pthread_self(), name) != 0))
+    WARN("pthread_setname_np failed\n", 0);
+}
+#  endif
+
 #  ifdef PARALLEL_MARK
 
 #    if defined(GC_WIN32_THREADS)                              \
@@ -401,6 +412,7 @@ set_marker_thread_name(unsigned id)
 #      ifdef HAVE_PTHREAD_SET_NAME_NP
 #        include <pthread_np.h>
 #      endif
+
 static void
 set_marker_thread_name(unsigned id)
 {
@@ -414,15 +426,12 @@ set_marker_thread_name(unsigned id)
 #      ifdef HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID
   /* The iOS or OS X case. */
   (void)pthread_setname_np(name_buf);
-#      elif defined(HAVE_PTHREAD_SET_NAME_NP)
+#      elif !defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID)
   /* The OpenBSD case. */
   pthread_set_name_np(pthread_self(), name_buf);
 #      else
   /* The case of Linux, Solaris, etc. */
-  GC_ASSERT(strlen(name_buf) < 16);
-  /* `pthread_setname_np()` may fail for longer names. */
-  if (UNLIKELY(pthread_setname_np(pthread_self(), name_buf) != 0))
-    WARN("pthread_setname_np failed\n", 0);
+  GC_pthread_setname_np_checked(name_buf);
 #      endif
 }
 
