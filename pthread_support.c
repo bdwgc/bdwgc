@@ -129,7 +129,7 @@ void REAL_FUNC(pthread_exit)(void *) GC_PTHREAD_EXIT_ATTRIBUTE;
 #    elif defined(GC_USE_DLOPEN_WRAP)
 #      include <dlfcn.h>
 #      define WRAP_FUNC(f) f
-#      define REAL_FUNC(f) GC_real_##f
+#      define REAL_FUNC(f) GC_real_func_##f
 /*
  * We define both `GC_<fn>` and plain `fn` to be the wrapped function.
  * In that way plain calls work, as do calls from files that include
@@ -282,9 +282,8 @@ GC_init_real_syms(void)
 
 #  if defined(MPROTECT_VDB) && defined(DARWIN)
 GC_INNER int
-GC_inner_pthread_create(pthread_t *t,
-                        GC_PTHREAD_CREATE_CONST pthread_attr_t *a,
-                        void *(*fn)(void *), void *arg)
+GC_real_pthread_create(pthread_t *t, GC_PTHREAD_CREATE_CONST pthread_attr_t *a,
+                       void *(*fn)(void *), void *arg)
 {
   INIT_REAL_SYMS();
   return REAL_FUNC(pthread_create)(t, a, fn, arg);
@@ -292,7 +291,7 @@ GC_inner_pthread_create(pthread_t *t,
 
 #    if !defined(NO_MARKER_SPECIAL_SIGMASK) && !defined(GC_NO_PTHREAD_SIGMASK)
 GC_INNER int
-GC_inner_pthread_sigmask(int how, const sigset_t *set, sigset_t *old_set)
+GC_real_pthread_sigmask(int how, const sigset_t *set, sigset_t *old_set)
 {
   INIT_REAL_SYMS();
   return REAL_FUNC(pthread_sigmask)(how, set, old_set);

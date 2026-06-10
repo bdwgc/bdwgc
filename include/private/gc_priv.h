@@ -3926,21 +3926,21 @@ EXTERN_C_END
 #    include <pthread.h>
 EXTERN_C_BEGIN
 #    ifdef THREADS
-GC_INNER int GC_inner_pthread_create(pthread_t *t,
-                                     GC_PTHREAD_CREATE_CONST pthread_attr_t *a,
-                                     void *(*fn)(void *), void *arg);
+GC_INNER int GC_real_pthread_create(pthread_t *t,
+                                    GC_PTHREAD_CREATE_CONST pthread_attr_t *a,
+                                    void *(*fn)(void *), void *arg);
 #    else
-#      define GC_inner_pthread_create pthread_create
+#      define GC_real_pthread_create pthread_create
 #    endif
 #    ifndef NO_MARKER_SPECIAL_SIGMASK
 #      if defined(THREADS) && !defined(GC_NO_PTHREAD_SIGMASK)
 EXTERN_C_END
 #        include <signal.h> /*< for `sigset_t` */
 EXTERN_C_BEGIN
-GC_INNER int GC_inner_pthread_sigmask(int how, const sigset_t *set,
-                                      sigset_t *old_set);
+GC_INNER int GC_real_pthread_sigmask(int how, const sigset_t *set,
+                                     sigset_t *old_set);
 #      else
-#        define GC_inner_pthread_sigmask pthread_sigmask
+#        define GC_real_pthread_sigmask pthread_sigmask
 #      endif
 #    endif
 #  endif
