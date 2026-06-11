@@ -3426,14 +3426,14 @@ async_set_pht_entry_from_index(volatile page_hash_table db, size_t index)
  * seems to decrease the likelihood of some of the problems described below.
  */
 #    include <mach/vm_map.h>
-#    define PROTECT_INNER(addr, len, allow_write, C_msg_prefix)            \
+#    define MP_PROTECT_INNER(addr, len, allow_write)                       \
       if (vm_protect(GC_task_self, (vm_address_t)(addr), (vm_size_t)(len), \
                      FALSE,                                                \
                      VM_PROT_READ | ((allow_write) ? VM_PROT_WRITE : 0)    \
                          | (GC_pages_executable ? VM_PROT_EXECUTE : 0))    \
           == KERN_SUCCESS) {                                               \
       } else                                                               \
-        ABORT(C_msg_prefix "vm_protect() failed")
+        ABORT("vm_protect() failed")
 
 #  elif !defined(USE_WINALLOC)
 #    include <sys/mman.h>
@@ -3441,35 +3441,34 @@ async_set_pht_entry_from_index(volatile page_hash_table db, size_t index)
 #      include <sys/syscall.h>
 #    endif
 
-#    define PROTECT_INNER(addr, len, allow_write, C_msg_prefix)           \
-      if (mprotect((caddr_t)(addr), (size_t)(len),                        \
-                   PROT_READ | ((allow_write) ? PROT_WRITE : 0)           \
-                       | (GC_pages_executable ? PROT_EXEC : 0))           \
-          >= 0) {                                                         \
-      } else if (GC_pages_executable) {                                   \
-        ABORT_ON_REMAP_FAIL(C_msg_prefix "mprotect vdb executable pages", \
-                            addr, len);                                   \
-      } else                                                              \
-        ABORT_ON_REMAP_FAIL(C_msg_prefix "mprotect vdb", addr, len)
+#    define MP_PROTECT_INNER(addr, len, allow_write)                     \
+      if (mprotect((caddr_t)(addr), (size_t)(len),                       \
+                   PROT_READ | ((allow_write) ? PROT_WRITE : 0)          \
+                       | (GC_pages_executable ? PROT_EXEC : 0))          \
+          >= 0) {                                                        \
+      } else if (GC_pages_executable) {                                  \
+        ABORT_ON_REMAP_FAIL("mprotect vdb executable pages", addr, len); \
+      } else                                                             \
+        ABORT_ON_REMAP_FAIL("mprotect vdb", addr, len)
 #    undef IGNORE_PAGES_EXECUTABLE
 
 #  else /* USE_WINALLOC */
 static DWORD protect_junk;
-#    define PROTECT_INNER(addr, len, allow_write, C_msg_prefix)             \
-      if (VirtualProtect(addr, len,                                         \
-                         GC_pages_executable                                \
-                             ? ((allow_write) ? PAGE_EXECUTE_READWRITE      \
-                                              : PAGE_EXECUTE_READ)          \
-                         : (allow_write) ? PAGE_READWRITE                   \
-                                         : PAGE_READONLY,                   \
-                         &protect_junk)) {                                  \
-      } else                                                                \
-        ABORT_ARG1(C_msg_prefix "VirtualProtect failed", ": errcode= 0x%X", \
+#    define MP_PROTECT_INNER(addr, len, allow_write)                   \
+      if (VirtualProtect(addr, len,                                    \
+                         GC_pages_executable                           \
+                             ? ((allow_write) ? PAGE_EXECUTE_READWRITE \
+                                              : PAGE_EXECUTE_READ)     \
+                         : (allow_write) ? PAGE_READWRITE              \
+                                         : PAGE_READONLY,              \
+                         &protect_junk)) {                             \
+      } else                                                           \
+        ABORT_ARG1("VirtualProtect failed", ": errcode= 0x%X",         \
                    (unsigned)GetLastError())
 #  endif /* USE_WINALLOC */
 
-#  define PROTECT(addr, len) PROTECT_INNER(addr, len, FALSE, "")
-#  define UNPROTECT(addr, len) PROTECT_INNER(addr, len, TRUE, "un-")
+#  define PROTECT(addr, len) MP_PROTECT_INNER(addr, len, FALSE)
+#  define UNPROTECT(addr, len) MP_PROTECT_INNER(addr, len, TRUE)
 
 #  if defined(MSWIN32)
 typedef LPTOP_LEVEL_EXCEPTION_FILTER SIG_HNDLR_PTR;
@@ -3666,7 +3665,7 @@ GC_write_fault_handler(struct _EXCEPTION_POINTERS *exc_info)
     UNPROTECT(h, GC_page_size);
     /*
      * We need to make sure that no collection occurs between the
-     * `UNPROTECT()` call and the setting of the dirty bit.
+     * unprotect action and the setting of the dirty bit.
      * Otherwise a write by a third thread might go unnoticed.
      * Reversing the order is just as bad, since we would end up
      * unprotecting a page in a collection cycle during which it is not
@@ -5458,8 +5457,8 @@ catch_exception_raise(mach_port_t exception_port, mach_port_t thread,
     }
   } else {
     /*
-     * Lie to the thread for now.  No sense `UNPROTECT`'ing the memory
-     * when we are just going to `PROTECT()` it again later.
+     * Lie to the thread for now.  No sense to `UNPROTECT` the memory
+     * when we are just going to `PROTECT` it again later.
      * The thread will just fault again once it resumes.
      * Could happen (but rarely) even if the state is `GC_MP_STOPPED`.
      */
