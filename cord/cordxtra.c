@@ -164,7 +164,12 @@ CORD_fill_buf(CORD x, size_t i, size_t len, char *buf)
 int
 CORD_cmp(CORD x, CORD y)
 {
-  return CORD_ncmp(x, 0, y, 0, ~(size_t)0);
+  /*
+   * Note: we pass maximum value of signed `size_t` type instead of unsigned
+   * one, as otherwise gcc compiler might produce a warning that the specified
+   * bound exceeds the maximum object size.  It should not matter logically.
+   */
+  return CORD_ncmp(x, 0, y, 0, (~(size_t)0) >> 1);
 }
 
 int
