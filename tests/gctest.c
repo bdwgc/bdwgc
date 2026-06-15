@@ -2020,6 +2020,7 @@ check_heap_stats(void)
   }
   obj_count = 0;
   (void)GC_call_with_reader_lock(count_reachable_objs, &obj_count, 0);
+  GC_printf("Running on " OS_TYPE "/" MACH_TYPE " target\n");
 #ifdef THREADS
   GC_printf("Completed %u tests (concurrently)\n", n_tests);
 #else
@@ -2162,10 +2163,7 @@ enable_incremental_mode(void)
 {
 #ifndef NO_INCREMENTAL
   unsigned vdbs = (unsigned)COVERT_DATAFLOW(GC_get_supported_vdbs());
-#endif
 
-  GC_printf("Running on " OS_TYPE "/" MACH_TYPE " target\n");
-#ifndef NO_INCREMENTAL
   if (vdbs != GC_VDB_NONE)
     GC_printf(
         "Supported VDBs:%s%s%s%s%s%s\n", vdbs & GC_VDB_MANUAL ? " manual" : "",
