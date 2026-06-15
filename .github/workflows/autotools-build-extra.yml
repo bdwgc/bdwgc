@@ -71,7 +71,7 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-latest
           conf_options: --disable-munmap --enable-large-config
-          cflags_extra: -m32
+          cflags_extra: -m32 -D NO_MPROTECT_VDB -D NO_SOFT_VDB
           c_compiler: gcc
           install_multilib: true
         - os: ubuntu-latest
@@ -143,6 +143,7 @@ jobs:
           install_libatomic_ops: true
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-cplusplus --enable-large-config
+          cflags_extra: -D NO_SOFT_VDB
         - os: ubuntu-latest
           conf_options: --disable-shared --enable-dynamic-loading --enable-rwlock
           cflags_extra: -O0 -fsanitize=address -m32
@@ -223,6 +224,9 @@ jobs:
           conf_options: --enable-cplusplus --enable-gc-assertions
           cflags_extra: -D BSD_TIME -D CPPCHECK -D DEFAULT_STACK_MAYBE_SMALL -D EMPTY_GETENV_RESULTS -D ENABLE_TRACE -D GC_ALWAYS_MULTITHREADED -D GC_NETBSD_THREADS_WORKAROUND
           c_compiler: gcc
+        - os: ubuntu-24.04-arm
+          conf_options: --enable-cplusplus --enable-gc-assertions
+          cflags_extra: -D NO_MANUAL_VDB -D NO_MPROTECT_VDB
         - os: ubuntu-latest
           conf_options: --enable-cplusplus --enable-gc-assertions
           cflags_extra: -D DONT_ADD_BYTE_AT_END -D GC_TIME_LIMIT=3 -D _FORTIFY_SOURCE=2 -funsigned-char
