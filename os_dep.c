@@ -1825,7 +1825,6 @@ typedef UINT(WINAPI *GetWriteWatch_type)(DWORD, PVOID,
                                          GC_ULONG_PTR /* `SIZE_T` */, PVOID *,
                                          GC_ULONG_PTR *, PULONG);
 static FARPROC GetWriteWatch_func;
-static DWORD GetWriteWatch_alloc_flag;
 
 #    define IS_NON_MPROTECT_VDB() (GetWriteWatch_func != 0)
 
@@ -1858,45 +1857,47 @@ detect_GetWriteWatch(void)
 #    else
   hK32 = GetModuleHandle(TEXT("kernel32.dll"));
 #    endif
-  if (hK32 != (HMODULE)0
-      && (GetWriteWatch_func = GetProcAddress(hK32, "GetWriteWatch")) != 0) {
-    void *page;
+  if (hK32 != (HMODULE)0) {
+    FARPROC pfn = GetProcAddress(hK32, "GetWriteWatch");
 
-    GC_ASSERT(GC_page_size != 0);
-    /*
-     * Also check whether `VirtualAlloc()` accepts `MEM_WRITE_WATCH`,
-     * as some versions of `kernel32.dll` library have one but not the other,
-     * making the feature completely broken.
-     */
-    page = VirtualAlloc(NULL, GC_page_size, MEM_WRITE_WATCH | MEM_RESERVE,
-                        PAGE_READWRITE);
-    if (page != NULL) {
-      PVOID pages[16];
-      GC_ULONG_PTR count = sizeof(pages) / sizeof(PVOID);
-      DWORD page_size;
+    if (pfn != 0) {
+      void *page;
+
+      GC_ASSERT(GC_page_size != 0);
       /*
-       * Check that it actually works.  In spite of some documentation
-       * it actually seems to exist on Win2K.
-       * This test may be unnecessary, but...
+       * Also check whether `VirtualAlloc()` accepts `MEM_WRITE_WATCH`,
+       * as some versions of `kernel32.dll` library have one but not the
+       * other, making the feature completely broken.
        */
-      if ((*(GetWriteWatch_type)(GC_funcptr_uint)GetWriteWatch_func)(
-              WRITE_WATCH_FLAG_RESET, page, GC_page_size, pages, &count,
-              &page_size)
-          != 0) {
-        /* `GetWriteWatch()` always fails. */
-        GetWriteWatch_func = 0;
-      } else {
-        GetWriteWatch_alloc_flag = MEM_WRITE_WATCH;
+      page = VirtualAlloc(NULL, GC_page_size, MEM_WRITE_WATCH | MEM_RESERVE,
+                          PAGE_READWRITE);
+      if (page != NULL) {
+        PVOID pages[16];
+        GC_ULONG_PTR count = sizeof(pages) / sizeof(PVOID);
+        DWORD page_size;
+
+        /*
+         * Check that it actually works.  In spite of some documentation
+         * it actually seems to exist on Win2K.
+         * This test may be unnecessary, but...
+         */
+        if ((*(GetWriteWatch_type)(GC_funcptr_uint)pfn)(
+                WRITE_WATCH_FLAG_RESET, page, GC_page_size, pages, &count,
+                &page_size)
+            != 0) {
+          /* `GetWriteWatch()` always fails. */
+        } else {
+          GetWriteWatch_func = pfn;
+        }
+        VirtualFree(page, 0 /* `dwSize` */, MEM_RELEASE);
       }
-      VirtualFree(page, 0 /* `dwSize` */, MEM_RELEASE);
-    } else {
-      /* `GetWriteWatch` will be useless. */
-      GetWriteWatch_func = 0;
     }
   }
   done = TRUE;
 }
 
+#    define GetWriteWatch_alloc_flag \
+      (IS_NON_MPROTECT_VDB() ? MEM_WRITE_WATCH : 0)
 #  else
 #    define GetWriteWatch_alloc_flag 0
 #  endif /* !GWW_VDB */
