@@ -4167,12 +4167,19 @@ GC_INNER void GC_mark_thread_local_free_lists(void);
 GC_INNER int GC_parse_version(int *pminor, const char *pverstr);
 #endif
 
-#if defined(MPROTECT_VDB) && defined(GWW_VDB) && defined(THREADS)
+#ifdef MPROTECT_VDB
+#  if defined(GWW_VDB) && defined(THREADS)
 /*
  * Returns `TRUE` if `GetWriteWatch()` is available.  May be called
  * repeatedly.  May be called with or without the allocator lock held.
  */
 GC_INNER GC_bool GC_gww_dirty_init(void);
+#  endif
+#  if (defined(THREADS) && !defined(NEED_FIXUP_POINTER) \
+       && !defined(NO_ALL_INTERIOR_POINTERS))           \
+      || defined(DONT_PROTECT_PTRFREE)
+GC_INNER GC_bool GC_is_mprotect_vdb(void);
+#  endif
 #endif
 
 #if defined(CHECKSUMS) || defined(PROC_VDB)

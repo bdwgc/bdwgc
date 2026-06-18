@@ -3947,6 +3947,20 @@ GC_unprotect_all_heap(void)
 }
 #  endif
 
+#  if (defined(THREADS) && !defined(NEED_FIXUP_POINTER) \
+       && !defined(NO_ALL_INTERIOR_POINTERS))           \
+      || defined(DONT_PROTECT_PTRFREE)
+GC_INNER GC_bool
+GC_is_mprotect_vdb(void)
+{
+#    if defined(GWW_VDB) || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB))
+  if (IS_NON_MPROTECT_VDB())
+    return FALSE;
+#    endif
+  return GC_auto_incremental;
+}
+#  endif
+
 #  ifdef COUNT_PROTECTED_REGIONS
 GC_INNER void
 GC_handle_protected_regions_limit(void)

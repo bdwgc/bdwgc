@@ -1836,7 +1836,7 @@ GC_push_all_stack(void *bottom, void *top)
   GC_ASSERT(I_HOLD_LOCK());
   if (GC_all_interior_pointers
 #  if defined(THREADS) && defined(MPROTECT_VDB)
-      && !GC_auto_incremental
+      && !GC_is_mprotect_vdb()
 #  endif
       && ADDR_LT((ptr_t)GC_mark_stack_top,
                  (ptr_t)(GC_mark_stack_limit - INITIAL_MARK_STACK_SIZE / 8))) {

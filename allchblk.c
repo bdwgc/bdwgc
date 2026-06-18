@@ -1083,7 +1083,7 @@ retry:
     GC_ASSERT(GC_page_size != 0);
     if (GC_page_size != HBLKSIZE
         && (!GC_incremental /*< not enabled yet */
-            || GC_incremental_protection_needs() != GC_PROTECTS_NONE)
+            || GC_is_mprotect_vdb())
         && is_hblks_mix_in_page(hbp, kind == PTRFREE))
       continue;
 #endif
