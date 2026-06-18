@@ -1825,20 +1825,27 @@ typedef UINT(WINAPI *GetWriteWatch_type)(DWORD, PVOID,
                                          GC_ULONG_PTR /* `SIZE_T` */, PVOID *,
                                          GC_ULONG_PTR *, PULONG);
 static FARPROC GetWriteWatch_func;
-
-#    define IS_NON_MPROTECT_VDB() (GetWriteWatch_func != 0)
+#    if defined(MPROTECT_VDB) && defined(THREADS)
+/*
+ * `GC_gww_dirty_init()` might be called multiple times on Windows, thus
+ * we set `GetWriteWatch_func` to 1 if it is detected that `GetWriteWatch()`
+ * is not usable.
+ */
+#      define IS_NON_MPROTECT_VDB() ((GC_ULONG_PTR)GetWriteWatch_func > 1)
+#    else
+#      define IS_NON_MPROTECT_VDB() (GetWriteWatch_func != 0)
+#    endif
 
 static void
 detect_GetWriteWatch(void)
 {
-  static GC_bool done;
   HMODULE hK32;
 
-  if (done)
-    return;
 #    ifdef MPROTECT_VDB
   if (is_mprotect_vdb_preferred()) {
-    done = TRUE;
+#      ifdef THREADS
+    GetWriteWatch_func = (FARPROC)1;
+#      endif
     /* This should work as if `GWW_VDB` macro is not defined. */
     return;
   }
@@ -1864,6 +1871,7 @@ detect_GetWriteWatch(void)
       void *page;
 
       GC_ASSERT(GC_page_size != 0);
+      GC_ASSERT(pfn != (FARPROC)1);
       /*
        * Also check whether `VirtualAlloc()` accepts `MEM_WRITE_WATCH`,
        * as some versions of `kernel32.dll` library have one but not the
@@ -1872,28 +1880,31 @@ detect_GetWriteWatch(void)
       page = VirtualAlloc(NULL, GC_page_size, MEM_WRITE_WATCH | MEM_RESERVE,
                           PAGE_READWRITE);
       if (page != NULL) {
+        /*
+         * Check that `GetWriteWatch()` actually works.  In spite of some
+         * documentation it actually seems to exist on Windows 2000.
+         * This test may be unnecessary, but...
+         */
         PVOID pages[16];
         GC_ULONG_PTR count = sizeof(pages) / sizeof(PVOID);
         DWORD page_size;
+        UINT res = (*(GetWriteWatch_type)(GC_funcptr_uint)pfn)(
+            WRITE_WATCH_FLAG_RESET, page, GC_page_size, pages, &count,
+            &page_size);
 
-        /*
-         * Check that it actually works.  In spite of some documentation
-         * it actually seems to exist on Win2K.
-         * This test may be unnecessary, but...
-         */
-        if ((*(GetWriteWatch_type)(GC_funcptr_uint)pfn)(
-                WRITE_WATCH_FLAG_RESET, page, GC_page_size, pages, &count,
-                &page_size)
-            != 0) {
-          /* `GetWriteWatch()` always fails. */
-        } else {
+        if (!VirtualFree(page, 0 /* `dwSize` */, MEM_RELEASE))
+          ABORT("VirtualFree failed (for GetWriteWatch)");
+        if (0 == res) {
           GetWriteWatch_func = pfn;
+          return;
         }
-        VirtualFree(page, 0 /* `dwSize` */, MEM_RELEASE);
+        /* `GetWriteWatch()` always fails. */
       }
     }
   }
-  done = TRUE;
+#    if defined(MPROTECT_VDB) && defined(THREADS)
+  GetWriteWatch_func = (FARPROC)1;
+#    endif
 }
 
 #    define GetWriteWatch_alloc_flag \
@@ -2828,7 +2839,7 @@ GC_win32_free_heap(void)
 #    endif
   /* Avoiding `VirtualAlloc` leak. */
   while (GC_n_heap_bases > 0) {
-    VirtualFree(GC_heap_bases[--GC_n_heap_bases], 0, MEM_RELEASE);
+    (void)VirtualFree(GC_heap_bases[--GC_n_heap_bases], 0, MEM_RELEASE);
     GC_heap_bases[GC_n_heap_bases] = NULL;
   }
 #  endif
@@ -3262,11 +3273,21 @@ create_detached_thread(void *(*start_routine)(void *))
 #    define GC_gww_dirty_init GC_dirty_init
 #  endif
 
-GC_INNER GC_bool
+#  if !defined(MPROTECT_VDB) || defined(THREADS)
+GC_INNER
+#  else
+STATIC
+#  endif
+GC_bool
 GC_gww_dirty_init(void)
 {
   /* No assumption about the allocator lock. */
-  detect_GetWriteWatch();
+#  if defined(MPROTECT_VDB) && defined(THREADS)
+  if (UNLIKELY(0 == GetWriteWatch_func))
+#  endif
+  {
+    detect_GetWriteWatch();
+  }
   return IS_NON_MPROTECT_VDB();
 }
 
@@ -3291,7 +3312,7 @@ GC_gww_read_dirty(GC_bool output_unneeded)
        * `GetWriteWatch()` is documented as returning nonzero when
        * it fails, but the documentation does not explicitly say why
        * it would fail or what its behavior will be if it fails.
-       * It does appear to fail, at least on recent Win2K instances,
+       * It does appear to fail, at least on recent Windows 2000 instances,
        * if the underlying memory was not allocated with the appropriate
        * flag.  This is common if `GC_enable_incremental` is called
        * shortly after the collector initialization.  To avoid modifying

@@ -4167,7 +4167,7 @@ GC_INNER void GC_mark_thread_local_free_lists(void);
 GC_INNER int GC_parse_version(int *pminor, const char *pverstr);
 #endif
 
-#if defined(MPROTECT_VDB) && defined(GWW_VDB)
+#if defined(MPROTECT_VDB) && defined(GWW_VDB) && defined(THREADS)
 /*
  * Returns `TRUE` if `GetWriteWatch()` is available.  May be called
  * repeatedly.  May be called with or without the allocator lock held.
