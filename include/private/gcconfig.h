@@ -2865,9 +2865,10 @@ EXTERN_C_BEGIN
 #  define GC_PTHREADS_PARAMARK
 #endif
 
-#if !defined(NO_MARKER_SPECIAL_SIGMASK)                                 \
-    && (defined(NACL) || defined(GC_WIN32_PTHREADS)                     \
-        || (defined(GC_PTHREADS_PARAMARK) && defined(GC_WIN32_THREADS)) \
+#if !defined(NO_MARKER_SPECIAL_SIGMASK)                                \
+    && (defined(NACL) || defined(GC_WIN32_PTHREADS)                    \
+        || (defined(GC_PTHREADS_PARAMARK) && defined(GC_WIN32_THREADS) \
+            && !defined(CYGWIN))                                       \
         || defined(GC_NO_PTHREAD_SIGMASK))
 /*
  * Either there is no `pthread_sigmask()`, or the GC marker thread cannot
