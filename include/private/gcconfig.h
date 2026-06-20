@@ -2832,7 +2832,8 @@ EXTERN_C_BEGIN
 
 #if !defined(NO_MARKER_SPECIAL_SIGMASK) \
     && (defined(NACL) || defined(GC_WIN32_PTHREADS) \
-        || (defined(GC_PTHREADS_PARAMARK) && defined(GC_WIN32_THREADS)) \
+        || (defined(GC_PTHREADS_PARAMARK) && defined(GC_WIN32_THREADS) \
+            && !defined(CYGWIN32)) \
         || defined(GC_NO_PTHREAD_SIGMASK))
   /* Either there is no pthread_sigmask(), or GC marker thread cannot   */
   /* steal and drop user signal calls.                                  */
