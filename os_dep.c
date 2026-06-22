@@ -4524,7 +4524,7 @@ soft_set_grungy_pages(ptr_t start, ptr_t limit, ptr_t next_start_hint,
           size_t index = PHT_HASH(h);
 
           /*
-           * Filter out the blocks without pointers.  It might worth for
+           * Filter out the blocks without pointers.  It might be worth for
            * the case when the heap is large enough for the hash collisions
            * to occur frequently.  Thus, off by default.
            */
