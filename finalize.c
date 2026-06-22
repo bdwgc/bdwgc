@@ -1386,13 +1386,14 @@ invoke_finalizers_internal(GC_bool all)
     fo_set_next(curr_fo, NULL);
     real_ptr = (ptr_t)curr_fo->fo_hidden_base; /*< revealed */
     curr_fo->fo_fn(real_ptr, curr_fo->fo_client_data);
-    curr_fo->fo_client_data = NULL;
-    ++count;
     /*
      * Explicit freeing of `curr_fo` is probably a bad idea.
      * It throws off accounting if nearly all objects are finalizable.
-     * Otherwise it should not matter.
+     * Otherwise it should not matter.  But dropping a reference to the
+     * client data immediately is worth to do.
      */
+    curr_fo->fo_client_data = NULL;
+    ++count;
   }
   /* `bytes_freed_before` is initialized whenever `count` is nonzero. */
   if (count != 0
