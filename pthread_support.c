@@ -2039,15 +2039,12 @@ GC_init_parallel(void)
 GC_API int
 GC_wrap_pthread_sigmask(int how, const sigset_t *set, sigset_t *old_set)
 {
-#    ifdef GC_WIN32_THREADS
-  /*
-   * `pthreads-win32` library does not support `sigmask`.
-   * So, nothing is required here...
-   */
-#    else
+#    if defined(PTHREAD_STOP_WORLD_IMPL) && !defined(NACL)
   sigset_t fudged_set;
+#    endif
 
   INIT_REAL_SYMS();
+#    if defined(PTHREAD_STOP_WORLD_IMPL) && !defined(NACL)
   if (LIKELY(set != NULL) && (how == SIG_BLOCK || how == SIG_SETMASK)) {
     int sig_suspend = GC_get_suspend_signal();
 

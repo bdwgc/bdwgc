@@ -466,8 +466,8 @@ typedef long ptrdiff_t;
 #      define GC_NO_DLOPEN
 #    endif
 
-#    if (defined(GC_DARWIN_THREADS) || defined(GC_WIN32_PTHREADS) \
-         || defined(__native_client__))                           \
+#    if (defined(GC_DARWIN_THREADS) || defined(GC_WIN32_THREADS) \
+         || defined(__native_client__))                          \
         && !defined(GC_NO_PTHREAD_SIGMASK)
 /* Either there is no `pthread_sigmask()` or no need to intercept it. */
 #      define GC_NO_PTHREAD_SIGMASK
