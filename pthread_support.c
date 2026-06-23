@@ -518,13 +518,18 @@ GC_INNER void GC_start_mark_threads_inner(void)
           ABORT("sigdelset failed");
 #     endif
 
-      if (REAL_FUNC(pthread_sigmask)(SIG_BLOCK, &set, &oldset) != 0) {
+#     ifdef GC_NO_PTHREAD_SIGMASK
+#       define mark_thread_pthread_sigmask pthread_sigmask
+#     else
+#       define mark_thread_pthread_sigmask REAL_FUNC(pthread_sigmask)
+#     endif
+      if (mark_thread_pthread_sigmask(SIG_BLOCK, &set, &oldset) != 0) {
         WARN("pthread_sigmask set failed, no markers started\n", 0);
         GC_markers_m1 = 0;
         (void)pthread_attr_destroy(&attr);
         return;
       }
-#   endif /* !NO_MARKER_SPECIAL_SIGMASK */
+#   endif
 
     /* To have proper GC_parallel value in GC_help_marker.      */
     GC_markers_m1 = available_markers_m1;
@@ -559,9 +564,10 @@ GC_INNER void GC_start_mark_threads_inner(void)
 
 #   ifndef NO_MARKER_SPECIAL_SIGMASK
       /* Restore previous signal mask.  */
-      if (REAL_FUNC(pthread_sigmask)(SIG_SETMASK, &oldset, NULL) != 0) {
+      if (mark_thread_pthread_sigmask(SIG_SETMASK, &oldset, NULL) != 0) {
         WARN("pthread_sigmask restore failed\n", 0);
       }
+#     undef mark_thread_pthread_sigmask
 #   endif
 
     (void)pthread_attr_destroy(&attr);
