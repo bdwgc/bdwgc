@@ -396,11 +396,14 @@ pub fn build(b: *std.Build) void {
         flags.append(b.allocator, "-D HAVE_DLADDR") catch unreachable;
     }
 
-    // TODO: as of zig 0.14, exception.h and getsect.h are not provided
-    // by zig itself for Darwin target.
+    // TODO: before zig 0.16, `exception.h` and `getsect.h` files were
+    // not provided by zig itself for Darwin target.
     if (t.os.tag.isDarwin() and !target.query.isNative()) {
-        flags.append(b.allocator, "-D MISSING_MACH_O_GETSECT_H") catch unreachable;
-        flags.append(b.allocator, "-D NO_MPROTECT_VDB") catch unreachable;
+        const ver0_16 = std.SemanticVersion.parse("0.16.0") catch unreachable;
+        if (builtin.zig_version.order(ver0_16) == .lt) {
+            flags.append(b.allocator, "-D MISSING_MACH_O_GETSECT_H") catch unreachable;
+            flags.append(b.allocator, "-D NO_MPROTECT_VDB") catch unreachable;
+        }
     }
 
     if (enable_cplusplus and enable_werror) {
