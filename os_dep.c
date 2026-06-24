@@ -4777,6 +4777,9 @@ GC_INNER GC_bool GC_dirty_init(void)
   pthread_t thread;
   pthread_attr_t attr;
   exception_mask_t mask;
+# ifndef NO_MARKER_SPECIAL_SIGMASK
+    sigset_t set, oldset;
+# endif
 
 # if defined(CAN_HANDLE_FORK) && !defined(THREADS)
     if (GC_handle_fork) {
@@ -4839,9 +4842,21 @@ GC_INNER GC_bool GC_dirty_init(void)
     ABORT("pthread_attr_init failed");
   if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0)
     ABORT("pthread_attr_setdetachedstate failed");
+# ifndef NO_MARKER_SPECIAL_SIGMASK
+    /* Do not steal user-defined signals by the collector thread. */
+    if (sigfillset(&set) != 0)
+      ABORT("sigfillset failed");
+    if (GC_inner_pthread_sigmask(SIG_BLOCK, &set, &oldset) != 0)
+      ABORT("pthread_sigmask set failed (for incremental mode)");
+# endif
   /* This will call the real pthread function, not our wrapper. */
   if (GC_inner_pthread_create(&thread, &attr, GC_mprotect_thread, NULL) != 0)
     ABORT("pthread_create failed");
+#  ifndef NO_MARKER_SPECIAL_SIGMASK
+  /* Restore previous signal mask. */
+  if (EXPECT(GC_inner_pthread_sigmask(SIG_SETMASK, &oldset, NULL) != 0, FALSE))
+    WARN("pthread_sigmask restore failed\n", 0);
+#  endif
   (void)pthread_attr_destroy(&attr);
 
   /* Setup the sigbus handler for ignoring the meaningless SIGBUSs */

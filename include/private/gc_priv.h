@@ -2641,6 +2641,17 @@ GC_EXTERN GC_bool GC_print_back_height;
 #   else
 #     define GC_inner_pthread_create pthread_create
 #   endif
+#   ifndef NO_MARKER_SPECIAL_SIGMASK
+#     if defined(THREADS) && !defined(GC_NO_PTHREAD_SIGMASK)
+        EXTERN_C_END
+#       include <signal.h> /* for sigset_t */
+        EXTERN_C_BEGIN
+        GC_INNER int GC_inner_pthread_sigmask(int how, const sigset_t *set,
+                                              sigset_t *old_set);
+#     else
+#       define GC_inner_pthread_sigmask pthread_sigmask
+#     endif
+#   endif
 # endif /* MPROTECT_VDB && DARWIN */
 
   GC_INNER GC_bool GC_dirty_init(void);

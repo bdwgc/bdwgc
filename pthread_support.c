@@ -268,6 +268,15 @@ static GC_bool parallel_initialized = FALSE;
     INIT_REAL_SYMS();
     return REAL_FUNC(pthread_create)(t, a, fn, arg);
   }
+
+# if !defined(NO_MARKER_SPECIAL_SIGMASK) && !defined(GC_NO_PTHREAD_SIGMASK)
+    GC_INNER int GC_inner_pthread_sigmask(int how, const sigset_t *set,
+                                          sigset_t *old_set)
+    {
+      INIT_REAL_SYMS();
+      return REAL_FUNC(pthread_sigmask)(how, set, old_set);
+    }
+# endif
 #endif
 
 #ifndef GC_ALWAYS_MULTITHREADED
