@@ -2084,8 +2084,6 @@ check_heap_stats(void)
             (unsigned long)GC_get_total_bytes());
   GC_printf("Total memory use by allocated blocks is %lu bytes\n",
             (unsigned long)GC_get_memory_use());
-  GC_printf("Final heap size is %lu bytes\n",
-            (unsigned long)GC_get_heap_size());
   if (GC_get_total_bytes() < (size_t)n_tests *
 #ifdef VERY_SMALL_CONFIG
                                  2700000
