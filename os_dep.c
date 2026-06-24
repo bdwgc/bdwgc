@@ -3255,13 +3255,31 @@ create_detached_thread(void *(*start_routine)(void *))
   int res;
   pthread_t thread;
   pthread_attr_t attr;
+#  ifndef NO_MARKER_SPECIAL_SIGMASK
+  sigset_t set, oldset;
+#  endif
 
   if (pthread_attr_init(&attr) != 0)
     ABORT("pthread_attr_init failed");
   if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0)
     ABORT("pthread_attr_setdetachedstate failed");
+#  ifndef NO_MARKER_SPECIAL_SIGMASK
+  /* Do not steal user-defined signals by the collector thread. */
+  if (sigfillset(&set) != 0)
+    ABORT("sigfillset failed");
+  if (UNLIKELY(GC_inner_pthread_sigmask(SIG_BLOCK, &set, &oldset) != 0)) {
+    WARN("pthread_sigmask set failed (for incremental mode)\n", 0);
+    (void)pthread_attr_destroy(&attr);
+    return FALSE;
+  }
+#  endif
   /* This will call the real `pthreads` routine, not our wrapper. */
   res = GC_inner_pthread_create(&thread, &attr, start_routine, NULL);
+#  ifndef NO_MARKER_SPECIAL_SIGMASK
+  /* Restore previous signal mask. */
+  if (UNLIKELY(GC_inner_pthread_sigmask(SIG_SETMASK, &oldset, NULL) != 0))
+    WARN("pthread_sigmask restore failed\n", 0);
+#  endif
   (void)pthread_attr_destroy(&attr);
   return 0 == res;
 }
