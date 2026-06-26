@@ -288,7 +288,7 @@ STATIC void GC_init_size_map(void)
 # ifdef THREADS
 #   define BIG_CLEAR_SIZE 2048  /* Clear this much now and then.        */
 # else
-    STATIC word GC_stack_last_cleared = 0;
+    STATIC word GC_stack_last_cleared = GC_WORD_MAX;
                         /* GC_gc_no value when we last did this.        */
     STATIC ptr_t GC_min_sp = NULL;
                         /* Coolest stack pointer value from which       */
