@@ -174,7 +174,7 @@ jobs:
           c_compiler: gcc
         - os: ubuntu-latest
           conf_options: --disable-threads --enable-gc-assertions
-          cflags_extra: -D GC_NO_SIGSETJMP -D _FORTIFY_SOURCE=2 -std=c11
+          cflags_extra: -D GC_NO_SIGSETJMP -D TEST_MANUAL_VDB -D _FORTIFY_SOURCE=2 -std=c11
           c_compiler: gcc
         - os: ubuntu-latest
           conf_options: --disable-threads --enable-gc-assertions
