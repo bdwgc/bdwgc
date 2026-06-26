@@ -830,8 +830,9 @@ GC_API int GC_CALL GC_is_heap_ptr(const void *);
  * Given a pointer to the base of an object, return its size in bytes.
  * (For small objects this also happens to work from interior pointers,
  * but that should not be relied upon.)  The returned size may be slightly
- * larger than what was originally requested.  The argument may be `NULL`
- * (causing 0 to be returned).
+ * larger than the actual size of the object (the returned value may include
+ * the size of the object debug header, an extra byte past end of the object,
+ * etc.).  The argument may be `NULL` (causing 0 to be returned).
  */
 GC_API size_t GC_CALL GC_size(const void * /* `obj` */);
 
