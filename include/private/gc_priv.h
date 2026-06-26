@@ -1039,9 +1039,9 @@ EXTERN_C_BEGIN
 /* Size parameters. */
 
 /*
- * Heap block size, in bytes.  Should be a power of two.
- * Incremental collection with `MPROTECT_VDB` currently requires the
- * page size to be a multiple of `HBLKSIZE`.  Since most modern
+ * Heap block size, in bytes.  Should be a power of two.  The incremental
+ * collection mode with `MPROTECT_VDB` or `UFFDWP_VDB` currently requires
+ * the page size to be a multiple of `HBLKSIZE`.  Since most modern
  * architectures support variable page sizes down to 4 KB, and i686 and
  * x86_64 are generally 4 KB, we now default to 4 KB, except for:
  *   - Alpha, Sunway: 8 KB pages by default;
@@ -1872,6 +1872,12 @@ struct _GC_arrays {
   int _pagemap_fd;
 #endif
 
+#ifdef UFFDWP_VDB
+  /* The number of heap sections already registered with `userfaultfd`. */
+#  define GC_uffdwp_registered_sects GC_arrays._uffdwp_registered_sects
+  size_t _uffdwp_registered_sects;
+#endif
+
 #if !defined(THREADS) && (defined(PROC_VDB) || defined(SOFT_VDB))
   /* `pid` used to compose `/proc` file names. */
 #  define GC_saved_proc_pid GC_arrays._saved_proc_pid
@@ -1895,7 +1901,8 @@ struct _GC_arrays {
   volatile AO_TS_t _allocate_lock;
 #  endif
 #  if !defined(HAVE_LOCKFREE_AO_OR) && defined(AO_HAVE_test_and_set_acquire) \
-      && (!defined(NO_MANUAL_VDB) || defined(MPROTECT_VDB))
+      && (!defined(NO_MANUAL_VDB) || defined(MPROTECT_VDB)                   \
+          || defined(UFFDWP_VDB))
 #    define NEED_FAULT_HANDLER_LOCK
 #    define GC_fault_handler_lock GC_arrays._fault_handler_lock
   volatile AO_TS_t _fault_handler_lock;
@@ -3909,7 +3916,7 @@ GC_INNER GC_bool GC_is_vdb_for_static_roots(void);
 #  endif
 
 #  ifdef CAN_HANDLE_FORK
-#    if defined(PROC_VDB) || defined(SOFT_VDB) \
+#    if defined(PROC_VDB) || defined(SOFT_VDB) || defined(UFFDWP_VDB) \
         || (defined(MPROTECT_VDB) && defined(DARWIN) && defined(THREADS))
 /*
  * Update pid-specific resources (like `/proc` file descriptors) needed
@@ -3921,7 +3928,7 @@ GC_INNER void GC_dirty_update_child(void);
 #    endif
 #  endif /* CAN_HANDLE_FORK */
 
-#  if defined(MPROTECT_VDB) && defined(DARWIN)
+#  if defined(MPROTECT_VDB) && defined(DARWIN) || defined(UFFDWP_VDB)
 EXTERN_C_END
 #    include <pthread.h>
 EXTERN_C_BEGIN
@@ -3945,6 +3952,10 @@ GC_INNER int GC_real_pthread_sigmask(int how, const sigset_t *set,
 #    endif
 #  endif
 #endif /* !GC_DISABLE_INCREMENTAL */
+
+#if defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID) && defined(UFFDWP_VDB)
+GC_INNER void GC_pthread_setname_np_checked(const char *name);
+#endif
 
 #if defined(COUNT_PROTECTED_REGIONS) && defined(MPROTECT_VDB)
 /*
@@ -4172,7 +4183,8 @@ GC_EXTERN GC_bool GC_world_stopped; /*< defined in `alloc.c` file */
 GC_INNER void GC_mark_thread_local_free_lists(void);
 #endif
 
-#if defined(SOFT_VDB) && !defined(NO_LINUX_VER_RUNTIME_CHECK) \
+#if ((defined(SOFT_VDB) || defined(UFFDWP_VDB)) \
+     && !defined(NO_LINUX_VER_RUNTIME_CHECK))   \
     || (defined(GLIBC_2_19_TSX_BUG) && defined(GC_PTHREADS_PARAMARK))
 /* Parse string like `<major>[.<minor>[<tail>]]` and return `major` value. */
 GC_INNER int GC_parse_version(int *pminor, const char *pverstr);
@@ -4188,7 +4200,7 @@ GC_INNER GC_bool GC_gww_dirty_init(void);
 #  endif
 #  if (defined(THREADS) && !defined(NEED_FIXUP_POINTER) \
        && !defined(NO_ALL_INTERIOR_POINTERS))           \
-      || defined(DONT_PROTECT_PTRFREE)
+      || (defined(DONT_PROTECT_PTRFREE) && !defined(UFFDWP_VDB))
 GC_INNER GC_bool GC_is_mprotect_vdb(void);
 #  endif
 #endif

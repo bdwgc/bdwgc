@@ -965,6 +965,9 @@ GC_get_supported_vdbs(void)
 #  ifdef SOFT_VDB
       | GC_VDB_SOFT
 #  endif
+#  ifdef UFFDWP_VDB
+      | GC_VDB_UFFDWP
+#  endif
       ;
 #endif
 }

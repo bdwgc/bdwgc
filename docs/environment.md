@@ -101,12 +101,13 @@ some other operating systems, it was turned into a runtime flag to enable
 last-minute workarounds.  "0" value means "do not retry signals".
 
 `GC_USE_GETWRITEWATCH=<n>` (Win32 and Linux only) - Explicitly specifies which
-strategy of keeping track of dirtied pages should be used.  If n is "0", then
-fall back to protecting pages and catching memory faults strategy), else the
-collector tries to use GetWriteWatch-based strategy (`GWW_VDB`) or soft-dirty
-bits strategy (`SOFT_VDB`) first if available.  Has no effect unless the
-collector is built with `MPROTECT_VDB` is defined, and `GWW_VDB` or `SOFT_VDB`
-is defined.
+strategy of keeping track of dirtied pages should be used.  If `n` is "0",
+then fall back to protecting pages and catching memory faults strategy), else
+the collector tries to use GetWriteWatch-based strategy (`GWW_VDB`) or Linux
+`userfaultfd` strategy (`UFFDWP_VDB`), or soft-dirty bits strategy
+(`SOFT_VDB`) first if available.  Has no effect unless the collector is built
+with `MPROTECT_VDB` macro is defined, and either `GWW_VDB` or `SOFT_VDB`, or
+`UFFDWP_VDB` macro is defined.
 
 `GC_DISABLE_INCREMENTAL` - Ignores runtime requests to enable the incremental
 garbage collection mode.  Useful for debugging.

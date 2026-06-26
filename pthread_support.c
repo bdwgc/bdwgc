@@ -280,7 +280,7 @@ GC_init_real_syms(void)
 #    define INIT_REAL_SYMS() (void)0
 #  endif /* GC_WIN32_THREADS */
 
-#  if defined(MPROTECT_VDB) && defined(DARWIN)
+#  if defined(MPROTECT_VDB) && defined(DARWIN) || defined(UFFDWP_VDB)
 GC_INNER int
 GC_real_pthread_create(pthread_t *t, GC_PTHREAD_CREATE_CONST pthread_attr_t *a,
                        void *(*fn)(void *), void *arg)
@@ -362,8 +362,14 @@ GC_check_tls(void)
 #    define GC_INNER_WIN32THREAD STATIC
 #  endif
 
-#  if defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID) && defined(PARALLEL_MARK)
-STATIC void
+#  if defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID) \
+      && (defined(PARALLEL_MARK) || defined(UFFDWP_VDB))
+#    ifdef UFFDWP_VDB
+GC_INNER
+#    else
+STATIC
+#    endif
+void
 GC_pthread_setname_np_checked(const char *name)
 {
   GC_ASSERT(strlen(name) < 16);

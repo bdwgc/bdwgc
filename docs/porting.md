@@ -154,13 +154,14 @@ operating system:
     updated for this platform and tracing of dynamic library roots is
     supported.
 
-  * `GWW_VDB`, `MPROTECT_VDB`, `PROC_VDB`, `SOFT_VDB` - May be defined if the
-    corresponding _virtual dirty bit_ implementation in `os_dep.c` file is
-    usable on this platform. This allows incremental/generational garbage
-    collection. (`GWW_VDB` uses the Win32 `GetWriteWatch` function to read
-    dirty bits, `MPROTECT_VDB` identifies modified pages by write-protecting
-    the heap and catching faults. `PROC_VDB` and `SOFT_VDB` use the `/proc`
-    pseudo-files to read dirty bits.)
+  * `GWW_VDB`, `MPROTECT_VDB`, `PROC_VDB`, `SOFT_VDB`, `UFFDWP_VDB` - May be
+    defined if the corresponding _virtual dirty bit_ implementation in
+    `os_dep.c` file is usable on this platform. This allows
+    incremental/generational garbage collection. (`GWW_VDB` uses the Win32
+    `GetWriteWatch` function to read dirty bits, `MPROTECT_VDB` and
+    `UFFDWP_VDB` identify modified pages by write-protecting the heap and
+    catching faults, `PROC_VDB` and `SOFT_VDB` use the `/proc` pseudo-files to
+    read dirty bits.)
 
   * `PREFETCH`, `GC_PREFETCH_FOR_WRITE` - The collector uses `PREFETCH(x)`
     to preload the cache with the data at `x` address. This defaults to

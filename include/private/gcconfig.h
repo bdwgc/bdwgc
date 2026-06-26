@@ -743,7 +743,8 @@ EXTERN_C_BEGIN
  *   - `GWW_VDB`: use Win32 `GetWriteWatch` primitive;
  *   - `MPROTECT_VDB`: write-protect the heap and catch faults;
  *   - `PROC_VDB`: use the SVR4 `/proc` primitives to read dirty bits;
- *   - `SOFT_VDB`: use the Linux `/proc` primitives to track dirty bits.
+ *   - `SOFT_VDB`: use the Linux `/proc` primitives to track dirty bits;
+ *   - `UFFDWP_VDB`: use Linux `userfaultfd` subsystem in write-protect mode.
  *
  * The first and second one may be combined, in which case a runtime
  * selection will be made, based on `GetWriteWatch` availability.
@@ -1003,6 +1004,16 @@ extern int _end[];
       && !defined(TILEGX) && !defined(TILEPRO)
 extern int _end[];
 #    define DATAEND ((ptr_t)_end)
+#  endif
+#  if (defined(AARCH64) || defined(I386) || defined(X86_64)) \
+      && !defined(NO_UFFDWP_VDB) && !defined(UFFDWP_VDB)
+/* TODO: Enable on other architectures. */
+/* TODO: Detect presence of `userfaultfd.h` and macros by `configure`. */
+#    if GC_GLIBC_PREREQ(2, 34) \
+        || (defined(HOST_ANDROID) && __ANDROID_API__ >= 34)
+/* Needs Linux 5.7 and `glibc` 2.34, or Android NDK r25 (API 34), at least. */
+#      define UFFDWP_VDB
+#    endif
 #  endif
 #  if !defined(REDIRECT_MALLOC) && !defined(E2K)
 /* Requires Linux 2.3.47 or later. */
@@ -2987,6 +2998,7 @@ EXTERN_C_BEGIN
 #  undef MPROTECT_VDB
 #  undef PROC_VDB
 #  undef SOFT_VDB
+#  undef UFFDWP_VDB
 #endif
 
 #if defined(USE_PROC_FOR_LIBRARIES) && !defined(LINUX) \
@@ -3010,12 +3022,37 @@ EXTERN_C_BEGIN
 #  undef SOFT_VDB
 #endif
 
-#if defined(SOFT_VDB) && defined(LINUX_VER_STATIC_CHECK)
+#if defined(BASE_ATOMIC_OPS_EMULATED) || defined(PREFER_MMAP_PROT_NONE) \
+    || defined(REDIRECT_MALLOC) || !defined(THREADS)
+/*
+ * Note: `PREFER_MMAP_PROT_NONE` causes the collector to allocate heap via
+ * `mmap(PROT_NONE)`, meaning pages are not initially accessible; this is not
+ * compatible with `UFFDIO_REGISTER_MODE_WP`.
+ */
+/* TODO: `REDIRECT_MALLOC` requires `UNLOCK` in `create_detached_thread`. */
+/* TODO: Support single-threaded configuration (VDB needs `-lpthread`). */
+#  undef UFFDWP_VDB
+#endif
+
+#if defined(LINUX_VER_STATIC_CHECK) \
+    && (defined(SOFT_VDB) || defined(UFFDWP_VDB))
 EXTERN_C_END
 #  include <linux/version.h> /*< for `LINUX_VERSION`, `LINUX_VERSION_CODE` */
 EXTERN_C_BEGIN
 #  if LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0)
 /* Not reliable in Linux kernels prior to v3.18. */
+#    undef SOFT_VDB
+#  endif
+#  if LINUX_VERSION_CODE < KERNEL_VERSION(5, 7, 0)
+#    undef UFFDWP_VDB
+#  endif
+#endif
+
+#if defined(SOFT_VDB) && defined(UFFDWP_VDB)
+/* TODO: `SOFT_VDB` and `UFFDWP_VDB` are mutually exclusive for now. */
+#  ifdef CHECK_SOFT_VDB
+#    undef UFFDWP_VDB
+#  else
 #    undef SOFT_VDB
 #  endif
 #endif
@@ -3040,7 +3077,7 @@ EXTERN_C_BEGIN
 #if defined(MPROTECT_VDB) && defined(GC_PREFER_MPROTECT_VDB)
 /* Choose `MPROTECT_VDB` manually (if multiple strategies available). */
 #  undef PROC_VDB
-/* `GWW_VDB`, `SOFT_VDB` are handled in `os_dep.c` file. */
+/* `GWW_VDB`, `SOFT_VDB`, `UFFDWP_VDB` are handled in `os_dep.c` file. */
 #endif
 
 #ifdef PROC_VDB
@@ -3048,6 +3085,7 @@ EXTERN_C_BEGIN
 #  undef MPROTECT_VDB
 /* For a test purpose only. */
 #  undef SOFT_VDB
+#  undef UFFDWP_VDB
 #endif
 
 #ifdef DARWIN_PARSE_STACK
@@ -3076,7 +3114,7 @@ EXTERN_C_BEGIN
 #endif
 
 #if !defined(DEFAULT_VDB) && !defined(GWW_VDB) && !defined(MPROTECT_VDB) \
-    && !defined(PROC_VDB) && !defined(SOFT_VDB)                          \
+    && !defined(PROC_VDB) && !defined(SOFT_VDB) && !defined(UFFDWP_VDB)  \
     && !defined(GC_DISABLE_INCREMENTAL)
 #  define DEFAULT_VDB
 #endif

@@ -1254,6 +1254,7 @@ GC_API int GC_CALL GC_get_mprotect_vdb_allowed(void);
 
 #define GC_VDB_PROC 0x20
 #define GC_VDB_SOFT 0x40
+#define GC_VDB_UFFDWP 0x80
 
 /**
  * Get the list of available VDB (virtual dirty bits) techniques.

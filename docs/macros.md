@@ -568,12 +568,13 @@ library (containing `MessageBox()` entry).
 `GC_PREFER_MPROTECT_VDB` - Causes `MPROTECT_VDB` to be chosen in case of
 multiple virtual dirty bit strategies are implemented (at present useful on
 Win32, Solaris and Linux to force `MPROTECT_VDB` strategy instead of the
-default `GWW_VDB`, `PROC_VDB` or `SOFT_VDB` ones, respectively).
+default `GWW_VDB`, `PROC_VDB`, `SOFT_VDB` and `UFFDWP_VDB` ones,
+respectively).
 
 `DONT_PROTECT_PTRFREE` - Prevents mixing heap blocks with and without pointers
-in a page, thus avoid protecting pointer-free pages (at the expense of
-potentially bigger heap size).  Has no effect unless MPROTECT_VDB is defined
-and the page is larger than the heap block.
+in a page, thus avoid protecting pointer-free pages using `mprotect()` (at the
+expense of potentially bigger heap size).  Has no effect unless `MPROTECT_VDB`
+is defined and the page is larger than the heap block.
 
 `CHECK_SOFT_VDB` - Turns on both `MPROTECT_VDB` and `SOFT_VDB` virtual dirty
 bit strategies to check whether they are consistent.  Use only for debugging

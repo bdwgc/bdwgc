@@ -18,7 +18,8 @@
 #include "private/gc_priv.h"
 
 #if (defined(MPROTECT_VDB) && !defined(MSWIN32) && !defined(MSWINCE)) \
-    || (defined(SOLARIS) && defined(THREADS)) || defined(OPENBSD)
+    || (defined(SOLARIS) && defined(THREADS)) || defined(OPENBSD)     \
+    || (defined(UFFDWP_VDB) && !defined(NO_MARKER_SPECIAL_SIGMASK))
 #  include <signal.h>
 #endif
 
@@ -50,7 +51,7 @@
 
 #if defined(LINUX) && defined(SPECIFIC_MAIN_STACKBOTTOM)        \
     || defined(ADD_HEAP_GUARD_PAGES) || defined(MMAP_SUPPORTED) \
-    || defined(NEED_PROC_MAPS)
+    || defined(NEED_PROC_MAPS) || defined(PROC_VDB) || defined(UFFDWP_VDB)
 #  include <errno.h>
 #endif
 
@@ -94,9 +95,10 @@ GC_get_mprotect_vdb_allowed(void)
   return (int)(!mprotect_vdb_disallowed);
 }
 
-#if ((defined(LINUX) && defined(SPECIFIC_MAIN_STACKBOTTOM)                  \
-      || defined(NEED_PROC_MAPS) || defined(PROC_VDB) || defined(SOFT_VDB)) \
-     && !defined(PROC_READ))                                                \
+#if ((defined(LINUX) && defined(SPECIFIC_MAIN_STACKBOTTOM)                 \
+      || defined(NEED_PROC_MAPS) || defined(PROC_VDB) || defined(SOFT_VDB) \
+      || defined(UFFDWP_VDB))                                              \
+     && !defined(PROC_READ))                                               \
     || defined(CPPCHECK)
 /* Note: should probably call the real `read()`, if later is wrapped. */
 #  define PROC_READ read
@@ -1781,8 +1783,9 @@ GC_get_main_stack_base(void)
  * with SunOS dynamic loading), or `GC_mark_roots` needs to check for them.
  */
 
-#if defined(MPROTECT_VDB) \
-    && (defined(GWW_VDB) || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB)))
+#if defined(MPROTECT_VDB)                       \
+    && (defined(GWW_VDB) || defined(UFFDWP_VDB) \
+        || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB)))
 static GC_bool
 is_mprotect_vdb_preferred(void)
 {
@@ -2846,7 +2849,8 @@ GC_win32_free_heap(void)
 }
 #endif
 
-#if (defined(USE_MUNMAP) || defined(MPROTECT_VDB)) && !defined(USE_WINALLOC)
+#if (defined(USE_MUNMAP) || defined(MPROTECT_VDB)) && !defined(USE_WINALLOC) \
+    || defined(UFFDWP_VDB)
 #  define ABORT_ON_REMAP_FAIL(C_msg_prefix, start_addr, len)             \
     ABORT_ARG3(C_msg_prefix " failed", " at %p (length %lu), errno= %d", \
                (void *)(start_addr), (unsigned long)(len), errno)
@@ -3157,7 +3161,8 @@ GC_get_push_other_roots(void)
   return GC_push_other_roots;
 }
 
-#if defined(SOFT_VDB) && !defined(NO_LINUX_VER_RUNTIME_CHECK) \
+#if ((defined(SOFT_VDB) || defined(UFFDWP_VDB)) \
+     && !defined(NO_LINUX_VER_RUNTIME_CHECK))   \
     || (defined(GLIBC_2_19_TSX_BUG) && defined(GC_PTHREADS_PARAMARK))
 GC_INNER int
 GC_parse_version(int *pminor, const char *pverstr)
@@ -3184,8 +3189,36 @@ GC_parse_version(int *pminor, const char *pverstr)
 }
 #endif
 
+#if !defined(NO_LINUX_VER_RUNTIME_CHECK) \
+    && (defined(SOFT_VDB) || defined(UFFDWP_VDB))
+#  include <string.h> /*< for `strcmp()` */
+#  include <sys/utsname.h>
+
+/* Ensure the linux (kernel) major/minor version is as given or higher. */
+static GC_bool
+ensure_min_linux_ver(int major, int minor)
+{
+  struct utsname info;
+  int actual_major;
+  int actual_minor = -1;
+
+  if (uname(&info) == -1) {
+    /* `uname()` has failed, should not happen actually. */
+    return FALSE;
+  }
+  if (strcmp(info.sysname, "Linux")) {
+    WARN("Cannot ensure Linux version as running on other OS: %s\n",
+         info.sysname);
+    return FALSE;
+  }
+  actual_major = GC_parse_version(&actual_minor, info.release);
+  return actual_major > major
+         || (actual_major == major && actual_minor >= minor);
+}
+#endif
+
 /*
- * Routines for accessing dirty bits on virtual pages.  There are 6 ways to
+ * Routines for accessing dirty bits on virtual pages.  There are 7 ways to
  * maintain this information, as of now:
  *
  *   - `DEFAULT_VDB`: A simple dummy implementation that treats every page
@@ -3210,6 +3243,14 @@ GC_parse_version(int *pminor, const char *pverstr)
  *     to be entirely satisfactory.  Requires reading dirty bits for entire
  *     address space.  Implementations tend to assume that the client is
  *     a (slow) debugger.
+ *
+ *   - `UFFDWP_VDB`: Use Linux `userfaultfd` (UFFD) subsystem to detect page
+ *     writes without the overhead of signal handling (unlike `MPROTECT_VDB`).
+ *     This provides a more efficient, less client-visible, modern approach
+ *     to tracking dirty pages for the incremental garbage collection.
+ *     Pages are marked as write-protected and `userfaultfd` events are used
+ *     to detect writes.  Requires Linux 5.7+.  `MPROTECT_VDB` may be defined
+ *     as a fallback strategy.
  *
  *   - `SOFT_VDB`: Use the `/proc` facility for reading soft-dirty PTEs
  *     (page table entries).  Works on Linux 3.18+ if the kernel is
@@ -3248,7 +3289,7 @@ GC_or_pages(page_hash_table pht1, const word *pht2)
 }
 #endif /* CHECKSUMS && GWW_VDB || PROC_VDB */
 
-#if defined(MPROTECT_VDB) && defined(DARWIN)
+#if defined(MPROTECT_VDB) && defined(DARWIN) || defined(UFFDWP_VDB)
 static GC_bool
 create_detached_thread(void *(*start_routine)(void *))
 {
@@ -3398,6 +3439,10 @@ GC_gww_read_dirty(GC_bool output_unneeded)
 static int clear_refs_fd = -1;
 #  define IS_NON_MPROTECT_VDB() (clear_refs_fd != -1)
 
+#elif defined(UFFDWP_VDB)
+static int uffdwp_fd = -1;
+#  define IS_NON_MPROTECT_VDB() (uffdwp_fd != -1)
+
 #else
 #  define IS_NON_MPROTECT_VDB() FALSE
 #endif
@@ -3417,7 +3462,7 @@ GC_dirty_init(void)
 }
 #endif /* DEFAULT_VDB */
 
-#if !defined(NO_MANUAL_VDB) || defined(MPROTECT_VDB)
+#if !defined(NO_MANUAL_VDB) || defined(MPROTECT_VDB) || defined(UFFDWP_VDB)
 #  if !defined(THREADS) || defined(HAVE_LOCKFREE_AO_OR)
 #    ifdef MPROTECT_VDB
 #      define async_set_pht_entry_from_index(db, index) \
@@ -3442,7 +3487,7 @@ async_set_pht_entry_from_index(volatile page_hash_table db, size_t index)
 #  elif !defined(CPPCHECK)
 #    error No test_and_set operation: Introduces a race.
 #  endif
-#endif /* !NO_MANUAL_VDB || MPROTECT_VDB */
+#endif
 
 #ifdef MPROTECT_VDB
 /*
@@ -3702,7 +3747,7 @@ GC_write_fault_handler(struct _EXCEPTION_POINTERS *exc_info)
 #    endif
       }
     }
-    UNPROTECT(h, GC_page_size);
+    MP_PROTECT_INNER(h, GC_page_size, TRUE); /*< unprotect */
     /*
      * We need to make sure that no collection occurs between the
      * unprotect action and the setting of the dirty bit.
@@ -3748,6 +3793,8 @@ GC_set_write_fault_handler(void)
 
 #    ifdef SOFT_VDB
 static GC_bool soft_dirty_init(void);
+#    elif defined(UFFDWP_VDB)
+static GC_bool uffdwp_dirty_init(void);
 #    endif
 
 GC_INNER GC_bool
@@ -3786,6 +3833,11 @@ GC_dirty_init(void)
 #      elif defined(SOFT_VDB)
   if (soft_dirty_init()) {
     GC_COND_LOG_PRINTF("Using soft-dirty bit feature\n");
+    return TRUE;
+  }
+#      elif defined(UFFDWP_VDB)
+  if (uffdwp_dirty_init()) {
+    GC_COND_LOG_PRINTF("Using Linux userfaultfd subsystem\n");
     return TRUE;
   }
 #      endif
@@ -3869,86 +3921,6 @@ GC_dirty_init(void)
 }
 #  endif /* !DARWIN */
 
-STATIC void
-GC_protect_heap(void)
-{
-  size_t i;
-
-  GC_ASSERT(GC_page_size != 0);
-  for (i = 0; i < GC_n_heap_sects; i++) {
-    ptr_t start = GC_heap_sects[i].hs_start;
-    size_t len = GC_heap_sects[i].hs_bytes;
-    struct hblk *current;
-    struct hblk *current_start; /*< start of block to be protected */
-    ptr_t limit;
-
-    GC_ASSERT((ADDR(start) & (GC_page_size - 1)) == 0);
-    GC_ASSERT((len & (GC_page_size - 1)) == 0);
-#  ifndef DONT_PROTECT_PTRFREE
-    /*
-     * We avoid protecting pointer-free objects unless the page size
-     * differs from `HBLKSIZE`.
-     */
-    if (GC_page_size != HBLKSIZE) {
-      PROTECT(start, len);
-      continue;
-    }
-#  endif
-
-    current_start = (struct hblk *)start;
-    limit = start + len;
-    for (current = current_start;;) {
-      size_t nblocks = 0;
-      GC_bool is_ptrfree = TRUE;
-
-      if (ADDR_LT((ptr_t)current, limit)) {
-        const hdr *hhdr;
-
-        GET_HDR(current, hhdr);
-        if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
-          /*
-           * This can happen only if we are at the beginning of a heap
-           * segment, and a block spans heap segments.  We will handle
-           * that block as part of the preceding segment.
-           */
-          GC_ASSERT(current_start == current);
-
-          current_start = ++current;
-          continue;
-        }
-        if (HBLK_IS_FREE(hhdr)) {
-          GC_ASSERT(modHBLKSZ(hhdr->hb_sz) == 0);
-          nblocks = divHBLKSZ(hhdr->hb_sz);
-        } else {
-          nblocks = OBJ_SZ_TO_BLOCKS(hhdr->hb_sz);
-          is_ptrfree = IS_PTRFREE(hhdr);
-        }
-      }
-      if (is_ptrfree) {
-        if (ADDR_LT((ptr_t)current_start, (ptr_t)current)) {
-#  ifdef DONT_PROTECT_PTRFREE
-          ptr_t cur_aligned = PTR_ALIGN_UP((ptr_t)current, GC_page_size);
-
-          current_start = HBLK_PAGE_ALIGNED(current_start);
-          /*
-           * Adjacent free blocks might be protected too because
-           * of the alignment by the page size.
-           */
-          PROTECT(current_start, cur_aligned - (ptr_t)current_start);
-#  else
-          PROTECT(current_start, (ptr_t)current - (ptr_t)current_start);
-#  endif
-        }
-        if (ADDR_GE((ptr_t)current, limit))
-          break;
-      }
-      current += nblocks;
-      if (is_ptrfree)
-        current_start = current;
-    }
-  }
-}
-
 #  if defined(CAN_HANDLE_FORK) && defined(DARWIN) && defined(THREADS) \
       || defined(COUNT_PROTECTED_REGIONS)
 /* Remove protection for the entire heap not updating `GC_dirty_pages`. */
@@ -3960,14 +3932,15 @@ GC_unprotect_all_heap(void)
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_auto_incremental);
   for (i = 0; i < GC_n_heap_sects; i++) {
-    UNPROTECT(GC_heap_sects[i].hs_start, GC_heap_sects[i].hs_bytes);
+    MP_PROTECT_INNER(GC_heap_sects[i].hs_start, GC_heap_sects[i].hs_bytes,
+                     TRUE);
   }
 }
 #  endif
 
 #  if (defined(THREADS) && !defined(NEED_FIXUP_POINTER) \
        && !defined(NO_ALL_INTERIOR_POINTERS))           \
-      || defined(DONT_PROTECT_PTRFREE)
+      || (defined(DONT_PROTECT_PTRFREE) && !defined(UFFDWP_VDB))
 GC_INNER GC_bool
 GC_is_mprotect_vdb(void)
 {
@@ -4007,6 +3980,7 @@ GC_handle_protected_regions_limit(void)
 }
 #  endif /* COUNT_PROTECTED_REGIONS */
 
+#  define REGISTER_HEAP_LAZY() (void)0
 #endif /* MPROTECT_VDB */
 
 #ifdef PROC_VDB
@@ -4018,7 +3992,6 @@ GC_handle_protected_regions_limit(void)
  * system calls.
  */
 
-#  include <errno.h>
 #  include <sys/signal.h>
 #  include <sys/stat.h>
 #  include <sys/syscall.h>
@@ -4353,33 +4326,6 @@ detect_soft_dirty_supported(ptr_t vaddr)
   return TRUE; /*< success */
 }
 
-#  ifndef NO_LINUX_VER_RUNTIME_CHECK
-#    include <string.h> /*< for strcmp() */
-#    include <sys/utsname.h>
-
-/* Ensure the linux (kernel) major/minor version is as given or higher. */
-static GC_bool
-ensure_min_linux_ver(int major, int minor)
-{
-  struct utsname info;
-  int actual_major;
-  int actual_minor = -1;
-
-  if (uname(&info) == -1) {
-    /* `uname()` has failed, should not happen actually. */
-    return FALSE;
-  }
-  if (strcmp(info.sysname, "Linux")) {
-    WARN("Cannot ensure Linux version as running on other OS: %s\n",
-         info.sysname);
-    return FALSE;
-  }
-  actual_major = GC_parse_version(&actual_minor, info.release);
-  return actual_major > major
-         || (actual_major == major && actual_minor >= minor);
-}
-#  endif
-
 #  ifdef MPROTECT_VDB
 static GC_bool
 soft_dirty_init(void)
@@ -4645,13 +4591,328 @@ GC_soft_read_dirty(GC_bool output_unneeded)
 }
 #endif /* SOFT_VDB */
 
+#ifdef UFFDWP_VDB
+#  include <linux/userfaultfd.h>
+#  include <sys/ioctl.h>
+#  include <sys/syscall.h>
+
+/* Open the `userfaultfd` file descriptor. */
+static GC_bool
+uffdwp_dirty_open_files(void)
+{
+  struct uffdio_api api;
+
+  GC_ASSERT(-1 == uffdwp_fd);
+#  ifndef UFFDWP_NOT_USER_MODE_ONLY
+#    ifndef UFFD_USER_MODE_ONLY
+#      define UFFD_USER_MODE_ONLY 1 /*< might be missing in Bionic */
+#    endif
+  /*
+   * First try to request the mode which ignores the faults in the kernel.
+   * This is to get past SELinux checks (needed on Android, at least).
+   */
+  uffdwp_fd
+      = syscall(SYS_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY);
+  if (-1 == uffdwp_fd)
+#  endif
+  {
+    uffdwp_fd = syscall(SYS_userfaultfd, O_CLOEXEC | O_NONBLOCK);
+    if (-1 == uffdwp_fd) {
+      GC_COND_LOG_PRINTF("userfaultfd syscall is not supported by kernel\n");
+      return FALSE;
+    }
+  }
+  /* Enable the write-protect feature. */
+#  ifdef MEMORY_SANITIZER
+  /* Prevent MSan false positive (FP) about use of uninitialized value. */
+  BZERO(&api, sizeof(api));
+#  endif
+  api.api = UFFD_API;
+  api.features = UFFD_FEATURE_PAGEFAULT_FLAG_WP;
+  if (ioctl(uffdwp_fd, UFFDIO_API, &api) == -1
+      || (api.features & UFFD_FEATURE_PAGEFAULT_FLAG_WP) == 0) {
+    GC_COND_LOG_PRINTF(
+        "userfaultfd write-protect is not supported by kernel\n");
+    close(uffdwp_fd);
+    uffdwp_fd = -1;
+    return FALSE;
+  }
+  return TRUE; /*< success */
+}
+
+/* Protect or unprotect memory pages in `userfaultfd` subsystem. */
+static void
+uffdwp_write_protect(void *start, size_t len, GC_bool allow_write)
+{
+  struct uffdio_writeprotect wp;
+
+  wp.range.start = ADDR(start);
+  wp.range.len = len;
+  wp.mode = allow_write ? 0 : UFFDIO_WRITEPROTECT_MODE_WP;
+  if (ioctl(uffdwp_fd, UFFDIO_WRITEPROTECT, &wp) == -1)
+    ABORT_ON_REMAP_FAIL("UFFDIO_WRITEPROTECT", start, len);
+}
+
+#  ifndef UFFDWP_MSG_BATCH_SIZE
+#    define UFFDWP_MSG_BATCH_SIZE 8
+#  endif
+
+/* The monitor thread that processes `userfaultfd` write-protect events. */
+static void *
+uffdwp_monitor_thread(void *arg)
+{
+  if (ADDR(arg) == GC_WORD_MAX)
+    return NULL; /*< to prevent a compiler warning */
+#  ifdef HAVE_PTHREAD_SETNAME_NP_WITH_TID
+  GC_pthread_setname_np_checked("GC-uffdwp");
+#  endif
+
+  for (;;) {
+    struct uffd_msg msg_buf[UFFDWP_MSG_BATCH_SIZE];
+    ssize_t res;
+    size_t i, n;
+
+    /* Wait for and get write-protect fault events. */
+    res = PROC_READ(uffdwp_fd, msg_buf, sizeof(msg_buf));
+    if (-1 == res) {
+      if (errno == EAGAIN || errno == EINTR)
+        continue;
+      ABORT_ARG1("userfaultfd read failed", ": errno= %d", errno);
+    }
+    if ((size_t)res % sizeof(struct uffd_msg) != 0)
+      ABORT("userfaultfd incomplete message received");
+    n = (size_t)res / sizeof(struct uffd_msg);
+#  ifdef DEBUG_DIRTY_BITS
+    if (n > 1)
+      GC_log_printf("Read %u userfaultfd messages at once\n", (unsigned)n);
+#  endif
+    for (i = 0; i < n; i++) {
+      struct uffd_msg *p_msg = &msg_buf[i];
+      struct hblk *h;
+      size_t j;
+
+      if (p_msg->event != UFFD_EVENT_PAGEFAULT
+          || (p_msg->arg.pagefault.flags & UFFD_PAGEFAULT_FLAG_WP) == 0)
+        ABORT_ARG2("userfaultfd unexpected event", " %u, flags= 0x%lx",
+                   p_msg->event, (unsigned long)p_msg->arg.pagefault.flags);
+
+      h = HBLK_PAGE_ALIGNED((ptr_t)(GC_uintptr_t)p_msg->arg.pagefault.address);
+      /* TODO: Add assertion that the address belongs to our heap. */
+#  ifdef DEBUG_DIRTY_BITS
+      GC_log_printf("dirty page at: %p\n", (void *)h);
+#  endif
+      /* Mark all sub-blocks in the page as dirty. */
+      for (j = 0; j < divHBLKSZ(GC_page_size); j++) {
+        size_t index = PHT_HASH(h + j);
+
+        async_set_pht_entry_from_index(GC_dirty_pages, index);
+      }
+      /*
+       * Unprotect the page; this also automatically resolves the fault and
+       * wakes the blocked thread (thus, `UFFDIO_CONTINUE` is not needed).
+       */
+      uffdwp_write_protect(h, GC_page_size, TRUE);
+    }
+  }
+}
+
+#  ifdef CAN_HANDLE_FORK
+GC_INNER void
+GC_dirty_update_child(void)
+{
+  GC_ASSERT(I_HOLD_LOCK());
+  if (-1 == uffdwp_fd) {
+    /* The GC incremental mode is off. */
+    return;
+  }
+  /*
+   * Close the file descriptor inherited from the parent.  The kernel
+   * unregisters all memory ranges itself (i.e. a manual memory unprotection
+   * is not needed).  Note: it is assumed that there are no unprocessed events
+   * for the current thread as otherwise a `SIGSEGV` would be thrown by the
+   * kernel when closing the file descriptor.
+   */
+  close(uffdwp_fd);
+  /* TODO: Re-enable incremental mode in child. */
+  GC_uffdwp_registered_sects = 0;
+  uffdwp_fd = -1;
+  GC_incremental = FALSE;
+}
+#  endif /* CAN_HANDLE_FORK */
+
+#  ifdef MPROTECT_VDB
+static GC_bool
+uffdwp_dirty_init(void)
+#  else
+GC_INNER GC_bool
+GC_dirty_init(void)
+#  endif
+{
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(GC_page_size != 0);
+#  ifdef MPROTECT_VDB
+  if (is_mprotect_vdb_preferred())
+    return FALSE;
+#  endif
+#  ifndef NO_LINUX_VER_RUNTIME_CHECK
+  if (!ensure_min_linux_ver(5, 7)) {
+    GC_COND_LOG_PRINTF(
+        "Running on old kernel lacking userfaultfd proper support\n");
+    return FALSE;
+  }
+#  endif
+  if (!uffdwp_dirty_open_files())
+    return FALSE;
+  if (UNLIKELY(!create_detached_thread(uffdwp_monitor_thread))) {
+    WARN("Failed to create userfaultfd monitor thread\n", 0);
+    close(uffdwp_fd);
+    return FALSE;
+  }
+  return TRUE; /*< success */
+}
+
+/* Lazily register new heap sections. */
+static void
+uffdwp_register_heap_lazy(void)
+{
+  size_t i;
+
+  for (i = GC_uffdwp_registered_sects; i < GC_n_heap_sects; i++) {
+    struct uffdio_register mem_reg;
+
+#  ifdef MEMORY_SANITIZER
+    BZERO(&mem_reg, sizeof(mem_reg));
+#  endif
+    mem_reg.range.start = ADDR(GC_heap_sects[i].hs_start);
+    mem_reg.range.len = GC_heap_sects[i].hs_bytes;
+    mem_reg.mode = UFFDIO_REGISTER_MODE_WP;
+    if (ioctl(uffdwp_fd, UFFDIO_REGISTER, &mem_reg) == -1)
+      ABORT_ARG2("UFFDIO_REGISTER failed", ": heap section %lu, errno= %d",
+                 (unsigned long)i, errno);
+  }
+  GC_uffdwp_registered_sects = GC_n_heap_sects;
+}
+
+#  ifdef MPROTECT_VDB
+#    define UF_MP_PROTECT_INNER(addr, len, allow_write)           \
+      do {                                                        \
+        if (IS_NON_MPROTECT_VDB()) {                              \
+          uffdwp_write_protect(addr, (size_t)(len), allow_write); \
+        } else {                                                  \
+          MP_PROTECT_INNER(addr, len, allow_write);               \
+        }                                                         \
+      } while (0)
+#    undef PROTECT
+#    undef UNPROTECT
+#    undef REGISTER_HEAP_LAZY
+#    define PROTECT(addr, len) UF_MP_PROTECT_INNER(addr, len, FALSE)
+#    define UNPROTECT(addr, len) UF_MP_PROTECT_INNER(addr, len, TRUE)
+#    define REGISTER_HEAP_LAZY()                                         \
+      (IS_NON_MPROTECT_VDB()                                             \
+               && UNLIKELY(GC_uffdwp_registered_sects < GC_n_heap_sects) \
+           ? uffdwp_register_heap_lazy()                                 \
+           : (void)0)
+#  else
+#    define REGISTER_HEAP_LAZY()                              \
+      (UNLIKELY(GC_uffdwp_registered_sects < GC_n_heap_sects) \
+           ? uffdwp_register_heap_lazy()                      \
+           : (void)0)
+#    define PROTECT(addr, len) uffdwp_write_protect(addr, (size_t)(len), FALSE)
+#    define UNPROTECT(addr, len) \
+      uffdwp_write_protect(addr, (size_t)(len), TRUE)
+#  endif
+
+#endif /* UFFDWP_VDB */
+
+#if defined(MPROTECT_VDB) || defined(UFFDWP_VDB)
+STATIC void
+GC_protect_heap(void)
+{
+  size_t i;
+
+  GC_ASSERT(GC_page_size != 0);
+  for (i = 0; i < GC_n_heap_sects; i++) {
+    ptr_t start = GC_heap_sects[i].hs_start;
+    size_t len = GC_heap_sects[i].hs_bytes;
+    struct hblk *current;
+    struct hblk *current_start; /*< start of block to be protected */
+    ptr_t limit;
+
+    GC_ASSERT((ADDR(start) & (GC_page_size - 1)) == 0);
+    GC_ASSERT((len & (GC_page_size - 1)) == 0);
+#  ifndef DONT_PROTECT_PTRFREE
+    /*
+     * We avoid protecting pointer-free objects unless the page size
+     * differs from `HBLKSIZE`.
+     */
+    if (GC_page_size != HBLKSIZE) {
+      PROTECT(start, len);
+      continue;
+    }
+#  endif
+
+    current_start = (struct hblk *)start;
+    limit = start + len;
+    for (current = current_start;;) {
+      size_t nblocks = 0;
+      GC_bool is_ptrfree = TRUE;
+
+      if (ADDR_LT((ptr_t)current, limit)) {
+        const hdr *hhdr;
+
+        GET_HDR(current, hhdr);
+        if (IS_FORWARDING_ADDR_OR_NIL(hhdr)) {
+          /*
+           * This can happen only if we are at the beginning of a heap
+           * segment, and a block spans heap segments.  We will handle
+           * that block as part of the preceding segment.
+           */
+          GC_ASSERT(current_start == current);
+
+          current_start = ++current;
+          continue;
+        }
+        if (HBLK_IS_FREE(hhdr)) {
+          GC_ASSERT(modHBLKSZ(hhdr->hb_sz) == 0);
+          nblocks = divHBLKSZ(hhdr->hb_sz);
+        } else {
+          nblocks = OBJ_SZ_TO_BLOCKS(hhdr->hb_sz);
+          is_ptrfree = IS_PTRFREE(hhdr);
+        }
+      }
+      if (is_ptrfree) {
+        if (ADDR_LT((ptr_t)current_start, (ptr_t)current)) {
+#  ifdef DONT_PROTECT_PTRFREE
+          ptr_t cur_aligned = PTR_ALIGN_UP((ptr_t)current, GC_page_size);
+
+          current_start = HBLK_PAGE_ALIGNED(current_start);
+          /*
+           * Adjacent free blocks might be protected too because
+           * of the alignment by the page size.
+           */
+          PROTECT(current_start, cur_aligned - (ptr_t)current_start);
+#  else
+          PROTECT(current_start, (ptr_t)current - (ptr_t)current_start);
+#  endif
+        }
+        if (ADDR_GE((ptr_t)current, limit))
+          break;
+      }
+      current += nblocks;
+      if (is_ptrfree)
+        current_start = current;
+    }
+  }
+}
+#endif
+
 #ifndef NO_MANUAL_VDB
 void
 GC_dirty_inner(const void *p)
 {
   size_t index = PHT_HASH(p);
 
-#  if defined(MPROTECT_VDB)
+#  if defined(MPROTECT_VDB) || defined(UFFDWP_VDB)
   /*
    * Do not update `GC_dirty_pages` if it should be followed by the
    * page unprotection.
@@ -4670,18 +4931,23 @@ GC_read_dirty(GC_bool output_unneeded)
 #  ifdef DEBUG_DIRTY_BITS
   GC_log_printf("read dirty begin\n");
 #  endif
+#  ifndef UFFDWP_VDB
   if (GC_manual_vdb
-#  if defined(MPROTECT_VDB)
+#    ifdef MPROTECT_VDB
       || !IS_NON_MPROTECT_VDB()
+#    endif
+  )
 #  endif
-  ) {
+  {
     if (!output_unneeded)
       BCOPY(CAST_AWAY_VOLATILE_PVOID(GC_dirty_pages), GC_grungy_pages,
             sizeof(GC_dirty_pages));
     BZERO(CAST_AWAY_VOLATILE_PVOID(GC_dirty_pages), sizeof(GC_dirty_pages));
-#  ifdef MPROTECT_VDB
-    if (!GC_manual_vdb)
+#  if defined(MPROTECT_VDB) || defined(UFFDWP_VDB)
+    if (!GC_manual_vdb) {
+      REGISTER_HEAP_LAZY();
       GC_protect_heap();
+    }
 #  endif
     return;
   }
@@ -4768,46 +5034,52 @@ GC_page_was_ever_dirty(const struct hblk *h)
 GC_INNER void
 GC_remove_protection(struct hblk *h, size_t nblocks, GC_bool is_ptrfree)
 {
-#  ifdef MPROTECT_VDB
-  struct hblk *current;
-  struct hblk *h_trunc; /*< truncated to page boundary */
-  ptr_t h_end;          /*< page boundary following the block end */
-#  endif
-
 #  ifndef PARALLEL_MARK
   GC_ASSERT(I_HOLD_LOCK());
 #  endif
-#  ifdef MPROTECT_VDB
+#  if defined(MPROTECT_VDB) || defined(UFFDWP_VDB)
   /*
-   * Note it is not allowed to call `GC_printf` (and the friends)
-   * in this function, see Win32 `GC_stop_world` for the details.
+   * Note it is not allowed to call `GC_printf` (and the friends) in this
+   * function on Windows, see relevant `GC_stop_world` for the details.
    */
 #    ifdef DONT_PROTECT_PTRFREE
   if (is_ptrfree)
     return;
 #    endif
-  if (!GC_auto_incremental || IS_NON_MPROTECT_VDB())
+  if (!GC_auto_incremental)
     return;
+#    if defined(GWW_VDB) || defined(SOFT_VDB)
+  if (IS_NON_MPROTECT_VDB())
+    return;
+#    endif
   GC_ASSERT(GC_page_size != 0);
-  h_trunc = HBLK_PAGE_ALIGNED(h);
-  h_end = PTR_ALIGN_UP((ptr_t)(h + nblocks), GC_page_size);
-  /*
-   * Note that we cannot examine `GC_dirty_pages` to check whether the
-   * page at `h_trunc` has already been marked dirty as there could be
-   * a hash collision.
-   */
-  for (current = h_trunc; ADDR_LT((ptr_t)current, h_end); ++current) {
-    size_t index = PHT_HASH(current);
+  REGISTER_HEAP_LAZY();
+
+  {
+    struct hblk *current;
+    /* Truncated to page boundary. */
+    struct hblk *h_trunc = HBLK_PAGE_ALIGNED(h);
+    /* Page boundary following the block end. */
+    ptr_t h_end = PTR_ALIGN_UP((ptr_t)(h + nblocks), GC_page_size);
+
+    /*
+     * Note that we cannot examine `GC_dirty_pages` to check whether the
+     * page at `h_trunc` has already been marked dirty as there could be
+     * a hash collision.
+     */
+    for (current = h_trunc; ADDR_LT((ptr_t)current, h_end); ++current) {
+      size_t index = PHT_HASH(current);
 
 #    ifndef DONT_PROTECT_PTRFREE
-    if (!is_ptrfree
-        || !ADDR_INSIDE((ptr_t)current, (ptr_t)h, (ptr_t)(h + nblocks)))
+      if (!is_ptrfree
+          || !ADDR_INSIDE((ptr_t)current, (ptr_t)h, (ptr_t)(h + nblocks)))
 #    endif
-    {
-      async_set_pht_entry_from_index(GC_dirty_pages, index);
+      {
+        async_set_pht_entry_from_index(GC_dirty_pages, index);
+      }
     }
+    UNPROTECT(h_trunc, h_end - (ptr_t)h_trunc);
   }
-  UNPROTECT(h_trunc, h_end - (ptr_t)h_trunc);
 #  else
   /* Ignore write hints.  They do not help us here. */
   UNUSED_ARG(h);
@@ -5537,8 +5809,11 @@ GC_API int GC_CALL
 GC_incremental_protection_needs(void)
 {
   GC_ASSERT(GC_is_initialized);
-#ifdef MPROTECT_VDB
-#  if defined(GWW_VDB) || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB))
+#ifndef MPROTECT_VDB
+  return GC_PROTECTS_NONE;
+#else
+#  if defined(GWW_VDB) || (defined(SOFT_VDB) && !defined(CHECK_SOFT_VDB)) \
+      || defined(UFFDWP_VDB)
   /* Only if the incremental mode is already switched on. */
   if (IS_NON_MPROTECT_VDB())
     return GC_PROTECTS_NONE;
@@ -5548,8 +5823,6 @@ GC_incremental_protection_needs(void)
     return GC_PROTECTS_POINTER_HEAP | GC_PROTECTS_PTRFREE_HEAP;
 #  endif
   return GC_PROTECTS_POINTER_HEAP;
-#else
-  return GC_PROTECTS_NONE;
 #endif
 }
 
@@ -5571,6 +5844,10 @@ GC_get_actual_vdb(void)
     if (IS_NON_MPROTECT_VDB())
       return GC_VDB_SOFT;
 #    endif
+#    ifdef UFFDWP_VDB
+    if (IS_NON_MPROTECT_VDB())
+      return GC_VDB_UFFDWP;
+#    endif
     return GC_VDB_MPROTECT;
 #  elif defined(GWW_VDB)
     return GC_VDB_GWW;
@@ -5578,6 +5855,8 @@ GC_get_actual_vdb(void)
     return GC_VDB_SOFT;
 #  elif defined(PROC_VDB)
     return GC_VDB_PROC;
+#  elif defined(UFFDWP_VDB)
+    return GC_VDB_UFFDWP;
 #  else /* DEFAULT_VDB */
     return GC_VDB_DEFAULT;
 #  endif
