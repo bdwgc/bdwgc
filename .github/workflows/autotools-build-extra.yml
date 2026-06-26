@@ -95,6 +95,7 @@ jobs:
           extra_sanitizer_checks: true
         - os: ubuntu-latest
           conf_options: --disable-shared --disable-thread-local-alloc --enable-cplusplus
+          cflags_extra: -D NO_UFFDWP_VDB
         - os: ubuntu-24.04-arm
           conf_options: --disable-shared --disable-threads
           c_compiler: gcc
@@ -251,6 +252,9 @@ jobs:
         - os: ubuntu-latest
           conf_options: --enable-cplusplus --enable-gc-assertions --enable-redirect-malloc --enable-rwlock --enable-uncollectable-redirection
           cflags_extra: -D _FORTIFY_SOURCE=2 -O3
+        - os: ubuntu-latest
+          conf_options: --enable-cplusplus --enable-gc-assertions --enable-rwlock
+          cflags_extra: -O3 -D NO_MPROTECT_VDB -D NO_UFFDWP_VDB
         - os: ubuntu-24.04-arm
           conf_options: --enable-cplusplus --enable-gc-assertions --with-libatomic-ops=yes
           cflags_extra: -D VERY_SMALL_CONFIG
