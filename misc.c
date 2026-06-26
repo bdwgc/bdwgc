@@ -390,12 +390,12 @@ GC_clear_stack(void *arg)
   }
   BZERO(CAST_AWAY_VOLATILE_PVOID(dummy), sizeof(dummy));
 #  else
-  if (GC_gc_no != GC_stack_last_cleared) {
+  if (GC_gc_no + 1 != GC_stack_last_cleared_p1) {
     /* Start things over, so we clear the entire stack again. */
     if (UNLIKELY(NULL == GC_high_water))
       GC_high_water = (ptr_t)GC_stackbottom;
     GC_min_sp = GC_high_water;
-    GC_stack_last_cleared = GC_gc_no;
+    GC_stack_last_cleared_p1 = GC_gc_no + 1;
     GC_bytes_allocd_at_reset = GC_bytes_allocd;
   }
   /* Adjust `GC_high_water`. */
