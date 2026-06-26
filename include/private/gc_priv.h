@@ -1774,9 +1774,9 @@ struct _GC_arrays {
 #  define GC_bytes_allocd_at_reset GC_arrays._bytes_allocd_at_reset
   word _bytes_allocd_at_reset;
 
-  /* `GC_gc_no` value when we last did this. */
-#  define GC_stack_last_cleared GC_arrays._stack_last_cleared
-  word _stack_last_cleared;
+  /* `GC_gc_no` value when we last did this, plus one.  Zero initially. */
+#  define GC_stack_last_cleared_p1 GC_arrays._stack_last_cleared_p1
+  word _stack_last_cleared_p1;
 #endif
 
   /* The number of extra calls to `GC_mark_some` that we have made. */
