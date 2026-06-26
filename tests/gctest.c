@@ -2172,12 +2172,13 @@ enable_incremental_mode(void)
     GC_enable_incremental();
     TEST_ASSERT(GC_is_init_called());
     if (vdbs != GC_VDB_NONE)
-      GC_printf("Supported VDBs:%s%s%s%s%s%s\n",
+      GC_printf("Supported VDBs:%s%s%s%s%s%s%s\n",
                 vdbs & GC_VDB_MANUAL ? " manual" : "",
                 vdbs & GC_VDB_DEFAULT ? " default" : "",
                 vdbs & GC_VDB_GWW ? " gww" : "",
                 vdbs & GC_VDB_PROC ? " proc" : "",
                 vdbs & GC_VDB_SOFT ? " soft" : "",
+                vdbs & GC_VDB_UFFDWP ? " uffdwp" : "",
                 vdbs & GC_VDB_MPROTECT ? " mprotect" : "");
   }
 #  endif
@@ -2193,6 +2194,9 @@ enable_incremental_mode(void)
       case GC_VDB_PROC:
       case GC_VDB_SOFT:
         GC_printf("Reading dirty bits from /proc\n");
+        break;
+      case GC_VDB_UFFDWP:
+        GC_printf("Using userfaultfd in write-protect mode\n");
         break;
       case GC_VDB_MPROTECT:
         GC_printf("Emulating dirty bits with mprotect/signals%s\n",

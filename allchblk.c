@@ -994,7 +994,8 @@ drop_hblk_in_chunks(size_t n, struct hblk *hbp, hdr *hhdr)
 }
 #endif /* !NO_BLACK_LISTING */
 
-#if defined(MPROTECT_VDB) && defined(DONT_PROTECT_PTRFREE)
+#if (defined(MPROTECT_VDB) || defined(UFFDWP_VDB)) \
+    && defined(DONT_PROTECT_PTRFREE)
 static GC_bool
 is_hblks_mix_in_page(struct hblk *hbp, GC_bool is_ptrfree)
 {
@@ -1021,7 +1022,7 @@ is_hblks_mix_in_page(struct hblk *hbp, GC_bool is_ptrfree)
   /* All blocks are free. */
   return FALSE;
 }
-#endif /* MPROTECT_VDB && DONT_PROTECT_PTRFREE */
+#endif
 
 /*
  * The same as `GC_allochblk`, but with search restricted to the
@@ -1075,15 +1076,24 @@ retry:
         continue;
     }
 
-#if defined(MPROTECT_VDB) && defined(DONT_PROTECT_PTRFREE)
+#if (defined(MPROTECT_VDB) || defined(UFFDWP_VDB)) \
+    && defined(DONT_PROTECT_PTRFREE)
     /*
      * Avoid write-protecting pointer-free blocks (only the case
      * if page size is larger than the block size).
      */
     GC_ASSERT(GC_page_size != 0);
     if (GC_page_size != HBLKSIZE
+#  ifdef UFFDWP_VDB
+        /*
+         * Either the incremental mode is not enabled yet, or it is based
+         * on `mprotect` or `userfaultfd`.
+         */
+        && !GC_manual_vdb
+#  else
         && (!GC_incremental /*< not enabled yet */
             || GC_is_mprotect_vdb())
+#  endif
         && is_hblks_mix_in_page(hbp, kind == PTRFREE))
       continue;
 #endif
