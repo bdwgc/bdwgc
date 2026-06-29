@@ -5908,9 +5908,8 @@ GC_print_callers(struct callinfo info[NFRAMES])
          * There are faster ways to do this, but hopefully this is
          * not time critical.
          */
-        (void)snprintf(cmd_buf, sizeof(cmd_buf),
-                       "/usr/bin/addr2line -f -e %s 0x%lx", exe_name,
-                       (unsigned long)ADDR(info[i].ci_pc));
+        (void)snprintf(cmd_buf, sizeof(cmd_buf), "addr2line -f -e %s 0x%lx",
+                       exe_name, (unsigned long)ADDR(info[i].ci_pc));
         cmd_buf[sizeof(cmd_buf) - 1] = '\0';
         old_preload = GETENV("LD_PRELOAD");
         if (old_preload != NULL) {
