@@ -142,8 +142,8 @@ a program `a.out` under Linux/i686 and Linux/x86_64 as follows:
      On some platforms this does not work at all for the multi-threaded
      programs.
 
-  2. If possible, ensure that the `addr2line` program is installed
-     in `/usr/bin`. (It comes with most Linux distributions.)
+  2. If possible, ensure that the `addr2line` program is installed. (It comes
+     with most Linux distributions.)
 
   3. If possible, compile your program, let's call it as `a.out`, with full
      debug information. This will improve the quality of the leak reports.
