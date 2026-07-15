@@ -3291,7 +3291,7 @@ GC_or_pages(page_hash_table pht1, const word *pht2)
 
 #if defined(MPROTECT_VDB) && defined(DARWIN) || defined(UFFDWP_VDB)
 static GC_bool
-create_detached_thread(void *(*start_routine)(void *))
+create_detached_thread(void *(*start_routine)(void *), void *arg)
 {
   int res;
   pthread_t thread;
@@ -3315,7 +3315,7 @@ create_detached_thread(void *(*start_routine)(void *))
   }
 #  endif
   /* This will call the real `pthreads` routine, not our wrapper. */
-  res = GC_real_pthread_create(&thread, &attr, start_routine, NULL);
+  res = GC_real_pthread_create(&thread, &attr, start_routine, arg);
 #  ifndef NO_MARKER_SPECIAL_SIGMASK
   /* Restore previous signal mask. */
   if (UNLIKELY(GC_real_pthread_sigmask(SIG_SETMASK, &oldset, NULL) != 0))
@@ -4642,7 +4642,7 @@ uffdwp_dirty_open_files(void)
 
 /* Protect or unprotect memory pages in `userfaultfd` subsystem. */
 static void
-uffdwp_write_protect(void *start, size_t len, GC_bool allow_write)
+uffdwp_write_protect(int fd, void *start, size_t len, GC_bool allow_write)
 {
   struct uffdio_writeprotect wp;
 
@@ -4650,14 +4650,15 @@ uffdwp_write_protect(void *start, size_t len, GC_bool allow_write)
   wp.range.start = ADDR(start);
   wp.range.len = len;
   wp.mode = allow_write ? 0 : UFFDIO_WRITEPROTECT_MODE_WP;
-  if (ioctl(uffdwp_fd, UFFDIO_WRITEPROTECT, &wp) == -1) {
+  if (ioctl(fd, UFFDIO_WRITEPROTECT, &wp) == -1) {
     /* Older kernels reject ranges spanning more than one VMA. */
     if (errno == ENOENT && len > GC_page_size) {
       size_t mid_len = ((len >> 1) + GC_page_size - 1) & ~(GC_page_size - 1);
 
       /* Retrying is safe even if part of the range was already processed. */
-      uffdwp_write_protect(start, mid_len, allow_write);
-      uffdwp_write_protect((ptr_t)start + mid_len, len - mid_len, allow_write);
+      uffdwp_write_protect(fd, start, mid_len, allow_write);
+      uffdwp_write_protect(fd, (ptr_t)start + mid_len, len - mid_len,
+                           allow_write);
       return;
     }
     ABORT_ON_REMAP_FAIL("UFFDIO_WRITEPROTECT", start, len);
@@ -4672,7 +4673,10 @@ uffdwp_write_protect(void *start, size_t len, GC_bool allow_write)
 static void *
 uffdwp_monitor_thread(void *arg)
 {
-  if (ADDR(arg) == GC_WORD_MAX)
+  /* Do not access `uffdwp_fd` directly. */
+  int fd = (int)(GC_uintptr_t)arg;
+
+  if (-1 == fd)
     return NULL; /*< to prevent a compiler warning */
 #  ifdef HAVE_PTHREAD_SETNAME_NP_WITH_TID
   GC_pthread_setname_np_checked("GC-uffdwp");
@@ -4684,7 +4688,7 @@ uffdwp_monitor_thread(void *arg)
     size_t i, n;
 
     /* Wait for and get write-protect fault events. */
-    res = PROC_READ(uffdwp_fd, msg_buf, sizeof(msg_buf));
+    res = PROC_READ(fd, msg_buf, sizeof(msg_buf));
     if (-1 == res) {
       if (errno == EINTR)
         continue;
@@ -4722,7 +4726,7 @@ uffdwp_monitor_thread(void *arg)
        * Unprotect the page; this also automatically resolves the fault and
        * wakes the blocked thread (thus, `UFFDIO_CONTINUE` is not needed).
        */
-      uffdwp_write_protect(h, GC_page_size, TRUE);
+      uffdwp_write_protect(fd, h, GC_page_size, TRUE);
     }
   }
 }
@@ -4774,7 +4778,8 @@ GC_dirty_init(void)
 #  endif
   if (!uffdwp_dirty_open_files())
     return FALSE;
-  if (UNLIKELY(!create_detached_thread(uffdwp_monitor_thread))) {
+  if (UNLIKELY(!create_detached_thread(
+          uffdwp_monitor_thread, NUMERIC_TO_VPTR((unsigned)uffdwp_fd)))) {
     WARN("Failed to create userfaultfd monitor thread\n", 0);
     close(uffdwp_fd);
     return FALSE;
@@ -4805,13 +4810,13 @@ uffdwp_register_heap_lazy(void)
 }
 
 #  ifdef MPROTECT_VDB
-#    define UF_MP_PROTECT_INNER(addr, len, allow_write)           \
-      do {                                                        \
-        if (IS_NON_MPROTECT_VDB()) {                              \
-          uffdwp_write_protect(addr, (size_t)(len), allow_write); \
-        } else {                                                  \
-          MP_PROTECT_INNER(addr, len, allow_write);               \
-        }                                                         \
+#    define UF_MP_PROTECT_INNER(addr, len, allow_write)                      \
+      do {                                                                   \
+        if (IS_NON_MPROTECT_VDB()) {                                         \
+          uffdwp_write_protect(uffdwp_fd, addr, (size_t)(len), allow_write); \
+        } else {                                                             \
+          MP_PROTECT_INNER(addr, len, allow_write);                          \
+        }                                                                    \
       } while (0)
 #    undef PROTECT
 #    undef UNPROTECT
@@ -4828,9 +4833,10 @@ uffdwp_register_heap_lazy(void)
       (UNLIKELY(GC_uffdwp_registered_sects < GC_n_heap_sects) \
            ? uffdwp_register_heap_lazy()                      \
            : (void)0)
-#    define PROTECT(addr, len) uffdwp_write_protect(addr, (size_t)(len), FALSE)
+#    define PROTECT(addr, len) \
+      uffdwp_write_protect(uffdwp_fd, addr, (size_t)(len), FALSE)
 #    define UNPROTECT(addr, len) \
-      uffdwp_write_protect(addr, (size_t)(len), TRUE)
+      uffdwp_write_protect(uffdwp_fd, addr, (size_t)(len), TRUE)
 #  endif
 
 #endif /* UFFDWP_VDB */
@@ -5544,7 +5550,7 @@ GC_dirty_init(void)
   if (r != KERN_SUCCESS)
     ABORT("task_set_exception_ports failed");
 
-  if (UNLIKELY(!create_detached_thread(GC_mprotect_thread))) {
+  if (UNLIKELY(!create_detached_thread(GC_mprotect_thread, NULL))) {
     WARN("Cannot turn on GC incremental (failed to create thread)\n", 0);
     /* Restore the old task exception ports. */
     if (GC_old_exc_ports.count > 0) {
