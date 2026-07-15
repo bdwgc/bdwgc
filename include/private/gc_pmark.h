@@ -66,7 +66,7 @@ EXTERN_C_BEGIN
 #define ENV(descr) ((descr) >> (GC_DS_TAG_BITS + GC_LOG_MAX_MARK_PROCS))
 #define MAX_ENV (((word)1 << (BITMAP_BITS - GC_LOG_MAX_MARK_PROCS)) - 1)
 
-GC_EXTERN unsigned GC_n_mark_procs;
+GC_EXTERN GC_VAR_ATTR unsigned GC_n_mark_procs;
 
 /* Number of mark stack entries to discard on overflow. */
 #define GC_MARK_STACK_DISCARDS (INITIAL_MARK_STACK_SIZE / 8)

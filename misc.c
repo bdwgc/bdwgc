@@ -73,22 +73,22 @@ GC_INNER pthread_mutex_t GC_allocate_ml;
 __thread unsigned char GC_cancel_disable_count = 0;
 #endif
 
-struct _GC_arrays GC_arrays /* `= { 0 }` */;
+/* `GC_VAR_ATTR` */ struct _GC_arrays GC_arrays /* `= { 0 }` */;
 
-GC_INNER unsigned GC_n_mark_procs = GC_RESERVED_MARK_PROCS;
+GC_INNER GC_VAR_ATTR unsigned GC_n_mark_procs = GC_RESERVED_MARK_PROCS;
 
-GC_INNER unsigned GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
+GC_INNER GC_VAR_ATTR unsigned GC_n_kinds = GC_N_KINDS_INITIAL_VALUE;
 
-ptr_t GC_stackbottom = NULL;
+GC_VAR_ATTR ptr_t GC_stackbottom = NULL;
 
-int GC_dont_gc = FALSE;
+GC_VAR_ATTR int GC_dont_gc = FALSE;
 
-int GC_dont_precollect = FALSE;
+GC_VAR_ATTR int GC_dont_precollect = FALSE;
 
-int GC_quiet = 0;
+GC_VAR_ATTR int GC_quiet = 0;
 
 #if !defined(NO_CLOCK) || !defined(SMALL_CONFIG)
-GC_INNER int GC_print_stats = 0;
+GC_INNER GC_VAR_ATTR int GC_print_stats = 0;
 #endif
 
 #ifdef MAKE_BACK_GRAPH
@@ -97,7 +97,7 @@ GC_INNER int GC_print_stats = 0;
 #  else
 #    define PRINT_BACK_HEIGHT_INIT FALSE
 #  endif
-GC_INNER GC_bool GC_print_back_height = PRINT_BACK_HEIGHT_INIT;
+GC_INNER GC_VAR_ATTR GC_bool GC_print_back_height = PRINT_BACK_HEIGHT_INIT;
 #endif
 
 #ifndef NO_DEBUGGING
@@ -106,11 +106,11 @@ GC_INNER GC_bool GC_print_back_height = PRINT_BACK_HEIGHT_INIT;
 #  else
 #    define DUMP_REGULARLY_INIT FALSE
 #  endif
-GC_INNER GC_bool GC_dump_regularly = DUMP_REGULARLY_INIT;
+GC_INNER GC_VAR_ATTR GC_bool GC_dump_regularly = DUMP_REGULARLY_INIT;
 #endif
 
 #ifdef KEEP_BACK_PTRS
-GC_INNER long GC_backtraces = 0;
+GC_INNER GC_VAR_ATTR long GC_backtraces = 0;
 #endif
 
 #ifdef FIND_LEAK
@@ -118,7 +118,7 @@ GC_INNER long GC_backtraces = 0;
 #else
 #  define FIND_LEAK_INIT 0
 #endif
-int GC_find_leak = FIND_LEAK_INIT;
+GC_VAR_ATTR int GC_find_leak = FIND_LEAK_INIT;
 
 #if !defined(NO_FIND_LEAK) && !defined(SHORT_DBG_HDRS)
 #  ifdef GC_FINDLEAK_DELAY_FREE
@@ -126,7 +126,7 @@ int GC_find_leak = FIND_LEAK_INIT;
 #  else
 #    define FINDLEAK_DELAY_FREE_INIT FALSE
 #  endif
-GC_INNER GC_bool GC_findleak_delay_free = FINDLEAK_DELAY_FREE_INIT;
+GC_INNER GC_VAR_ATTR GC_bool GC_findleak_delay_free = FINDLEAK_DELAY_FREE_INIT;
 #endif /* !NO_FIND_LEAK && !SHORT_DBG_HDRS */
 
 #ifndef NO_ALL_INTERIOR_POINTERS
@@ -135,7 +135,7 @@ GC_INNER GC_bool GC_findleak_delay_free = FINDLEAK_DELAY_FREE_INIT;
 #  else
 #    define ALL_INTERIOR_POINTERS_INIT 0
 #  endif
-int GC_all_interior_pointers = ALL_INTERIOR_POINTERS_INIT;
+GC_VAR_ATTR int GC_all_interior_pointers = ALL_INTERIOR_POINTERS_INIT;
 #endif
 
 #ifdef FINALIZE_ON_DEMAND
@@ -143,17 +143,17 @@ int GC_all_interior_pointers = ALL_INTERIOR_POINTERS_INIT;
 #else
 #  define FINALIZE_ON_DEMAND_INIT 0
 #endif
-int GC_finalize_on_demand = FINALIZE_ON_DEMAND_INIT;
+GC_VAR_ATTR int GC_finalize_on_demand = FINALIZE_ON_DEMAND_INIT;
 
 #ifdef JAVA_FINALIZATION
 #  define JAVA_FINALIZATION_INIT 1
 #else
 #  define JAVA_FINALIZATION_INIT 0
 #endif
-int GC_java_finalization = JAVA_FINALIZATION_INIT;
+GC_VAR_ATTR int GC_java_finalization = JAVA_FINALIZATION_INIT;
 
 /* All accesses to it should be synchronized to avoid data race. */
-GC_finalizer_notifier_proc GC_finalizer_notifier
+GC_VAR_ATTR GC_finalizer_notifier_proc GC_finalizer_notifier
     = (GC_finalizer_notifier_proc)0;
 
 #ifdef GC_FORCE_UNMAP_ON_GCOLLECT
@@ -161,13 +161,15 @@ GC_finalizer_notifier_proc GC_finalizer_notifier
 #else
 #  define FORCE_UNMAP_ON_GCOLLECT_INIT FALSE
 #endif
-GC_INNER GC_bool GC_force_unmap_on_gcollect = FORCE_UNMAP_ON_GCOLLECT_INIT;
+GC_INNER GC_VAR_ATTR GC_bool GC_force_unmap_on_gcollect
+    = FORCE_UNMAP_ON_GCOLLECT_INIT;
 
 #ifndef NO_BLACK_LISTING
 #  ifndef GC_LARGE_ALLOC_WARN_INTERVAL
 #    define GC_LARGE_ALLOC_WARN_INTERVAL 5
 #  endif
-GC_INNER long GC_large_alloc_warn_interval = (GC_LARGE_ALLOC_WARN_INTERVAL);
+GC_INNER GC_VAR_ATTR long GC_large_alloc_warn_interval
+    = (GC_LARGE_ALLOC_WARN_INTERVAL);
 #endif
 
 STATIC void *GC_CALLBACK
@@ -178,7 +180,7 @@ GC_default_oom_fn(size_t bytes_requested)
 }
 
 /* All accesses to it should be synchronized to avoid data race. */
-GC_oom_func GC_oom_fn = GC_default_oom_fn;
+GC_VAR_ATTR GC_oom_func GC_oom_fn = GC_default_oom_fn;
 
 #ifdef CAN_HANDLE_FORK
 #  ifdef HANDLE_FORK
@@ -186,7 +188,7 @@ GC_oom_func GC_oom_fn = GC_default_oom_fn;
 #  else
 #    define HANDLE_FORK_INIT 0
 #  endif
-GC_INNER int GC_handle_fork = HANDLE_FORK_INIT;
+GC_INNER GC_VAR_ATTR int GC_handle_fork = HANDLE_FORK_INIT;
 
 #elif !defined(HAVE_NO_FORK)
 GC_API void GC_CALL
@@ -850,7 +852,7 @@ looping_handler(int sig)
   }
 }
 
-static GC_bool installed_looping_handler = FALSE;
+static GC_VAR_ATTR GC_bool installed_looping_handler = FALSE;
 
 static void
 maybe_install_looping_handler(void)
@@ -879,9 +881,9 @@ maybe_install_looping_handler(void)
 #if !defined(OS2) && !defined(GC_ANDROID_LOG) && !defined(NN_PLATFORM_CTR) \
     && !defined(NINTENDO_SWITCH)                                           \
     && (!defined(MSWIN32) || defined(CONSOLE_LOG)) && !defined(MSWINCE)
-STATIC int GC_stdout = GC_DEFAULT_STDOUT_FD;
-STATIC int GC_stderr = GC_DEFAULT_STDERR_FD;
-STATIC int GC_log = GC_DEFAULT_STDERR_FD;
+STATIC GC_VAR_ATTR int GC_stdout = GC_DEFAULT_STDOUT_FD;
+STATIC GC_VAR_ATTR int GC_stderr = GC_DEFAULT_STDERR_FD;
+STATIC GC_VAR_ATTR int GC_log = GC_DEFAULT_STDERR_FD;
 
 #  ifndef MSWIN32
 GC_API void GC_CALL
@@ -927,7 +929,7 @@ callee_saves_pushed_dummy_fn(ptr_t data, void *context)
 #else
 #  define MANUAL_VDB_INIT FALSE
 #endif
-static GC_bool manual_vdb_allowed = MANUAL_VDB_INIT;
+static GC_VAR_ATTR GC_bool manual_vdb_allowed = MANUAL_VDB_INIT;
 
 GC_API void GC_CALL
 GC_set_manual_vdb_allowed(int value)
@@ -1052,7 +1054,7 @@ GC_init(void)
     return;
 #ifdef REDIRECT_MALLOC
   {
-    static GC_bool init_started = FALSE;
+    static GC_VAR_ATTR GC_bool init_started;
 
     if (init_started)
       ABORT("Redirected malloc() called during GC init");
@@ -1690,7 +1692,7 @@ GC_deinit(void)
 
 #if (defined(MSWIN32) && !defined(CONSOLE_LOG)) || defined(MSWINCE)
 
-STATIC HANDLE GC_log = 0;
+STATIC GC_VAR_ATTR HANDLE GC_log = 0;
 
 #  ifdef THREADS
 #    if defined(PARALLEL_MARK) && !defined(GC_ALWAYS_MULTITHREADED)
@@ -1918,9 +1920,9 @@ GC_write(const char *buf, size_t len)
 #  define WRITE(f, buf, len) GC_write(buf, len)
 
 #elif defined(OS2)
-STATIC FILE *GC_stdout = NULL;
-STATIC FILE *GC_stderr = NULL;
-STATIC FILE *GC_log = NULL;
+STATIC GC_VAR_ATTR FILE *GC_stdout = NULL;
+STATIC GC_VAR_ATTR FILE *GC_stderr = NULL;
+STATIC GC_VAR_ATTR FILE *GC_log = NULL;
 
 /* Initialize `GC_log` (and the friends) passed to `GC_write()`. */
 STATIC void
@@ -2163,7 +2165,7 @@ GC_default_warn_proc(const char *msg, GC_uintptr_t arg)
   GC_warn_printf(msg, arg);
 }
 
-GC_INNER GC_warn_proc GC_current_warn_proc = GC_default_warn_proc;
+GC_INNER GC_VAR_ATTR GC_warn_proc GC_current_warn_proc = GC_default_warn_proc;
 
 GC_API void GC_CALLBACK
 GC_ignore_warn_proc(const char *msg, GC_uintptr_t arg)
@@ -2260,7 +2262,7 @@ GC_default_on_abort(const char *msg)
 }
 
 #ifndef SMALL_CONFIG
-GC_abort_func GC_on_abort = GC_default_on_abort;
+GC_VAR_ATTR GC_abort_func GC_on_abort = GC_default_on_abort;
 #endif
 
 GC_API void GC_CALL

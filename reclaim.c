@@ -147,13 +147,14 @@ GC_default_print_heap_obj_proc(ptr_t p)
                                          : "composite");
 }
 
-GC_INNER void (*GC_print_heap_obj)(ptr_t p) = GC_default_print_heap_obj_proc;
+GC_INNER GC_VAR_ATTR void (*GC_print_heap_obj)(ptr_t p)
+    = GC_default_print_heap_obj_proc;
 
 #if !defined(NO_FIND_LEAK) || !defined(SHORT_DBG_HDRS)
 GC_INNER void
 GC_print_all_errors(void)
 {
-  static GC_bool printing_errors = FALSE;
+  static GC_VAR_ATTR GC_bool printing_errors;
   GC_bool have_errors;
 #  ifndef NO_FIND_LEAK
   unsigned i, n_leaked;

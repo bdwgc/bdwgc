@@ -37,17 +37,17 @@ typedef struct {
 
 /* Declare symbols externally visible for debugging purpose. */
 EXTERN_C_BEGIN
-extern page_entry GC_sums[NSUMS];
-extern int GC_n_dirty_errors, GC_n_faulted_dirty_errors;
-extern unsigned long GC_n_clean, GC_n_dirty;
+extern GC_VAR_ATTR page_entry GC_sums[NSUMS];
+extern GC_VAR_ATTR int GC_n_dirty_errors, GC_n_faulted_dirty_errors;
+extern GC_VAR_ATTR unsigned long GC_n_clean, GC_n_dirty;
 EXTERN_C_END
 
-page_entry GC_sums[NSUMS] = { { FALSE, 0, 0, NULL } };
+GC_VAR_ATTR page_entry GC_sums[NSUMS] = { { FALSE, 0, 0, NULL } };
 
 /* Record of pages on which we saw a write fault. */
-STATIC word GC_faulted[NSUMS] = { 0 };
+STATIC GC_VAR_ATTR word GC_faulted[NSUMS] = { 0 };
 
-STATIC size_t GC_n_faulted = 0;
+STATIC GC_VAR_ATTR size_t GC_n_faulted = 0;
 
 #  ifndef GC_NO_DEINIT
 void
@@ -95,10 +95,10 @@ GC_checksum(struct hblk *h)
   return result | SIGNB; /*< does not look like pointer */
 }
 
-int GC_n_dirty_errors = 0;
-int GC_n_faulted_dirty_errors = 0;
-unsigned long GC_n_clean = 0;
-unsigned long GC_n_dirty = 0;
+GC_VAR_ATTR int GC_n_dirty_errors = 0;
+GC_VAR_ATTR int GC_n_faulted_dirty_errors = 0;
+GC_VAR_ATTR unsigned long GC_n_clean = 0;
+GC_VAR_ATTR unsigned long GC_n_dirty = 0;
 
 STATIC void
 GC_update_check_page(struct hblk *h, int index)

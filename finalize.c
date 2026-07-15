@@ -339,7 +339,7 @@ GC_complete_ongoing_collection(void)
 #  ifndef GC_TOGGLE_REFS_NOT_NEEDED
 typedef union toggle_ref_u GCToggleRef;
 
-STATIC GC_toggleref_func GC_toggleref_callback = 0;
+STATIC GC_VAR_ATTR GC_toggleref_func GC_toggleref_callback = 0;
 
 GC_INNER void
 GC_process_togglerefs(void)
@@ -515,7 +515,7 @@ GC_toggleref_add(void *obj, int is_strong_ref)
 
 /* Finalizer callback support. */
 
-STATIC GC_await_finalize_proc GC_object_finalized_proc = 0;
+STATIC GC_VAR_ATTR GC_await_finalize_proc GC_object_finalized_proc = 0;
 
 GC_API void GC_CALL
 GC_set_await_finalize_proc(GC_await_finalize_proc fn)
@@ -1247,7 +1247,7 @@ GC_finalize(void)
  * of `GC_invoke_finalizers()`; zero means no limit.  Accessed with the
  * allocator lock held.
  */
-STATIC unsigned GC_interrupt_finalizers = 0;
+STATIC GC_VAR_ATTR unsigned GC_interrupt_finalizers = 0;
 
 #  ifndef JAVA_FINALIZATION_NOT_NEEDED
 
@@ -1434,7 +1434,7 @@ GC_notify_or_invoke_finalizers(void)
   if (GC_gc_no != GC_last_back_trace_gc_no
       && LIKELY(GC_gc_no > 1) /*< skip initial collection */) {
 #    ifdef KEEP_BACK_PTRS
-    static GC_bool bt_in_progress = FALSE;
+    static GC_VAR_ATTR GC_bool bt_in_progress;
 
     if (!bt_in_progress) {
       long i;

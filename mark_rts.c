@@ -27,7 +27,7 @@
  */
 
 /* Register dynamic library data segments. */
-int GC_no_dls = 0;
+GC_VAR_ATTR int GC_no_dls = 0;
 
 #if !defined(NO_DEBUGGING) || defined(GC_ASSERTIONS)
 GC_INNER word
@@ -956,7 +956,7 @@ GC_custom_push_regs_and_stack(GC_custom_push_proc fn, void *client_data,
   UNUSED_ARG(cold_gc_frame);
 }
 
-GC_INNER void (*GC_push_typed_structures)(void) = 0;
+GC_INNER GC_VAR_ATTR void (*GC_push_typed_structures)(void) = 0;
 
 GC_INNER void
 GC_cond_register_dynamic_libraries(void)

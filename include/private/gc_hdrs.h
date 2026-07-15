@@ -60,8 +60,8 @@ EXTERN_C_BEGIN
 #define TOP_SZ (1 << LOG_TOP_SZ)
 
 #ifdef COUNT_HDR_CACHE_HITS
-extern word GC_hdr_cache_hits; /*< used for debugging/profiling */
-extern word GC_hdr_cache_misses;
+/* The hit/miss counters for debugging and profiling. */
+extern GC_VAR_ATTR word GC_hdr_cache_hits, GC_hdr_cache_misses;
 #  define HC_HIT() (void)(++GC_hdr_cache_hits)
 #  define HC_MISS() (void)(++GC_hdr_cache_misses)
 #else

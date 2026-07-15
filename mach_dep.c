@@ -60,7 +60,7 @@ GC_with_callee_saves_pushed(GC_with_callee_saves_func fn, ptr_t arg)
    */
 
   /* The variable is set to -1 (means broken) or 1 (means it works). */
-  static signed char getcontext_works = 0;
+  static GC_VAR_ATTR signed char getcontext_works = 0;
   ucontext_t ctxt;
 #      ifdef GETCONTEXT_FPU_EXCMASK_BUG
   /*

@@ -73,7 +73,7 @@ typedef long unsigned int caddr_t;
 #else
 #  define PAGES_EXECUTABLE_INIT TRUE
 #endif
-STATIC GC_bool GC_pages_executable = PAGES_EXECUTABLE_INIT;
+STATIC GC_VAR_ATTR GC_bool GC_pages_executable = PAGES_EXECUTABLE_INIT;
 
 /* Note: it is undefined later on `GC_pages_executable` real use. */
 #define IGNORE_PAGES_EXECUTABLE 1
@@ -82,7 +82,7 @@ STATIC GC_bool GC_pages_executable = PAGES_EXECUTABLE_INIT;
  * A runtime flag indicating that `mprotect`-based VDB should be avoided.
  * Zero-initialized.
  */
-static GC_bool mprotect_vdb_disallowed = FALSE;
+static GC_VAR_ATTR GC_bool mprotect_vdb_disallowed = FALSE;
 
 GC_API void GC_CALL
 GC_set_mprotect_vdb_allowed(int value)
@@ -486,7 +486,7 @@ extern char **environ;
 EXTERN_C_END
 #  endif
 
-ptr_t GC_data_start = NULL;
+GC_VAR_ATTR ptr_t GC_data_start = NULL;
 
 GC_INNER void
 GC_init_linux_data_start(void)
@@ -592,8 +592,8 @@ __asan_default_options(void)
 #endif
 
 #ifdef OPENBSD
-static struct sigaction old_segv_act;
-STATIC JMP_BUF GC_jmp_buf_openbsd;
+static GC_VAR_ATTR struct sigaction old_segv_act;
+STATIC GC_VAR_ATTR JMP_BUF GC_jmp_buf_openbsd;
 
 STATIC void
 GC_fault_handler_openbsd(int sig)
@@ -602,7 +602,7 @@ GC_fault_handler_openbsd(int sig)
   LONGJMP(GC_jmp_buf_openbsd, 1);
 }
 
-static volatile int firstpass;
+static GC_VAR_ATTR volatile int firstpass = 0;
 
 /*
  * Return first addressable location that is greater than `p` or return
@@ -611,7 +611,7 @@ static volatile int firstpass;
 STATIC ptr_t
 GC_skip_hole_openbsd(ptr_t p, ptr_t bound)
 {
-  static volatile ptr_t result;
+  static GC_VAR_ATTR volatile ptr_t result;
   struct sigaction act;
   size_t pgsz;
 
@@ -731,13 +731,13 @@ struct o32_obj {
 
 #endif /* OS2 */
 
-GC_INNER size_t GC_page_size = 0;
+GC_INNER GC_VAR_ATTR size_t GC_page_size = 0;
 #ifdef REAL_PAGESIZE_NEEDED
-GC_INNER size_t GC_real_page_size = 0;
+GC_INNER GC_VAR_ATTR size_t GC_real_page_size = 0;
 #endif
 
 #ifdef SOFT_VDB
-STATIC unsigned GC_log_pagesize = 0;
+STATIC GC_VAR_ATTR unsigned GC_log_pagesize = 0;
 #endif
 
 #ifdef ANY_MSWIN
@@ -750,7 +750,7 @@ STATIC unsigned GC_log_pagesize = 0;
 GC_INNER GC_bool GC_dont_query_stack_min = FALSE;
 #  endif
 
-GC_INNER SYSTEM_INFO GC_sysinfo;
+GC_INNER GC_VAR_ATTR SYSTEM_INFO GC_sysinfo;
 
 #  ifndef CYGWIN
 #    define is_writable(prot)                               \
@@ -995,15 +995,15 @@ GC_get_stack_base(struct GC_stack_base *sb)
 
 #  ifdef USE_SEGV_SIGACT
 #    ifndef OPENBSD
-static struct sigaction old_segv_act;
+static GC_VAR_ATTR struct sigaction old_segv_act;
 #    endif
 #    ifdef USE_BUS_SIGACT
-static struct sigaction old_bus_act;
+static GC_VAR_ATTR struct sigaction old_bus_act;
 #    endif
 #  else
-static GC_fault_handler_t old_segv_hand;
+static GC_VAR_ATTR GC_fault_handler_t old_segv_hand;
 #    ifdef HAVE_SIGBUS
-static GC_fault_handler_t old_bus_hand;
+static GC_VAR_ATTR GC_fault_handler_t old_bus_hand;
 #    endif
 #  endif /* !USE_SEGV_SIGACT */
 
@@ -1055,7 +1055,7 @@ GC_set_and_save_fault_handler(GC_fault_handler_t h)
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
     || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
-GC_INNER JMP_BUF GC_jmp_buf;
+GC_INNER GC_VAR_ATTR JMP_BUF GC_jmp_buf;
 
 STATIC void
 GC_fault_handler(int sig)
@@ -1111,7 +1111,7 @@ GC_find_limit_with_bound(ptr_t p, GC_bool up, ptr_t bound)
    * across the `longjmp`.  Can safely be `static` since it is only called
    * with the allocator lock held.
    */
-  static volatile ptr_t result;
+  static GC_VAR_ATTR volatile ptr_t result;
 
   GC_ASSERT(up ? ADDR(bound) >= MIN_PAGE_SIZE
                : ADDR(bound) <= ~(word)MIN_PAGE_SIZE);
@@ -1828,7 +1828,7 @@ is_mprotect_vdb_preferred(void)
 typedef UINT(WINAPI *GetWriteWatch_type)(DWORD, PVOID,
                                          GC_ULONG_PTR /* `SIZE_T` */, PVOID *,
                                          GC_ULONG_PTR *, PULONG);
-static FARPROC GetWriteWatch_func;
+static GC_VAR_ATTR FARPROC GetWriteWatch_func = 0;
 #    if defined(MPROTECT_VDB) && defined(THREADS)
 /*
  * `GC_gww_dirty_init()` might be called multiple times on Windows, thus
@@ -1928,8 +1928,8 @@ detect_GetWriteWatch(void)
  * We register the main data segment here.
  */
 
-GC_INNER GC_bool GC_no_win32_dlls = FALSE;
-GC_INNER GC_bool GC_wnt = FALSE;
+GC_INNER GC_VAR_ATTR GC_bool GC_no_win32_dlls = FALSE;
+GC_INNER GC_VAR_ATTR GC_bool GC_wnt = FALSE;
 
 GC_INNER void
 GC_init_win32(void)
@@ -2035,7 +2035,7 @@ GC_register_root_section(ptr_t static_root)
 
 /* Note: initialized to approximate largest root size. */
 #    define GC_INITIAL_MAX_ROOT_SIZE 100000
-STATIC size_t GC_max_root_size = GC_INITIAL_MAX_ROOT_SIZE;
+STATIC GC_VAR_ATTR size_t GC_max_root_size = GC_INITIAL_MAX_ROOT_SIZE;
 
 /*
  * Is `p` the base of one of the `malloc` heap sections we already
@@ -2455,7 +2455,7 @@ GC_register_data_segments(void)
 #        define OPT_MAP_ANON MAP_ANON
 #      endif
 #    else
-static int zero_fd = -1;
+static GC_VAR_ATTR int zero_fd = -1;
 #      define OPT_MAP_ANON 0
 #    endif
 
@@ -2469,11 +2469,11 @@ EXTERN_C_END
 STATIC void *
 GC_unix_mmap_get_mem(size_t bytes)
 {
+  static GC_VAR_ATTR word last_addr = HEAP_START;
   void *result;
-  static word last_addr = HEAP_START;
 
 #      ifndef USE_MMAP_ANON
-  static GC_bool initialized = FALSE;
+  static GC_VAR_ATTR GC_bool initialized;
 
   if (UNLIKELY(!initialized)) {
 #        ifdef SYMBIAN
@@ -2604,7 +2604,7 @@ GC_unix_get_mem(size_t bytes)
 {
 #    if defined(MMAP_SUPPORTED)
   /* By default, we try both `sbrk` and `mmap`, in that order. */
-  static GC_bool sbrk_failed = FALSE;
+  static GC_VAR_ATTR GC_bool sbrk_failed;
   void *result = NULL;
 
   if (GC_pages_executable) {
@@ -3148,7 +3148,8 @@ GC_default_push_other_roots(void)
 
 #endif /* THREADS */
 
-GC_push_other_roots_proc GC_push_other_roots = GC_default_push_other_roots;
+GC_VAR_ATTR GC_push_other_roots_proc GC_push_other_roots
+    = GC_default_push_other_roots;
 
 GC_API void GC_CALL
 GC_set_push_other_roots(GC_push_other_roots_proc fn)
@@ -3388,7 +3389,7 @@ GC_gww_read_dirty(GC_bool output_unneeded)
               WRITE_WATCH_FLAG_RESET, GC_heap_sects[i].hs_start,
               GC_heap_sects[i].hs_bytes, pages, &count, &page_size)
           != 0) {
-        static int warn_count = 0;
+        static GC_VAR_ATTR int warn_count;
         struct hblk *start = (struct hblk *)GC_heap_sects[i].hs_start;
         size_t nblocks = divHBLKSZ(GC_heap_sects[i].hs_bytes);
 
@@ -3437,11 +3438,11 @@ GC_gww_read_dirty(GC_bool output_unneeded)
 }
 
 #elif defined(SOFT_VDB)
-static int clear_refs_fd = -1;
+static GC_VAR_ATTR int clear_refs_fd = -1;
 #  define IS_NON_MPROTECT_VDB() (clear_refs_fd != -1)
 
 #elif defined(UFFDWP_VDB)
-static int uffdwp_fd = -1;
+static GC_VAR_ATTR int uffdwp_fd = -1;
 #  define IS_NON_MPROTECT_VDB() (uffdwp_fd != -1)
 
 #else
@@ -3575,13 +3576,13 @@ typedef void (*PLAIN_HNDLR_PTR)(int);
 
 #  ifndef DARWIN
 /* Also old `MSWIN32` `ACCESS_VIOLATION` filter. */
-STATIC SIG_HNDLR_PTR GC_old_segv_handler = 0;
+STATIC GC_VAR_ATTR SIG_HNDLR_PTR GC_old_segv_handler = 0;
 #    ifdef USE_BUS_SIGACT
-STATIC SIG_HNDLR_PTR GC_old_bus_handler = 0;
-STATIC GC_bool GC_old_bus_handler_used_si = FALSE;
+STATIC GC_VAR_ATTR SIG_HNDLR_PTR GC_old_bus_handler = 0;
+STATIC GC_VAR_ATTR GC_bool GC_old_bus_handler_used_si = FALSE;
 #    endif
 #    if !defined(MSWIN32) && !defined(MSWINCE)
-STATIC GC_bool GC_old_segv_handler_used_si = FALSE;
+STATIC GC_VAR_ATTR GC_bool GC_old_segv_handler_used_si = FALSE;
 #    endif
 #  endif /* !DARWIN */
 
@@ -4019,8 +4020,8 @@ struct prasmap {
 #  endif
 
 #  define INITIAL_BUF_SZ 8192
-STATIC size_t GC_proc_buf_size = INITIAL_BUF_SZ;
-STATIC int GC_proc_fd = -1;
+STATIC GC_VAR_ATTR size_t GC_proc_buf_size = INITIAL_BUF_SZ;
+STATIC GC_VAR_ATTR int GC_proc_fd = -1;
 
 static GC_bool
 proc_dirty_open_files(void)
@@ -5459,7 +5460,7 @@ GC_mprotect_thread(void *arg)
  * Updates to this are not atomic, but the `SIGBUS` signals seem pretty rare.
  * Even if this does not get updated property, it is not really a problem.
  */
-STATIC int GC_sigbus_count = 0;
+STATIC GC_VAR_ATTR int GC_sigbus_count = 0;
 
 STATIC void
 GC_darwin_sigbus(int num)
@@ -6095,7 +6096,7 @@ GC_print_callers(struct callinfo info[NFRAMES])
 {
   int i, reentered;
 #  if defined(AO_HAVE_fetch_and_add1) && defined(AO_HAVE_fetch_and_sub1)
-  static volatile AO_t reentry_count = 0;
+  static GC_VAR_ATTR volatile AO_t reentry_count;
 
   /*
    * Note: alternatively, if available, we may use a thread-local storage,
@@ -6106,7 +6107,7 @@ GC_print_callers(struct callinfo info[NFRAMES])
   GC_ASSERT(I_DONT_HOLD_LOCK());
   reentered = (int)(GC_signed_word)AO_fetch_and_add1(&reentry_count);
 #  else
-  static int reentry_count = 0;
+  static GC_VAR_ATTR int reentry_count;
 
   /* Note: this could use a different lock. */
   LOCK();
@@ -6170,19 +6171,18 @@ GC_print_callers(struct callinfo info[NFRAMES])
 #  ifdef CALLINFO_USE_ADDR2LINE
       /* Try for a line number. */
       do {
-        FILE *pipe;
 #    define EXE_SZ 100
-        static char exe_name[EXE_SZ];
-#    define CMD_SZ 200
-        char cmd_buf[CMD_SZ];
 #    define RESULT_SZ 200
-        static char result_buf[RESULT_SZ];
+        static GC_VAR_ATTR char exe_name[EXE_SZ];
+        static GC_VAR_ATTR char result_buf[RESULT_SZ];
+        static GC_VAR_ATTR GC_bool found_exe_name, will_fail;
+#    define CMD_SZ 200
+#    define PRELOAD_SZ 200
+        char cmd_buf[CMD_SZ];
+        char preload_buf[PRELOAD_SZ];
+        FILE *pipe;
         size_t result_len;
         const char *old_preload;
-#    define PRELOAD_SZ 200
-        char preload_buf[PRELOAD_SZ];
-        static GC_bool found_exe_name = FALSE;
-        static GC_bool will_fail = FALSE;
 
         /*
          * Try to get it via a hairy and expensive scheme.

@@ -55,7 +55,7 @@
  * Zero means no filter installed.  May be unused on some platforms.
  */
 /* FIXME: Add filter support for more platforms. */
-STATIC GC_has_static_roots_func GC_has_static_roots = 0;
+STATIC GC_VAR_ATTR GC_has_static_roots_func GC_has_static_roots = 0;
 
 #ifdef ANY_MSWIN
 /*
@@ -732,7 +732,7 @@ GC_register_dynamic_libraries_dl_iterate_phdr(void)
   } else {
     ptr_t datastart, dataend;
 #        ifdef DATASTART_USES_XGETDATASTART
-    static ptr_t datastart_cached = MAKE_CPTR(GC_WORD_MAX);
+    static GC_VAR_ATTR ptr_t datastart_cached = MAKE_CPTR(GC_WORD_MAX);
 
     /* Evaluate `DATASTART` only once. */
     if (ADDR(datastart_cached) == GC_WORD_MAX) {
@@ -744,7 +744,7 @@ GC_register_dynamic_libraries_dl_iterate_phdr(void)
 #        endif
 #        ifdef DATAEND_IS_FUNC
     {
-      static ptr_t dataend_cached = NULL;
+      static GC_VAR_ATTR ptr_t dataend_cached;
 
       /* Evaluate `DATAEND` only once. */
       if (NULL == dataend_cached) {
@@ -812,8 +812,7 @@ EXTERN_C_END
 STATIC struct link_map *
 GC_FirstDLOpenedLinkMap(void)
 {
-  static struct link_map *cachedResult = NULL;
-
+  static GC_VAR_ATTR struct link_map *cachedResult;
 #      ifdef SUNOS53_SHARED_LIB
   /*
    * BTL: Avoid the Solaris 5.3 `ld.so` bug that `_DYNAMIC` is not being
@@ -821,7 +820,7 @@ GC_FirstDLOpenedLinkMap(void)
    * have to use its value in the set of original object files loaded at
    * the program startup.
    */
-  static ElfW(Dyn) *dynStructureAddr = NULL;
+  static GC_VAR_ATTR ElfW(Dyn) *dynStructureAddr = NULL;
 
   if (NULL == dynStructureAddr) {
     void *startupSyms = dlopen(NULL, RTLD_LAZY);
@@ -959,10 +958,10 @@ GC_register_dynamic_libraries(void)
    * are mapped by the process, and throw out regions we know we should
    * not worry about.  This may also work under other SVR4 variants.
    */
-  static int fd = -1;
-  static prmap_t *addr_map = NULL;
+  static GC_VAR_ATTR int fd = -1;
   /* Number of records currently in `addr_map`. */
-  static int current_sz = 0;
+  static GC_VAR_ATTR int current_sz;
+  static GC_VAR_ATTR prmap_t *addr_map;
   char buf[6 + 20 + 1];
   /* Required size of `addr_map`. */
   int needed_sz = 0;
@@ -1039,12 +1038,12 @@ GC_register_dynamic_libraries(void)
        * Discard text segments, i.e. zero-offset mappings against
        * executable files that appear to have ELF headers.
        */
-      caddr_t arg;
-      int obj;
 #      define MAP_IRR_SZ 10
       /* Known irrelevant map entries. */
-      static ptr_t map_irr[MAP_IRR_SZ];
-      static int n_irr = 0;
+      static GC_VAR_ATTR ptr_t map_irr[MAP_IRR_SZ];
+      static GC_VAR_ATTR int n_irr;
+      caddr_t arg;
+      int obj;
       struct stat buf;
       int j;
 
@@ -1343,7 +1342,7 @@ GC_register_dynamic_libraries(void)
 GC_INNER void
 GC_init_dyld(void)
 {
-  static GC_bool initialized = FALSE;
+  static GC_VAR_ATTR GC_bool initialized;
 
   GC_ASSERT(I_DONT_HOLD_LOCK());
   if (initialized)
