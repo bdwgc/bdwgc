@@ -254,7 +254,7 @@ GC_generic_malloc_inner(size_t lb, int kind, unsigned flags)
 }
 
 #ifdef GC_COLLECT_AT_MALLOC
-size_t GC_dbg_collect_at_malloc_min_lb = (GC_COLLECT_AT_MALLOC);
+GC_VAR_ATTR size_t GC_dbg_collect_at_malloc_min_lb = (GC_COLLECT_AT_MALLOC);
 #endif
 
 GC_INNER void *

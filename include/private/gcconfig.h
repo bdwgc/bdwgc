@@ -3302,7 +3302,7 @@ EXTERN_C_BEGIN
 #endif /* LINUX */
 
 #if defined(SEARCH_FOR_DATA_START)
-extern ptr_t GC_data_start;
+extern GC_VAR_ATTR ptr_t GC_data_start;
 #  define DATASTART GC_data_start
 #endif
 

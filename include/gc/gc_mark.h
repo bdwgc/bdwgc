@@ -147,8 +147,8 @@ typedef struct GC_ms_entry *(GC_CALLBACK *GC_mark_proc)(
  * object is larger than `GC_least_plausible_heap_addr` and less than
  * `GC_greatest_plausible_heap_addr`.
  */
-GC_API void *GC_least_plausible_heap_addr;
-GC_API void *GC_greatest_plausible_heap_addr;
+GC_API GC_VAR_ATTR void *GC_least_plausible_heap_addr;
+GC_API GC_VAR_ATTR void *GC_greatest_plausible_heap_addr;
 
 /**
  * Specify the pointer address mask.  Works only if the collector is

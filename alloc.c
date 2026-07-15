@@ -55,9 +55,9 @@
  */
 
 /* Number of bytes not intended to be collected. */
-word GC_non_gc_bytes = 0;
+GC_VAR_ATTR word GC_non_gc_bytes = 0;
 
-word GC_gc_no = 0;
+GC_VAR_ATTR word GC_gc_no = 0;
 
 #ifndef NO_CLOCK
 
@@ -146,13 +146,13 @@ int GC_parallel = FALSE; /*< parallel collection is off by default */
 #else
 #  define FULL_FREQ_INIT 19
 #endif
-int GC_full_freq = FULL_FREQ_INIT;
+GC_VAR_ATTR int GC_full_freq = FULL_FREQ_INIT;
 
 #ifdef THREAD_LOCAL_ALLOC
 GC_INNER GC_bool GC_world_stopped = FALSE;
 #endif
 
-STATIC GC_bool GC_disable_automatic_collection = FALSE;
+STATIC GC_VAR_ATTR GC_bool GC_disable_automatic_collection = FALSE;
 
 GC_API void GC_CALL
 GC_set_disable_automatic_collection(int value)
@@ -212,7 +212,7 @@ GC_get_dont_add_byte_at_end(void)
 #else
 #  define DONT_EXPAND_INIT FALSE
 #endif
-int GC_dont_expand = DONT_EXPAND_INIT;
+GC_VAR_ATTR int GC_dont_expand = DONT_EXPAND_INIT;
 
 #ifdef GC_FREE_SPACE_DIVISOR
 #  define FREE_SPACE_DIVISOR_INIT \
@@ -220,7 +220,7 @@ int GC_dont_expand = DONT_EXPAND_INIT;
 #else
 #  define FREE_SPACE_DIVISOR_INIT 3
 #endif
-word GC_free_space_divisor = FREE_SPACE_DIVISOR_INIT;
+GC_VAR_ATTR word GC_free_space_divisor = FREE_SPACE_DIVISOR_INIT;
 
 GC_INNER int GC_CALLBACK
 GC_never_stop_func(void)
@@ -243,7 +243,7 @@ GC_never_stop_func(void)
  * We try to keep pause times from exceeding this by much.
  * In milliseconds.
  */
-unsigned long GC_time_limit = TIME_LIMIT_INIT;
+GC_VAR_ATTR unsigned long GC_time_limit = TIME_LIMIT_INIT;
 
 #ifndef NO_CLOCK
 /*
@@ -251,7 +251,7 @@ unsigned long GC_time_limit = TIME_LIMIT_INIT;
  * Not updated by `GC_set_time_limit()`.
  * Ignored if the value of `GC_time_limit` is `GC_TIME_UNLIMITED`.
  */
-STATIC unsigned long GC_time_lim_nsec = 0;
+STATIC GC_VAR_ATTR unsigned long GC_time_lim_nsec = 0;
 
 #  define TV_NSEC_LIMIT (1000UL * 1000) /*< amount of nanoseconds in 1 ms */
 
@@ -276,7 +276,7 @@ GC_get_time_limit_tv(void)
 #endif /* !NO_CLOCK */
 
 /* Note: accessed holding the allocator lock. */
-STATIC GC_stop_func GC_default_stop_func = GC_never_stop_func;
+STATIC GC_VAR_ATTR GC_stop_func GC_default_stop_func = GC_never_stop_func;
 
 GC_API void GC_CALL
 GC_set_stop_func(GC_stop_func stop_func)
@@ -304,8 +304,8 @@ GC_get_stop_func(void)
 STATIC int GC_CALLBACK
 GC_timeout_stop_func(void)
 {
+  static GC_VAR_ATTR unsigned count;
   CLOCK_TYPE current_time;
-  static unsigned count = 0;
   unsigned long time_diff, nsec_diff;
 
   GC_ASSERT(I_HOLD_LOCK());
@@ -335,11 +335,11 @@ GC_timeout_stop_func(void)
 #endif /* !GC_DISABLE_INCREMENTAL */
 
 #ifdef THREADS
-GC_INNER word GC_total_stacksize = 0;
+GC_INNER GC_VAR_ATTR word GC_total_stacksize = 0;
 #endif
 
 /* The lowest value returned by `min_bytes_allocd()`. */
-static size_t min_bytes_allocd_minimum = 1;
+static GC_VAR_ATTR size_t min_bytes_allocd_minimum = 1;
 
 GC_API void GC_CALL
 GC_set_min_bytes_allocd(size_t value)
@@ -484,7 +484,7 @@ GC_start_incremental_collection(void)
 GC_INNER GC_bool
 GC_should_collect(void)
 {
-  static word last_min_bytes_allocd, last_gc_no;
+  static GC_VAR_ATTR word last_min_bytes_allocd, last_gc_no;
 
   GC_ASSERT(I_HOLD_LOCK());
   if (last_gc_no != GC_gc_no) {
@@ -512,7 +512,7 @@ GC_should_collect(void)
  * Called at start of full collections.  Not called if zero.
  * Called with the allocator lock held.  Not used by the collector itself.
  */
-/* `STATIC` */ GC_start_callback_proc GC_start_call_back = 0;
+/* `STATIC` */ GC_VAR_ATTR GC_start_callback_proc GC_start_call_back = 0;
 
 GC_API void GC_CALL
 GC_set_start_callback(GC_start_callback_proc fn)
@@ -599,7 +599,7 @@ GC_maybe_gc(void)
   }
 }
 
-STATIC GC_on_collection_event_proc GC_on_collection_event = 0;
+STATIC GC_VAR_ATTR GC_on_collection_event_proc GC_on_collection_event = 0;
 
 GC_API void GC_CALL
 GC_set_on_collection_event(GC_on_collection_event_proc fn)
@@ -740,7 +740,7 @@ GC_try_to_collect_inner(GC_stop_func stop_func)
  * since otherwise we allocate too much during garbage collection, and
  * the cleanup gets expensive.
  */
-STATIC unsigned GC_rate = GC_RATE;
+STATIC GC_VAR_ATTR unsigned GC_rate = GC_RATE;
 
 GC_API void GC_CALL
 GC_set_rate(int value)
@@ -765,7 +765,7 @@ GC_get_rate(void)
  * A value of 1 means that we finish the second time, no matter how long
  * it takes.  Does not count the initial root scan for a full collection.
  */
-static int max_prior_attempts = MAX_PRIOR_ATTEMPTS;
+static GC_VAR_ATTR int max_prior_attempts = MAX_PRIOR_ATTEMPTS;
 
 GC_API void GC_CALL
 GC_set_max_prior_attempts(int value)
@@ -838,8 +838,8 @@ GC_collect_a_little_inner(size_t n_blocks)
 }
 
 #if !defined(NO_FIND_LEAK) || !defined(SHORT_DBG_HDRS)
-GC_INNER void (*GC_check_heap)(void) = 0;
-GC_INNER void (*GC_print_all_smashed)(void) = 0;
+GC_INNER GC_VAR_ATTR void (*GC_check_heap)(void) = 0;
+GC_INNER GC_VAR_ATTR void (*GC_print_all_smashed)(void) = 0;
 #endif
 
 GC_API int GC_CALL
@@ -897,7 +897,7 @@ GC_start_world_external(void)
 #  ifndef MUNMAP_THRESHOLD
 #    define MUNMAP_THRESHOLD 7
 #  endif
-GC_INNER unsigned GC_unmap_threshold = MUNMAP_THRESHOLD;
+GC_INNER GC_VAR_ATTR unsigned GC_unmap_threshold = MUNMAP_THRESHOLD;
 
 #  define IF_USE_MUNMAP(x) x
 #  define COMMA_IF_USE_MUNMAP(x) /* comma */ , x
@@ -1274,7 +1274,7 @@ clear_all_fl_marks(void)
 void GC_check_tls(void);
 #endif
 
-GC_on_heap_resize_proc GC_on_heap_resize = 0;
+GC_VAR_ATTR GC_on_heap_resize_proc GC_on_heap_resize = 0;
 
 /* Used for logging only. */
 GC_INLINE int
@@ -1501,7 +1501,7 @@ GC_gcollect_and_unmap(void)
   (void)GC_try_to_collect_general(GC_never_stop_func, TRUE);
 }
 
-STATIC GC_on_os_get_mem_proc GC_on_os_get_mem = 0;
+STATIC GC_VAR_ATTR GC_on_os_get_mem_proc GC_on_os_get_mem = 0;
 
 GC_API void GC_CALL
 GC_set_on_os_get_mem(GC_on_os_get_mem_proc fn)
@@ -1711,10 +1711,10 @@ GC_print_heap_sects(void)
 }
 #endif /* !NO_DEBUGGING */
 
-void *GC_least_plausible_heap_addr = MAKE_CPTR(GC_WORD_MAX);
-void *GC_greatest_plausible_heap_addr = NULL;
+GC_VAR_ATTR void *GC_least_plausible_heap_addr = MAKE_CPTR(GC_WORD_MAX);
+GC_VAR_ATTR void *GC_greatest_plausible_heap_addr = NULL;
 
-STATIC word GC_max_heapsize = 0;
+STATIC GC_VAR_ATTR word GC_max_heapsize = 0;
 
 GC_API void GC_CALL
 GC_set_max_heap_size(GC_word n)
@@ -1722,7 +1722,7 @@ GC_set_max_heap_size(GC_word n)
   GC_max_heapsize = n;
 }
 
-word GC_max_retries = 0;
+GC_VAR_ATTR word GC_max_retries = 0;
 
 GC_INNER void
 GC_scratch_recycle_inner(void *ptr, size_t sz)
@@ -1855,7 +1855,8 @@ GC_expand_hp(size_t bytes)
 #else
 #  define ALLOCD_BYTES_PER_FINALIZER_INIT 10000
 #endif
-STATIC word GC_allocd_bytes_per_finalizer = ALLOCD_BYTES_PER_FINALIZER_INIT;
+STATIC GC_VAR_ATTR word GC_allocd_bytes_per_finalizer
+    = ALLOCD_BYTES_PER_FINALIZER_INIT;
 
 GC_API void GC_CALL
 GC_set_allocd_bytes_per_finalizer(GC_word value)
@@ -1872,8 +1873,7 @@ GC_get_allocd_bytes_per_finalizer(void)
 GC_INNER GC_bool
 GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
 {
-  static word last_fo_entries, last_bytes_finalized;
-
+  static GC_VAR_ATTR word last_fo_entries, last_bytes_finalized;
   GC_bool gc_not_stopped = TRUE;
   word blocks_to_get;
   IF_CANCEL(int cancel_state;)

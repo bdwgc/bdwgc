@@ -26,7 +26,7 @@ GC_default_same_obj_print_proc(void *p, void *q)
              ": %p and %p are not in the same object", p, q);
 }
 
-GC_same_obj_print_proc_t GC_same_obj_print_proc
+GC_VAR_ATTR GC_same_obj_print_proc_t GC_same_obj_print_proc
     = GC_default_same_obj_print_proc;
 
 GC_API void *GC_CALL
@@ -99,7 +99,7 @@ GC_default_is_valid_displacement_print_proc(void *p)
   ABORT_ARG1("GC_is_valid_displacement test failed", ": %p not valid", p);
 }
 
-GC_valid_ptr_print_proc_t GC_is_valid_displacement_print_proc
+GC_VAR_ATTR GC_valid_ptr_print_proc_t GC_is_valid_displacement_print_proc
     = GC_default_is_valid_displacement_print_proc;
 
 GC_API void *GC_CALL
@@ -146,7 +146,7 @@ GC_default_is_visible_print_proc(void *p)
   ABORT_ARG1("GC_is_visible test failed", ": %p not GC-visible", p);
 }
 
-GC_valid_ptr_print_proc_t GC_is_visible_print_proc
+GC_VAR_ATTR GC_valid_ptr_print_proc_t GC_is_visible_print_proc
     = GC_default_is_visible_print_proc;
 
 /* Could `p` be a stack address? */
@@ -160,7 +160,7 @@ GC_on_stack(ptr_t p)
 STATIC GC_bool
 GC_is_static_root(ptr_t p)
 {
-  static size_t last_static_root_set = MAX_ROOT_SETS;
+  static GC_VAR_ATTR size_t last_static_root_set = MAX_ROOT_SETS;
   size_t i;
 
 #ifdef CPPCHECK

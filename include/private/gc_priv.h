@@ -759,7 +759,7 @@ GC_INNER void GC_win32_dll_resume_all_threads(void);
 #ifdef SMALL_CONFIG
 #  define GC_on_abort(msg) (void)0 /*< be silent on abort */
 #else
-GC_API_PRIV GC_abort_func GC_on_abort;
+GC_API_PRIV GC_VAR_ATTR GC_abort_func GC_on_abort;
 #endif
 
 #if defined(CPPCHECK)
@@ -865,7 +865,7 @@ GC_API_PRIV GC_abort_func GC_on_abort;
  */
 #define WARN(msg, arg) \
   GC_current_warn_proc("GC Warning: " msg, (GC_uintptr_t)(arg))
-GC_EXTERN GC_warn_proc GC_current_warn_proc;
+GC_EXTERN GC_VAR_ATTR GC_warn_proc GC_current_warn_proc;
 
 /*
  * Print format type macro for decimal `GC_signed_word` value passed to
@@ -2679,7 +2679,7 @@ struct _GC_arrays {
 #endif
 };
 
-GC_API_PRIV struct _GC_arrays GC_arrays;
+GC_API_PRIV /* `GC_VAR_ATTR` */ struct _GC_arrays GC_arrays;
 #define beginGC_arrays ((ptr_t)(&GC_arrays))
 #define endGC_arrays (beginGC_arrays + sizeof(GC_arrays))
 
@@ -2693,7 +2693,7 @@ GC_API_PRIV struct _GC_arrays GC_arrays;
 #    define MAXOBJKINDS 16
 #  endif
 #endif
-GC_EXTERN struct obj_kind {
+GC_EXTERN /* `GC_VAR_ATTR` */ struct obj_kind {
   /*
    * Array of free-list headers for this kind of object.  Point either
    * to `GC_arrays` or to storage allocated with `GC_scratch_alloc()`.
@@ -2754,13 +2754,13 @@ GC_EXTERN struct obj_kind {
 #  define GC_N_KINDS_INITIAL_VALUE 3
 #endif
 
-GC_EXTERN unsigned GC_n_kinds;
+GC_EXTERN GC_VAR_ATTR unsigned GC_n_kinds;
 
 /* May mean the allocation granularity size, not page size. */
-GC_EXTERN size_t GC_page_size;
+GC_EXTERN GC_VAR_ATTR size_t GC_page_size;
 
 #ifdef REAL_PAGESIZE_NEEDED
-GC_EXTERN size_t GC_real_page_size;
+GC_EXTERN GC_VAR_ATTR size_t GC_real_page_size;
 #else
 #  define GC_real_page_size GC_page_size
 #endif
@@ -2821,7 +2821,7 @@ GC_INNER void *GC_unix_get_mem(size_t lb);
 #endif
 
 #ifdef ANY_MSWIN
-GC_EXTERN SYSTEM_INFO GC_sysinfo;
+GC_EXTERN GC_VAR_ATTR SYSTEM_INFO GC_sysinfo;
 
 /*
  * Is `p` the start of either the `malloc` heap, or of one of the collector
@@ -2832,8 +2832,8 @@ GC_INNER GC_bool GC_is_heap_base(const void *p);
 
 #ifdef GC_GCJ_SUPPORT
 /* Note: `GC_hblkfreelist` and `GC_free_bytes` remain visible to GNU `gcj`. */
-extern struct hblk *GC_hblkfreelist[];
-extern word GC_free_bytes[];
+extern GC_VAR_ATTR struct hblk *GC_hblkfreelist[];
+extern GC_VAR_ATTR word GC_free_bytes[];
 #endif
 
 /* This is used by `GC_do_blocking()`. */
@@ -2855,7 +2855,7 @@ GC_push_all_stack_sections(ptr_t lo, ptr_t hi,
  * The total size, in bytes, of all stacks.
  * Updated on every `GC_push_all_stacks()` call.
  */
-GC_EXTERN word GC_total_stacksize;
+GC_EXTERN GC_VAR_ATTR word GC_total_stacksize;
 #endif
 
 #ifdef IA64
@@ -3116,7 +3116,7 @@ GC_INNER void GC_push_roots(GC_bool all, ptr_t cold_gc_frame);
  * original function.  Remains externally visible as used by some
  * well-known 3rd-party software (e.g., ECL) currently.
  */
-GC_API_PRIV GC_push_other_roots_proc GC_push_other_roots;
+GC_API_PRIV GC_VAR_ATTR GC_push_other_roots_proc GC_push_other_roots;
 
 #ifdef THREADS
 GC_INNER void GC_push_thread_structures(void);
@@ -3128,7 +3128,7 @@ GC_INNER void GC_push_reclaim_structures(void);
  * A pointer set to `GC_push_typed_structures_proc` lazily so that we can
  * avoid linking in the typed allocation support if the latter is unused.
  */
-GC_EXTERN void (*GC_push_typed_structures)(void);
+GC_EXTERN GC_VAR_ATTR void (*GC_push_typed_structures)(void);
 
 typedef void (*GC_with_callee_saves_func)(ptr_t arg, void *context);
 
@@ -3430,7 +3430,7 @@ void GC_add_trace_entry(const char *caller_fn_name, ptr_t arg1, ptr_t arg2);
  * The interval between unsuppressed warnings about repeated allocation
  * of a very large block.
  */
-GC_EXTERN long GC_large_alloc_warn_interval;
+GC_EXTERN GC_VAR_ATTR long GC_large_alloc_warn_interval;
 
 /* Initialize the black listing mechanism. */
 GC_INNER void GC_bl_init(void);
@@ -3673,7 +3673,7 @@ GC_INNER ptr_t GC_allocobj(size_t lg, int kind);
  * equal to the given value.  This might be handy during debugging.
  * Note: this variable is visible outside for debugging purpose.
  */
-extern size_t GC_dbg_collect_at_malloc_min_lb;
+extern GC_VAR_ATTR size_t GC_dbg_collect_at_malloc_min_lb;
 
 #  define GC_DBG_COLLECT_AT_MALLOC(lb) \
     (void)((lb) >= GC_dbg_collect_at_malloc_min_lb ? (GC_gcollect(), 0) : 0)
@@ -3737,17 +3737,17 @@ GC_INNER void GC_print_all_errors(void);
  * Check that all objects in the heap with debugging info are intact.
  * Add any that are not to `GC_smashed` list.
  */
-GC_EXTERN void (*GC_check_heap)(void);
+GC_EXTERN GC_VAR_ATTR void (*GC_check_heap)(void);
 
 /* Print `GC_smashed` list if it is not empty.  Then clear the list. */
-GC_EXTERN void (*GC_print_all_smashed)(void);
+GC_EXTERN GC_VAR_ATTR void (*GC_print_all_smashed)(void);
 #endif
 
 /*
  * If possible, print (using `GC_err_printf()`) a more detailed
  * description (terminated with "\n") of the object referred to by `p`.
  */
-GC_EXTERN void (*GC_print_heap_obj)(ptr_t p);
+GC_EXTERN GC_VAR_ATTR void (*GC_print_heap_obj)(ptr_t p);
 
 GC_INNER void GC_default_print_heap_obj_proc(ptr_t p);
 
@@ -3768,7 +3768,7 @@ void GC_print_address_map(void);
  * Do not immediately deallocate object on `free()` in the find-leak mode,
  * just mark it as freed (and deallocate it after collection).
  */
-GC_EXTERN GC_bool GC_findleak_delay_free;
+GC_EXTERN GC_VAR_ATTR GC_bool GC_findleak_delay_free;
 #  endif
 #endif /* !NO_FIND_LEAK */
 
@@ -3794,7 +3794,7 @@ GC_EXTERN GC_bool GC_findleak_delay_free;
  * Value of 1 generates basic collector log; `VERBOSE` generates additional
  * messages.
  */
-GC_EXTERN int GC_print_stats;
+GC_EXTERN GC_VAR_ATTR int GC_print_stats;
 #else /* SMALL_CONFIG */
 /*
  * Defined as a macro to aid the compiler to remove the relevant message
@@ -3806,7 +3806,7 @@ GC_EXTERN int GC_print_stats;
 
 #ifdef KEEP_BACK_PTRS
 /* Number of random backtraces to generate for each collection. */
-GC_EXTERN long GC_backtraces;
+GC_EXTERN GC_VAR_ATTR long GC_backtraces;
 #endif
 
 /*
@@ -3833,7 +3833,7 @@ GC_rand_next(GC_RAND_STATE_T *pseed)
 #endif
 
 #ifdef MAKE_BACK_GRAPH
-GC_EXTERN GC_bool GC_print_back_height;
+GC_EXTERN GC_VAR_ATTR GC_bool GC_print_back_height;
 void GC_print_back_graph_stats(void);
 #endif
 
@@ -3933,7 +3933,7 @@ GC_INNER void GC_unmap_gap(ptr_t start1, size_t bytes1, ptr_t start2,
  *
  * Note: the value is examined by `GC_thr_init`.
  */
-GC_EXTERN int GC_handle_fork;
+GC_EXTERN GC_VAR_ATTR int GC_handle_fork;
 
 #  ifdef THREADS
 #    if defined(SOLARIS) && !defined(_STRICT_STDC)
@@ -4125,7 +4125,7 @@ GC_API_PRIV void GC_err_printf(const char *format, ...)
 GC_API_PRIV void GC_log_printf(const char *format, ...)
     GC_ATTR_FORMAT_PRINTF(1, 2);
 
-extern int GC_quiet; /*< visible outside currently */
+extern GC_VAR_ATTR int GC_quiet; /*< visible outside currently */
 
 #ifndef GC_ANDROID_LOG
 #  define GC_PRINT_STATS_FLAG (GC_print_stats != 0)
@@ -4185,13 +4185,13 @@ GC_INNER void GC_err_puts(const char *s);
 #define TO_KiB_UL(v) ((unsigned long)(((v) + ((1 << 9) - 1)) >> 10))
 
 #ifdef USE_MUNMAP
-GC_EXTERN unsigned GC_unmap_threshold; /*< defined in `alloc.c` file */
+GC_EXTERN GC_VAR_ATTR unsigned GC_unmap_threshold;
 
 /*
  * Force memory unmapping on every collection.  Has no effect on
  * implicitly-initiated collections.
  */
-GC_EXTERN GC_bool GC_force_unmap_on_gcollect;
+GC_EXTERN GC_VAR_ATTR GC_bool GC_force_unmap_on_gcollect;
 #endif
 
 #ifdef MSWIN32
@@ -4199,10 +4199,10 @@ GC_EXTERN GC_bool GC_force_unmap_on_gcollect;
 #    define GC_no_win32_dlls FALSE
 #    define GC_wnt TRUE
 #  else
-GC_EXTERN GC_bool GC_no_win32_dlls;
+GC_EXTERN GC_VAR_ATTR GC_bool GC_no_win32_dlls;
 
 /* Is this a Windows NT derivative (i.e. NT, Win2K, XP or later)? */
-GC_EXTERN GC_bool GC_wnt;
+GC_EXTERN GC_VAR_ATTR GC_bool GC_wnt;
 
 GC_INNER void GC_init_win32(void);
 #  endif
@@ -4638,7 +4638,7 @@ GC_INNER word GC_compute_root_size(void);
 unsigned GC_n_set_marks(const hdr *);
 
 /* A flag to generate regular debugging dumps. */
-GC_EXTERN GC_bool GC_dump_regularly;
+GC_EXTERN GC_VAR_ATTR GC_bool GC_dump_regularly;
 
 #  define COND_DUMP                    \
     if (UNLIKELY(GC_dump_regularly)) { \
@@ -4822,7 +4822,7 @@ GC_INNER void GC_set_and_save_fault_handler(GC_fault_handler_t);
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
     || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
-GC_EXTERN JMP_BUF GC_jmp_buf;
+GC_EXTERN GC_VAR_ATTR JMP_BUF GC_jmp_buf;
 
 /*
  * Set up a handler for address faults which will `longjmp`

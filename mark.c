@@ -71,7 +71,7 @@ GC_noop1_ptr(volatile void *p)
  * mark descriptors.  Note: `GC_obj_kinds[NORMAL].ok_descriptor` is
  * adjusted in `GC_init()` for `EXTRA_BYTES`.
  */
-GC_INNER struct obj_kind GC_obj_kinds[MAXOBJKINDS] = {
+GC_INNER /* `GC_VAR_ATTR` */ struct obj_kind GC_obj_kinds[MAXOBJKINDS] = {
   /* `PTRFREE` */
   { &GC_aobjfreelist[0], 0 /*< filled in dynamically */,
     /* `0 |` */ GC_DS_LENGTH, FALSE,
@@ -131,7 +131,7 @@ GC_reset_obj_kinds(void)
  * The number of dirty pages we marked from, excluding pointer-free pages,
  * etc.  Used for logging only.
  */
-STATIC word GC_n_rescuing_pages = 0;
+STATIC GC_VAR_ATTR word GC_n_rescuing_pages = 0;
 #endif
 
 GC_API void GC_CALL
@@ -414,7 +414,7 @@ push_roots_and_advance(GC_bool push_all, ptr_t cold_gc_frame)
     GC_mark_state = MS_ROOTS_PUSHED;
 }
 
-STATIC GC_on_mark_stack_empty_proc GC_on_mark_stack_empty = 0;
+STATIC GC_VAR_ATTR GC_on_mark_stack_empty_proc GC_on_mark_stack_empty = 0;
 
 GC_API void GC_CALL
 GC_set_on_mark_stack_empty(GC_on_mark_stack_empty_proc fn)
@@ -668,7 +668,7 @@ handle_ex:
   GC_reset_fault_handler();
 #  endif
   {
-    static word warned_gc_no;
+    static GC_VAR_ATTR word warned_gc_no;
 
     /* Report caught `ACCESS_VIOLATION`, once per collection. */
     if (warned_gc_no != GC_gc_no) {

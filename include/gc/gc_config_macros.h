@@ -505,6 +505,15 @@ typedef long ptrdiff_t;
 
 #  endif /* GC_PTHREADS */
 
+#  ifndef GC_VAR_ATTR
+/*
+ * This is an attribute useful for a special placement of the collector
+ * variables, e.g. to implement thread-local copies of the collector.
+ * Note: not applied currently to variables used only in multi-threaded code.
+ */
+#    define GC_VAR_ATTR /* empty */
+#  endif
+
 #  ifdef __cplusplus
 
 #    ifndef GC_ATTR_EXPLICIT
