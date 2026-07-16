@@ -995,7 +995,8 @@ GC_stopped_mark(GC_stop_func stop_func)
   if (abandoned_at > 0) {
     /* Give the mutator a chance. */
     GC_mark_deficit = abandoned_at - 1;
-    /* TODO: Notify `GC_EVENT_MARK_ABANDON`. */
+    if (GC_on_collection_event)
+      GC_on_collection_event(GC_EVENT_MARK_ABANDON);
   } else {
     GC_gc_no++;
     /* Check all debugged objects for consistency. */
