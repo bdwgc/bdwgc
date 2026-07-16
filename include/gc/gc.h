@@ -191,7 +191,8 @@ typedef enum {
   GC_EVENT_PRE_START_WORLD,  /*< begin restarting world */
   GC_EVENT_POST_START_WORLD, /*< end restarting world */
   GC_EVENT_THREAD_SUSPENDED,
-  GC_EVENT_THREAD_UNSUSPENDED
+  GC_EVENT_THREAD_UNSUSPENDED,
+  GC_EVENT_MARK_ABANDON
 } GC_EventType;
 
 /**
