@@ -2085,13 +2085,12 @@ check_heap_stats(void)
             (unsigned long)GC_get_total_bytes());
   GC_printf("Total memory use by allocated blocks is %lu bytes\n",
             (unsigned long)GC_get_memory_use());
-  if (GC_get_total_bytes() < (size_t)n_tests *
 #ifdef VERY_SMALL_CONFIG
-                                 2700000
+#  define MIN_TOTAL_BYTES_PER_TEST 2700000
 #else
-                                 33500000
+#  define MIN_TOTAL_BYTES_PER_TEST 33500000
 #endif
-  ) {
+  if (GC_get_total_bytes() < (size_t)n_tests * MIN_TOTAL_BYTES_PER_TEST) {
     GC_printf("Incorrect execution - missed some allocations\n");
     FAIL;
   }
