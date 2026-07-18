@@ -1916,10 +1916,11 @@ test_long_mult(void)
 {
   unsigned32 hp, lp;
 
+  /* Check that it splits a 64-bit product into 32-bit parts correctly. */
   LONG_MULT(hp, lp, (unsigned32)0x1234567UL, (unsigned32)0xfedcba98UL);
   TEST_ASSERT(hp == (unsigned32)0x121fa00UL);
   TEST_ASSERT(lp == (unsigned32)0x23e20b28UL);
-
+  /* A check to exercise cross-term accumulation and carry propagation. */
   LONG_MULT(hp, lp, (unsigned32)0xdeadbeefUL, (unsigned32)0xefcdab12UL);
   TEST_ASSERT(hp == (unsigned32)0xd0971b30UL);
   TEST_ASSERT(lp == (unsigned32)0xbd2411ceUL);
