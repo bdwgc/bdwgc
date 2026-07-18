@@ -26,7 +26,7 @@ leaving the object.
 
 In either case, the block descriptor (`hdr`) refers to a table of object
 starting addresses (the `hb_map` field). The starting address table is indexed
-by the low bits if the candidate pointer. The resulting entry contains
+by the low bits of the candidate pointer. The resulting entry contains
 a displacement to the beginning of the object, or an indication that this
 cannot be a valid object pointer. (If all interior pointer are recognized,
 pointers into large objects are handled specially, as appropriate.)
@@ -64,8 +64,8 @@ a single `bottom_index` structure consisting only of `NULL` `hdr` pointers.
 
 `bottom_index` structures contain slightly more information than just `hdr`
 pointers. The `asc_link` field is used to link all `bottom_index` structures
-in ascending order for fast traversal. This list is pointed to be
-`GC_all_bottom_indices`. It is maintained with the aid of `key` field that
+in ascending order for fast traversal. This list is pointed to by
+`GC_all_bottom_indices`. It is maintained with the aid of the `key` field that
 contains the high bits corresponding to the `bottom_index`.
 
 ## 64-bit addresses
