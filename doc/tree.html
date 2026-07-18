@@ -31,7 +31,7 @@ pointer without leaving the object.
 <P>
 In either case, the block descriptor (<TT>struct hblkhdr</tt>)
 refers to a table of object starting addresses (the <TT>hb_map</tt> field).
-The starting address table is indexed by the low bits if the candidate pointer.
+The starting address table is indexed by the low bits of the candidate pointer.
 The resulting entry contains a displacement to the beginning of the object,
 or an indication that this cannot be a valid object pointer.
 (If all interior pointer are recognized, pointers into large objects
@@ -72,8 +72,8 @@ only of NULL <TT>hdr</tt> pointers.
 <TT>Bottom_index</tt> structures contain slightly more information than
 just <TT>hdr</tt> pointers.  The <TT>asc_link</tt> field is used to link
 all <TT>bottom_index</tt> structures in ascending order for fast traversal.
-This list is pointed to be <TT>GC_all_bottom_indices</tt>.
-It is maintained with the aid of <TT>key</tt> field that contains the
+This list is pointed to by <TT>GC_all_bottom_indices</tt>.
+It is maintained with the aid of the <TT>key</tt> field that contains the
 high bits corresponding to the <TT>bottom_index</tt>.
 
 <H2>64 bit addresses</h2>
