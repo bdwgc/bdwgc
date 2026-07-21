@@ -1,4 +1,4 @@
-.TH BDWGC 3 "24 Dec 2025"
+.TH BDWGC 3 2025-12-24
 .SH NAME
 GC_malloc, GC_malloc_atomic, GC_free, GC_realloc, GC_reallocf,
 GC_enable_incremental, GC_register_finalizer, GC_malloc_ignore_off_page,
@@ -24,10 +24,8 @@ void *GC_malloc_ignore_off_page(size_t size);
 void *GC_malloc_atomic_ignore_off_page(size_t size);
 .br
 void GC_set_warn_proc(void (*proc)(const char *, GC_uintptr_t));
-.br
 .sp
 cc ... -lgc
-.LP
 .SH DESCRIPTION
 .I GC_malloc
 and
@@ -141,7 +139,6 @@ incremental collection on machines without appropriate VM support, provisions
 for providing more explicit object layout information to the garbage
 collector, more direct support for "weak" pointers, support for
 "abortable" garbage collections during idle time, etc.
-.LP
 .SH "SEE ALSO"
 The README and gc.h files in the distribution.  More detailed definitions of
 the functions exported by the collector are given there.  (The above list is
@@ -153,7 +150,6 @@ Boehm, H., and M. Weiser, "Garbage Collection in an Uncooperative Environment",
 "Software Practice & Experience", September 1988, pp. 807-820.
 .LP
 The malloc(3) man page.
-.LP
 .SH AUTHOR
 Hans-J. Boehm (boehm@acm.org).
 Some of the code was written by others (see the AUTHORS file for the details),
