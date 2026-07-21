@@ -1,0 +1,34 @@
+# Workflow for checking formatting of source code (C/C++, Zig).
+name: format check
+
+on: [ push, pull_request ]
+
+jobs:
+  check:
+    name: ${{ matrix.type }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        type: [ c, zig ]
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install zig
+      if: ${{ matrix.type == 'zig' }}
+      uses: mlugg/setup-zig@v2
+
+    - name: Dry-run clang-format
+      if: ${{ matrix.type == 'c' }}
+      run: |
+        clang-format --version
+        find . -iname '*.c' -o -iname '*.cc' -o -iname '*.cpp' -o -iname '*.h' \
+          | xargs clang-format --dry-run --Werror
+
+    - name: Dry-run zig fmt
+      if: ${{ matrix.type == 'zig' }}
+      run: zig fmt --check build.zig build.zig.zon
