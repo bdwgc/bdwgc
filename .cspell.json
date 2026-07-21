@@ -229,6 +229,7 @@
     "mprotect",
     "MSDOS",
     "MSGBOX",
+    "msvc",
     "MSWIN",
     "MSWINCE",
     "MSWINRT",

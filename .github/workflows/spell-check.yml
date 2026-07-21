@@ -14,7 +14,9 @@ jobs:
     - name: Run cspell
       uses: streetsidesoftware/cspell-action@v8
       with:
-        files: "**/*.{c,cc,cpp,h,man,md}"
+        files: |
+          LICENSE
+          **/*.{c,cc,cpp,h,man,md}
         # Note: file `.cspell.json` contains the list of words (mostly names)
         # to be ignored; the list is ordered alphabetically ignoring case.
         incremental_files_only: false
