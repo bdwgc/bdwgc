@@ -1,4 +1,4 @@
-# Workflow for checking formatting of source code (C/C++, Zig).
+# Workflow for checking formatting of source code (C/C++, CMake, Zig).
 name: format check
 
 on: [ push, pull_request ]
@@ -13,10 +13,14 @@ jobs:
       fail-fast: false
 
       matrix:
-        type: [ c, zig ]
+        type: [ c, cmake, zig ]
 
     steps:
     - uses: actions/checkout@v6
+
+    - name: Install gersemi
+      if: ${{ matrix.type == 'cmake' }}
+      run: python3 -m pip install --upgrade gersemi
 
     - name: Install zig
       if: ${{ matrix.type == 'zig' }}
@@ -28,6 +32,10 @@ jobs:
         clang-format --version
         find . -iname '*.c' -o -iname '*.cc' -o -iname '*.cpp' -o -iname '*.h' \
           | xargs clang-format --dry-run --Werror
+
+    - name: Dry-run gersemi (CMake files check)
+      if: ${{ matrix.type == 'cmake' }}
+      run: python3 -m gersemi --check --diff CMakeLists.txt Config.cmake.in
 
     - name: Dry-run zig fmt
       if: ${{ matrix.type == 'zig' }}
