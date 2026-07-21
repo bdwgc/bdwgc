@@ -630,7 +630,9 @@ submission please check that it has not been done yet by someone else.
 
 If you want to contribute, submit
 a [pull request](https://github.com/bdwgc/bdwgc/pulls) to GitHub.
-Please process the modified files with clang-format before the submission.
+Please process the modified files with `cspell`, `clang-format` (and similar
+formatting tools, see the relevant GitHub workflow file) before the
+submission.
 
 If you need help, use
 [Stack Overflow](https://stackoverflow.com/questions/tagged/boehm-gc).
