@@ -1,4 +1,4 @@
-# Workflow for checking formatting of source code (C/C++, CMake, Zig).
+# Workflow for checking formatting of source code (C/C++, CMake, man, Zig).
 name: format check
 
 on: [ push, pull_request ]
@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        type: [ c, cmake, zig ]
+        type: [ c, cmake, man, zig ]
 
     steps:
     - uses: actions/checkout@v6
@@ -21,6 +21,13 @@ jobs:
     - name: Install gersemi
       if: ${{ matrix.type == 'cmake' }}
       run: python3 -m pip install --upgrade gersemi
+
+    - name: Install mandoc
+      if: ${{ matrix.type == 'man' }}
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: mandoc
+        version: 1.0
 
     - name: Install zig
       if: ${{ matrix.type == 'zig' }}
@@ -36,6 +43,20 @@ jobs:
     - name: Dry-run gersemi (CMake files check)
       if: ${{ matrix.type == 'cmake' }}
       run: python3 -m gersemi --check --diff CMakeLists.txt Config.cmake.in
+
+    - name: Lint .man files
+      if: ${{ matrix.type == 'man' }}
+      run: mandoc -T lint -W warning gc.man
+
+    - name: Render .man files (smoke test)
+      if: ${{ matrix.type == 'man' }}
+      # Note: `groff` itself does not exit with a non-zero value on errors.
+      run: |
+        set -o pipefail
+        if groff -man -T ascii gc.man 2>&1 >/dev/null | grep .; then
+          echo "groff produced errors/warnings (see above)"
+          exit 1
+        fi
 
     - name: Dry-run zig fmt
       if: ${{ matrix.type == 'zig' }}
