@@ -1,5 +1,5 @@
 ---
-# Workflow for checking formatting of source code (C/C++, CMake, man, Zig).
+# Workflow for checking formatting of source code (C/C++, CMake, Zig, etc.).
 name: format check
 
 "on": [push, pull_request]
@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        type: [c, cmake, man, zig]
+        type: [c, cmake, man, md, zig]
 
     steps:
       - uses: actions/checkout@v6
@@ -61,6 +61,13 @@ jobs:
             echo "groff produced errors/warnings (see above)"
             exit 1
           fi
+
+      - name: Dry-run markdownlint
+        if: ${{ matrix.type == 'md' }}
+        uses: DavidAnson/markdownlint-cli2-action@v17
+        with:
+          globs: |
+            **/*.md
 
       - name: Dry-run zig fmt
         if: ${{ matrix.type == 'zig' }}
