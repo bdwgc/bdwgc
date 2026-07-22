@@ -2,7 +2,6 @@
 
 This is version 7.4.32 of a conservative garbage collector for C and C++.
 
-
 ## Download
 
 You might find a more recent/stable version on the
@@ -17,29 +16,29 @@ Also, the latest bug fixes and new features are available in the
 This is intended to be a general purpose, garbage collecting storage
 allocator.  The algorithms used are described in:
 
- * Boehm, H., and M. Weiser, "Garbage Collection in an Uncooperative
+* Boehm, H., and M. Weiser, "Garbage Collection in an Uncooperative
    Environment", Software Practice & Experience, September 1988, pp. 807-820.
 
- * Boehm, H., A. Demers, and S. Shenker, "Mostly Parallel Garbage Collection",
+* Boehm, H., A. Demers, and S. Shenker, "Mostly Parallel Garbage Collection",
    Proceedings of the ACM SIGPLAN '91 Conference on Programming Language Design
    and Implementation, SIGPLAN Notices 26, 6 (June 1991), pp. 157-164.
 
- * Boehm, H., "Space Efficient Conservative Garbage Collection", Proceedings
+* Boehm, H., "Space Efficient Conservative Garbage Collection", Proceedings
    of the ACM SIGPLAN '91 Conference on Programming Language Design and
    Implementation, SIGPLAN Notices 28, 6 (June 1993), pp. 197-206.
 
- * Boehm H., "Reducing Garbage Collector Cache Misses", Proceedings of the
+* Boehm H., "Reducing Garbage Collector Cache Misses", Proceedings of the
    2000 International Symposium on Memory Management.
 
 Possible interactions between the collector and optimizing compilers are
 discussed in
 
- * Boehm, H., and D. Chase, "A Proposal for GC-safe C Compilation",
+* Boehm, H., and D. Chase, "A Proposal for GC-safe C Compilation",
    The Journal of C Language Translation 4, 2 (December 1992).
 
 and
 
- * Boehm H., "Simple GC-safe Compilation", Proceedings of the ACM SIGPLAN '96
+* Boehm H., "Simple GC-safe Compilation", Proceedings of the ACM SIGPLAN '96
    Conference on Programming Language Design and Implementation.
 
 Unlike the collector described in the second reference, this collector
@@ -68,7 +67,6 @@ in Xerox Cedar, or the "rope" package in the SGI STL or the g++ distribution.)
 
 Further collector documentation can be found
 in [overview.html](doc/overview.html).
-
 
 ## General Description
 
@@ -497,7 +495,6 @@ However, their use may be appropriate in a few carefully written
 library routines that do not make the objects themselves available
 for writing by client code.
 
-
 ## Bugs
 
 Any memory that does not have a recognizable pointer to it will be
@@ -518,7 +515,6 @@ is enabled.
 per MB of accessible memory that needs to be scanned and processed.
 Your mileage may vary.)  The incremental/generational collection facility
 may help in some cases.
-
 
 ## Feedback, Contribution, Questions and Notifications
 
@@ -546,15 +542,15 @@ GitHub.
 
 ## Copyright & Warranty
 
- * Copyright (c) 1988, 1989 Hans-J. Boehm, Alan J. Demers
- * Copyright (c) 1991-1996 by Xerox Corporation.  All rights reserved.
- * Copyright (c) 1996-1999 by Silicon Graphics.  All rights reserved.
- * Copyright (c) 1999-2011 by Hewlett-Packard Development Company.
- * Copyright (c) 2008-2019 Ivan Maidanski
+* Copyright (c) 1988, 1989 Hans-J. Boehm, Alan J. Demers
+* Copyright (c) 1991-1996 by Xerox Corporation.  All rights reserved.
+* Copyright (c) 1996-1999 by Silicon Graphics.  All rights reserved.
+* Copyright (c) 1999-2011 by Hewlett-Packard Development Company.
+* Copyright (c) 2008-2019 Ivan Maidanski
 
 The files pthread_stop_world.c and pthread_support.c are also
 
- * Copyright (c) 1998 by Fergus Henderson.  All rights reserved.
+* Copyright (c) 1998 by Fergus Henderson.  All rights reserved.
 
 The files Makefile.am, and configure.in are
 
