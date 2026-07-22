@@ -31,7 +31,7 @@ under Linux on X86 and IA64 processors, though ports to other otherwise
 supported Pthreads platforms should be straightforward. They are intended
 to be used together.
 
-  * Building the collector with `-DPARALLEL_MARK` allows the collector to run
+* Building the collector with `-DPARALLEL_MARK` allows the collector to run
   the mark phase in parallel in multiple threads, and thus on multiple
   processors. The mark phase typically consumes the large majority of the
   collection time. Thus this largely parallelizes the garbage collector
@@ -45,7 +45,7 @@ to be used together.
   A second effect of this flag is to switch to a more concurrent
   implementation of `GC_malloc_many`, so that free lists can be built, and
   memory can be cleared, by more than one thread concurrently.
-  * Building the collector with `-DTHREAD_LOCAL_ALLOC` adds support for
+* Building the collector with `-DTHREAD_LOCAL_ALLOC` adds support for
   thread-local allocation. This causes `GC_malloc`, `GC_malloc_atomic`, and
   `GC_gcj_malloc` to be redefined to perform thread-local allocation.
 
