@@ -64,13 +64,13 @@ make install
 ```
 
 
-# Input
+## Input
 
 The main input to cmake is `CMakeLists.txt` file (script) in the bdwgc root
 directory.  For help, go to [cmake.org](https://cmake.org/).
 
 
-# How to import bdwgc
+## How to import bdwgc
 
 Another project could add bdwgc (of the required version) as one of its
 dependencies with something like this in their `CMakeLists.txt` file:
