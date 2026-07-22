@@ -68,24 +68,10 @@ to be permanent, the warning indicates a memory leak.
      `volatile`) variable as long as the block is needed.
 
   3. If the large blocks are allocated with `realloc`, we suggest instead
-     allocating them with something like the following. Note that the
-     `realloc` size increment should be fairly large (e.g. a factor of 3/2)
-     for this to exhibit reasonable performance. But we all know we should
-     do that anyway.
-
-```c
-void *big_realloc(void *p, size_t new_size) {
-  size_t old_size = GC_size(p);
-  void *result;
-  if (new_size <= 10000) return GC_realloc(p, new_size);
-  if (new_size <= old_size) return p;
-  result = GC_malloc_ignore_off_page(new_size);
-  if (result == 0) return 0;
-  memcpy(result, p, old_size);
-  GC_free(p);
-  return result;
-}
-```
+     allocating them with `GC_malloc_ignore_off_page()` when the new size
+     is rather big (e.g. greater than 10 KB). Note that the `realloc` size
+     increment should be fairly large (e.g. a factor of 3/2) for this to
+     exhibit reasonable performance. But we all know we should do that anyway.
 
   4. In the unlikely case that even relatively small object (less than 20 KB)
      allocations are triggering these warnings, then your address space
