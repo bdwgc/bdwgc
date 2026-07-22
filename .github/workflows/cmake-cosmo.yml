@@ -1,11 +1,14 @@
+---
 # This workflow is for cmake-based build/test using Cosmo (Cosmopolitan).
 name: cmake cosmo
 
-on: [ push, pull_request ]
+"on": [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.os }} thr:${{ matrix.enable_threads }} single-obj:${{ matrix.single_obj_compilation }}
+    name: >-
+      ${{ matrix.os }} thr:${{ matrix.enable_threads }}
+      single-obj:${{ matrix.single_obj_compilation }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 4
 
@@ -13,49 +16,53 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ ubuntu-latest ] # TODO: macos-latest, windows-latest
-        build_type: [ Debug ]
-        enable_cplusplus: [ on ]
-        enable_gc_dump: [ on ]
-        enable_rwlock: [ off ]
-        enable_threads: [ off ] # TODO: on
-        gc_assertions: [ on ]
-        large_config: [ on ]
-        redirect_malloc: [ off ]
-        single_obj_compilation: [ off, on ]
+        # TODO: macos-latest, windows-latest
+        os: [ubuntu-latest]
+        build_type: [Debug]
+        enable_cplusplus: ["on"]
+        enable_gc_dump: ["on"]
+        enable_rwlock: ["off"]
+        # TODO: on
+        enable_threads: ["off"]
+        gc_assertions: ["on"]
+        large_config: ["on"]
+        redirect_malloc: ["off"]
+        single_obj_compilation: ["off", "on"]
 
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-    - uses: bjia56/setup-cosmocc@main
-      with:
-        version: latest
+      - uses: bjia56/setup-cosmocc@main
+        with:
+          version: latest
 
-    - name: Configure CMake targetting Cosmo
-      run: >
-        cmake -B ${{ github.workspace }}/build
-        -S ${{ github.workspace }}
-        -DCMAKE_AR=`type -p cosmoar`
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DCMAKE_CXX_COMPILER=cosmoc++
-        -DCMAKE_C_COMPILER=cosmocc
-        -DGC_BUILD_SHARED_LIBS=off
-        -Denable_cplusplus=${{ matrix.enable_cplusplus }}
-        -Denable_gc_assertions=${{ matrix.gc_assertions }}
-        -Denable_gc_dump=${{ matrix.enable_gc_dump }}
-        -Denable_large_config=${{ matrix.large_config }}
-        -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
-        -Denable_rwlock=${{ matrix.enable_rwlock }}
-        -Denable_single_obj_compilation=${{ matrix.single_obj_compilation }}
-        -Denable_threads=${{ matrix.enable_threads }}
-        -Denable_werror=on
-        -Werror=dev
+      - name: Configure CMake targetting Cosmo
+        run: >
+          cmake -B ${{ github.workspace }}/build
+          -S ${{ github.workspace }}
+          -DCMAKE_AR=`type -p cosmoar`
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CXX_COMPILER=cosmoc++
+          -DCMAKE_C_COMPILER=cosmocc
+          -DGC_BUILD_SHARED_LIBS=off
+          -Denable_cplusplus=${{ matrix.enable_cplusplus }}
+          -Denable_gc_assertions=${{ matrix.gc_assertions }}
+          -Denable_gc_dump=${{ matrix.enable_gc_dump }}
+          -Denable_large_config=${{ matrix.large_config }}
+          -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
+          -Denable_rwlock=${{ matrix.enable_rwlock }}
+          -Denable_single_obj_compilation=${{ matrix.single_obj_compilation }}
+          -Denable_threads=${{ matrix.enable_threads }}
+          -Denable_werror=on
+          -Werror=dev
 
-    - name: Build
-      run: >
-        cmake --build ${{ github.workspace }}/build
-        --config ${{ matrix.build_type }} --verbose --parallel
+      - name: Build
+        run: >
+          cmake --build ${{ github.workspace }}/build
+          --config ${{ matrix.build_type }} --verbose --parallel
 
-    - name: Test
-      working-directory: ${{ github.workspace }}/build
-      run: ctest --build-config ${{ matrix.build_type }} --verbose --parallel 8
+      - name: Test
+        working-directory: ${{ github.workspace }}/build
+        run: >-
+          ctest --build-config ${{ matrix.build_type }}
+          --verbose --parallel 8

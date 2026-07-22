@@ -1,11 +1,21 @@
+---
 # This workflow is for zig-based build/test running on Linux, MacOS, Windows.
 name: zig build
 
-on: [ push, pull_request ]
+"on": [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.os }} ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }} rwlock:${{ matrix.enable_rwlock }} redir:${{ matrix.redirect_malloc }} gcdeb:${{ matrix.enable_gc_debug }} munmap:${{ matrix.enable_munmap }} paramark:${{ matrix.parallel_mark }} thrlocal:${{ matrix.thread_local_alloc }} multi-obj:${{ matrix.disable_single_obj_compilation }}
+    name: >-
+      ${{ matrix.os }} ${{ matrix.ttriple }} ${{ matrix.linkage }}
+      thr:${{ matrix.enable_threads }}
+      rwlock:${{ matrix.enable_rwlock }}
+      redir:${{ matrix.redirect_malloc }}
+      gcdeb:${{ matrix.enable_gc_debug }}
+      munmap:${{ matrix.enable_munmap }}
+      paramark:${{ matrix.parallel_mark }}
+      thrlocal:${{ matrix.thread_local_alloc }}
+      multi-obj:${{ matrix.disable_single_obj }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 7
 
@@ -13,130 +23,130 @@ jobs:
       fail-fast: false
 
       matrix:
-        zig_version: [ "0.16.0" ]
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
-        ttriple: [ native, native-native-msvc, x86-windows-gnu ]
-        enable_cplusplus: [ true ]
-        gc_assertions: [ true ]
-        large_config: [ false ]
-        enable_threads: [ false, true ]
-        disable_handle_fork: [ false ]
-        enable_rwlock: [ false, true ]
-        redirect_malloc: [ false, true ]
-        enable_gc_debug: [ false, true ]
-        enable_munmap: [ false, true ]
-        parallel_mark: [ false, true ]
-        thread_local_alloc: [ false, true ]
-        linkage: [ static, dynamic ]
-        disable_single_obj_compilation: [ false, true ]
-        build_cord: [ true ]
+        zig_version: ["0.16.0"]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        ttriple: [native, native-native-msvc, x86-windows-gnu]
+        enable_cplusplus: [true]
+        gc_assertions: [true]
+        large_config: [false]
+        enable_threads: [false, true]
+        disable_handle_fork: [false]
+        enable_rwlock: [false, true]
+        redirect_malloc: [false, true]
+        enable_gc_debug: [false, true]
+        enable_munmap: [false, true]
+        parallel_mark: [false, true]
+        thread_local_alloc: [false, true]
+        linkage: [static, dynamic]
+        disable_single_obj: [false, true]
+        build_cord: [true]
         exclude:
-        - os: macos-latest
-          ttriple: native-native-msvc
-        - os: macos-latest
-          ttriple: x86-windows-gnu
-        - os: ubuntu-latest
-          ttriple: native-native-msvc
-        - os: ubuntu-latest
-          ttriple: x86-windows-gnu
-        - os: windows-latest
-          disable_handle_fork: true
-        - disable_single_obj_compilation: true
-          linkage: static
-        - enable_threads: false
-          disable_handle_fork: true
-        - enable_threads: false
-          parallel_mark: true
-        - enable_threads: false
-          enable_rwlock: true
-        - enable_threads: false
-          thread_local_alloc: true
-        # The following ones are long-running jobs, thus excluded.
-        - os: macos-latest
-          enable_gc_debug: true
-          enable_rwlock: true
-        # The following ones just to reduce amount of jobs.
-        - disable_single_obj_compilation: true
-          enable_gc_debug: true
-        - disable_single_obj_compilation: true
-          enable_munmap: false
-        - disable_single_obj_compilation: true
-          parallel_mark: false
-        - disable_single_obj_compilation: true
-          ttriple: native
-        - enable_munmap: false
-          linkage: dynamic
-        - enable_munmap: true
-          enable_threads: false
-          linkage: static
-        - enable_gc_debug: true
-          enable_rwlock: true
-          thread_local_alloc: false
-        - parallel_mark: false
-          redirect_malloc: true
-        - enable_gc_debug: true
-          thread_local_alloc: false
-        - os: macos-latest
-          enable_munmap: false
-          enable_threads: false
-        - os: macos-latest
-          enable_munmap: false
-          enable_rwlock: true
-        - os: macos-latest
-          enable_rwlock: true
-          thread_local_alloc: false
-        - os: macos-latest
-          enable_rwlock: true
-          parallel_mark: false
-        - os: macos-latest
-          enable_munmap: false
-          redirect_malloc: false
-        - os: macos-latest
-          enable_threads: true
-          redirect_malloc: false
-          thread_local_alloc: false
-        - os: macos-latest
-          enable_threads: true
-          parallel_mark: false
-          redirect_malloc: false
-        - ttriple: x86-windows-gnu
-          enable_gc_debug: true
-          enable_munmap: false
-        - ttriple: x86-windows-gnu
-          enable_munmap: false
-          parallel_mark: false
-        - ttriple: x86-windows-gnu
-          enable_rwlock: false
-          enable_threads: true
-          redirect_malloc: true
-        - ttriple: x86-windows-gnu
-          enable_rwlock: true
-          parallel_mark: false
+          - os: macos-latest
+            ttriple: native-native-msvc
+          - os: macos-latest
+            ttriple: x86-windows-gnu
+          - os: ubuntu-latest
+            ttriple: native-native-msvc
+          - os: ubuntu-latest
+            ttriple: x86-windows-gnu
+          - os: windows-latest
+            disable_handle_fork: true
+          - disable_single_obj: true
+            linkage: static
+          - enable_threads: false
+            disable_handle_fork: true
+          - enable_threads: false
+            parallel_mark: true
+          - enable_threads: false
+            enable_rwlock: true
+          - enable_threads: false
+            thread_local_alloc: true
+          # The following ones are long-running jobs, thus excluded.
+          - os: macos-latest
+            enable_gc_debug: true
+            enable_rwlock: true
+          # The following ones just to reduce amount of jobs.
+          - disable_single_obj: true
+            enable_gc_debug: true
+          - disable_single_obj: true
+            enable_munmap: false
+          - disable_single_obj: true
+            parallel_mark: false
+          - disable_single_obj: true
+            ttriple: native
+          - enable_munmap: false
+            linkage: dynamic
+          - enable_munmap: true
+            enable_threads: false
+            linkage: static
+          - enable_gc_debug: true
+            enable_rwlock: true
+            thread_local_alloc: false
+          - parallel_mark: false
+            redirect_malloc: true
+          - enable_gc_debug: true
+            thread_local_alloc: false
+          - os: macos-latest
+            enable_munmap: false
+            enable_threads: false
+          - os: macos-latest
+            enable_munmap: false
+            enable_rwlock: true
+          - os: macos-latest
+            enable_rwlock: true
+            thread_local_alloc: false
+          - os: macos-latest
+            enable_rwlock: true
+            parallel_mark: false
+          - os: macos-latest
+            enable_munmap: false
+            redirect_malloc: false
+          - os: macos-latest
+            enable_threads: true
+            redirect_malloc: false
+            thread_local_alloc: false
+          - os: macos-latest
+            enable_threads: true
+            parallel_mark: false
+            redirect_malloc: false
+          - ttriple: x86-windows-gnu
+            enable_gc_debug: true
+            enable_munmap: false
+          - ttriple: x86-windows-gnu
+            enable_munmap: false
+            parallel_mark: false
+          - ttriple: x86-windows-gnu
+            enable_rwlock: false
+            enable_threads: true
+            redirect_malloc: true
+          - ttriple: x86-windows-gnu
+            enable_rwlock: true
+            parallel_mark: false
 
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-    - uses: mlugg/setup-zig@v2
-      with:
-        version: ${{ matrix.zig_version }}
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ matrix.zig_version }}
 
-    - name: Build and run tests
-      run: >
-        zig build
-        -Dtarget=${{ matrix.ttriple }}
-        -Dlinkage=${{ matrix.linkage }}
-        -Dbuild_cord=${{ matrix.build_cord }}
-        -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
-        -Ddisable_single_obj_compilation=${{ matrix.disable_single_obj_compilation }}
-        -Denable_cplusplus=${{ matrix.enable_cplusplus }}
-        -Denable_gc_assertions=${{ matrix.gc_assertions }}
-        -Denable_gc_debug=${{ matrix.enable_gc_debug }}
-        -Denable_large_config=${{ matrix.large_config }}
-        -Denable_munmap=${{ matrix.enable_munmap }}
-        -Denable_parallel_mark=${{ matrix.parallel_mark }}
-        -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
-        -Denable_rwlock=${{ matrix.enable_rwlock }}
-        -Denable_thread_local_alloc=${{ matrix.thread_local_alloc }}
-        -Denable_threads=${{ matrix.enable_threads }}
-        -Denable_werror
-        test
+      - name: Build and run tests
+        run: >
+          zig build
+          -Dtarget=${{ matrix.ttriple }}
+          -Dlinkage=${{ matrix.linkage }}
+          -Dbuild_cord=${{ matrix.build_cord }}
+          -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
+          -Ddisable_single_obj_compilation=${{ matrix.disable_single_obj }}
+          -Denable_cplusplus=${{ matrix.enable_cplusplus }}
+          -Denable_gc_assertions=${{ matrix.gc_assertions }}
+          -Denable_gc_debug=${{ matrix.enable_gc_debug }}
+          -Denable_large_config=${{ matrix.large_config }}
+          -Denable_munmap=${{ matrix.enable_munmap }}
+          -Denable_parallel_mark=${{ matrix.parallel_mark }}
+          -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
+          -Denable_rwlock=${{ matrix.enable_rwlock }}
+          -Denable_thread_local_alloc=${{ matrix.thread_local_alloc }}
+          -Denable_threads=${{ matrix.enable_threads }}
+          -Denable_werror
+          test
