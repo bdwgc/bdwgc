@@ -1,3 +1,4 @@
+---
 language: cpp
 os: linux
 dist: noble
@@ -7,174 +8,196 @@ git:
 
 jobs:
   include:
-  - addons:
-      apt:
-        packages:
-        - lcov
-    compiler: gcc
-    env:
-    - CONF_OPTIONS="--enable-single-obj-compilation --enable-cplusplus --disable-shared --enable-gc-assertions --enable-valgrind-tracking"
-    - CFLAGS_EXTRA="--coverage -fprofile-update=atomic -O0 -D TEST_COVERAGE -D NTHREADS=20 -D USE_CUSTOM_SPECIFIC"
-    - CC_FOR_CHECK=g++
-    - MAKEFILE_TARGETS="all"
-    - MAKEFILE_TARGETS_CHECK="check"
-    - NO_CLONE_LIBATOMIC_OPS=true
-    - REPORT_COVERAGE=true
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - TESTS_CUSTOM_RUN=true
-  - env:
-    - MAKEFILE_TARGETS="dist"
-  - os: freebsd
-    env:
-    - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2"
-    - CONF_OPTIONS="--enable-cplusplus --enable-gc-assertions --enable-gc-debug --enable-rwlock"
-    - MAKE_NPROC=8
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - os: freebsd
-    env:
-    - CONF_OPTIONS="--enable-cplusplus"
-    - MAKE_NPROC=8
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - os: freebsd
-    env:
-    - CONF_OPTIONS="--enable-gc-assertions --disable-shared"
-    - MAKE_NPROC=8
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - compiler: gcc
-    env:
-    - CC_FOR_CHECK=g++
-    - CONF_OPTIONS="--enable-gc-assertions"
-    - MAKEFILE_TARGETS="all"
-    - MAKEFILE_TARGETS_CHECK="check"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - env:
-    - MAKEFILE_TARGETS="distcheck"
-    - AUTOCONF_VER=2.72
-    - AUTOMAKE_VER=1.18.1
-    - LIBTOOL_VER=2.5.4
-    - M4_VER=1.4.21
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: ppc64le
-    compiler: gcc
-    env:
-    - CONF_OPTIONS="--enable-cplusplus"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - arch: s390x
-    compiler: clang
-    env:
-    - CFLAGS_EXTRA="-O3 -flto -D _FORTIFY_SOURCE=2"
-    - CONF_OPTIONS="--enable-cplusplus"
-    - GCTEST_WITH_MPROTECT_VDB=true
-    - NO_CLONE_LIBATOMIC_OPS=true
-  - if: type != pull_request
-    addons:
-      coverity_scan:
-        project:
-          name: bdwgc/bdwgc
-          version: 8.3.0
-        notification_email: ivmai@mail.ru
-        branch_pattern: master
-        build_command_prepend: "./configure --enable-cplusplus --disable-shared --enable-single-obj-compilation"
-        build_command: make -j check CFLAGS_EXTRA=-DLINT2
-    env:
-    - COVERITY_SCAN_BRANCH=1
+    - addons:
+        apt:
+          packages:
+            - lcov
+      compiler: gcc
+      env:
+        - >-
+          CONF_OPTIONS="--enable-single-obj-compilation --enable-cplusplus
+          --disable-shared --enable-gc-assertions
+          --enable-valgrind-tracking"
+        - >-
+          CFLAGS_EXTRA="--coverage -fprofile-update=atomic -O0 -D TEST_COVERAGE
+          -D NTHREADS=20 -D USE_CUSTOM_SPECIFIC"
+        - CC_FOR_CHECK=g++
+        - MAKEFILE_TARGETS="all"
+        - MAKEFILE_TARGETS_CHECK="check"
+        - NO_CLONE_LIBATOMIC_OPS=true
+        - REPORT_COVERAGE=true
+        - GCTEST_WITH_MPROTECT_VDB=true
+        - TESTS_CUSTOM_RUN=true
+    - env:
+        - MAKEFILE_TARGETS="dist"
+    - os: freebsd
+      env:
+        - CFLAGS_EXTRA="-O3 -D _FORTIFY_SOURCE=2"
+        - >-
+          CONF_OPTIONS="--enable-cplusplus --enable-gc-assertions
+          --enable-gc-debug --enable-rwlock"
+        - MAKE_NPROC=8
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - os: freebsd
+      env:
+        - CONF_OPTIONS="--enable-cplusplus"
+        - MAKE_NPROC=8
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - os: freebsd
+      env:
+        - CONF_OPTIONS="--enable-gc-assertions --disable-shared"
+        - MAKE_NPROC=8
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - compiler: gcc
+      env:
+        - CC_FOR_CHECK=g++
+        - CONF_OPTIONS="--enable-gc-assertions"
+        - MAKEFILE_TARGETS="all"
+        - MAKEFILE_TARGETS_CHECK="check"
+        - GCTEST_WITH_MPROTECT_VDB=true
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - env:
+        - MAKEFILE_TARGETS="distcheck"
+        - AUTOCONF_VER=2.72
+        - AUTOMAKE_VER=1.18.1
+        - LIBTOOL_VER=2.5.4
+        - M4_VER=1.4.21
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - arch: ppc64le
+      compiler: gcc
+      env:
+        - CONF_OPTIONS="--enable-cplusplus"
+        - GCTEST_WITH_MPROTECT_VDB=true
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - arch: s390x
+      compiler: clang
+      env:
+        - CFLAGS_EXTRA="-O3 -flto -D _FORTIFY_SOURCE=2"
+        - CONF_OPTIONS="--enable-cplusplus"
+        - GCTEST_WITH_MPROTECT_VDB=true
+        - NO_CLONE_LIBATOMIC_OPS=true
+    - if: type != pull_request
+      addons:
+        coverity_scan:
+          project:
+            name: bdwgc/bdwgc
+            version: 8.3.0
+          notification_email: ivmai@mail.ru
+          branch_pattern: master
+          build_command_prepend: >-
+            ./configure --enable-cplusplus --disable-shared
+            --enable-single-obj-compilation
+          build_command: make -j check CFLAGS_EXTRA=-DLINT2
+      env:
+        - COVERITY_SCAN_BRANCH=1
 
 before_install:
-- if [[ "$REPORT_COVERAGE" == true ]]; then
-    mkdir -p ../coveralls;
-    wget -O - https://coveralls.io/coveralls-linux.tar.gz | tar xf - --gz --directory ../coveralls;
-    export PATH=`pwd`/../coveralls:$PATH;
-  fi
-- if [[ "$AUTOCONF_VER" != "" || "$AUTOMAKE_VER" != ""
-        || "$LIBTOOL_VER" != "" || "$M4_VER" != "" ]]; then
-    GNUTOOLS_ROOT=`pwd`/../gnu-tools;
-    export PATH=$GNUTOOLS_ROOT/bin:$PATH;
-    GNU_DOWNLOAD_SITE=https://ftp.gnu.org/gnu;
-  fi
-- if [[ "$M4_VER" != "" ]]; then
-    M4_XZ_URL=$GNU_DOWNLOAD_SITE/m4/m4-$M4_VER.tar.xz;
-    wget -O - $M4_XZ_URL | tar xf - --xz --directory ~;
-    (cd ~/m4-$M4_VER && ./configure --prefix=$GNUTOOLS_ROOT && make -j && make install);
-  fi
-- if [[ "$LIBTOOL_VER" != "" ]]; then
-    LIBTOOL_XZ_URL=$GNU_DOWNLOAD_SITE/libtool/libtool-$LIBTOOL_VER.tar.xz;
-    wget -O - $LIBTOOL_XZ_URL | tar xf - --xz --directory ~;
-    (cd ~/libtool-$LIBTOOL_VER && ./configure --prefix=$GNUTOOLS_ROOT && make -j && make install);
-  fi
-- if [[ "$AUTOCONF_VER" != "" ]]; then
-    AUTOCONF_XZ_URL=$GNU_DOWNLOAD_SITE/autoconf/autoconf-$AUTOCONF_VER.tar.xz;
-    wget -O - $AUTOCONF_XZ_URL | tar xf - --xz --directory ~;
-    (cd ~/autoconf-$AUTOCONF_VER && ./configure --prefix=$GNUTOOLS_ROOT && make -j && make install);
-  fi
-- if [[ "$AUTOMAKE_VER" != "" ]]; then
-    AUTOMAKE_XZ_URL=$GNU_DOWNLOAD_SITE/automake/automake-$AUTOMAKE_VER.tar.xz;
-    wget -O - $AUTOMAKE_XZ_URL | tar xf - --xz --directory ~;
-    (cd ~/automake-$AUTOMAKE_VER && ./configure --prefix=$GNUTOOLS_ROOT && make -j && make install);
-  fi
-- if [[ "$MAKEFILE_TARGETS" == *"dist"* ]]; then
-    autoconf --version;
-    automake --version;
-    m4 --version;
-    libtool --version || true;
-  fi
-- if [[ "$MAKEFILE_TARGETS" == "" ]]; then MAKEFILE_TARGETS="check"; fi
+  - if [[ "$REPORT_COVERAGE" == true ]]; then
+      mkdir -p ../coveralls;
+      wget -O - https://coveralls.io/coveralls-linux.tar.gz
+        | tar xf - --gz --directory ../coveralls;
+      export PATH=`pwd`/../coveralls:$PATH;
+    fi
+  - if [[ "$AUTOCONF_VER" != "" || "$AUTOMAKE_VER" != ""
+      || "$LIBTOOL_VER" != "" || "$M4_VER" != "" ]]; then
+      GNUTOOLS_ROOT=`pwd`/../gnu-tools;
+      export PATH=$GNUTOOLS_ROOT/bin:$PATH;
+      GNU_DOWNLOAD_SITE=https://ftp.gnu.org/gnu;
+    fi
+  - if [[ "$M4_VER" != "" ]]; then
+      M4_XZ_URL=$GNU_DOWNLOAD_SITE/m4/m4-$M4_VER.tar.xz;
+      wget -O - $M4_XZ_URL | tar xf - --xz --directory ~;
+      (cd ~/m4-$M4_VER && ./configure --prefix=$GNUTOOLS_ROOT
+        && make -j && make install);
+    fi
+  - if [[ "$LIBTOOL_VER" != "" ]]; then
+      LIBTOOL_XZ_URL=$GNU_DOWNLOAD_SITE/libtool/libtool-$LIBTOOL_VER.tar.xz;
+      wget -O - $LIBTOOL_XZ_URL | tar xf - --xz --directory ~;
+      (cd ~/libtool-$LIBTOOL_VER && ./configure --prefix=$GNUTOOLS_ROOT
+        && make -j && make install);
+    fi
+  - if [[ "$AUTOCONF_VER" != "" ]]; then
+      AUTOCONF_XZ_URL=$GNU_DOWNLOAD_SITE/autoconf/autoconf-$AUTOCONF_VER.tar.xz;
+      wget -O - $AUTOCONF_XZ_URL | tar xf - --xz --directory ~;
+      (cd ~/autoconf-$AUTOCONF_VER && ./configure --prefix=$GNUTOOLS_ROOT
+        && make -j && make install);
+    fi
+  - if [[ "$AUTOMAKE_VER" != "" ]]; then
+      AUTOMAKE_XZ_URL=$GNU_DOWNLOAD_SITE/automake/automake-$AUTOMAKE_VER.tar.xz;
+      wget -O - $AUTOMAKE_XZ_URL | tar xf - --xz --directory ~;
+      (cd ~/automake-$AUTOMAKE_VER && ./configure --prefix=$GNUTOOLS_ROOT
+        && make -j && make install);
+    fi
+  - if [[ "$MAKEFILE_TARGETS" == *"dist"* ]]; then
+      autoconf --version;
+      automake --version;
+      m4 --version;
+      libtool --version || true;
+    fi
+  - if [[ "$MAKEFILE_TARGETS" == "" ]]; then
+      MAKEFILE_TARGETS="check";
+    fi
 
 install:
-- if [[ "$NO_CLONE_LIBATOMIC_OPS" != true ]]; then
-    git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git;
-  fi
-- ./autogen.sh
-- if [[ "$GNUTOOLS_ROOT" != "" ]]; then mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x; fi
+  - if [[ "$NO_CLONE_LIBATOMIC_OPS" != true ]]; then
+      git clone --depth=1 https://github.com/bdwgc/libatomic_ops.git;
+    fi
+  - ./autogen.sh
+  - if [[ "$GNUTOOLS_ROOT" != "" ]]; then
+      mv $GNUTOOLS_ROOT $GNUTOOLS_ROOT-x;
+    fi
 
 script:
-- if [[ "$COVERITY_SCAN_BRANCH" != 1 ]]; then
-    ./configure $CONF_OPTIONS --enable-werror &&
-    cat include/config.h;
-  fi
-- if [[ "$COVERITY_SCAN_BRANCH" != 1 ]]; then
-    make -j$MAKE_NPROC $MAKEFILE_TARGETS CFLAGS_EXTRA="$CFLAGS_EXTRA";
-  fi
-- if [[ "$CC_FOR_CHECK" != "" ]]; then
-    make $MAKEFILE_TARGETS_CHECK CC=$CC_FOR_CHECK CFLAGS_EXTRA="$CFLAGS_EXTRA";
-  fi
-- if [ -f cordtest.log ]; then cat cordtest.log; fi
-- if [ -f disclaim_bench.log ]; then cat disclaim_bench.log; fi
-- if [ -f disclaimtest.log ]; then cat disclaimtest.log; fi
-- if [ -f gctest.log ]; then cat gctest.log; fi
-- if [ -f threadkeytest.log ]; then cat threadkeytest.log; fi
-- if [ -f threadleaktest.log ]; then cat threadleaktest.log; fi
-- if [ -f weakmaptest.log ]; then cat weakmaptest.log; fi
-- if [[ "$TESTS_CUSTOM_RUN" == true ]]; then
-    ASAN_OPTIONS="detect_leaks=1" UBSAN_OPTIONS="halt_on_error=1"
+  - if [[ "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+      ./configure $CONF_OPTIONS --enable-werror
+      && cat include/config.h;
+    fi
+  - if [[ "$COVERITY_SCAN_BRANCH" != 1 ]]; then
+      make -j$MAKE_NPROC $MAKEFILE_TARGETS CFLAGS_EXTRA="$CFLAGS_EXTRA";
+    fi
+  - if [[ "$CC_FOR_CHECK" != "" ]]; then
+      make $MAKEFILE_TARGETS_CHECK CC=$CC_FOR_CHECK
+        CFLAGS_EXTRA="$CFLAGS_EXTRA";
+    fi
+  - if [ -f cordtest.log ]; then cat cordtest.log; fi
+  - if [ -f disclaim_bench.log ]; then cat disclaim_bench.log; fi
+  - if [ -f disclaimtest.log ]; then cat disclaimtest.log; fi
+  - if [ -f gctest.log ]; then cat gctest.log; fi
+  - if [ -f threadkeytest.log ]; then cat threadkeytest.log; fi
+  - if [ -f threadleaktest.log ]; then cat threadleaktest.log; fi
+  - if [ -f weakmaptest.log ]; then cat weakmaptest.log; fi
+  - if [[ "$TESTS_CUSTOM_RUN" == true ]]; then
+      ASAN_OPTIONS="detect_leaks=1" UBSAN_OPTIONS="halt_on_error=1"
         make check-without-test-driver;
-  fi
-- if [[ "$GCTEST_WITH_MPROTECT_VDB" == true ]]; then
-    GC_USE_GETWRITEWATCH=0 ./gctest;
-  fi
+    fi
+  - if [[ "$GCTEST_WITH_MPROTECT_VDB" == true ]]; then
+      GC_USE_GETWRITEWATCH=0 ./gctest;
+    fi
 
 after_success:
-- if [[ "$REPORT_COVERAGE" == true ]]; then
-    lcov --capture --base-directory . --directory . --output-file coverage.info &&
-    lcov --remove coverage.info '/usr/*' 'cord/tests/*' 'tests/*' --output-file coverage.info &&
-    lcov --list coverage.info;
-    coveralls report coverage.info -r ${COVERALLS_REPO_TOKEN};
-    bash <(curl -s https://codecov.io/bash) -f coverage.info -t ${CODECOV_TOKEN};
-  fi
+  - if [[ "$REPORT_COVERAGE" == true ]]; then
+      lcov --capture --base-directory . --directory .
+        --output-file coverage.info
+      && lcov --remove coverage.info '/usr/*' 'cord/tests/*' 'tests/*'
+        --output-file coverage.info
+      && lcov --list coverage.info;
+      coveralls report coverage.info -r ${COVERALLS_REPO_TOKEN};
+      bash <(curl -s https://codecov.io/bash) -f coverage.info
+        -t ${CODECOV_TOKEN};
+    fi
 
 before_deploy:
-- yes | gem update --system --force
-- gem install bundler
-- gem install uri
-- gem install logger
+  - yes | gem update --system --force
+  - gem install bundler
+  - gem install uri
+  - gem install logger
 
 deploy:
   provider: releases
   edge: true
   file: gc-*.tar.gz
   file_glob: true
-  on:
+  "on":
     condition: $MAKEFILE_TARGETS = distcheck
     repo: bdwgc/bdwgc
     tags: true

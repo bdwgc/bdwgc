@@ -1,7 +1,8 @@
+---
 # This workflow is to do spell-checking of the source code and documents.
 name: spell check
 
-on: [ push, pull_request ]
+"on": [push, pull_request]
 
 jobs:
   check:
@@ -9,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-    - name: Run cspell
-      uses: streetsidesoftware/cspell-action@v8
-      with:
-        files: |
-          LICENSE
-          **/*.{c,cc,cpp,h,man,md}
-        # Note: file `.cspell.json` contains the list of words (mostly names)
-        # to be ignored; the list is ordered alphabetically ignoring case.
-        incremental_files_only: false
-        verbose: true
+      - name: Run cspell
+        uses: streetsidesoftware/cspell-action@v8
+        with:
+          files: |
+            LICENSE
+            **/*.{c,cc,cpp,h,man,md}
+          # Note: file `.cspell.json` contains the list of words (mostly names)
+          # to be ignored; the list is ordered alphabetically ignoring case.
+          incremental_files_only: false
+          verbose: true

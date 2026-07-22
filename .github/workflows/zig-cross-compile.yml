@@ -1,122 +1,125 @@
+---
 # This workflow uses Zig and its excellent cross-compilation support to test
 # compiling for multiple Linux-based platforms; no runtime tests are executed.
 name: zig cross-compile
 
-on: [ push, pull_request ]
+"on": [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.enable_threads }}
+    name: >-
+      ${{ matrix.ttriple }} ${{ matrix.linkage }}
+      thr:${{ matrix.enable_threads }}
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        zig_version: [ "0.16.0" ]
-        ttriple: [
-          aarch64-linux-gnu,
-          aarch64-linux-musl,
-          aarch64_be-linux-gnu,
-          aarch64_be-linux-musl,
-          arc-linux-gnu,
-          arm-linux-gnueabi,
-          arm-linux-gnueabihf,
-          arm-linux-musleabi,
-          arm-linux-musleabihf,
-          armeb-linux-gnueabi,
-          armeb-linux-gnueabihf,
-          armeb-linux-musleabi,
-          armeb-linux-musleabihf,
-          hexagon-linux-musl,
-          loongarch64-linux-gnu,
-          loongarch64-linux-gnusf,
-          loongarch64-linux-musl,
-          loongarch64-linux-muslf32,
-          loongarch64-linux-muslsf,
-          m68k-linux-gnu,
-          m68k-linux-musl,
-          mips-linux-gnueabi,
-          mips-linux-gnueabihf,
-          mips-linux-musleabi,
-          mips-linux-musleabihf,
-          mips64-linux-gnuabi64,
-          mips64-linux-gnuabin32,
-          mips64-linux-muslabi64,
-          mips64-linux-muslabin32,
-          mips64el-linux-gnuabi64,
-          mips64el-linux-gnuabin32,
-          mips64el-linux-muslabi64,
-          mips64el-linux-muslabin32,
-          mipsel-linux-gnueabi,
-          mipsel-linux-gnueabihf,
-          mipsel-linux-musleabi,
-          mipsel-linux-musleabihf,
-          powerpc-linux-gnueabi,
-          powerpc-linux-gnueabihf,
-          powerpc-linux-musleabi,
-          powerpc-linux-musleabihf,
-          powerpc64-linux-gnu,
-          powerpc64-linux-musl,
-          powerpc64le-linux-gnu,
-          powerpc64le-linux-musl,
-          riscv32-linux-gnu,
-          riscv32-linux-musl,
-          riscv64-linux-gnu,
-          riscv64-linux-musl,
-          s390x-linux-gnu,
-          s390x-linux-musl,
-          sparc-linux-gnu,
-          sparc64-linux-gnu,
-          thumb-linux-musleabi,
-          thumb-linux-musleabihf,
-          thumbeb-linux-musleabi,
-          thumbeb-linux-musleabihf,
-          x86-linux-gnu,
-          x86-linux-musl,
-          x86_64-linux-gnu.2.27, # test with a glibc version
-          x86_64-linux-gnux32,
-          x86_64-linux-musl,
-          x86_64-linux-muslx32,
-        ]
-        enable_cplusplus: [ true ]
-        enable_threads: [ false, true ]
-        linkage: [ static, dynamic ]
+        zig_version: ["0.16.0"]
+        ttriple:
+          - aarch64-linux-gnu
+          - aarch64-linux-musl
+          - aarch64_be-linux-gnu
+          - aarch64_be-linux-musl
+          - arc-linux-gnu
+          - arm-linux-gnueabi
+          - arm-linux-gnueabihf
+          - arm-linux-musleabi
+          - arm-linux-musleabihf
+          - armeb-linux-gnueabi
+          - armeb-linux-gnueabihf
+          - armeb-linux-musleabi
+          - armeb-linux-musleabihf
+          - hexagon-linux-musl
+          - loongarch64-linux-gnu
+          - loongarch64-linux-gnusf
+          - loongarch64-linux-musl
+          - loongarch64-linux-muslf32
+          - loongarch64-linux-muslsf
+          - m68k-linux-gnu
+          - m68k-linux-musl
+          - mips-linux-gnueabi
+          - mips-linux-gnueabihf
+          - mips-linux-musleabi
+          - mips-linux-musleabihf
+          - mips64-linux-gnuabi64
+          - mips64-linux-gnuabin32
+          - mips64-linux-muslabi64
+          - mips64-linux-muslabin32
+          - mips64el-linux-gnuabi64
+          - mips64el-linux-gnuabin32
+          - mips64el-linux-muslabi64
+          - mips64el-linux-muslabin32
+          - mipsel-linux-gnueabi
+          - mipsel-linux-gnueabihf
+          - mipsel-linux-musleabi
+          - mipsel-linux-musleabihf
+          - powerpc-linux-gnueabi
+          - powerpc-linux-gnueabihf
+          - powerpc-linux-musleabi
+          - powerpc-linux-musleabihf
+          - powerpc64-linux-gnu
+          - powerpc64-linux-musl
+          - powerpc64le-linux-gnu
+          - powerpc64le-linux-musl
+          - riscv32-linux-gnu
+          - riscv32-linux-musl
+          - riscv64-linux-gnu
+          - riscv64-linux-musl
+          - s390x-linux-gnu
+          - s390x-linux-musl
+          - sparc-linux-gnu
+          - sparc64-linux-gnu
+          - thumb-linux-musleabi
+          - thumb-linux-musleabihf
+          - thumbeb-linux-musleabi
+          - thumbeb-linux-musleabihf
+          - x86-linux-gnu
+          - x86-linux-musl
+          # test with a glibc version
+          - x86_64-linux-gnu.2.27
+          - x86_64-linux-gnux32
+          - x86_64-linux-musl
+          - x86_64-linux-muslx32
+        enable_cplusplus: [true]
+        enable_threads: [false, true]
+        linkage: [static, dynamic]
         exclude:
-        # FIXME: SPARCv8 does not handle f128 in calls
-        - linkage: dynamic
-          ttriple: sparc-linux-gnu
-        # FIXME: recompile with -fPIC
-        - linkage: dynamic
-          ttriple: sparc64-linux-gnu
-        - linkage: dynamic
-          ttriple: x86_64-linux-gnux32
-        - linkage: dynamic
-          ttriple: x86_64-linux-muslx32
-        # FIXME: ignoring -fno-PIC option
-        - linkage: static
-          ttriple: mips64-linux-muslabi64
-        - linkage: static
-          ttriple: mips64el-linux-muslabi64
-        # FIXME: __linux__ macro is not predefined
-        - ttriple: arc-linux-gnu
-        # FIXME: LLVM error in memmoveFast
-        - ttriple: loongarch64-linux-gnusf
-        # FIXME: No available targets compatible with triple
-        - ttriple: m68k-linux-gnu
-        - ttriple: m68k-linux-musl
+          # FIXME: SPARCv8 does not handle f128 in calls
+          - linkage: dynamic
+            ttriple: sparc-linux-gnu
+          # FIXME: recompile with -fPIC
+          - linkage: dynamic
+            ttriple: sparc64-linux-gnu
+          - linkage: dynamic
+            ttriple: x86_64-linux-gnux32
+          - linkage: dynamic
+            ttriple: x86_64-linux-muslx32
+          # FIXME: ignoring -fno-PIC option
+          - linkage: static
+            ttriple: mips64-linux-muslabi64
+          - linkage: static
+            ttriple: mips64el-linux-muslabi64
+          # FIXME: __linux__ macro is not predefined
+          - ttriple: arc-linux-gnu
+          # FIXME: LLVM error in memmoveFast
+          - ttriple: loongarch64-linux-gnusf
+          # FIXME: No available targets compatible with triple
+          - ttriple: m68k-linux-gnu
+          - ttriple: m68k-linux-musl
 
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-    - uses: mlugg/setup-zig@v2
-      with:
-        version: ${{ matrix.zig_version }}
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ matrix.zig_version }}
 
-    - name: Build
-      run: >
-        zig build
-        -Dtarget=${{ matrix.ttriple }}
-        -Dlinkage=${{ matrix.linkage }}
-        -Denable_cplusplus=${{ matrix.enable_cplusplus }}
-        -Denable_threads=${{ matrix.enable_threads }}
-        -Denable_werror
+      - name: Build
+        run: >
+          zig build
+          -Dtarget=${{ matrix.ttriple }}
+          -Dlinkage=${{ matrix.linkage }}
+          -Denable_cplusplus=${{ matrix.enable_cplusplus }}
+          -Denable_threads=${{ matrix.enable_threads }}
+          -Denable_werror
