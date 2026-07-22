@@ -3,7 +3,6 @@
 This is version 8.2.12 of a conservative garbage
 collector for C and C++.
 
-
 ## Download
 
 You might find a more recent/stable version on the
@@ -13,35 +12,34 @@ You might find a more recent/stable version on the
 Also, the latest bug fixes and new features are available in the
 [development repository](https://github.com/bdwgc/bdwgc).
 
-
 ## Overview
 
 This is intended to be a general purpose, garbage collecting storage
 allocator.  The algorithms used are described in:
 
- * Boehm, H., and M. Weiser, "Garbage Collection in an Uncooperative
+* Boehm, H., and M. Weiser, "Garbage Collection in an Uncooperative
    Environment", Software Practice & Experience, September 1988, pp. 807-820.
 
- * Boehm, H., A. Demers, and S. Shenker, "Mostly Parallel Garbage Collection",
+* Boehm, H., A. Demers, and S. Shenker, "Mostly Parallel Garbage Collection",
    Proceedings of the ACM SIGPLAN '91 Conference on Programming Language Design
    and Implementation, SIGPLAN Notices 26, 6 (June 1991), pp. 157-164.
 
- * Boehm, H., "Space Efficient Conservative Garbage Collection", Proceedings
+* Boehm, H., "Space Efficient Conservative Garbage Collection", Proceedings
    of the ACM SIGPLAN '91 Conference on Programming Language Design and
    Implementation, SIGPLAN Notices 28, 6 (June 1993), pp. 197-206.
 
- * Boehm H., "Reducing Garbage Collector Cache Misses", Proceedings of the
+* Boehm H., "Reducing Garbage Collector Cache Misses", Proceedings of the
    2000 International Symposium on Memory Management.
 
 Possible interactions between the collector and optimizing compilers are
 discussed in
 
- * Boehm, H., and D. Chase, "A Proposal for GC-safe C Compilation",
+* Boehm, H., and D. Chase, "A Proposal for GC-safe C Compilation",
    The Journal of C Language Translation 4, 2 (December 1992).
 
 and
 
- * Boehm H., "Simple GC-safe Compilation", Proceedings of the ACM SIGPLAN '96
+* Boehm H., "Simple GC-safe Compilation", Proceedings of the ACM SIGPLAN '96
    Conference on Programming Language Design and Implementation.
 
 Unlike the collector described in the second reference, this collector
@@ -70,7 +68,6 @@ in Xerox Cedar, or the "rope" package in the SGI STL or the g++ distribution.)
 
 Further collector documentation can be found in the
 [overview](doc/overview.md).
-
 
 ## General Description
 
@@ -154,7 +151,6 @@ does scan thread stacks, though, so generally the best solution is to
 ensure that any pointers stored in thread-local storage are also
 stored on the thread's stack for the duration of their lifetime.
 (This is arguably a longstanding bug, but it hasn't been fixed yet.)
-
 
 ## Installation and Portability
 
@@ -246,7 +242,6 @@ or win16 is hard.
 
 For machines not already mentioned, or for nonstandard compilers,
 some porting suggestions are provided [here](doc/porting.md).
-
 
 ## The C Interface to the Allocator
 
@@ -353,7 +348,6 @@ accessing garbage collector routines.
 There are provisions for allocation with explicit type information.
 This is rarely necessary.  Details can be found in gc_typed.h.
 
-
 ## The C++ Interface to the Allocator
 
 The Ellis-Hull C++ interface to the collector is included in the collector
@@ -367,7 +361,6 @@ Very often it will also be necessary to use gc_allocator.h and the
 allocator declared there to construct STL data structures.  Otherwise
 subobjects of STL data structures will be allocated using a system
 allocator, and objects they refer to may be prematurely collected.
-
 
 ## Use as Leak Detector
 
@@ -393,7 +386,6 @@ sometimes be slightly LESS effective in leak finding mode, since in the latter
 `GC_debug_free` actually results in reuse of the object.  (Otherwise the
 object is simply marked invalid.)  Also, note that most GC tests are not
 designed to run meaningfully in `FIND_LEAK` mode.
-
 
 ## Debugging Facilities
 
@@ -444,7 +436,6 @@ of 16 bytes from the object beginning, and some translation is necessary
 when finalization routines are invoked.  For details, about what's stored
 in the header, see the definition of the type oh in dbg_mlc.c file.)
 
-
 ## Incremental/Generational Collection
 
 The collector normally interrupts client code for the duration of
@@ -478,7 +469,6 @@ of information:
   `GC_reachable_here` call are likely to be observed very infrequently and
   hard to trace.
 
-
 ## Bugs
 
 Any memory that does not have a recognizable pointer to it will be
@@ -499,7 +489,6 @@ is enabled.
 per MB of accessible memory that needs to be scanned and processed.
 Your mileage may vary.)  The incremental/generational collection facility
 may help in some cases.
-
 
 ## Feedback, Contribution, Questions and Notifications
 
@@ -525,38 +514,37 @@ To be notified on all issues, please
 [watch](https://github.com/bdwgc/bdwgc/watchers) the project on
 GitHub.
 
-
 ## Copyright & Warranty
 
- * Copyright (c) 1988, 1989 Hans-J. Boehm, Alan J. Demers
- * Copyright (c) 1991-1996 by Xerox Corporation.  All rights reserved.
- * Copyright (c) 1996-1999 by Silicon Graphics.  All rights reserved.
- * Copyright (c) 1999-2011 by Hewlett-Packard Development Company.
- * Copyright (c) 2008-2025 Ivan Maidanski
+* Copyright (c) 1988, 1989 Hans-J. Boehm, Alan J. Demers
+* Copyright (c) 1991-1996 by Xerox Corporation.  All rights reserved.
+* Copyright (c) 1996-1999 by Silicon Graphics.  All rights reserved.
+* Copyright (c) 1999-2011 by Hewlett-Packard Development Company.
+* Copyright (c) 2008-2025 Ivan Maidanski
 
 The files pthread_stop_world.c, pthread_support.c and some others are also
 
- * Copyright (c) 1998 by Fergus Henderson.  All rights reserved.
+* Copyright (c) 1998 by Fergus Henderson.  All rights reserved.
 
 The file include/gc.h is also
 
- * Copyright (c) 2007 Free Software Foundation, Inc
+* Copyright (c) 2007 Free Software Foundation, Inc
 
 The files Makefile.am and configure.ac are
 
- * Copyright (c) 2001 by Red Hat Inc. All rights reserved.
+* Copyright (c) 2001 by Red Hat Inc. All rights reserved.
 
 The files extra/msvc_dbg.c and include/private/msvc_dbg.h are
 
- * Copyright (c) 2004-2005 Andrei Polushin
+* Copyright (c) 2004-2005 Andrei Polushin
 
 The file tests/initsecondarythread.c is
 
- * Copyright (c) 2011 Ludovic Courtes
+* Copyright (c) 2011 Ludovic Courtes
 
 The file tests/disclaim_weakmap_test.c is
 
- * Copyright (c) 2018 Petter A. Urkedal
+* Copyright (c) 2018 Petter A. Urkedal
 
 Several files supporting GNU-style builds are copyrighted by the Free
 Software Foundation, and carry a different license from that given

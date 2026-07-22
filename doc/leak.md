@@ -75,10 +75,8 @@ of the distribution.
 
 On a Linux/x86 system this produces on the stderr stream:
 
-
     Found 1 leaked objects:
     0x806dff0 (tests/leak_test.c:19, sz=4, NORMAL)
-
 
 (On most unmentioned operating systems, the output is similar to this. If the
 collector had been built on Linux/x86 with `-DSAVE_CALL_CHAIN`, the output
@@ -87,15 +85,12 @@ not be compiled with `-fomit_frame_pointer`.)
 
 On Irix it reports:
 
-
     Found 1 leaked objects:
     0x10040fe0 (tests/leak_test.c:19, sz=4, NORMAL)
             Caller at allocation:
                     ##PC##= 0x10004910
 
-
 and on Solaris the error report is:
-
 
     Found 1 leaked objects:
     0xef621fc8 (tests/leak_test.c:19, sz=4, NORMAL)
@@ -104,7 +99,6 @@ and on Solaris the error report is:
                     ##PC##= 0x14ADC
                     args: 1 (0x1), -268436012 (0xEFFFFDD4)
                     ##PC##= 0x14A64
-
 
 In the latter two cases some additional information is given about how malloc
 was called when the leaked object was allocated. For Solaris, the first line
@@ -137,18 +131,18 @@ a program a.out under Linux/x86 as follows:
   be safe to omit the `--disable-threads` option on Linux, but the combination
   of thread support and `malloc` replacement is not yet rock solid):
 
-   - `./configure --prefix=_foo_ --enable-gc-debug --enable-redirect-malloc --disable-threads`
-   - `make`
-   - `make install`
+    - `./configure --prefix=_foo_ --enable-gc-debug --enable-redirect-malloc --disable-threads`
+    - `make`
+    - `make install`
 
   5. Set environment variables as follows (the last two are optional, just to
   confirm the collector is running, and to facilitate debugging from another
   console window if something goes wrong, respectively):
 
-   - `LD_PRELOAD=_foo_/lib/libgc.so`
-   - `GC_FIND_LEAK`
-   - `GC_PRINT_STATS`
-   - `GC_LOOP_ON_ABORT`
+    - `LD_PRELOAD=_foo_/lib/libgc.so`
+    - `GC_FIND_LEAK`
+    - `GC_PRINT_STATS`
+    - `GC_LOOP_ON_ABORT`
 
   6. Simply run `a.out` as you normally would. Note that if you run anything
   else (e.g. your editor) with those environment variables set, it will also
