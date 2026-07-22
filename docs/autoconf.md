@@ -49,15 +49,15 @@ always equivalent to the generated one.
 
 Some of important options to configure:
 
-  * `--prefix=PREFIX`: install architecture-independent files in `PREFIX`
+* `--prefix=PREFIX`: install architecture-independent files in `PREFIX`
     (`/usr/local` path by default on UNIX-like platforms).
 
-  * `--exec-prefix=EPREFIX`: install architecture-dependent files in `EPREFIX`
+* `--exec-prefix=EPREFIX`: install architecture-dependent files in `EPREFIX`
     (same as `prefix` by default).
 
-  * `--enable-threads=TYPE`: choose multi-threading package.
+* `--enable-threads=TYPE`: choose multi-threading package.
 
-  * `--enable-gc-debug`: include full support for pointer back-tracing, etc.
+* `--enable-gc-debug`: include full support for pointer back-tracing, etc.
 
 On UNIX-like platforms, unless `--prefix` is set (or `--exec-prefix`, or one
 of the more obscure options), `make install` will install `libgc.a` and

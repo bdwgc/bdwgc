@@ -6,20 +6,19 @@ makefiles.
 
 CMake (as of v3.14.5) is able to generate:
 
-  * Borland Makefiles
-  * MSYS Makefiles
-  * MinGW Makefiles
-  * NMake Makefiles
-  * Unix Makefiles
-  * Visual Studio 16 2019
-  * Visual Studio 15 2017
-  * Visual Studio 14 2015
-  * Visual Studio 12 2013
-  * Visual Studio 11 2012
-  * Visual Studio 10 2010
-  * Visual Studio 9 2008
-  * Watcom WMake
-
+* Borland Makefiles
+* MSYS Makefiles
+* MinGW Makefiles
+* NMake Makefiles
+* Unix Makefiles
+* Visual Studio 16 2019
+* Visual Studio 15 2017
+* Visual Studio 14 2015
+* Visual Studio 12 2013
+* Visual Studio 11 2012
+* Visual Studio 10 2010
+* Visual Studio 9 2008
+* Watcom WMake
 
 ## Build process
 
@@ -36,10 +35,10 @@ The steps are:
 
 Notes:
 
-  * Specify `-D enable_cplusplus=ON` option to build `gccpp` and `gctba`
+* Specify `-D enable_cplusplus=ON` option to build `gccpp` and `gctba`
     libraries (i.e. the ones that provide bdwgc C++ support);
 
-  * Specify `-D BUILD_TESTING=OFF` option to skip compilation of the tests.
+* Specify `-D BUILD_TESTING=OFF` option to skip compilation of the tests.
 
 You can also run cmake from a build directory to build outside of the root of
 the source tree - just specify the path to the latter, e.g.:
@@ -63,12 +62,10 @@ ctest
 make install
 ```
 
-
 ## Input
 
 The main input to cmake is `CMakeLists.txt` file (script) in the bdwgc root
 directory.  For help, go to [cmake.org](https://cmake.org/).
-
 
 ## How to import bdwgc
 

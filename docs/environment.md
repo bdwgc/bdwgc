@@ -112,7 +112,6 @@ with `MPROTECT_VDB` macro is defined, and either `GWW_VDB` or `SOFT_VDB`, or
 `GC_DISABLE_INCREMENTAL` - Ignores runtime requests to enable the incremental
 garbage collection mode.  Useful for debugging.
 
-
 ## Ones for program-settable runtime flags
 
 The following ones turn on runtime flags that are also program settable.

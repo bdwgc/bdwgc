@@ -5,7 +5,6 @@ deal with platform dependencies.  This violates a number of known coding
 standards.  On the other hand, it seems to be the only practical way to
 support this many platforms without excessive code duplication.
 
-
 ## Basic guidelines
 
 A few guidelines have mostly been followed in order to keep this manageable:
@@ -28,7 +27,6 @@ A few guidelines have mostly been followed in order to keep this manageable:
 Many of the tested configuration macros are at least somewhat defined in
 either `include/config.h.in` or in `Makefile.direct`.  Below is an attempt at
 documenting these macros.
-
 
 ## Macros tested during client build
 
@@ -119,7 +117,6 @@ redefining thread primitives to invoke the `GC_` wrappers instead.
 threads.  If not defined or defined to zero, then the collector decides based
 on the number of total CPU cores.  Has no effect unless the collector is built
 with `PARALLEL_MARK` macro defined.
-
 
 ## Macros tested at collector build
 

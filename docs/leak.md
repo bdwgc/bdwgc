@@ -80,7 +80,6 @@ of the distribution.
 
 On Linux/x86_64 the output to the stderr stream would be like:
 
-
     Found 1 leaked objects:
     0x7f5229ccbe70 (tests/leak.c:50, sz= 6, NORMAL)
             Call chain at allocation:
@@ -89,9 +88,7 @@ On Linux/x86_64 the output to the stderr stream would be like:
                     /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xea) [0x7f5229d1fd0a]
                     bdwgc/.libs/leaktest(+0x135a) [0x55bcdfc5a35a]
 
-
 On Solaris/SPARC host the output would be like:
-
 
     Found 1 leaked objects:
     0xef621fc8 (tests/leak.c:50, sz= 6, NORMAL)
@@ -101,23 +98,18 @@ On Solaris/SPARC host the output would be like:
                     args: 1 (0x1), -268436012 (0xEFFFFDD4)
                     ##PC##= 0x14A64
 
-
 On some operating systems the output would contain only information about the
 immediate caller:
-
 
     Found 1 leaked objects:
     0x10040fe0 (tests/leak.c:50, sz= 6, NORMAL)
             Caller at allocation:
                     ##PC##= 0x10004910
 
-
 On most other operating systems the output would look like:
-
 
     Found 1 leaked objects:
     0x806dff0 (tests/leak.c:50, sz= 6, NORMAL)
-
 
 In the first 3 cases some information is given about how malloc was called
 when the leaked object was allocated. For Solaris, the first line specifies

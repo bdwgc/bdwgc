@@ -155,9 +155,9 @@ by the collector.
 It is the programmers responsibility to ensure that garbage-collectible memory
 is referenced by pointers stored in one of
 
-  * Program variables
-  * Garbage-collected objects
-  * Uncollected but _traceable_ objects
+* Program variables
+* Garbage-collected objects
+* Uncollected but _traceable_ objects
 
 Traceable objects are not necessarily reclaimed by the collector, but are
 scanned for pointers to collectible objects. They are usually allocated
