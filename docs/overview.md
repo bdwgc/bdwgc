@@ -3,13 +3,13 @@
 
 # A garbage collector for C and C++
 
-  * Platforms
-  * Some collector details
-  * Further reading
-  * Information provided on the BDWGC site
-  * Documentation files
-  * More background information
-  * Contacts and new release announcements
+* Platforms
+* Some collector details
+* Further reading
+* Information provided on the BDWGC site
+* Documentation files
+* More background information
+* Contacts and new release announcements
 
 [ This is an updated version of the page formerly at
 `www.hpl.hp.com/personal/Hans_Boehm/gc/`, before that at
@@ -322,9 +322,9 @@ To receive notifications on every release, please subscribe to
 Notifications on all issues and pull requests are available
 by [watching](https://github.com/bdwgc/bdwgc/watchers) the project.
 
-Mailing lists (bdwgc-announce@lists.opendylan.org, bdwgc@lists.opendylan.org,
-and the former gc-announce@linux.hpl.hp.com and gc@linux.hpl.hp.com) are not
-used at this moment. Their content is available
+Mailing lists (<bdwgc-announce@lists.opendylan.org>,
+<bdwgc@lists.opendylan.org>, and the former <gc-announce@linux.hpl.hp.com> and
+<gc@linux.hpl.hp.com>) are not used at this moment. Their content is available
 in
 [bdwgc-announce](https://github.com/bdwgc/bdwgc/files/1037650/bdwgc-announce-mailing-list-archive-2014_02.tar.gz)
 and
@@ -334,4 +334,4 @@ at [Narkive](http://bdwgc.opendylan.narkive.com).
 
 Some prior discussion of the collector has taken place on the GCC Java mailing
 list, whose archives appear [here](http://gcc.gnu.org/ml/java/), and also
-on [gclist@iecc.com](http://lists.tunes.org/mailman/listinfo/gclist).
+on [<gclist@iecc.com>](http://lists.tunes.org/mailman/listinfo/gclist).

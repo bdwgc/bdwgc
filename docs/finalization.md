@@ -18,19 +18,19 @@ memory-managed libraries may be an exception.)
 
 In general the following guidelines should be followed:
 
-  * Actions that must be executed promptly do not belong in finalizers. They
+* Actions that must be executed promptly do not belong in finalizers. They
   should be handled by explicit calls in the code (or C++ destructors if you
   prefer). If you expect the action to occur at a specific point, this
   is probably not hard.
-  * Finalizers are intended for resource reclamation.
-  * Scarce system resources should be managed explicitly whenever convenient.
+* Finalizers are intended for resource reclamation.
+* Scarce system resources should be managed explicitly whenever convenient.
   Use finalizers only as a backup mechanism for the cases that would be hard
   to handle explicitly.
-  * If scarce resources are managed with finalization, the allocation routine
+* If scarce resources are managed with finalization, the allocation routine
   for that resource (e.g. open for file handles) should force a garbage
   collection (two if that does not suffice) if it finds itself short of the
   resource.
-  * If extremely scarce resources are managed by finalization (e.g. file
+* If extremely scarce resources are managed by finalization (e.g. file
   descriptors on systems which have a limit of 20 open files), it may
   be necessary to introduce a descriptor caching scheme to hide the resource
   limit. (E.g., the program would keep real file descriptors for the 20 most
@@ -39,7 +39,7 @@ In general the following guidelines should be followed:
   Finalization would logically close the file, closing the real descriptor
   only if it happened to be cached.) Note that most modern systems allow
   thousands of open files, and this is typically not an issue.
-  * Finalization code may be run anyplace an allocation or other call to the
+* Finalization code may be run anyplace an allocation or other call to the
   collector takes place. In multi-threaded programs, finalizers have to obey
   the normal locking conventions to ensure safety. Code run directly from
   finalizers should not acquire locks that may be held during allocation.

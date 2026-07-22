@@ -32,7 +32,7 @@ The collector uses two facilities to enhance collector scalability on
 multiprocessors. They are intended to be used together. (The following refers
 to `Makefile.direct` file again.)
 
-  * Building the collector with `-D PARALLEL_MARK` allows the collector to run
+* Building the collector with `-D PARALLEL_MARK` allows the collector to run
   the mark phase in parallel in multiple threads, and thus on multiple
   processors (or processor cores). The mark phase typically consumes the large
   majority of the collection time. Thus, this largely parallelizes the garbage
@@ -45,7 +45,7 @@ to `Makefile.direct` file again.)
   a child process). Another effect of this flag is to switch to a more
   concurrent implementation of `GC_malloc_many`, so that free lists can be
   built and memory can be cleared by more than one thread concurrently.
-  * Building the collector with `-D THREAD_LOCAL_ALLOC` adds support for
+* Building the collector with `-D THREAD_LOCAL_ALLOC` adds support for
   thread-local allocation. This causes `GC_malloc` (actually `GC_malloc_kind`)
   and `GC_gcj_malloc` to be redefined to perform thread-local allocation.
 

@@ -66,31 +66,31 @@ The `include/private/gcconfig.h` file consists of three sections:
 The following macros must be defined correctly for each architecture and
 operating system:
 
-  * `MACH_TYPE` - Defined to a string that represents the machine
+* `MACH_TYPE` - Defined to a string that represents the machine
     architecture. This is just the macro name used to identify the
     architecture, but enclosed in quotes.
 
-  * `OS_TYPE` - Defined to a string that represents the operating system name.
+* `OS_TYPE` - Defined to a string that represents the operating system name.
     This is just the macro name used to identify the operating system, but
     enclosed in quotes.
 
-  * `CPP_WORDSZ` - The address (also referred simply as "word") size in bits
+* `CPP_WORDSZ` - The address (also referred simply as "word") size in bits
     as a constant suitable for preprocessor tests, i.e. without casts or
     `sizeof` expressions. For platforms supporting both 32- and 64-bit ABIs,
     this should be conditionally defined depending on the current ABI.
 
-  * `CPP_PTRSZ` - Similar to `CPP_WORDSZ` but for the size of a pointer (also
+* `CPP_PTRSZ` - Similar to `CPP_WORDSZ` but for the size of a pointer (also
     referred as "pointer-sized word") in bits. On most platforms, its value
     is equal to that of `CPP_WORDSZ`.
 
-  * `ALIGNMENT` - Defined to be the largest `n` such that all pointers
+* `ALIGNMENT` - Defined to be the largest `n` such that all pointers
     are guaranteed to be aligned on `n`-byte boundaries. Defining it to be
     1 will always work, but perform poorly. For all modern 32-bit platforms,
     this is 4. For all modern 64-bit platforms, this is 8. (Whether or not
     x86 qualifies as a modern architecture here is compiler- and
     OS-dependent.)
 
-  * `DATASTART` - The beginning of the main data segment. The collector will
+* `DATASTART` - The beginning of the main data segment. The collector will
     trace all memory between `DATASTART` and `DATAEND` for root pointers.
     On some platforms, this can be defined to a constant address, though
     experience has shown that to be risky. Ideally the linker will define
@@ -101,28 +101,28 @@ operating system:
     loading support defines `GC_register_main_static_data()` which returns
     false.
 
-  * `SEARCH_FOR_DATA_START` - If this is defined `DATASTART` will be defined
+* `SEARCH_FOR_DATA_START` - If this is defined `DATASTART` will be defined
     to a dynamically computed value which is obtained by starting with the
     address of `_end` and walking backwards until non-addressable memory
     is found. This often works on POSIX-like platforms. It makes it harder
     to debug client programs, since startup involves generating and catching
     a segmentation fault, which tends to confuse users.
 
-  * `DATAEND` - Set to the end of the main data segment. Defaults to `_end`,
+* `DATAEND` - Set to the end of the main data segment. Defaults to `_end`,
     where that is declared as an array. This works in some cases, since the
     linker introduces a suitable symbol.
 
-  * `DATASTART2`, `DATAEND2` - Some platforms have two discontiguous main data
+* `DATASTART2`, `DATAEND2` - Some platforms have two discontiguous main data
     segments, e.g. for initialized and uninitialized data. If so, these two
     macros should be defined to the limits of the second main data segment.
 
-  * `STACK_GROWS_UP` - Should be defined if the stack (or thread stacks) grow
+* `STACK_GROWS_UP` - Should be defined if the stack (or thread stacks) grow
     towards higher addresses. (This appears to be true only on PA-RISC.
     If your architecture has more than one stack per thread, and is not
     supported yet, you will need to do more work. Grep for `E2K` and `IA64`
     in the source code for examples.)
 
-  * `STACKBOTTOM` - Defined to be the cold end of the stack, which is usually
+* `STACKBOTTOM` - Defined to be the cold end of the stack, which is usually
     (i.e. when the stacks grow down) the highest address in the stack.
     It must bound the region of the stack that contains pointers into the
     collector heap. With multi-threading support, this must be the cold end
@@ -132,30 +132,30 @@ operating system:
     is defined, client code must explicitly set `GC_stackbottom` to
     an appropriate value before calling `GC_INIT` or any other `GC_` routine.
 
-  * `SPECIFIC_MAIN_STACKBOTTOM` - May be defined instead of `STACKBOTTOM`.
+* `SPECIFIC_MAIN_STACKBOTTOM` - May be defined instead of `STACKBOTTOM`.
     If defined, then the cold end of the main stack will be determined in some
     OS-specific way, e.g. by reading it from `/proc` in case of Linux.
 
-  * `HEURISTIC1` - May be defined instead of `STACKBOTTOM`. `STACK_GRAN`
+* `HEURISTIC1` - May be defined instead of `STACKBOTTOM`. `STACK_GRAN`
     should be defined too in this case. The cold end of the stack is
     determined by taking an address inside `GC_init`s frame, and rounding it
     up to the next multiple of `STACK_GRAN`. This works well if the stack
     bottom is always aligned to a large power of two. (Note: defining
     `STACK_GRAN` to 0x1000000 is rarely optimal.)
 
-  * `HEURISTIC2` - May be defined instead of `STACKBOTTOM`. The cold end
+* `HEURISTIC2` - May be defined instead of `STACKBOTTOM`. The cold end
     of the stack is determined by taking an address inside `GC_init`s frame,
     incrementing it repeatedly in small steps (decrement if `STACK_GROWS_UP`),
     and reading the value at each location. We remember the value when the
     first Segmentation violation or Bus error is signaled, round that to the
     nearest plausible page boundary, and use that as the stack bottom.
 
-  * `DYNAMIC_LOADING` - Should be defined if `dyn_load.c` file has been
+* `DYNAMIC_LOADING` - Should be defined if `dyn_load.c` file has been
     updated for this platform and tracing of dynamic library roots is
     supported.
 
-  * `GWW_VDB`, `MPROTECT_VDB`, `PROC_VDB`, `SOFT_VDB`, `UFFDWP_VDB` - May be
-    defined if the corresponding _virtual dirty bit_ implementation in
+* `GWW_VDB`, `MPROTECT_VDB`, `PROC_VDB`, `SOFT_VDB`, `UFFDWP_VDB` - May be
+    defined if the corresponding *virtual dirty bit* implementation in
     `os_dep.c` file is usable on this platform. This allows
     incremental/generational garbage collection. (`GWW_VDB` uses the Win32
     `GetWriteWatch` function to read dirty bits, `MPROTECT_VDB` and
@@ -163,15 +163,15 @@ operating system:
     catching faults, `PROC_VDB` and `SOFT_VDB` use the `/proc` pseudo-files to
     read dirty bits.)
 
-  * `PREFETCH`, `GC_PREFETCH_FOR_WRITE` - The collector uses `PREFETCH(x)`
+* `PREFETCH`, `GC_PREFETCH_FOR_WRITE` - The collector uses `PREFETCH(x)`
     to preload the cache with the data at `x` address. This defaults to
     a no-op.
 
-  * `CLEAR_DOUBLE` - If it is defined, then `CLEAR_DOUBLE(x)` is used as
+* `CLEAR_DOUBLE` - If it is defined, then `CLEAR_DOUBLE(x)` is used as
     a fast way to clear two "pointer-sized" words at `GC_malloc`-aligned
     address `x`. By default, `NULL` pointers storing is used instead.
 
-  * `HEAP_START` - May be defined as the initial address hint for
+* `HEAP_START` - May be defined as the initial address hint for
     `mmap`-based allocation.
 
 ## Additional requirements for a basic port
@@ -207,10 +207,10 @@ in one or more files specific to the particular thread interface. E.g.,
 somewhat portable support of `pthreads` is implemented in `pthread_support.c`
 and `pthread_stop_world.c` files. The essential functionality consists of:
 
-  * `GC_stop_world` - Stops all threads which may access the garbage-collected
+* `GC_stop_world` - Stops all threads which may access the garbage-collected
   heap, other than the caller;
-  * `GC_start_world` - Restart other threads;
-  * `GC_push_all_stacks` - Push the contents of all thread stacks (or,
+* `GC_start_world` - Restart other threads;
+* `GC_push_all_stacks` - Push the contents of all thread stacks (or,
   at least, of pointer-containing regions in the thread stacks) onto the mark
   stack.
 
@@ -253,9 +253,9 @@ in non-stack variables defined in dynamic libraries.
 
 If dynamic library data sections must also be traced, then:
 
-  * `DYNAMIC_LOADING` must be defined in the appropriate section of
+* `DYNAMIC_LOADING` must be defined in the appropriate section of
   `include/private/gcconfig.h` file.
-  * An appropriate versions of the functions `GC_register_dynamic_libraries`
+* An appropriate versions of the functions `GC_register_dynamic_libraries`
   should be defined in `dyn_load.c` file. This function should invoke
   `GC_cond_add_roots(region_start, region_end, TRUE)` on each dynamic
   library data section.
@@ -274,7 +274,7 @@ locking behavior in this case.
 ## Incremental GC support
 
 For incremental and generational collection to work, `os_dep.c` file must
-contain a suitable _virtual dirty bit_ implementation, which allows the
+contain a suitable *virtual dirty bit* implementation, which allows the
 collector to track which heap pages (assumed to be a multiple of the
 collector's block size) have been written during a certain time interval.
 The collector provides several implementations, which might be adapted.

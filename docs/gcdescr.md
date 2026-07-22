@@ -19,15 +19,16 @@ be apparent in the design. We assume the default finalization model, but the
 code affected by that is very localized.
 
 Table of Contents
-  * [Introduction](#introduction)
-  * [Allocation](#allocation)
-  * [Mark phase](#mark-phase)
-  * [Sweep phase](#sweep-phase)
-  * [Finalization](#finalization)
-  * [Generational Collection and Dirty Bits](#generational-collection-and-dirty-bits)
-  * [Black-listing](#black-listing)
-  * [Multi-threading support](#multi-threading-support)
-  * [Thread-local allocation](#thread-local-allocation)
+
+* [Introduction](#introduction)
+* [Allocation](#allocation)
+* [Mark phase](#mark-phase)
+* [Sweep phase](#sweep-phase)
+* [Finalization](#finalization)
+* [Generational Collection and Dirty Bits](#generational-collection-and-dirty-bits)
+* [Black-listing](#black-listing)
+* [Multi-threading support](#multi-threading-support)
+* [Thread-local allocation](#thread-local-allocation)
 
 ## Introduction
 
@@ -144,16 +145,16 @@ The above is in fact an oversimplification of the real heap expansion and GC
 triggering heuristic, which adjusts slightly for root size and certain kinds
 of fragmentation. In particular:
 
-  * Programs with a large root set size and little live heap memory will
+* Programs with a large root set size and little live heap memory will
   expand the heap to amortize the cost of scanning the roots.
-  * GC actually collects more frequently in non-incremental mode. The large
+* GC actually collects more frequently in non-incremental mode. The large
   block allocator usually refuses to split large heap blocks once the garbage
   collection threshold is reached. This often has the effect of collecting
   well before the heap fills up, thus reducing fragmentation and working set
   size at the expense of GC time. (If the collector is configured not to unmap
   unused pages, GC chooses an intermediate strategy depending on how much
   large object allocation has taken place in the past.)
-  * In calculating the amount of allocation since the last collection we give
+* In calculating the amount of allocation since the last collection we give
   partial credit for objects we expect to be explicitly deallocated. Even
   if all objects are explicitly managed, it is often desirable to collect
   on rare occasion, since that is our only mechanism for coalescing completely
@@ -170,11 +171,11 @@ At each collection, the collector marks all objects that are possibly
 reachable from pointer variables. Since it cannot generally tell where pointer
 variables are located, it scans the following _root segments_ for pointers:
 
-  * The registers. Depending on the architecture, this may be done using
+* The registers. Depending on the architecture, this may be done using
   assembly code, or by calling a `setjmp`-like function which saves register
   contents on the stack.
 
-  * The stack(s). In the case of a single-threaded application, on most
+* The stack(s). In the case of a single-threaded application, on most
   platforms this is done by scanning the memory between (an approximation of)
   the current stack pointer and `GC_stackbottom`. (For Intel Itanium, the
   register stack scanned separately.) The `GC_stackbottom` variable is set in
@@ -185,7 +186,7 @@ variables are located, it scans the following _root segments_ for pointers:
   during the mark process. This is addressed by scanning some sections of the
   stack _eagerly_, effectively capturing a snapshot at one point in time.
 
-  * Static data region(s). In the simplest case, this is the region between
+* Static data region(s). In the simplest case, this is the region between
   `DATASTART` and `DATAEND`, as defined in `include/private/gcconfig.h` file.
   However, in most cases, this will also involve static data regions
   associated with dynamic libraries. These are identified by the mostly
@@ -260,19 +261,19 @@ if 64-bit pointers) be considered a candidate pointer.
 We determine whether a candidate pointer is actually the address of a heap
 block. This is done in the following steps:
 
-  * The candidate pointer is checked against rough heap bounds. These heap
+* The candidate pointer is checked against rough heap bounds. These heap
   bounds are maintained such that all actual heap objects fall between them.
   In order to facilitate black-listing (see below) we also include address
   regions that the heap is likely to expand into. Most non-pointers fail this
   initial test.
-  * The candidate pointer is divided into two pieces; the most significant
+* The candidate pointer is divided into two pieces; the most significant
   bits identify a `HBLKSIZE`-sized page in the address space, and the least
   significant bits specify an offset within that page. (A hardware page may
   actually consist of multiple such pages. Normally, `HBLKSIZE` is usually the
   page size divided by a small power of two. Alternatively, if the collector
   is built with `-D LARGE_CONFIG`, such a page may consist of multiple hardware
   pages.)
-  * The page address part of the candidate pointer is looked up in
+* The page address part of the candidate pointer is looked up in
   a [table](tree.md). Each table entry contains either 0, indicating that
   the page is not part of the garbage-collected heap, a small integer `n`,
   indicating that the page is part of large object, starting at least `n`
@@ -280,7 +281,7 @@ block. This is done in the following steps:
   the candidate pointer is not a true pointer and can be safely ignored.
   In the last two cases, we can obtain a descriptor for the page containing
   the beginning of the object.
-  * The starting address of the referenced object is computed. The page
+* The starting address of the referenced object is computed. The page
   descriptor contains the size of the object(s) in that page, the object kind,
   and the necessary mark bits for those objects. The size information can be
   used to map the candidate pointer to the object starting address.
@@ -288,7 +289,7 @@ block. This is done in the following steps:
   a precomputed map of page offsets to displacements from the beginning of an
   object. The use of this map avoids a potentially slow integer remainder
   operation in computing the object start address.
-  * The mark bit for the target object is checked and set. If the object was
+* The mark bit for the target object is checked and set. If the object was
   previously unmarked, the object is pushed on the mark stack. The descriptor
   is read from the page descriptor. (This is computed from information stored
   in `GC_obj_kinds` when the page is first allocated.)
@@ -409,22 +410,22 @@ again from marked objects on those pages, this time with the mutator stopped.
 
 We keep track of modified pages using one of several distinct mechanisms:
 
-  * (`MPROTECT_VDB`) By write-protecting physical pages and catching write
+* (`MPROTECT_VDB`) By write-protecting physical pages and catching write
   faults. This is implemented for many UNIX-like systems and for Win32. It is
   not possible in a few environments.
-  * (`GWW_VDB`) By using the Win32 `GetWriteWatch` function to read dirty
+* (`GWW_VDB`) By using the Win32 `GetWriteWatch` function to read dirty
   bits.
-  * (`PROC_VDB`) By retrieving dirty bit information from `/proc`. (Currently
+* (`PROC_VDB`) By retrieving dirty bit information from `/proc`. (Currently
   only Sun's Solaris supports this. Though this is considerably cleaner,
   performance may actually be better with `mprotect` and signals.)
-  * (`SOFT_VDB`) By retrieving Linux soft-dirty bit information from `/proc`.
-  * (`UFFDWP_VDB`) By using the Linux `userfaultfd` subsystem in the
+* (`SOFT_VDB`) By retrieving Linux soft-dirty bit information from `/proc`.
+* (`UFFDWP_VDB`) By using the Linux `userfaultfd` subsystem in the
   write-protect mode.
-  * Through explicit mutator cooperation. This enabled by
+* Through explicit mutator cooperation. This enabled by
   `GC_set_manual_vdb_allowed(1)` call, and requires the client code to call
   `GC_ptr_store_and_dirty` or `GC_end_stubborn_change` (followed by a number
   of `GC_reachable_here` calls), and is rarely used.
-  * (`DEFAULT_VDB`) By treating all pages as dirty. This is the default
+* (`DEFAULT_VDB`) By treating all pages as dirty. This is the default
   if none of the other techniques is known to be usable. (Practical only for
   testing.)
 

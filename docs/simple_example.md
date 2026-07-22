@@ -105,7 +105,6 @@ int main(void) {
 }
 ```
 
-
 ### Interaction with the system malloc
 
 It is usually best not to mix garbage-collected allocation with the system
@@ -122,7 +121,7 @@ library. This can never hurt, and is thus generally good practice.
 
 For a multi-threaded program, some more rules apply:
 
-  * Files that either allocate through the GC _or make thread-related calls_
+* Files that either allocate through the GC _or make thread-related calls_
   should first define the macro `GC_THREADS`, and then include `gc.h` file.
   On some platforms this will redefine some threads primitives, e.g. to let
   the collector keep track of thread creation.
