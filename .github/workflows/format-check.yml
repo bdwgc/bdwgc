@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        type: [c, cmake, man, md, zig]
+        type: [c, cmake, man, md, yaml, zig]
 
     steps:
       - uses: actions/checkout@v6
@@ -29,6 +29,10 @@ jobs:
         with:
           packages: mandoc
           version: 1.0
+
+      - name: Install yamllint
+        if: ${{ matrix.type == 'yaml' }}
+        run: python3 -m pip install --upgrade yamllint
 
       - name: Install zig
         if: ${{ matrix.type == 'zig' }}
@@ -68,6 +72,10 @@ jobs:
         with:
           globs: |
             **/*.md
+
+      - name: Dry-run yamllint
+        if: ${{ matrix.type == 'yaml' }}
+        run: yamllint --strict .*.yml .github/workflows/*.yml
 
       - name: Dry-run zig fmt
         if: ${{ matrix.type == 'zig' }}
