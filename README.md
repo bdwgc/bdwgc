@@ -106,7 +106,8 @@ large objects to be disregarded, greatly reducing the probability of
 accidental retention of large objects.  For most purposes it seems
 best to compile with `ALL_INTERIOR_POINTERS` and to use
 `GC_malloc_ignore_off_page` if you get collector warnings from
-allocations of very large objects.  See [here](doc/debugging.md) for details.
+allocations of very large objects.  See the
+[debugging documentation](doc/debugging.md) for details.
 
 _WARNING_: pointers inside memory allocated by the standard `malloc` are not
 seen by the garbage collector.  Thus objects pointed to only from such a
@@ -236,12 +237,12 @@ you may have to adjust the alignment parameters defined in gc_priv.h.
 Note that this may also be an issue with packed records/structs, if those
 enforce less alignment for pointers.
 
-A port to a machine that is not byte addressed, or does not use 32 bit
-or 64 bit addresses will require a major effort.  A port to plain MSDOS
-or win16 is hard.
+A port to a machine that is not byte addressed, or does not use 32- or 64-bit
+addresses will require a major effort.  A port to plain MSDOS or win16 is
+hard.
 
-For machines not already mentioned, or for nonstandard compilers,
-some porting suggestions are provided [here](doc/porting.md).
+For machines not already mentioned, or for nonstandard compilers, some
+suggestions are provided in the [porting instructions](doc/porting.md).
 
 ## The C Interface to the Allocator
 

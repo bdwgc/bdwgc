@@ -1,7 +1,7 @@
-[Interface Overview](gcinterface.md) | [Tutorial Slides](http://www.hboehm.info/gc/04tutorial.pdf) | [FAQ](http://www.hboehm.info/gc/faq.html) | [Example](simple_example.md) | [Download](https://github.com/bdwgc/bdwgc/wiki/Download) | [License](http://www.hboehm.info/gc/license.txt)
----|---|---|---|---|---
-
 # A garbage collector for C and C++
+
+[Interface Overview](gcinterface.md) | [Tutorial Slides](http://www.hboehm.info/gc/04tutorial.pdf) | [FAQ](http://www.hboehm.info/gc/faq.html) | [Example](simple_example.md) | [Download](https://github.com/bdwgc/bdwgc/wiki/Download) | [License](http://www.hboehm.info/gc/license.txt)
+--- | --- | --- | --- | --- | ---
 
 * Platforms
 * Some collector details
@@ -21,14 +21,14 @@ conservative Garbage Collector (**BDWGC**) can be used as a garbage collecting
 replacement for C `malloc` or C++ `new`. It allows you to allocate memory
 basically as you normally would, without explicitly deallocating memory that
 is no longer useful. The collector automatically recycles memory when
-it determines that it can no longer be otherwise accessed. A simple example
-of such a use is given [here](simple_example.md).
+it determines that it can no longer be otherwise accessed. A sample of such
+a use is given in the [simple example](simple_example.md).
 
 The collector is also used by a number of programming language implementations
 that either use C as intermediate code, want to facilitate easier
 interoperation with C libraries, or just prefer the simple collector
-interface. For a more detailed description of the interface, see
-[here](gcinterface.md).
+interface. For a more detailed description of the interface, see the
+[interface overview](gcinterface.md).
 
 Alternatively, the garbage collector may be used as a [leak detector](leak.md)
 for C or C++ programs, though that is not its primary goal.
@@ -43,9 +43,10 @@ The development version (snapshot) is available in the master branch of
 [bdwgc git](https://github.com/bdwgc/bdwgc) repository on GitHub.
 
 The arguments for and against conservative garbage collection in C and C++ are
-briefly discussed [here](http://www.hboehm.info/gc/issues.html). The
-beginnings of a frequently-asked-questions list are
-[here](http://www.hboehm.info/gc/faq.html).
+briefly discussed in
+[Advantages and Disadvantages of Conservative GC](http://www.hboehm.info/gc/issues.html).
+Here are the beginnings of
+a [frequently-asked-questions list](http://www.hboehm.info/gc/faq.html).
 
 The garbage collector code is copyrighted by
 [Hans-J. Boehm](http://www.hboehm.info), Alan J. Demers,
@@ -61,8 +62,8 @@ ANY USE IS AT YOUR OWN RISK.**
 
 Empirically, this collector works with most unmodified C programs, simply
 by replacing `malloc` and `calloc` with `GC_malloc` calls, replacing `realloc`
-with `GC_realloc` calls, and removing `free` calls. Exceptions are discussed
-[here](http://www.hboehm.info/gc/issues.html).
+with `GC_realloc` calls, and removing `free` calls. Exceptions are discussed in
+[Advantages and Disadvantages of Conservative GC](http://www.hboehm.info/gc/issues.html).
 
 ## Platforms
 
@@ -87,7 +88,8 @@ to locate pointers if such information is provided, but it is usually used
 without such information. See the README and `gc.h` files in the distribution
 for more details.
 
-For an overview of the implementation, see [here](gcdescr.md).
+For an overview of the implementation, see the
+[algorithmic overview](gcdescr.md).
 
 The garbage collector distribution includes a C string (`cord.h`) package that
 provides for fast concatenation and substring operations on long strings.
@@ -111,8 +113,9 @@ for garbage collection.
 
 ## Further reading
 
-**The beginnings of a frequently asked questions list for this collector are
-[here](http://www.hboehm.info/gc/faq.html).**
+**The beginnings of a
+[frequently asked questions list](http://www.hboehm.info/gc/faq.html) for this
+collector.**
 
 **The following provide information on garbage collection in general:**
 
@@ -134,7 +137,8 @@ mentioned on the page.
 **The following papers describe the collector algorithms we use and the
 underlying design decisions at a higher level:**
 
-(Some of the lower level details can be found [here](gcdescr.md).)
+(Some of the lower level details can be found in the
+[algorithmic overview](gcdescr.md).)
 
 The first one is not available electronically due to copyright considerations.
 Most of the others are subject to ACM copyright.
@@ -315,5 +319,6 @@ archive files, respectively. The gc list archive may also be read
 at [Narkive](http://bdwgc.opendylan.narkive.com).
 
 Some prior discussion of the collector has taken place on the gcc java mailing
-list, whose archives appear [here](http://gcc.gnu.org/ml/java/), and also
+list, whose archives appear in the
+[GCC Java mailing list archive](http://gcc.gnu.org/ml/java/), and also
 on [<gclist@iecc.com>](http://lists.tunes.org/mailman/listinfo/gclist).
