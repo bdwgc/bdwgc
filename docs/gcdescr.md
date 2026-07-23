@@ -4,8 +4,8 @@ This is a description of the algorithms and data structures used in our
 conservative garbage collector. I expect the level of detail to increase with
 time. For a survey of GC algorithms, e.g. see Paul Wilson's
 [Uniprocessor Garbage Collection Techniques](https://ftpmirror.infania.net/sites/ftp.leo.org/historic/doc/programming/gcsurvey.ps.Z)
-excellent paper. For an overview of the collector interface, see
-[here](gcinterface.md).
+excellent paper. For the information about the collector interface, see the
+[interface overview](gcinterface.md).
 
 This description is targeted primarily at someone trying to understand the
 source code. It specifically refers to variable and function names. It may
@@ -240,7 +240,7 @@ since it usually consumes a large majority of the garbage collection time.
 The fact that it performs only a small amount of work per call also allows
 it to be used as the core routine of the parallel marker. In that case it is
 normally invoked on thread-private mark stacks instead of the global mark
-stack. More details can be found [here](scale.md).
+stack. More details can be found in the [scalability documentation](scale.md).
 
 The marker correctly handles mark stack overflows. Whenever the mark stack
 overflows, the mark state is reset to `MS_INVALID`. Since there are already
@@ -432,9 +432,9 @@ We keep track of modified pages using one of several distinct mechanisms:
 ## Black-listing
 
 The collector implements _black-listing_ of pages, as described in
-[Space Efficient Conservative Collection](https://dl.acm.org/doi/10.1145/173262.155109)
-by Boehm, PLDI'93, also available
-[here](https://www.cs.rice.edu/~javaplt/311/Readings/pldi93.pdf).
+[Space Efficient Conservative Collection](https://www.cs.rice.edu/~javaplt/311/Readings/pldi93.pdf)
+by Boehm, PLDI'93
+([official version](https://dl.acm.org/doi/10.1145/173262.155109)).
 
 During the mark phase, the collector tracks _near misses_, i.e. attempts
 to follow a _pointer_ to just outside the garbage-collected heap, or to
@@ -492,8 +492,8 @@ wrapping mechanism under Linux.
 
 The collector support several facilities to enhance the processor-scalability
 and thread performance of the collector. These are discussed in more detail
-[here](scale.md). We briefly outline the data approach to thread-local
-allocation in the next section.
+in the [scalability documentation](scale.md). We briefly outline the data
+approach to thread-local allocation in the next section.
 
 ## Thread-local allocation
 
@@ -542,5 +542,6 @@ Note that if the collector is configured for thread-local allocation (the
 default for most platforms), `GC_malloc` and friends only use thread-local
 allocation.
 
-For some more details see [here](scale.md), and the technical report entitled
+For some more details see the [scalability documentation](scale.md), and
+the technical report entitled
 [Fast Multiprocessor Memory Allocation and Garbage Collection](https://www.researchgate.net/publication/242553754_Fast_multiprocessor_memory_allocation_and_garbage_collection).

@@ -28,7 +28,7 @@ make install
 Here the `make check` command is optional, but highly recommended. It runs
 a basic correctness test which usually takes well under a minute.
 
-### Other platforms
+### Other platforms support
 
 The old way, probably suitable for ancient platforms, is to build the
 collector by copying the appropriate makefile (e.g., `Makefile.direct` file,
@@ -45,7 +45,7 @@ If your platform provides a `make` utility, that is generally preferred
 to platform- and compiler-dependent "project" files. (At least that is the
 strong preference of the would-be maintainer of those project files.)
 
-### Threads
+### How to turn off threads support
 
 If you do not need multi-threading support, configure the collector with
 `--disable-threads` option.
@@ -54,7 +54,7 @@ Alternatively, if your target is a real old-fashioned uniprocessor (no
 "hyperthreading", etc.), you may just want to turn off parallel marking with
 `--disable-parallel-mark`.
 
-### C++
+### C++ support
 
 You will need to include the C++ support, which unfortunately tends to be
 among the least portable parts of the collector, since it seems to rely
@@ -111,13 +111,13 @@ It is usually best not to mix garbage-collected allocation with the system
 `malloc`-`free`. If you do, you need to be careful not to store pointers
 to the garbage-collected heap in memory allocated with the system `malloc`.
 
-### Other Platforms
+### Other platforms
 
 On some other platforms it is necessary to call `GC_INIT` from the main
 program, which is presumed to be part of the main executable, not a dynamic
 library. This can never hurt, and is thus generally good practice.
 
-### Threads
+### Multi-threaded code
 
 For a multi-threaded program, some more rules apply:
 
@@ -126,7 +126,7 @@ For a multi-threaded program, some more rules apply:
   On some platforms this will redefine some threads primitives, e.g. to let
   the collector keep track of thread creation.
 
-### C++
+### C++ considerations
 
 In the case of C++, you need to be especially careful not to store pointers
 to the garbage-collected heap in areas that are not traced by the collector.
@@ -160,7 +160,7 @@ case, we list the static library directly on the compile line; the dynamic
 library could have been used instead, provided we arranged for the dynamic
 loader to find it, e.g. by setting `LD_LIBRARY_PATH`.
 
-### Threads
+### Linking with threads
 
 On `pthreads` platforms, you will of course also have to link with
 `-lpthread`, and compile with any thread-safety options required by your
