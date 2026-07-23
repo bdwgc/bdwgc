@@ -145,10 +145,10 @@ These measurements do not use incremental collection, nor was prefetching
 enabled in the marker. We used the C version of the benchmark. All
 measurements are in elapsed seconds on an unloaded machine.
 
-Number of client threads| 1 marker thread (secs.)| 2 marker threads (secs.)
----|------|-----
-  1| 10.45| 7.85
-  2| 19.95| 12.3
+Number of client threads | 1 marker thread (seconds) | 2 marker threads (seconds)
+--- | --- | ---
+1 | 10.45 | 7.85
+2 | 19.95 | 12.3
 
 The execution time for the single threaded case is slightly worse than with
 simple locking. However, even the single-threaded benchmark runs faster than
