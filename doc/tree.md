@@ -77,9 +77,10 @@ is contiguous and not excessively large.
 
 ## A picture
 
-The following is an _ASCII_ diagram of the data structure used by GC_base. This was
+The following is an _ASCII_ diagram of the data structure used by `GC_base`,
 contributed originally by Dave Barrett.
 
+```text
          63                  LOG_TOP_SZ[11]  LOG_BOTTOM_SZ[10]   LOG_HBLKSIZE[13]
         +------------------+----------------+------------------+------------------+
       p:|                  |   TL_HASH(hi)  |                  |   HBLKDISPL(p)   |
@@ -151,12 +152,14 @@ contributed originally by Dave Barrett.
         |       |                      | least MINHINCR*HBLKSIZE bytes (below);
         v       |                      | otherwise, size of each object in chunk.
        ---      +----------------------+
+```
 
 Dynamic data structures above are interleaved throughout the heap in blocks
 of size `MINHINCR * HBLKSIZE` bytes as done by `GC_scratch_alloc` which cannot
 be freed; free lists are used (e.g. `alloc_hdr`). `hblk`'s below are
 collected.
 
+```text
                  (struct hblk)
       ---    +----------------------+ < HBLKSIZE  ---
        ^     +-----hb_body----------+ (and WORDSZ- ^         ---   ---
@@ -177,3 +180,4 @@ collected.
        |     |      Object N        | valid object offsets.   |     |
        v     |                      | All objects WORDSZ-     v     v
       ---    +----------------------+ aligned.               ---   ---
+```

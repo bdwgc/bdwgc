@@ -105,15 +105,14 @@ an object becomes inaccessible. This is often useful as a backup method for
 releasing system resources (e.g. closing files) when the object referencing
 them becomes inaccessible. It is not an acceptable method to perform actions
 that must be performed in a timely fashion. See `gc.h` for details of the
-interface. See also [here](finalization.md) for a more detailed discussion
-of the design.
+interface. See also the [finalization documentation](finalization.md) for
+a more detailed discussion of the design.
 
 Note that an object may become inaccessible before client code is done
 operating on objects referenced by its fields. Suitable synchronization
 is usually required. See
-[here](http://portal.acm.org/citation.cfm?doid=604131.604153)
-or [here](http://www.hpl.hp.com/techreports/2002/HPL-2002-335.html) for
-details.
+["Destructors, Finalizers, and Synchronization"](http://portal.acm.org/citation.cfm?doid=604131.604153)
+for details.
 
 If you are concerned with multiprocessor performance and scalability, you
 should consider enabling and using thread local allocation.
@@ -189,10 +188,10 @@ discouraged.
 
 This defines SGI-style allocators
 
-  * `traceable_alloc`
-  * `single_client_traceable_alloc`
-  * `gc_alloc`
-  * `single_client_gc_alloc`
+* `traceable_alloc`
+* `single_client_traceable_alloc`
+* `gc_alloc`
+* `single_client_gc_alloc`
 
 The first two allocate uncollectible but traced memory, while the second two
 allocate collectible memory. The `single_client_...` versions are not safe for
