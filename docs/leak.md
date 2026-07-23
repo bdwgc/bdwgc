@@ -147,7 +147,7 @@ a program `a.out` under Linux/i686 and Linux/x86_64 as follows:
      combination of multi-threading support and `malloc` replacement is not
      rock solid yet):
 
-       - `./configure --prefix=_foo_ --enable-gc-debug --enable-redirect-malloc --disable-threads`
+       - `./configure --prefix=_foo_ --disable-threads --enable-gc-debug --enable-redirect-malloc`
        - `make`
        - `make install`
 

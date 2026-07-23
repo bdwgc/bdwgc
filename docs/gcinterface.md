@@ -111,10 +111,10 @@ an object becomes inaccessible. This is often useful as a backup method for
 releasing system resources (e.g. closing files) when the object referencing
 them becomes inaccessible. It is not an acceptable method to perform actions
 that must be performed in a timely fashion. See `gc.h` file for details of the
-interface. See also [here](finalization.md) for a more detailed discussion
-of the design. Note that an object may become inaccessible before client code
-is done operating on objects referenced by its fields. Suitable
-synchronization is usually required. See
+interface. See also the [finalization documentation](finalization.md) for
+a more detailed discussion of the design. Note that an object may become
+inaccessible before client code is done operating on objects referenced by
+its fields. Suitable synchronization is usually required. See
 ["Destructors, Finalizers, and Synchronization"](https://dl.acm.org/doi/10.1145/604131.604153)
 for details.
 

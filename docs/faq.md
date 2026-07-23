@@ -6,7 +6,7 @@ are likely to apply to any garbage collector whatsoever.
 
 ## Questions and Answers
 
-### I wrote a test program which allocates objects and registers finalizers for them.  Only a few (or no) objects are finalized.  What is wrong?
+### Few or no finalizers run in my test program.  What is wrong?
 
 Probably nothing.  Finalizers are only executed if all of the following happen
 before the process exits:
@@ -37,11 +37,11 @@ the 2002 ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages,
 Jan. 2002, pp. 93-100
 ([official version](https://dl.acm.org/doi/10.1145/565816.503282)).
 
-### How can I get more of the finalizers to run to convince myself that the GC is working?
+### How can I get more finalizers to run to verify the GC is working?
 
 Invoke GC_gcollect a couple of times just before process exit.
 
-### I want to ensure that all my objects are finalized and reclaimed before process exit.  How can I do that?
+### Can I ensure all objects are finalized and reclaimed before exit?
 
 You cannot, and you do not really want that.  This would require finalizing
 _reachable_ objects.  Finalizers run later would have to be able to handle
@@ -61,7 +61,7 @@ pp. 262-272
 ([official version](https://dl.acm.org/doi/10.1145/604131.604153),
 [slides](http://www.hboehm.info/popl03/slides.pdf)).
 
-### I wrote a memory allocation loop, and it runs much slower with the garbage collector than when I use malloc/free memory management.  Why?
+### Why is my allocation loop much slower with the GC than malloc/free?
 
 Odds are your loop allocates very large objects and never initializes them.
 Real programs generally do not behave that way.  Garbage collectors generally
@@ -79,7 +79,7 @@ locking on each allocation.
 * If you use large statically allocated arrays or mapped files, consider
 `GC_exclude_static_roots`.
 
-### If my heap uses 2 GB on a 32-bit machine, will not every other integer or other random data be misinterpreted as a pointer by the collector?  Thus will not way too much memory be retained?
+### Will too much memory be retained with a 2 GB heap on a 32-bit machine?
 
 Maybe.  Probably, if the collector is used purely conservatively, with no
 pointer layout information (such as use of `GC_MALLOC_ATOMIC`).
@@ -96,8 +96,8 @@ The collector black-listing mechanism avoids allocating areas that are prone
 to be targets of misinterpreted references.  The collector can be told to
 ignore some or all pointers to object interiors.
 
-### I have a different question that is not answered here, nor in the other GC documentation.  Where else can I go?
+### I have a question not answered here or in the GC docs.  Where can I go?
 
 If you cannot find the answer in the [GC overview](overview.md) and the linked
-files, please see "Feedback, Contribution, Questions and Notifications" section of
-the main [README](../README.md).
+files, please see the "Feedback, Contribution, Questions and Notifications"
+section of the main [README](../README.md).

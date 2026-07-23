@@ -134,7 +134,8 @@ large objects to be disregarded, greatly reducing the probability of
 accidental retention of large objects.  For most purposes it seems
 best to compile with `ALL_INTERIOR_POINTERS` and to use
 `GC_malloc_ignore_off_page` if you get collector warnings from
-allocations of very large objects.  See [here](docs/debugging.md) for details.
+allocations of very large objects.  See the
+[debugging documentation](docs/debugging.md) for details.
 
 *Warning*: pointers inside memory allocated by the standard (system) `malloc`
 are not seen by the garbage collector.  Thus objects pointed to only from such
@@ -343,12 +344,12 @@ you may have to adjust the alignment parameters defined in
 `include/private/gc_priv.h` file.  Note that this may also be an issue with
 packed records/structs, if those enforce less alignment for pointers.
 
-A port to a machine that is not byte addressed, or does not use 32 bit
-or 64 bit addresses will require a major effort.  A port to plain MSDOS
-or win16 is hard.
+A port to a machine that is not byte addressed, or does not use 32- or 64-bit
+addresses will require a major effort.  A port to plain MSDOS or win16 is
+hard.
 
-For machines not already mentioned, or for nonstandard compilers,
-some porting suggestions are provided [here](docs/porting.md).
+For machines not already mentioned, or for nonstandard compilers, some
+suggestions are provided in the [porting instructions](docs/porting.md).
 
 ## The C Interface to the Allocator
 
@@ -470,9 +471,9 @@ distribution.  If you intend to use this, type
 This creates `libgccpp.a` and `libgctba.a` files, or their shared library
 equivalents (`libgccpp.so` and `libgctba.so` files).  You should link with
 either the first (`gccpp`) or the second one (`gctba`), but not both.
-See `gc_cpp.h` file and [here](docs/gcinterface.md) for the definition of the
-interface.  This interface tries to approximate the Ellis-Detlefs C++ garbage
-collection proposal without compiler changes.
+See `gc_cpp.h` file and the [interface overview](docs/gcinterface.md) for the
+definition of the interface.  This interface tries to approximate the
+Ellis-Detlefs C++ garbage collection proposal without compiler changes.
 
 Very often it will also be necessary to use `gc_allocator.h` file and the
 allocator declared there to construct STL data structures.  Otherwise

@@ -71,13 +71,15 @@ in `gc.h` file for more details.
 
 ## The Parallel Marking Algorithm
 
-We use an algorithm similar to that developed by Endo, Taura, and Yonezawa
-([An Effective Garbage Collection Strategy for Parallel Programming Languages on Large Scale Distributed-Memory Machines](https://dl.acm.org/doi/pdf/10.1145/263767.263801))
-at the University of Tokyo. However, the data structures and implementation
-are different, and represent a smaller change to the original collector
-source, probably at the expense of extreme scalability. Some of the
-refinements they suggest, e.g. splitting large objects, were also incorporated
-into our approach.
+We use an algorithm similar to that developed by Endo, Taura, and Yonezawa at
+the University of Tokyo, described in
+"An Effective Garbage Collection Strategy for Parallel Programming Languages
+on Large Scale Distributed-Memory Machines" paper
+([official version](https://dl.acm.org/doi/pdf/10.1145/263767.263801)).
+However, the data structures and implementation are different, and represent
+a smaller change to the original collector source, probably at the expense
+of extreme scalability. Some of the refinements they suggest, e.g. splitting
+large objects, were also incorporated into our approach.
 
 The global mark stack is transformed into a global work queue. Unlike the
 usual case, it never shrinks during a mark phase. The mark threads remove
@@ -153,10 +155,10 @@ These measurements do not use incremental collection, nor was prefetching
 enabled in the marker. We used the C variant of the benchmark. All
 measurements are in elapsed seconds on an unloaded machine.
 
-Number of client threads| 1 marker thread (secs.)| 2 marker threads (secs.)
----|------|-----
-  1| 10.45| 7.85
-  2| 19.95| 12.3
+Number of client threads | 1 marker thread (seconds) | 2 marker threads (seconds)
+--- | --- | ---
+1 | 10.45 | 7.85
+2 | 19.95 | 12.3
 
 The execution time for the single threaded case is slightly worse than with
 simple locking. However, even the single-threaded benchmark runs faster than
