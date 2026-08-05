@@ -2956,8 +2956,15 @@ EXTERN_C_BEGIN
 #  undef DYNAMIC_LOADING
 #endif
 
-#if defined(SMALL_CONFIG) && !defined(GC_DISABLE_INCREMENTAL)
-/* Presumably not worth the space it takes. */
+#if (defined(KEEP_BACK_PTRS) || defined(SMALL_CONFIG)) \
+    && !defined(GC_DISABLE_INCREMENTAL)
+/*
+ * If we are keeping back pointers, the collector itself dirties all pages
+ * on which objects have been marked, making the incremental collection
+ * pointless.
+ * For small heap sizes: the incremental collection presumably is not worth
+ * the space it takes.
+ */
 #  define GC_DISABLE_INCREMENTAL
 #endif
 

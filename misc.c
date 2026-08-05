@@ -1579,12 +1579,7 @@ GC_init(void)
 GC_API void GC_CALL
 GC_enable_incremental(void)
 {
-#if !defined(GC_DISABLE_INCREMENTAL) && !defined(KEEP_BACK_PTRS)
-  /*
-   * If we are keeping back pointers, the collector itself dirties all pages
-   * on which objects have been marked, making the incremental collection
-   * pointless.
-   */
+#ifndef GC_DISABLE_INCREMENTAL
   if (!GC_find_leak_inner && NULL == GETENV("GC_DISABLE_INCREMENTAL")) {
     LOCK();
     if (!GC_incremental) {
