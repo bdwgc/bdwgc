@@ -440,8 +440,8 @@ GC_mark_some(ptr_t cold_gc_frame)
     if (ADDR_GE((ptr_t)GC_mark_stack_top,
                 (ptr_t)(GC_mark_stack_limit - INITIAL_MARK_STACK_SIZE / 2))) {
       /*
-       * Go ahead and mark, even though that might cause us to see more
-       * marked dirty objects later on.  Avoid this in the future.
+       * Go ahead and mark.
+       * TODO: This might cause us to see more marked dirty objects later on.
        */
       GC_mark_stack_too_small = TRUE;
       MARK_FROM_MARK_STACK();
@@ -481,11 +481,11 @@ GC_mark_some(ptr_t cold_gc_frame)
   case MS_ROOTS_PUSHED:
 #ifdef PARALLEL_MARK
     /*
-     * Eventually, incremental marking should run asynchronously
-     * in multiple threads, without acquiring the allocator lock.
-     * For now, parallel marker is disabled if there is a chance that
-     * marking could be interrupted by a client-supplied time limit
-     * or custom stop function.
+     * Eventually, incremental marking should run asynchronously in multiple
+     * threads, without acquiring the allocator lock.
+     * TODO: For now, parallel marker is disabled if there is a chance that
+     * marking could be interrupted by a client-supplied time limit or custom
+     * stop function.
      */
     if (GC_parallel && !GC_parallel_mark_disabled) {
       GC_do_parallel_mark();
