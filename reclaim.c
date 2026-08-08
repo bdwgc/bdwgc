@@ -644,7 +644,9 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
 #endif
     GC_ASSERT(hbp == hhdr->hb_block);
     if (report_if_found) {
+#ifndef NO_FIND_LEAK
       GC_reclaim_small_nonempty_block(hbp, sz, TRUE /* `report_if_found` */);
+#endif
     } else if (empty) {
 #ifdef ENABLE_DISCLAIM
       if ((hhdr->hb_flags & HAS_DISCLAIM) != 0) {

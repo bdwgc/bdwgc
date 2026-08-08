@@ -1070,27 +1070,28 @@ GC_stopped_mark(GC_stop_func stop_func)
   return FALSE;
 }
 
+#if !defined(NO_FIND_LEAK) || defined(THREAD_LOCAL_ALLOC)
 GC_INNER void
 GC_set_fl_marks(ptr_t q)
 {
-#ifdef GC_ASSERTIONS
+#  ifdef GC_ASSERTIONS
   ptr_t q2;
-#endif
+#  endif
   struct hblk *h = HBLKPTR(q);
   const struct hblk *last_h = h;
   hdr *hhdr;
-#ifdef MARK_BIT_PER_OBJ
+#  ifdef MARK_BIT_PER_OBJ
   size_t sz;
-#endif
+#  endif
 
   GC_ASSERT(q != NULL);
   hhdr = HDR(h);
-#ifdef MARK_BIT_PER_OBJ
+#  ifdef MARK_BIT_PER_OBJ
   sz = hhdr->hb_sz;
-#endif
-#ifdef GC_ASSERTIONS
+#  endif
+#  ifdef GC_ASSERTIONS
   q2 = (ptr_t)obj_link(q);
-#endif
+#  endif
   for (;;) {
     size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)q - (ptr_t)h), sz);
 
@@ -1101,7 +1102,7 @@ GC_set_fl_marks(ptr_t q)
     q = (ptr_t)obj_link(q);
     if (NULL == q)
       break;
-#ifdef GC_ASSERTIONS
+#  ifdef GC_ASSERTIONS
     /*
      * Detect a cycle in the free list.  The algorithm is to have
      * a "twice faster" iterator over the list which meets the first
@@ -1115,19 +1116,20 @@ GC_set_fl_marks(ptr_t q)
         GC_ASSERT(q2 != q);
       }
     }
-#endif
+#  endif
 
     h = HBLKPTR(q);
     if (UNLIKELY(h != last_h)) {
       last_h = h;
       /* Update `hhdr` and `sz`. */
       hhdr = HDR(h);
-#ifdef MARK_BIT_PER_OBJ
+#  ifdef MARK_BIT_PER_OBJ
       sz = hhdr->hb_sz;
-#endif
+#  endif
     }
   }
 }
+#endif
 
 #if defined(GC_ASSERTIONS) && defined(THREAD_LOCAL_ALLOC)
 /*
@@ -1229,6 +1231,7 @@ GC_clear_fl_marks(ptr_t q)
   }
 }
 
+#ifndef NO_FIND_LEAK
 /* Mark all objects on the free lists for every object kind. */
 static void
 set_all_fl_marks(void)
@@ -1246,6 +1249,7 @@ set_all_fl_marks(void)
     }
   }
 }
+#endif
 
 /*
  * Clear free-list mark bits.  Also subtract memory remaining from
@@ -1330,12 +1334,13 @@ GC_finish_collection(void)
   }
 #endif
   COND_DUMP;
+#ifndef NO_FIND_LEAK
   if (GC_find_leak_inner) {
     set_all_fl_marks();
     /* This just checks; it does not really reclaim anything. */
     GC_start_reclaim(TRUE);
   }
-
+#endif
 #ifndef GC_NO_FINALIZATION
   GC_finalize();
 #endif

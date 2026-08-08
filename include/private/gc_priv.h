@@ -3223,8 +3223,10 @@ GC_INNER void GC_clear_hdr_marks(hdr *hhdr);
 /* Set all mark bits in the header.  Used for uncollectible blocks. */
 GC_INNER void GC_set_hdr_marks(hdr *hhdr);
 
+#if !defined(NO_FIND_LEAK) || defined(THREAD_LOCAL_ALLOC)
 /* Set all mark bits associated with a free list. */
 GC_INNER void GC_set_fl_marks(ptr_t);
+#endif
 
 #if defined(GC_ASSERTIONS) && defined(THREAD_LOCAL_ALLOC)
 /*
