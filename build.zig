@@ -266,7 +266,7 @@ pub fn build(b: *std.Build) void {
     }
 
     if (!enable_dynamic_loading) {
-        flags.append(b.allocator, "-D IGNORE_DDYNAMIC_LOADING") catch unreachable;
+        flags.append(b.allocator, "-D IGNORE_DYNAMIC_LOADING") catch unreachable;
     }
 
     if (!enable_register_main_static_data) {
