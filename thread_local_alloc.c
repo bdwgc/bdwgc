@@ -54,7 +54,7 @@ init_freelists(GC_tlfs p)
     for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
       p->_freelists[kind][j] = NUMERIC_TO_VPTR(1);
     }
-#  ifdef GC_GCJ_SUPPORT
+#  ifdef THREAD_GCJ_FREELISTS
     p->gcj_freelists[j] = NUMERIC_TO_VPTR(1);
 #  endif
   }
@@ -63,7 +63,7 @@ init_freelists(GC_tlfs p)
    * ensure that the explicit deallocation works.  However, an allocation
    * of a `gcj` object with the zero size is always an error.
    */
-#  ifdef GC_GCJ_SUPPORT
+#  ifdef THREAD_GCJ_FREELISTS
   p->gcj_freelists[0] = MAKE_CPTR(ERROR_FL);
 #  endif
 }
@@ -114,7 +114,7 @@ return_freelists(void **fl, void **gfl)
   }
   /* The 0 granule free list really contains 1 granule objects. */
   if (ADDR(fl[0]) >= HBLKSIZE
-#  ifdef GC_GCJ_SUPPORT
+#  ifdef THREAD_GCJ_FREELISTS
       && ADDR(fl[0]) != ERROR_FL
 #  endif
   ) {
@@ -207,7 +207,7 @@ GC_destroy_thread_local(GC_tlfs p)
     return_freelists_async(p->_freelists[kind], GC_obj_kinds[kind].ok_freelist,
                            is_async);
   }
-#  ifdef GC_GCJ_SUPPORT
+#  ifdef THREAD_GCJ_FREELISTS
   return_freelists_async(p->gcj_freelists, (void **)GC_gcjobjfreelist,
                          is_async);
 #  endif
@@ -264,8 +264,7 @@ GC_malloc_kind(size_t lb, int kind)
   return result;
 }
 
-#  ifdef GC_GCJ_SUPPORT
-
+#  ifdef THREAD_GCJ_FREELISTS
 #    include "gc/gc_gcj.h"
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
@@ -336,8 +335,7 @@ GC_gcj_malloc(size_t lb, const void *vtable_ptr)
       } while (0));
   return result;
 }
-
-#  endif /* GC_GCJ_SUPPORT */
+#  endif
 
 GC_INNER void
 GC_mark_thread_local_fls_for(GC_tlfs p)
@@ -357,7 +355,7 @@ GC_mark_thread_local_fls_for(GC_tlfs p)
       if (ADDR(q) > HBLKSIZE)
         GC_set_fl_marks(q);
     }
-#  ifdef GC_GCJ_SUPPORT
+#  ifdef THREAD_GCJ_FREELISTS
     if (LIKELY(j > 0)) {
       ptr_t q = GC_cptr_load((volatile ptr_t *)&p->gcj_freelists[j]);
 
@@ -379,7 +377,7 @@ GC_check_tls_for(GC_tlfs p)
     for (kind = 0; kind < THREAD_FREELISTS_KINDS; ++kind) {
       GC_check_fl_marks(&p->_freelists[kind][j]);
     }
-#    ifdef GC_GCJ_SUPPORT
+#    ifdef THREAD_GCJ_FREELISTS
     GC_check_fl_marks(&p->gcj_freelists[j]);
 #    endif
   }

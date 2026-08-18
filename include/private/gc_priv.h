@@ -3586,7 +3586,7 @@ extern size_t GC_dbg_collect_at_malloc_min_lb;
 
 /* Allocation routines that bypass the thread-local cache. */
 
-#if defined(THREAD_LOCAL_ALLOC) && defined(GC_GCJ_SUPPORT)
+#ifdef THREAD_GCJ_FREELISTS
 /*
  * Allocate an object, clear it, and store the pointer to the type
  * structure ("vtable" in `gcj`).  This adds a byte at the end of the

@@ -3551,6 +3551,10 @@ extern ptr_t GC_data_start;
 #  undef HAS_WIN32_THREADS_DISCOVERY
 #endif
 
+#if defined(GC_GCJ_SUPPORT) && defined(THREAD_LOCAL_ALLOC)
+#  define THREAD_GCJ_FREELISTS
+#endif
+
 #if defined(PARALLEL_MARK) && !defined(DEFAULT_STACK_MAYBE_SMALL) \
     && (defined(DGUX) || defined(HPUX)                            \
         || defined(NO_GETCONTEXT) /* e.g. musl */)

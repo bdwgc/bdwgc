@@ -69,7 +69,7 @@ struct thread_local_freelists {
   void *_freelists[THREAD_FREELISTS_KINDS][GC_TINY_FREELISTS];
 #  define ptrfree_freelists _freelists[PTRFREE]
 #  define normal_freelists _freelists[NORMAL]
-#  ifdef GC_GCJ_SUPPORT
+#  ifdef THREAD_GCJ_FREELISTS
   void *gcj_freelists[GC_TINY_FREELISTS];
   /* A value used for `gcj_freelists[-1]`; allocation is erroneous. */
 #    define ERROR_FL GC_WORD_MAX

@@ -129,7 +129,7 @@ GC_init_gcj_malloc_mp(unsigned mp_index, GC_mark_proc mp, size_t descr_offset)
 #  undef ignore_gcj_info
 }
 
-#  ifdef THREAD_LOCAL_ALLOC
+#  ifdef THREAD_GCJ_FREELISTS
 GC_INNER
 #  else
 STATIC
@@ -179,13 +179,13 @@ GC_core_gcj_malloc(size_t lb, const void *vtable_ptr, unsigned flags)
   return GC_clear_stack(op);
 }
 
-#  ifndef THREAD_LOCAL_ALLOC
+#  ifndef THREAD_GCJ_FREELISTS
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_gcj_malloc(size_t lb, const void *vtable_ptr)
 {
   return GC_core_gcj_malloc(lb, vtable_ptr, 0 /* `flags` */);
 }
-#  endif /* !THREAD_LOCAL_ALLOC */
+#  endif
 
 GC_API GC_ATTR_MALLOC void *GC_CALL
 GC_gcj_malloc_ignore_off_page(size_t lb, const void *vtable_ptr)
