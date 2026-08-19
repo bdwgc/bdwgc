@@ -1182,15 +1182,16 @@ GC_check_fl_marks(void **pfreelist)
 
 /*
  * Clear all mark bits for the free list (specified by the first entry).
- * Decrement `GC_bytes_found` by number of bytes on free list.
+ * Return number of bytes on the free list.
  */
-STATIC void
+STATIC word
 GC_clear_fl_marks(ptr_t q)
 {
   struct hblk *h = HBLKPTR(q);
   const struct hblk *last_h = h;
   hdr *hhdr = HDR(h);
   size_t sz = hhdr->hb_sz; /*< normally set only once */
+  word bytes = 0;
 
   for (;;) {
     size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)q - (ptr_t)h), sz);
@@ -1215,7 +1216,7 @@ GC_clear_fl_marks(ptr_t q)
       hhdr->hb_n_marks = n_marks;
 #endif
     }
-    GC_bytes_found -= (GC_signed_word)sz;
+    bytes += sz;
 
     q = (ptr_t)obj_link(q);
     if (NULL == q)
@@ -1229,6 +1230,7 @@ GC_clear_fl_marks(ptr_t q)
       sz = hhdr->hb_sz;
     }
   }
+  return bytes;
 }
 
 #ifndef NO_FIND_LEAK
@@ -1251,14 +1253,12 @@ set_all_fl_marks(void)
 }
 #endif
 
-/*
- * Clear free-list mark bits.  Also subtract memory remaining from
- * `GC_bytes_found` count.
- */
-static void
+/* Clear free-list mark bits.  Return number of bytes on the free lists. */
+static word
 clear_all_fl_marks(void)
 {
   unsigned kind;
+  word bytes = 0;
 
   for (kind = 0; kind < GC_n_kinds; kind++) {
     size_t lg;
@@ -1267,9 +1267,10 @@ clear_all_fl_marks(void)
       ptr_t q = (ptr_t)GC_obj_kinds[kind].ok_freelist[lg];
 
       if (q != NULL)
-        GC_clear_fl_marks(q);
+        bytes += GC_clear_fl_marks(q);
     }
   }
+  return bytes;
 }
 
 #if defined(GC_ASSERTIONS) && defined(THREAD_LOCAL_ALLOC)
@@ -1360,9 +1361,9 @@ GC_finish_collection(void)
    * Note that composite objects on free list are cleared, thus
    * accidentally marking a free list is not a problem; but some objects
    * on the list itself might be marked, and the given function call
-   * fixes it.
+   * fixes it.  Also update the counter of bytes of memory reclaimed.
    */
-  clear_all_fl_marks();
+  GC_bytes_found -= (GC_signed_word)clear_all_fl_marks();
 
   GC_VERBOSE_LOG_PRINTF("Bytes recovered before sweep - f.l. count = %ld\n",
                         (long)GC_bytes_found);
