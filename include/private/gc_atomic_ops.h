@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Ivan Maidanski
+ * Copyright (c) 2017-2026 Ivan Maidanski
  *
  * THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
  * OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
