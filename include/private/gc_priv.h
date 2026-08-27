@@ -2858,12 +2858,12 @@ GC_INNER void GC_push_all_register_sections(
 #  define MARK_BIT_NO(offset, sz) ((offset) / (sz))
 
 /* Spacing between useful mark bits. */
-#  define MARK_BIT_OFFSET(sz) 1
+#  define MARK_BIT_OFFSET(sz) ((void)(sz), 1U)
 
 /* Position of final, always set, mark bit. */
 #  define FINAL_MARK_BIT(sz) ((sz) > MAXOBJBYTES ? 1 : HBLK_OBJS(sz))
 #else
-#  define MARK_BIT_NO(offset, sz) BYTES_TO_GRANULES(offset)
+#  define MARK_BIT_NO(offset, sz) ((void)(sz), BYTES_TO_GRANULES(offset))
 #  define MARK_BIT_OFFSET(sz) BYTES_TO_GRANULES(sz)
 #  define FINAL_MARK_BIT(sz)                 \
     ((sz) > MAXOBJBYTES ? MARK_BITS_PER_HBLK \

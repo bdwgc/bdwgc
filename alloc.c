@@ -1080,20 +1080,14 @@ GC_set_fl_marks(ptr_t q)
   struct hblk *h = HBLKPTR(q);
   const struct hblk *last_h = h;
   hdr *hhdr;
-#  ifdef MARK_BIT_PER_OBJ
-  size_t sz;
-#  endif
 
   GC_ASSERT(q != NULL);
   hhdr = HDR(h);
-#  ifdef MARK_BIT_PER_OBJ
-  sz = hhdr->hb_sz;
-#  endif
 #  ifdef GC_ASSERTIONS
   q2 = (ptr_t)obj_link(q);
 #  endif
   for (;;) {
-    size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)q - (ptr_t)h), sz);
+    size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)q - (ptr_t)h), hhdr->hb_sz);
 
     if (!mark_bit_from_hdr(hhdr, bit_no)) {
       set_mark_bit_from_hdr(hhdr, bit_no);
@@ -1121,11 +1115,8 @@ GC_set_fl_marks(ptr_t q)
     h = HBLKPTR(q);
     if (UNLIKELY(h != last_h)) {
       last_h = h;
-      /* Update `hhdr` and `sz`. */
+      /* Update `hhdr`. */
       hhdr = HDR(h);
-#  ifdef MARK_BIT_PER_OBJ
-      sz = hhdr->hb_sz;
-#  endif
     }
   }
 }
