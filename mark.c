@@ -281,12 +281,20 @@ clear_marks_for_block(struct hblk *h, void *dummy)
 
 /* Slow but general routines for setting/clearing/getting mark bits. */
 
+GC_INLINE size_t
+GC_get_hhdr_mark_bit_no(hdr **phhdr, const void *p)
+{
+  const struct hblk *h = HBLKPTR(p);
+
+  *phhdr = HDR(h);
+  return MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)h), (*phhdr)->hb_sz);
+}
+
 GC_API void GC_CALL
 GC_set_mark_bit(const void *p)
 {
-  struct hblk *h = HBLKPTR(p);
-  hdr *hhdr = HDR(h);
-  size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)h), hhdr->hb_sz);
+  hdr *hhdr;
+  size_t bit_no = GC_get_hhdr_mark_bit_no(&hhdr, p);
 
   if (!mark_bit_from_hdr(hhdr, bit_no)) {
     set_mark_bit_from_hdr(hhdr, bit_no);
@@ -297,9 +305,8 @@ GC_set_mark_bit(const void *p)
 GC_API void GC_CALL
 GC_clear_mark_bit(const void *p)
 {
-  struct hblk *h = HBLKPTR(p);
-  hdr *hhdr = HDR(h);
-  size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)h), hhdr->hb_sz);
+  hdr *hhdr;
+  size_t bit_no = GC_get_hhdr_mark_bit_no(&hhdr, p);
 
   if (mark_bit_from_hdr(hhdr, bit_no)) {
     size_t n_marks = hhdr->hb_n_marks;
@@ -324,9 +331,8 @@ GC_clear_mark_bit(const void *p)
 GC_API int GC_CALL
 GC_is_marked(const void *p)
 {
-  struct hblk *h = HBLKPTR(p);
-  hdr *hhdr = HDR(h);
-  size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)h), hhdr->hb_sz);
+  hdr *hhdr;
+  size_t bit_no = GC_get_hhdr_mark_bit_no(&hhdr, p);
 
   return (int)mark_bit_from_hdr(hhdr, bit_no); /*< 0 or 1 */
 }
