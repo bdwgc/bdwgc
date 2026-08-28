@@ -77,8 +77,8 @@ void CORD_ec_flush_buf(CORD_ec x);
                         ? (CORD_ec_flush_buf(x), 0) : 0), \
                  (void)(*(x)[0].ec_bufptr++ = (c)))
 
-/* Append a cord to an extensible cord.  Structure remains shared with  */
-/* original.                                                            */
+/* Append a cord to an extensible cord.  The structure remains shared   */
+/* with the original.                                                   */
 void CORD_ec_append_cord(CORD_ec x, CORD s);
 
 #ifdef __cplusplus

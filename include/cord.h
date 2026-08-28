@@ -13,7 +13,7 @@
 
 /*
  * Cords are immutable character strings.  A number of operations
- * on long cords are much more efficient than their strings.h counterpart.
+ * on long cords are much more efficient than their string.h counterparts.
  * In particular, concatenation takes constant time independent of the length
  * of the arguments.  (Cords are represented as trees, with internal
  * nodes representing concatenation and leaves consisting of either C
@@ -233,7 +233,7 @@ CORD_API int CORD_riter(CORD x, CORD_iter_fn f1, void * client_data);
 /* Must not return.                                                     */
 extern void (* CORD_oom_fn)(void);
 
-/* Dump the representation of x to stdout in an implementation defined  */
+/* Dump the representation of x to stdout in an implementation-defined  */
 /* manner.  Intended for debugging only.                                */
 CORD_API void CORD_dump(CORD x);
 
@@ -274,20 +274,20 @@ CORD_API CORD CORD_chars(char c, size_t i);
 /* the cord.  Short files are likely to be immediately read, but        */
 /* long files are likely to be read on demand, possibly relying on      */
 /* stdio for buffering.                                                 */
-/* We must have exclusive access to the descriptor f, i.e. we may       */
-/* read it at any time, and expect the file pointer to be               */
+/* We must have exclusive access to the file, i.e. we may               */
+/* read it at any time and expect the file current position to be       */
 /* where we left it.  Normally this should be invoked as                */
 /* CORD_from_file(fopen(...)).                                          */
-/* CORD_from_file arranges to close the file descriptor when it is no   */
+/* CORD_from_file arranges to close the file when it is no              */
 /* longer needed (e.g. when the result becomes inaccessible).           */
-/* The file f must be such that ftell reflects the actual character     */
+/* The file must be such that ftell reflects the actual character       */
 /* position in the file, i.e. the number of characters that can be      */
 /* or were read with fread.  On UNIX systems this is always true.       */
-/* On Windows systems, f must be opened in binary mode.                 */
+/* On Windows systems, the file must be opened in binary mode.          */
 CORD_API CORD CORD_from_file(FILE * f);
 
 /* Equivalent to the above, except that the entire file will be read    */
-/* and the file pointer will be closed immediately.                     */
+/* and the file will be closed immediately.                             */
 /* The binary mode restriction from above does not apply.               */
 CORD_API CORD CORD_from_file_eager(FILE * f);
 
