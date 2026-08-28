@@ -22,8 +22,10 @@
  *   - enable more compiler optimizations.
  *
  * Tip: to get the highest level of compiler optimizations, the typical
- * compiler options to use (assuming gcc) are:
- * `-O3 -march=native -fprofile-generate`
+ * compiler options to use (assuming gcc) are: first
+ * `-O3 -march=native -fprofile-generate` to instrument the build,
+ * then run a representative workload, and finally rebuild with
+ * `-O3 -march=native -fprofile-use`.
  *
  * Warning: gcc for Linux (for C++ clients only): use `-fexceptions` both for
  * the collector library and the client as otherwise `GC_thread_exit_proc()`
