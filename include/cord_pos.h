@@ -39,7 +39,7 @@ typedef struct CORD_Pos {
     size_t cur_pos;
     int path_len;
 #       define CORD_POS_INVALID (0x55555555)
-                /* path_len == INVALID <==> position invalid */
+                /* path_len == INVALID <==> the position invalid */
     const char *cur_leaf;       /* Current leaf, if it is a string.     */
                                 /* If the current leaf is a function,   */
                                 /* then this may point to function_buf  */
