@@ -52,7 +52,7 @@ Important options to configure:
 
 
 Unless --prefix is set (or --exec-prefix or one of the more obscure options),
-make install will install libgc.a and libgc.so in /usr/local/bin, which
+make install will install libgc.a and libgc.so in /usr/local/lib, which
 would typically require the "make install" to be run as root.
 
 Most commonly --enable-threads=posix or will be needed.  --enable-parallel-mark
