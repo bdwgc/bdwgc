@@ -46,7 +46,10 @@ typedef struct CORD_Pos {
 
   int path_len;
 
-  /* `path_len` is `CORD_POS_INVALID` if and only if position is invalid. */
+  /*
+   * Note: `path_len` is `CORD_POS_INVALID` if and only if the position is
+   * invalid.
+   */
 #  define CORD_POS_INVALID 0x55555555
 
   /*

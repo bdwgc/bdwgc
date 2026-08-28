@@ -13,8 +13,8 @@
 
 /*
  * Cords are immutable character strings.  A number of operations on long
- * cords are much more efficient than their counterpart in platform
- * `strings.h` file.  In particular, concatenation takes constant time
+ * cords are much more efficient than their counterparts in the platform
+ * `string.h` file.  In particular, concatenation takes constant time
  * independent of the length of the arguments.  (Cords are represented as
  * trees, with internal nodes representing concatenation and leaves
  * consisting of either C strings or a functional description of the string.)
@@ -113,7 +113,7 @@ typedef const char *CORD;
 CORD_API CORD CORD_cat(CORD, CORD);
 
 /**
- * Concatenate a cord and a substring of C string.  Except for the empty
+ * Concatenate a cord and a substring of a C string.  Except for the empty
  * string case, this is a special case of `CORD_cat`.  Since the length of
  * the substring is known, it can be faster.  The string `y` is shared with
  * the resulting cord.  Hence it should not be altered by the caller.
@@ -256,8 +256,8 @@ CORD_API CORD_oom_fn_t CORD_oom_fn;
 #endif
 
 /**
- * Dump the representation of `x` to `stdout` in an implementation
- * defined manner.  Intended for debugging only.
+ * Dump the representation of `x` to `stdout` in an implementation-defined
+ * manner.  Intended for debugging only.
  */
 CORD_API void CORD_dump(CORD /* `x` */);
 
@@ -306,27 +306,26 @@ CORD_API CORD CORD_chars(char /* `c` */, size_t /* `i` */);
 
 /**
  * Turn a file `f` into cord.  The file must be seekable.  Its contents
- * must remain constant.  The file may be accessed as an immediate
- * result of this call and/or as a result of subsequent accesses to
- * the cord.  Short files are likely to be immediately read, but
- * long files are likely to be read on demand, possibly relying on
- * `stdio` for buffering.  We must have exclusive access to the
- * descriptor `f`, i.e. we may read it at any time, and expect the file
- * pointer to be where we left it.  Normally this should be invoked as
- * `CORD_from_file(fopen(...))`.  The latter (`CORD_from_file`)
- * arranges to close the file descriptor when it is no longer needed
- * (e.g. when the result becomes inaccessible).  The file `f` must be
- * such that `ftell` reflects the actual character position in the
- * file, i.e. the number of characters that can be or were read with
- * `fread`.  On UNIX systems this is always true.  On Windows systems,
- * `f` must be opened in binary mode.
+ * must remain constant.  The file may be accessed as an immediate result
+ * of this call and/or as a result of subsequent accesses to the cord.
+ * Short files are likely to be immediately read, but long files are likely
+ * to be read on demand, possibly relying on `stdio` for buffering.
+ * We must have exclusive access to the file, i.e. we may read it at any
+ * time and expect the file current position to be where we left it.
+ * Normally this should be invoked as `CORD_from_file(fopen(...))`.
+ * The latter (`CORD_from_file`) arranges to close the file when it is
+ * no longer needed (e.g. when the result becomes inaccessible).
+ * The file must be such that `ftell` reflects the actual character position
+ * in the file, i.e. the number of characters that can be or were read with
+ * `fread`.  On UNIX systems this is always true.  On Windows systems, the
+ * file must be opened in binary mode.
  */
 CORD_API CORD CORD_from_file(FILE * /* `f` */);
 
 /**
- * Equivalent to `CORD_from_file`, except that the entire file will be
- * read and the file pointer will be closed immediately.  The binary mode
- * restriction of `CORD_from_file` does not apply.
+ * Equivalent to `CORD_from_file`, except that the entire file will be read
+ * and the file will be closed immediately.  The binary mode restriction
+ * of `CORD_from_file` does not apply.
  */
 CORD_API CORD CORD_from_file_eager(FILE *);
 

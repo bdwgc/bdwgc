@@ -16,7 +16,7 @@ check_PROGRAMS += cordtest
 cordtest_SOURCES = cord/tests/cordtest.c
 cordtest_LDADD = $(top_builddir)/libcord.la
 
-## In case of static libraries build, `libgc.a` file is already referenced in
+## In case of a static library build, `libgc.a` file is already referenced in
 ## `dependency_libs` attribute of `libcord.la` file.
 if ENABLE_SHARED
 cordtest_LDADD += $(top_builddir)/libgc.la
