@@ -63,8 +63,8 @@ void CORD_ec_flush_buf(CORD_ec x);
 	*((x)[0].ec_bufptr)++ = (c); \
     }
 
-/* Append a cord to an extensible cord.  Structure remains shared with 	*/
-/* original.								*/
+/* Append a cord to an extensible cord.  The structure remains shared   */
+/* with the original.                                                   */
 void CORD_ec_append_cord(CORD_ec x, CORD s);
 
 # endif /* EC_H */
