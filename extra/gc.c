@@ -75,7 +75,7 @@
 # include "../pthread_start.c"
 #endif
 
-/* Restore pthread calls redirection (if altered in             */
+/* Restore pthreads call redirection (if altered in             */
 /* pthread_stop_world.c, pthread_support.c or win32_threads.c). */
 /* This is only useful if directly included from application    */
 /* (instead of linking gc).                                     */
