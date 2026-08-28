@@ -85,8 +85,8 @@
 #endif
 
 /*
- * Restore `pthreads` calls redirection (if altered in `pthread_stop_world.c`
- * or `pthread_support.c` file).  This is only useful if directly included
+ * Restore `pthreads` call redirection (if altered in `pthread_stop_world.c`
+ * or `pthread_support.c` files).  This is only useful if directly included
  * from client code (instead of linking with `gc.o` file).
  */
 #if !defined(GC_NO_THREAD_REDIRECTS) && defined(GC_PTHREADS)
@@ -94,4 +94,4 @@
 #  include "gc/gc_pthread_redirects.h"
 #endif
 
-/* Note: the files from `extra` folder are not included. */
+/* Note: the files from the `extra` folder are not included. */
