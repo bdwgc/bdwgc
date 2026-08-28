@@ -61,8 +61,8 @@ Some of important options to configure:
 
 On UNIX-like platforms, unless `--prefix` is set (or `--exec-prefix`, or one
 of the more obscure options), `make install` will install `libgc.a` and
-`libgc.so` in `/usr/local/lib` and `/usr/local/bin`, respectively, which would
-typically require the `make install` to be run as root.
+`libgc.so` in `/usr/local/lib`, which would typically require the
+`make install` to be run as root.
 
 It is not recommended to turn off parallel marking for multiprocessors unless
 some issues exist with the feature on the target platform.
