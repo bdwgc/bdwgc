@@ -832,21 +832,20 @@ GC_print_free_list(int kind, size_t lg)
 #endif /* !NO_DEBUGGING */
 
 /*
- * Clear all `obj_link` pointers in the list of free objects `*flp`.
- * Clear `*flp`.  This must be done before dropping a list of free
- * `gcj`-style objects, since may otherwise end up with dangling
- * "descriptor" pointers.  It may help for other pointer-containing
- * objects.
+ * Clear all next-object pointers in the free list.  This must be done
+ * before dropping a list of free `gcj`-style objects, since may otherwise
+ * end up with dangling "descriptor" pointers.  It may help for other
+ * pointer-containing objects.
  */
-STATIC void
-GC_clear_fl_links(void **flp)
+static void
+clear_fl_links(void *fl)
 {
-  void *next;
+  do {
+    void **flp = &obj_link(fl);
 
-  for (next = *flp; next != NULL; next = *flp) {
+    fl = *flp;
     *flp = NULL;
-    flp = &obj_link(next);
-  }
+  } while (fl != NULL);
 }
 
 GC_INNER void
@@ -865,7 +864,6 @@ GC_start_reclaim(GC_bool report_if_found)
   /* Clear reclaim- and free-lists. */
   for (kind = 0; kind < (int)GC_n_kinds; kind++) {
     struct hblk **rlist = GC_obj_kinds[kind].ok_reclaim_list;
-    GC_bool should_clobber = GC_obj_kinds[kind].ok_descriptor != 0;
 
     if (NULL == rlist) {
       /* Means this object kind is not used. */
@@ -873,17 +871,16 @@ GC_start_reclaim(GC_bool report_if_found)
     }
 
     if (!report_if_found) {
-      void **fop;
-      void **lim = &GC_obj_kinds[kind].ok_freelist[MAXOBJGRANULES + 1];
+      GC_bool should_clobber = GC_obj_kinds[kind].ok_descriptor != 0;
+      size_t lg;
 
-      for (fop = GC_obj_kinds[kind].ok_freelist;
-           ADDR_LT((ptr_t)fop, (ptr_t)lim); fop++) {
-        if (*fop != NULL) {
-          if (should_clobber) {
-            GC_clear_fl_links(fop);
-          } else {
-            *fop = NULL;
-          }
+      for (lg = 1; lg <= MAXOBJGRANULES; lg++) {
+        void *fl = GC_obj_kinds[kind].ok_freelist[lg];
+
+        if (fl != NULL) {
+          GC_obj_kinds[kind].ok_freelist[lg] = NULL;
+          if (should_clobber)
+            clear_fl_links(fl);
         }
       }
     } else {
