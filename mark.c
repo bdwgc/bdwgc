@@ -1105,6 +1105,9 @@ GC_steal_mark_stack(mse *low, mse *high, mse *local, size_t n_to_get,
   mse *top = local - 1;
   size_t i = 0;
 
+#  ifdef CPPCHECK
+  GC_noop1_ptr(local);
+#  endif
   GC_ASSERT(ADDR_GE((ptr_t)high, (ptr_t)(low - 1))
             && (word)(high - low + 1) <= GC_mark_stack_size);
   for (p = low; ADDR_GE((ptr_t)high, (ptr_t)p) && i <= n_to_get; ++p) {

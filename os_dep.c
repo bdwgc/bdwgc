@@ -5342,6 +5342,9 @@ GC_mprotect_thread(void *arg)
   struct mp_reply_s reply;
   struct mp_msg_s msg;
 
+#  ifdef CPPCHECK
+  GC_noop1_ptr(arg);
+#  endif
   if (ADDR(arg) == GC_WORD_MAX)
     return NULL; /*< to prevent a compiler warning */
 #  if defined(CPPCHECK)
