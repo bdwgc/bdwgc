@@ -55,7 +55,7 @@ jobs:
       - name: Set cppcheck version
         id: version
         run: |
-          CPPCHECK_VER=2.20.1
+          CPPCHECK_VER=2.21.1
           echo "version=$CPPCHECK_VER" >> $GITHUB_OUTPUT
           echo "cache_key=cppcheck-$CPPCHECK_VER" >> $GITHUB_OUTPUT
 
