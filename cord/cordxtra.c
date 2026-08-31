@@ -601,7 +601,7 @@ CORD_lf_func(size_t i, void *client_data)
   lf_state *state = (lf_state *)client_data;
   cache_line *volatile *cl_addr
       = &state->lf_cache[DIV_LINE_SZ(MOD_CACHE_SZ(i))];
-  cache_line *cl;
+  const cache_line *cl;
 
 #ifdef CORD_USE_GCC_ATOMIC
   cl = (cache_line *)__atomic_load_n(cl_addr, __ATOMIC_ACQUIRE);

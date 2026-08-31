@@ -473,7 +473,7 @@ GC_base(void *p)
 GC_API int GC_CALL
 GC_is_heap_ptr(const void *p)
 {
-  bottom_index *bi;
+  const bottom_index *bi;
 
   GC_ASSERT(GC_is_initialized);
   GET_BI(p, bi);
