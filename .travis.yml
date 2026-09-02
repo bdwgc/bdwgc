@@ -63,12 +63,6 @@ jobs:
         - LIBTOOL_VER=2.5.4
         - M4_VER=1.4.21
         - NO_CLONE_LIBATOMIC_OPS=true
-    - arch: ppc64le
-      compiler: gcc
-      env:
-        - CONF_OPTIONS="--enable-cplusplus"
-        - GCTEST_WITH_MPROTECT_VDB=true
-        - NO_CLONE_LIBATOMIC_OPS=true
     - arch: s390x
       compiler: clang
       env:
