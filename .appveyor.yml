@@ -11,7 +11,7 @@ environment:
   DJGPP_VER: 3.4
   DJGPP_GCC_VER: 1220
   DMC_VER: 857
-  WATCOM_VER: 2026-06-01
+  WATCOM_VER: 2026-09-01
   CMAKE_CONFIG: Debug
   TEST_TARGET: check
   DJGPP_URL: "https://github.com/andrewwutw/build-djgpp/releases/\
