@@ -863,7 +863,8 @@ GC_start_reclaim(GC_bool report_if_found)
 
   /* Clear reclaim- and free-lists. */
   for (kind = 0; kind < (int)GC_n_kinds; kind++) {
-    struct hblk **rlist = GC_obj_kinds[kind].ok_reclaim_list;
+    struct obj_kind *ok = &GC_obj_kinds[kind];
+    struct hblk **rlist = ok->ok_reclaim_list;
 
     if (NULL == rlist) {
       /* Means this object kind is not used. */
@@ -871,15 +872,14 @@ GC_start_reclaim(GC_bool report_if_found)
     }
 
     if (!report_if_found) {
-      GC_bool should_clobber = GC_obj_kinds[kind].ok_descriptor != 0;
       size_t lg;
 
       for (lg = 1; lg <= MAXOBJGRANULES; lg++) {
-        void *fl = GC_obj_kinds[kind].ok_freelist[lg];
+        void *fl = ok->ok_freelist[lg];
 
         if (fl != NULL) {
-          GC_obj_kinds[kind].ok_freelist[lg] = NULL;
-          if (should_clobber)
+          ok->ok_freelist[lg] = NULL;
+          if (ok->ok_descriptor != 0) /*< should clobber? */
             clear_fl_links(fl);
         }
       }
