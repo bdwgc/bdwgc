@@ -170,6 +170,7 @@ GC_new_hblk(size_t lg, int kind)
 
   GC_STATIC_ASSERT(sizeof(struct hblk) == HBLKSIZE);
   GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(lg > 0 && lg <= MAXOBJGRANULES);
   /* Allocate a new heap block. */
   h = GC_allochblk(lb_adjusted, kind, 0 /* `flags` */, 0 /* `align_m1` */);
   if (UNLIKELY(NULL == h))

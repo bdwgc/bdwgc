@@ -1996,7 +1996,7 @@ GC_allocobj(size_t lg, int kind)
 {
 #define MAX_ALLOCOBJ_RETRIES 3
   int retry_cnt = 0;
-  void **flh = &GC_obj_kinds[kind].ok_freelist[lg];
+  void **flh;
 #ifndef GC_DISABLE_INCREMENTAL
   GC_bool tried_minor = FALSE;
 #endif
@@ -2005,7 +2005,9 @@ GC_allocobj(size_t lg, int kind)
   GC_ASSERT(GC_is_initialized);
   if (UNLIKELY(0 == lg))
     return NULL;
+  GC_ASSERT(lg <= MAXOBJGRANULES);
 
+  flh = &GC_obj_kinds[kind].ok_freelist[lg];
   while (NULL == *flh) {
     /*
      * Only a few iterations are expected at most, otherwise something

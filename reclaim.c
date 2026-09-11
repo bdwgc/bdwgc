@@ -922,6 +922,7 @@ GC_continue_reclaim(size_t lg, int kind)
   void **flh;
 
   GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(lg > 0 && lg <= MAXOBJGRANULES);
   if (NULL == rlh) {
     /* No blocks of this kind. */
     return;
