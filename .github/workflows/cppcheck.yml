@@ -56,17 +56,16 @@ jobs:
         id: version
         run: |
           CPPCHECK_VER=2.21.1
+          KEY_SUFF=${{ runner.os }}-${{ runner.arch }}
           echo "version=$CPPCHECK_VER" >> $GITHUB_OUTPUT
-          echo "cache_key=cppcheck-$CPPCHECK_VER" >> $GITHUB_OUTPUT
+          echo "cache_key=cppcheck-$CPPCHECK_VER-$KEY_SUFF" >> $GITHUB_OUTPUT
 
       - name: Cache cppcheck
         id: cache-cppcheck
         uses: actions/cache@v5
         with:
           path: ~/cppcheck-install
-          key: >-
-            ${{ steps.version.outputs.cache_key }}-${{ runner.os }}
-            -${{ runner.arch }}
+          key: ${{ steps.version.outputs.cache_key }}
 
       - name: Download and make cppcheck
         if: steps.cache-cppcheck.outputs.cache-hit != 'true'
