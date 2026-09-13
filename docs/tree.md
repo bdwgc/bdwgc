@@ -100,7 +100,7 @@ contributed originally by Dave Barrett.
    ^       |              |   |                   |                  |
    |       |              |   |                   |                  |
  TOP_SZ    +--------------+<--+                   |                  |
- (items)+-<|      []      | * if 0<bi<HBLKSIZE    |                  |
+ (items)+-<|      []      | (*) if 0<bi<HBLKSIZE  |                  |
    |    |  +--------------+ then large object     |                  |
    |    |  |              | starts at the bi'th   |                  |
    v    |  |              | hblk before p.        |             i    |
@@ -108,55 +108,56 @@ contributed originally by Dave Barrett.
         v                                         |         aligned) |
     bi= |GET_BI(p){->hash_link}->key==hi          |                  |
         v                                         |                  |
-        |   (bottom_index)  \ GC_scratch_alloc'd  |          +-------+
-        |    (struct bi)    / by get_index()      |          |
-  ---   +->+--------------+                       |          |
-   ^       |              |                       |          |
-   |       |              |                       |          |
- BOTTOM_SZ |              |   ha=GET_HDR_ADDR(p)  |          |
- (items)   +--------------+<----------------------+          |
-   |   +--<|   index[]    |                                  |
-   |   |   +--------------+                      GC_obj_map: v
-   |   |   |              |              from      / +-+-+-----+-+-+-+-+  ---
-   v   |   |              |       GC_add_map_entry <0| | |     | | | | |   ^
-  ---  |   +--------------+                        \ +-+-+-----+-+-+-+-+   |
-       |   |   asc_link   |                          +-+-+-----+-+-+-+-+ MAXOBJGRANULES
-       |   +--------------+                      +-->| | |  j  | | | | |  +1
-       |   |     key      |                      |   +-+-+-----+-+-+-+-+   |
-       |   +--------------+                      |   +-+-+-----+-+-+-+-+   |
-       |   |  hash_link   |                      |   | | |     | | | | |   v
-       |   +--------------+                      |   +-+-+-----+-+-+-+-+  ---
-       |                                         |   |<--OBJ_MAP_LEN-->|
-       |                                         |   =HBLKSIZE/GC_GRANULE_BYTES
- HDR(p)|      GC_find_header(p)                  |    (1024 elements on Alpha)
-       |            \ from                       +--+ (8/16 bits each)
-       |      (hdr) / alloc_hdr()                   |
-       +---->+----------------------------------+   |
-   GET_HDR(p)| struct hblk * hb_next            |   |
-             +----------------------------------+   |
-             | ...                              |   |
-             +----------------------------------+   |
-             | unsigned char hb_obj_kind        |   |
-             +----------------------------------+   |
-             | unsigned char hb_flags           |   |
-             +----------------------------------+   |
-             | unsigned short hb_last_reclaimed |   |
-             +----------------------------------+   |
-             | size_t        hb_sz              |   |
-             +----------------------------------+   |
-             | word          hb_descr           |   |
-             +----------------------------------+   |
-             | unsigned char/short *hb_map      |>--+
-             +----------------------------------+
-             | AO_t          hb_n_marks         |
-    ---      +----------------------------------+
-     ^       |                                  | * if hdr is free, hb_sz is
-     |       |                                  | the size of a heap chunk
- HB_MARKS_SZ | char/AO_t     hb_marks[]         | (struct hblk) of at least
-     |       |                                  | MINHINCR*HBLKSIZE bytes
-     |       |                                  | (below); otherwise, size of
-     v       |                                  | each object in chunk.
-    ---      +----------------------------------+
+        |   (bottom_index)  \ GC_scratch_alloc'd  |        +---------+
+        |    (struct bi)    / by get_index()      |        |
+  ---   +->+--------------+                       |        |
+   ^       |              |                       |        |
+   |       |              |                       |        |
+ BOTTOM_SZ |              |   ha=GET_HDR_ADDR(p)  |        |
+ (items)   +--------------+<----------------------+        |
+   |   +--<|   index[]    |                                |
+   |   |   +--------------+                    GC_obj_map: v
+   |   |   |              |            from      / +-+-+-----+-+-+-+-+  ---
+   v   |   |              |     GC_add_map_entry <0| | |     | | | | |   ^
+  ---  |   +--------------+                      \ +-+-+-----+-+-+-+-+   |
+       |   |   asc_link   |                        +-+-+-----+-+-+-+-+ MAXOBJGRANULES
+       |   +--------------+                    +-->| | |  j  | | | | |  +1
+       |   |     key      |                    |   +-+-+-----+-+-+-+-+   |
+       |   +--------------+                    |   +-+-+-----+-+-+-+-+   |
+       |   |  hash_link   |                    |   | | |     | | | | |   v
+       |   +--------------+                    |   +-+-+-----+-+-+-+-+  ---
+       |                                       |   |<--OBJ_MAP_LEN-->|
+       |                                       |   =HBLKSIZE / GC_GRANULE_BYTES
+ HDR(p)|      GC_find_header(p)                |    (1024 elements on Alpha)
+       |            \ from                     |    (8/16 bits each)
+       |      (hdr) / alloc_hdr()              |
+       +---->+-----------------------------+   |
+   GET_HDR(p)| struct hblk * hb_next       |   |
+             +-----------------------------+   |
+             | ...                         |   |
+             +-----------------------------+   |
+             | unsigned char hb_obj_kind   |   |
+             +-----------------------------+   |
+             | unsigned char hb_flags      |   |
+             +-----------------------------+   |
+             | unsigned short              |   |
+             |           hb_last_reclaimed |   |
+             +-----------------------------+   |
+             | size_t        hb_sz         |   |
+             +-----------------------------+   |
+             | word          hb_descr      |   |
+             +-----------------------------+   |
+             | unsigned char/short *hb_map |>--+
+             +-----------------------------+
+             | AO_t          hb_n_marks    |
+    ---      +-----------------------------+
+     ^       |                             | (*) if hdr is free, hb_sz is
+     |       |                             | the size of a heap chunk
+ HB_MARKS_SZ | char/AO_t     hb_marks[]    | (struct hblk) of at least
+     |       |                             | MINHINCR * HBLKSIZE bytes
+     |       |                             | (below); otherwise, size of
+     v       |                             | each object in chunk.
+    ---      +-----------------------------+
 ```
 
 Dynamic data structures above are interleaved throughout the heap in blocks
