@@ -167,6 +167,7 @@ GC_new_hblk(size_t lg, int kind)
 {
   struct hblk *h; /*< the new heap block */
   size_t lb_adjusted = GRANULES_TO_BYTES(lg);
+  struct obj_kind *ok = &GC_obj_kinds[kind];
 
   GC_STATIC_ASSERT(sizeof(struct hblk) == HBLKSIZE);
   GC_ASSERT(I_HOLD_LOCK());
@@ -181,9 +182,8 @@ GC_new_hblk(size_t lg, int kind)
     GC_set_hdr_marks(HDR(h));
 
   /* Build the free list. */
-  GC_obj_kinds[kind].ok_freelist[lg]
-      = GC_build_fl(h, (ptr_t)GC_obj_kinds[kind].ok_freelist[lg], lg,
-                    GC_debugging_started || GC_obj_kinds[kind].ok_init);
+  ok->ok_freelist[lg] = GC_build_fl(h, (ptr_t)ok->ok_freelist[lg], lg,
+                                    ok->ok_init || GC_debugging_started);
 }
 
 /*
