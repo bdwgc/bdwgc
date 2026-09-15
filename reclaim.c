@@ -230,13 +230,8 @@ GC_block_nearly_full(const hdr *hhdr, size_t sz)
   return hhdr->hb_n_marks > HBLK_OBJS(sz) * 7 / 8;
 }
 
-/*
- * TODO: This should perhaps again be specialized for `USE_MARK_BYTES`
- * and `USE_MARK_BITS` cases.
- */
-
 GC_INLINE ptr_t
-GC_clear_block(ptr_t q, size_t sz, word *pcount)
+GC_clear_block(ptr_t q, size_t sz)
 {
   ptr_t *p = (ptr_t *)q;
   ptr_t plim = q + sz;
@@ -257,73 +252,7 @@ GC_clear_block(ptr_t q, size_t sz, word *pcount)
     *p++ = NULL;
   }
 #endif
-  *pcount += sz;
   return (ptr_t)p;
-}
-
-/*
- * Restore unmarked small objects in `h` of size `sz` (in bytes) to the
- * object free list.  Returns the new list.  Clears unmarked objects.
- */
-STATIC ptr_t
-GC_reclaim_clear(struct hblk *hbp, const hdr *hhdr, size_t sz, ptr_t list,
-                 word *pcount)
-{
-  size_t bit_no;
-  ptr_t p, plim;
-
-  GC_ASSERT(hhdr == GC_find_header(hbp));
-#ifndef THREADS
-  GC_ASSERT(sz == hhdr->hb_sz);
-#else
-  /* Skip the assertion because of a potential race with `GC_realloc`. */
-#endif
-  GC_ASSERT((sz & (sizeof(ptr_t) - 1)) == 0);
-
-  /* Go through all objects in the block. */
-  p = hbp->hb_body;
-  plim = p + HBLKSIZE - sz;
-  for (bit_no = 0; ADDR_GE(plim, p); bit_no += MARK_BIT_OFFSET(sz)) {
-    if (mark_bit_from_hdr(hhdr, bit_no)) {
-      p += sz;
-    } else {
-      /* The object is available - put it on list. */
-      obj_link(p) = list;
-      list = p;
-      FREE_PROFILER_HOOK(p);
-      p = GC_clear_block(p, sz, pcount);
-    }
-  }
-  return list;
-}
-
-/* The same thing as `GC_reclaim_clear`, but do not clear objects. */
-STATIC ptr_t
-GC_reclaim_uninit(struct hblk *hbp, const hdr *hhdr, size_t sz, ptr_t list,
-                  word *pcount)
-{
-  size_t bit_no;
-  word n_bytes_found = 0;
-  ptr_t p, plim;
-
-#ifndef THREADS
-  GC_ASSERT(sz == hhdr->hb_sz);
-#endif
-
-  /* Go through all objects in the block. */
-  p = hbp->hb_body;
-  plim = (ptr_t)hbp + HBLKSIZE - sz;
-  for (bit_no = 0; ADDR_GE(plim, p); bit_no += MARK_BIT_OFFSET(sz), p += sz) {
-    if (!mark_bit_from_hdr(hhdr, bit_no)) {
-      n_bytes_found += sz;
-      /* The object is available - put it on list. */
-      obj_link(p) = list;
-      list = p;
-      FREE_PROFILER_HOOK(p);
-    }
-  }
-  *pcount += n_bytes_found;
-  return list;
 }
 
 #ifdef ENABLE_DISCLAIM
@@ -358,12 +287,80 @@ GC_disclaim_and_reclaim(struct hblk *hbp, hdr *hhdr, size_t sz, ptr_t list,
       obj_link(p) = list;
       list = p;
       FREE_PROFILER_HOOK(p);
-      p = GC_clear_block(p, sz, pcount);
+      p = GC_clear_block(p, sz);
+      *pcount += sz;
     }
   }
   return list;
 }
 #endif /* ENABLE_DISCLAIM */
+
+/*
+ * Restore unmarked small objects in `h` of size `sz` (in bytes) to the
+ * object free list.  Returns the new list.  Clears unmarked objects.
+ */
+STATIC ptr_t
+GC_reclaim_clear(struct hblk *hbp, const hdr *hhdr, size_t sz, ptr_t list,
+                 word *pcount)
+{
+  size_t bit_no;
+  ptr_t p, plim;
+
+  GC_ASSERT(hhdr == GC_find_header(hbp));
+#ifndef THREADS
+  GC_ASSERT(sz == hhdr->hb_sz);
+#else
+  /* Skip the assertion because of a potential race with `GC_realloc`. */
+#endif
+  GC_ASSERT((sz & (sizeof(ptr_t) - 1)) == 0);
+
+  /* Go through all objects in the block. */
+  p = hbp->hb_body;
+  plim = p + HBLKSIZE - sz;
+  for (bit_no = 0; ADDR_GE(plim, p); bit_no += MARK_BIT_OFFSET(sz)) {
+    if (mark_bit_from_hdr(hhdr, bit_no)) {
+      p += sz;
+    } else {
+      /* The object is available - put it on list. */
+      obj_link(p) = list;
+      list = p;
+      FREE_PROFILER_HOOK(p);
+      p = GC_clear_block(p, sz);
+      *pcount += sz;
+    }
+  }
+  return list;
+}
+
+/* The same thing as `GC_reclaim_clear`, but do not clear objects. */
+STATIC ptr_t
+GC_reclaim_uninit(struct hblk *hbp, const hdr *hhdr, size_t sz, ptr_t list,
+                  word *pcount)
+{
+  size_t bit_no;
+  word n_bytes_found = 0;
+  ptr_t p, plim;
+
+#ifndef THREADS
+  GC_ASSERT(sz == hhdr->hb_sz);
+#endif
+
+  /* Go through all objects in the block. */
+  p = hbp->hb_body;
+  plim = (ptr_t)hbp + HBLKSIZE - sz;
+  for (bit_no = 0; ADDR_GE(plim, p); bit_no += MARK_BIT_OFFSET(sz)) {
+    if (!mark_bit_from_hdr(hhdr, bit_no)) {
+      n_bytes_found += sz;
+      /* The object is available - put it on list. */
+      obj_link(p) = list;
+      list = p;
+      FREE_PROFILER_HOOK(p);
+    }
+    p += sz;
+  }
+  *pcount += n_bytes_found;
+  return list;
+}
 
 #ifndef NO_FIND_LEAK
 
@@ -530,7 +527,7 @@ GC_disclaim_and_reclaim_or_free_small_block(struct hblk *hbp)
   hhdr->hb_last_reclaimed = (unsigned short)GC_gc_no;
   flh_next = GC_reclaim_generic(hbp, hhdr, sz, ok->ok_init, (ptr_t)(*flh),
                                 (/* unsigned */ word *)&GC_bytes_found);
-  if (hhdr->hb_n_marks) {
+  if (!GC_block_empty(hhdr)) {
     *flh = flh_next;
   } else {
     GC_ASSERT(hbp == hhdr->hb_block);
@@ -607,7 +604,6 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
       }
     }
   } else {
-    GC_bool empty = GC_block_empty(hhdr);
 
 #ifdef PARALLEL_MARK
     /*
@@ -630,7 +626,7 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
 #ifndef NO_FIND_LEAK
       GC_reclaim_small_nonempty_block(hbp, sz, TRUE /* `report_if_found` */);
 #endif
-    } else if (empty) {
+    } else if (GC_block_empty(hhdr)) {
 #ifdef ENABLE_DISCLAIM
       if ((hhdr->hb_flags & HAS_DISCLAIM) != 0) {
         GC_disclaim_and_reclaim_or_free_small_block(hbp);
