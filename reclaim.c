@@ -625,23 +625,6 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
 #else
     GC_ASSERT(sz * hhdr->hb_n_marks <= HBLKSIZE);
 #endif
-#ifdef VALGRIND_TRACKING
-    /*
-     * Call `GC_free_profiler_hook()` on freed objects so that
-     * a profiling tool could track the allocations.
-     */
-    {
-      ptr_t p = hbp->hb_body;
-      ptr_t plim = p + HBLKSIZE - sz;
-      size_t bit_no;
-
-      for (bit_no = 0; ADDR_GE(plim, p);
-           bit_no += MARK_BIT_OFFSET(sz), p += sz) {
-        if (!mark_bit_from_hdr(hhdr, bit_no))
-          FREE_PROFILER_HOOK(p);
-      }
-    }
-#endif
     GC_ASSERT(hbp == hhdr->hb_block);
     if (report_if_found) {
 #ifndef NO_FIND_LEAK
@@ -654,9 +637,19 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
       } else
 #endif
       /* else */ {
+#ifdef VALGRIND_TRACKING
+        /*
+         * Call `GC_free_profiler_hook()` on every object of the empty block
+         * so that a profiling tool could track the allocations.
+         */
+        ptr_t p = hbp->hb_body;
+        ptr_t plim = p + HBLKSIZE - sz;
+
+        for (; ADDR_GE(plim, p); p += sz)
+          FREE_PROFILER_HOOK(p);
+#endif
         GC_bytes_found += (GC_signed_word)HBLKSIZE;
         GC_freehblk(hbp);
-        FREE_PROFILER_HOOK(hbp);
       }
     } else if (GC_find_leak_inner || !GC_block_nearly_full(hhdr, sz)) {
       /* Group of smaller objects, enqueue the real work. */
