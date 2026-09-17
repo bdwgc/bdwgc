@@ -509,8 +509,8 @@ GC_reclaim_small_nonempty_block(struct hblk *hbp, size_t sz,
 }
 
 #ifdef ENABLE_DISCLAIM
-STATIC void
-GC_disclaim_and_reclaim_or_free_small_block(struct hblk *hbp)
+STATIC GC_bool
+GC_disclaim_and_reclaim_small_block(struct hblk *hbp)
 {
   hdr *hhdr;
   size_t sz;
@@ -527,13 +527,11 @@ GC_disclaim_and_reclaim_or_free_small_block(struct hblk *hbp)
   hhdr->hb_last_reclaimed = (unsigned short)GC_gc_no;
   flh_next = GC_reclaim_generic(hbp, hhdr, sz, ok->ok_init, (ptr_t)(*flh),
                                 (/* unsigned */ word *)&GC_bytes_found);
-  if (!GC_block_empty(hhdr)) {
-    *flh = flh_next;
-  } else {
-    GC_ASSERT(hbp == hhdr->hb_block);
-    GC_bytes_found += (GC_signed_word)HBLKSIZE;
-    GC_freehblk(hbp);
-  }
+  if (GC_block_empty(hhdr))
+    return FALSE;
+
+  *flh = flh_next;
+  return TRUE;
 }
 #endif /* ENABLE_DISCLAIM */
 
@@ -628,8 +626,9 @@ GC_reclaim_block(struct hblk *hbp, void *report_if_found)
 #endif
     } else if (GC_block_empty(hhdr)) {
 #ifdef ENABLE_DISCLAIM
-      if ((hhdr->hb_flags & HAS_DISCLAIM) != 0) {
-        GC_disclaim_and_reclaim_or_free_small_block(hbp);
+      if ((hhdr->hb_flags & HAS_DISCLAIM) != 0
+          && GC_disclaim_and_reclaim_small_block(hbp)) {
+        /* No-op. */
       } else
 #endif
       /* else */ {
