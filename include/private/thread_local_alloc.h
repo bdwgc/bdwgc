@@ -91,7 +91,7 @@ typedef struct thread_local_freelists {
 # define ptrfree_freelists _freelists[PTRFREE]
 # define normal_freelists _freelists[NORMAL]
         /* Note: Preserve *_freelists names for some clients.   */
-# ifdef GC_GCJ_SUPPORT
+# ifdef THREAD_GCJ_FREELISTS
     void * gcj_freelists[TINY_FREELISTS];
 #   define ERROR_FL ((void *)(word)-1)
         /* Value used for gcj_freelists[-1]; allocation is      */
