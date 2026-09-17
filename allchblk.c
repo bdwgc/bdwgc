@@ -221,6 +221,18 @@ GC_API void GC_CALL GC_dump_regions(void)
 
 # endif /* NO_DEBUGGING */
 
+/* Setup hhdr to make it look like a valid block. */
+static void setup_fake_header(hdr *hhdr)
+{
+    GC_ASSERT(NULL == hhdr -> hb_valid_ds_bitmap);
+    hhdr -> hb_sz = HBLKSIZE;
+    hhdr -> hb_descr = 0;
+#   ifdef MARK_BIT_PER_GRANULE
+        hhdr -> hb_flags |= LARGE_BLOCK;
+        hhdr -> hb_map = 0;
+#   endif
+}
+
 /* Initialize hdr for a block containing the indicated size and         */
 /* kind of objects.                                                     */
 /* Return FALSE on failure.                                             */
@@ -228,7 +240,9 @@ static GC_bool setup_header(hdr * hhdr, struct hblk *block, size_t byte_sz,
                             int kind, unsigned flags)
 {
     word descr;
+    size_t lg;
 
+    GC_ASSERT(NULL == hhdr -> hb_valid_ds_bitmap);
 #   ifdef MARK_BIT_PER_GRANULE
       if (byte_sz > MAXOBJBYTES)
         flags |= LARGE_BLOCK;
@@ -249,6 +263,7 @@ static GC_bool setup_header(hdr * hhdr, struct hblk *block, size_t byte_sz,
       if (GC_obj_kinds[kind].ok_relocate_descr) descr += byte_sz;
       hhdr -> hb_descr = descr;
 
+      lg = BYTES_TO_GRANULES(byte_sz);
 #   ifdef MARK_BIT_PER_OBJ
      /* Set hb_inv_sz as portably as possible.                          */
      /* We set it to the smallest value such that sz * inv_sz >= 2**32  */
@@ -274,22 +289,19 @@ static GC_bool setup_header(hdr * hhdr, struct hblk *block, size_t byte_sz,
       }
 #   endif
 #   ifdef MARK_BIT_PER_GRANULE
-    {
-      size_t granules = BYTES_TO_GRANULES(byte_sz);
-
-      if (EXPECT(!GC_add_map_entry(granules), FALSE)) {
-        /* Make it look like a valid block. */
-        hhdr -> hb_sz = HBLKSIZE;
-        hhdr -> hb_descr = 0;
-        hhdr -> hb_flags |= LARGE_BLOCK;
-        hhdr -> hb_map = 0;
+      if (EXPECT(!GC_add_map_entry(lg), FALSE)) {
+        setup_fake_header(hhdr);
         return FALSE;
       }
       hhdr -> hb_map = GC_obj_map[(hhdr -> hb_flags & LARGE_BLOCK) != 0 ?
-                                    0 : granules];
-    }
+                                    0 : lg];
 #   endif /* MARK_BIT_PER_GRANULE */
 
+    if (IS_INDIR_PER_OBJ_DESCR(descr) && lg <= MAXOBJGRANULES
+        && EXPECT(!GC_alloc_valid_ds_bitmap(hhdr), FALSE)) {
+      setup_fake_header(hhdr);
+      return FALSE;
+    }
     /* Clear mark bits */
     GC_clear_hdr_marks(hhdr);
 
@@ -384,6 +396,7 @@ STATIC void GC_add_to_fl(struct hblk *h, hdr *hhdr)
       GC_ASSERT(prev == 0 || !HBLK_IS_FREE(prevhdr)
                 || (GC_heapsize & SIGNB) != 0);
 #   endif
+    GC_ASSERT(NULL == hhdr -> hb_valid_ds_bitmap);
     GC_ASSERT(((hhdr -> hb_sz) & (HBLKSIZE-1)) == 0);
     GC_hblkfreelist[index] = h;
     GC_free_bytes[index] += hhdr -> hb_sz;
@@ -939,6 +952,7 @@ GC_INNER void GC_freehblk(struct hblk *hbp)
     word size;
 
     GET_HDR(hbp, hhdr);
+    GC_ASSERT(NULL == hhdr -> hb_valid_ds_bitmap);
     size = HBLKSIZE * OBJ_SZ_TO_BLOCKS(hhdr->hb_sz);
     if ((size & SIGNB) != 0)
       ABORT("Deallocating excessively large block.  Too large an allocation?");
