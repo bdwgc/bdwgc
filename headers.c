@@ -167,13 +167,12 @@ GC_scratch_alloc(size_t bytes)
 static hdr *
 alloc_hdr(void)
 {
-  hdr *result;
+  hdr *result = GC_hdr_free_list;
 
   GC_ASSERT(I_HOLD_LOCK());
-  if (NULL == GC_hdr_free_list) {
+  if (NULL == result) {
     result = (hdr *)GC_scratch_alloc(sizeof(hdr));
   } else {
-    result = GC_hdr_free_list;
     GC_hdr_free_list = (hdr *)result->hb_next;
   }
   return result;
