@@ -144,6 +144,9 @@ contributed originally by Dave Barrett.
                 +----------------------+             |
                 | ushort *hb_map       |>------------+
                 +----------------------+
+                | valid_ds_bitmap_t *  |
+                |   hb_valid_ds_bitmap |
+                +----------------------+
                 | AO_t   hb_n_marks    |
        ---      +----------------------+
         ^       |                      |

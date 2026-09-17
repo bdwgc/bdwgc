@@ -68,7 +68,7 @@ static void return_freelists(void **fl, void **gfl)
         fl[i] = (ptr_t)HBLKSIZE;
     }
     /* The 0 granule freelist really contains 1 granule objects.        */
-#   ifdef GC_GCJ_SUPPORT
+#   ifdef THREAD_GCJ_FREELISTS
       if (fl[0] == ERROR_FL) return;
 #   endif
     if ((word)(fl[0]) >= HBLKSIZE) {
@@ -115,14 +115,14 @@ GC_INNER void GC_init_thread_local(GC_tlfs p)
         for (i = 0; i < THREAD_FREELISTS_KINDS; ++i) {
             p -> _freelists[i][j] = (void *)(word)1;
         }
-#       ifdef GC_GCJ_SUPPORT
+#       ifdef THREAD_GCJ_FREELISTS
             p -> gcj_freelists[j] = (void *)(word)1;
 #       endif
     }
     /* The size 0 free lists are handled like the regular free lists,   */
     /* to ensure that the explicit deallocation works.  However,        */
     /* allocation of a size 0 "gcj" object is always an error.          */
-#   ifdef GC_GCJ_SUPPORT
+#   ifdef THREAD_GCJ_FREELISTS
         p -> gcj_freelists[0] = ERROR_FL;
 #   endif
 }
@@ -139,7 +139,7 @@ GC_INNER void GC_destroy_thread_local(GC_tlfs p)
             break; /* kind is not created */
         return_freelists(p -> _freelists[k], GC_obj_kinds[k].ok_freelist);
     }
-#   ifdef GC_GCJ_SUPPORT
+#   ifdef THREAD_GCJ_FREELISTS
         return_freelists(p -> gcj_freelists, (void **)GC_gcjobjfreelist);
 #   endif
 }
@@ -177,6 +177,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_kind(size_t bytes, int kind)
       }
 #   endif
     GC_ASSERT(GC_is_initialized);
+    GC_ASSERT(!IS_INDIR_PER_OBJ_DESCR(GC_obj_kinds[kind].ok_descriptor));
     GC_ASSERT(GC_is_thread_tsd_valid(tsd));
     granules = ROUNDED_UP_GRANULES(bytes);
     GC_FAST_MALLOC_GRANS(result, granules,
@@ -192,7 +193,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_kind(size_t bytes, int kind)
     return result;
 }
 
-#ifdef GC_GCJ_SUPPORT
+#ifdef THREAD_GCJ_FREELISTS
 
 # include "gc_gcj.h"
 
@@ -256,7 +257,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_gcj_malloc(size_t bytes,
   }
 }
 
-#endif /* GC_GCJ_SUPPORT */
+#endif
 
 /* The thread support layer must arrange to mark thread-local   */
 /* free lists explicitly, since the link field is often         */
@@ -275,7 +276,7 @@ GC_INNER void GC_mark_thread_local_fls_for(GC_tlfs p)
         if ((word)q > HBLKSIZE)
           GC_set_fl_marks(q);
       }
-#     ifdef GC_GCJ_SUPPORT
+#     ifdef THREAD_GCJ_FREELISTS
         if (EXPECT(j > 0, TRUE)) {
           q = (ptr_t)AO_load((volatile AO_t *)&p->gcj_freelists[j]);
           if ((word)q > HBLKSIZE)
@@ -295,7 +296,7 @@ GC_INNER void GC_mark_thread_local_fls_for(GC_tlfs p)
           for (i = 0; i < THREAD_FREELISTS_KINDS; ++i) {
             GC_check_fl_marks(&p->_freelists[i][j]);
           }
-#         ifdef GC_GCJ_SUPPORT
+#         ifdef THREAD_GCJ_FREELISTS
             GC_check_fl_marks(&p->gcj_freelists[j]);
 #         endif
         }

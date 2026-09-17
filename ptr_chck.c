@@ -248,9 +248,21 @@ GC_API void * GC_CALL GC_is_visible(void *p)
                       descr = *(word *)((ptr_t)base + (descr & ~GC_DS_TAGS));
                     } else {
                       ptr_t type_descr = *(ptr_t *)base;
+                      const valid_ds_bitmap_t *bitmap
+                                        = hhdr -> hb_valid_ds_bitmap;
 
+                      /* Guard against misinterpreting the next link,   */
+                      /* see GC_mark_from.                              */
                       if (EXPECT(NULL == type_descr, FALSE))
-                        goto fail; /* see comment in GC_mark_from */
+                        goto fail;
+                      if (bitmap != NULL) {
+                        size_t bit_no
+                          = MARK_BIT_NO((size_t)(base - (ptr_t)HBLKPTR(base)),
+                                        hhdr -> hb_sz);
+
+                        if (EXPECT(!hdr_valid_ds_mark(bitmap, bit_no), FALSE))
+                          goto fail;
+                      }
                       descr = *(word *)(type_descr
                                         - (descr - (word)(GC_DS_PER_OBJECT
                                            - GC_INDIR_PER_OBJ_BIAS)));
