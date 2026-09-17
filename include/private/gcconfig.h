@@ -2688,6 +2688,11 @@
 # undef PARALLEL_MARK
 #endif
 
+#if defined(GC_GCJ_SUPPORT) && defined(THREAD_LOCAL_ALLOC) \
+    && !(MARK_DESCR_OFFSET > CPP_WORDSZ/8)
+# define THREAD_GCJ_FREELISTS
+#endif
+
 #if defined(PLATFORM_ANDROID) && !defined(THREADS) \
     && !defined(USE_GET_STACKBASE_FOR_MAIN)
   /* Always use pthread_attr_getstack on Android ("-lpthread" option is  */

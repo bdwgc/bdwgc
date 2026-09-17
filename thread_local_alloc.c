@@ -68,7 +68,7 @@ static void return_freelists(void **fl, void **gfl)
         fl[i] = (ptr_t)HBLKSIZE;
     }
     /* The 0 granule freelist really contains 1 granule objects.        */
-#   ifdef GC_GCJ_SUPPORT
+#   ifdef THREAD_GCJ_FREELISTS
       if (fl[0] == ERROR_FL) return;
 #   endif
     if ((word)(fl[0]) >= HBLKSIZE) {
@@ -95,7 +95,7 @@ GC_INNER void GC_init_thread_local(GC_tlfs p)
     for (i = 1; i < TINY_FREELISTS; ++i) {
         p -> ptrfree_freelists[i] = (void *)(word)1;
         p -> normal_freelists[i] = (void *)(word)1;
-#       ifdef GC_GCJ_SUPPORT
+#       ifdef THREAD_GCJ_FREELISTS
           p -> gcj_freelists[i] = (void *)(word)1;
 #       endif
     }
@@ -105,7 +105,7 @@ GC_INNER void GC_init_thread_local(GC_tlfs p)
     /* size 0 "gcj" object is always an error.                          */
     p -> ptrfree_freelists[0] = (void *)(word)1;
     p -> normal_freelists[0] = (void *)(word)1;
-#   ifdef GC_GCJ_SUPPORT
+#   ifdef THREAD_GCJ_FREELISTS
         p -> gcj_freelists[0] = ERROR_FL;
 #   endif
 }
@@ -116,7 +116,7 @@ GC_INNER void GC_destroy_thread_local(GC_tlfs p)
     /* We currently only do this from the thread itself.        */
     return_freelists(p -> ptrfree_freelists, GC_aobjfreelist);
     return_freelists(p -> normal_freelists, GC_objfreelist);
-#   ifdef GC_GCJ_SUPPORT
+#   ifdef THREAD_GCJ_FREELISTS
         return_freelists(p -> gcj_freelists, (void **)GC_gcjobjfreelist);
 #   endif
 }
@@ -193,7 +193,7 @@ GC_API void * GC_CALL GC_malloc_atomic(size_t bytes)
     return result;
 }
 
-#ifdef GC_GCJ_SUPPORT
+#ifdef THREAD_GCJ_FREELISTS
 
 # include "atomic_ops.h" /* for AO_compiler_barrier() */
 
@@ -258,7 +258,7 @@ GC_API void * GC_CALL GC_gcj_malloc(size_t bytes,
   }
 }
 
-#endif /* GC_GCJ_SUPPORT */
+#endif
 
 /* The thread support layer must arrange to mark thread-local   */
 /* free lists explicitly, since the link field is often         */
@@ -274,12 +274,12 @@ GC_INNER void GC_mark_thread_local_fls_for(GC_tlfs p)
       if ((word)q > HBLKSIZE) GC_set_fl_marks(q);
       q = p -> normal_freelists[j];
       if ((word)q > HBLKSIZE) GC_set_fl_marks(q);
-#     ifdef GC_GCJ_SUPPORT
+#     ifdef THREAD_GCJ_FREELISTS
         if (j > 0) {
           q = p -> gcj_freelists[j];
           if ((word)q > HBLKSIZE) GC_set_fl_marks(q);
         }
-#     endif /* GC_GCJ_SUPPORT */
+#     endif
     }
 }
 
@@ -292,7 +292,7 @@ GC_INNER void GC_mark_thread_local_fls_for(GC_tlfs p)
         for (j = 1; j < TINY_FREELISTS; ++j) {
           GC_check_fl_marks(&p->ptrfree_freelists[j]);
           GC_check_fl_marks(&p->normal_freelists[j]);
-#         ifdef GC_GCJ_SUPPORT
+#         ifdef THREAD_GCJ_FREELISTS
             GC_check_fl_marks(&p->gcj_freelists[j]);
 #         endif
         }

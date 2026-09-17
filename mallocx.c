@@ -279,7 +279,8 @@ GC_API void GC_CALL GC_generic_malloc_many(size_t lb, int k, void **result)
     DCL_LOCK_STATE;
 
     GC_ASSERT(lb != 0 && (lb & (GRANULE_BYTES-1)) == 0);
-    if (!EXPECT(lb <= MAXOBJBYTES, TRUE)) {
+    if (!EXPECT(lb <= MAXOBJBYTES, TRUE)
+        || IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor)) {
         op = GC_generic_malloc(lb - EXTRA_BYTES, k);
         if(0 != op) obj_link(op) = 0;
         *result = op;

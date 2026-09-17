@@ -156,7 +156,7 @@ static void maybe_finalize(void)
 /* Allocate an object, clear it, and store the pointer to the   */
 /* type structure (vtable in gcj).                              */
 /* This adds a byte at the end of the object if GC_malloc would.*/
-#ifdef THREAD_LOCAL_ALLOC
+#ifdef THREAD_GCJ_FREELISTS
   GC_INNER void * GC_core_gcj_malloc(size_t lb,
                                      void * ptr_to_struct_containing_descr)
 #else
@@ -184,6 +184,9 @@ static void maybe_finalize(void)
             }
         } else {
             *opp = obj_link(op);
+#           if MARK_DESCR_OFFSET > CPP_WORDSZ/8
+                GC_set_valid_ds_mark_obj(op);
+#           endif
             GC_bytes_allocd += GRANULES_TO_BYTES(lg);
         }
         *(void **)op = ptr_to_struct_containing_descr;
@@ -238,7 +241,7 @@ GC_API void * GC_CALL GC_debug_gcj_malloc(size_t lb,
     return result;
 }
 
-/* There is no THREAD_LOCAL_ALLOC for GC_gcj_malloc_ignore_off_page().  */
+/* There is no THREAD_GCJ_FREELISTS for GC_gcj_malloc_ignore_off_page().  */
 GC_API void * GC_CALL GC_gcj_malloc_ignore_off_page(size_t lb,
                                      void * ptr_to_struct_containing_descr)
 {
@@ -261,6 +264,9 @@ GC_API void * GC_CALL GC_gcj_malloc_ignore_off_page(size_t lb,
             }
         } else {
             *opp = obj_link(op);
+#           if MARK_DESCR_OFFSET > CPP_WORDSZ/8
+                GC_set_valid_ds_mark_obj(op);
+#           endif
             GC_bytes_allocd += GRANULES_TO_BYTES(lg);
         }
     } else {
