@@ -251,6 +251,7 @@ GC_malloc_kind(size_t lb, int kind)
     return GC_malloc_kind_global(lb, kind);
 
   GC_ASSERT(GC_is_initialized);
+  GC_ASSERT(!IS_INDIR_PER_OBJ_DESCR(GC_obj_kinds[kind].ok_descriptor));
   GC_ASSERT(GC_is_thread_tsd_valid(tsd));
   lg = ALLOC_REQUEST_GRANS(lb);
   GC_FAST_MALLOC_GRANS(

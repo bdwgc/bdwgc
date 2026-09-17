@@ -149,6 +149,9 @@ contributed originally by Dave Barrett.
              +-----------------------------+   |
              | unsigned char/short *hb_map |>--+
              +-----------------------------+
+             | valid_ds_bitmap_t *         |
+             |          hb_valid_ds_bitmap |
+             +-----------------------------+
              | AO_t          hb_n_marks    |
     ---      +-----------------------------+
      ^       |                             | (*) if hdr is free, hb_sz is

@@ -223,6 +223,8 @@ GC_generic_malloc_inner_small(size_t lb, int kind)
   }
   *opp = obj_link(op);
   obj_link(op) = NULL;
+  if (IS_INDIR_PER_OBJ_DESCR(ok->ok_descriptor))
+    GC_set_valid_ds_mark_obj(op);
   GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
   return op;
 }
@@ -353,6 +355,7 @@ GC_malloc_kind_aligned_global(size_t lb, int kind, size_t align_m1)
 {
   GC_ASSERT(kind < MAXOBJKINDS);
   if (SMALL_OBJ(lb) && LIKELY(align_m1 < HBLKSIZE / 2)) {
+    struct obj_kind *ok = &GC_obj_kinds[kind];
     void *op;
     void **opp;
     size_t lg;
@@ -360,7 +363,7 @@ GC_malloc_kind_aligned_global(size_t lb, int kind, size_t align_m1)
     GC_DBG_COLLECT_AT_MALLOC(lb);
     LOCK();
     lg = GC_size_map[lb];
-    opp = &GC_obj_kinds[kind].ok_freelist[lg];
+    opp = &ok->ok_freelist[lg];
     op = *opp;
     if (UNLIKELY(align_m1 >= GC_GRANULE_BYTES)) {
       /* TODO: Avoid linear search. */
@@ -375,6 +378,8 @@ GC_malloc_kind_aligned_global(size_t lb, int kind, size_t align_m1)
       *opp = obj_link(op);
       if (kind != PTRFREE)
         obj_link(op) = NULL;
+      if (IS_INDIR_PER_OBJ_DESCR(ok->ok_descriptor))
+        GC_set_valid_ds_mark_obj(op);
       GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
       UNLOCK();
       GC_ASSERT((ADDR(op) & align_m1) == 0);
@@ -429,6 +434,7 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
   }
 
   if (SMALL_OBJ(lb)) {
+    struct obj_kind *ok = &GC_obj_kinds[kind];
     void **opp;
     size_t lg;
 
@@ -438,11 +444,13 @@ GC_generic_malloc_uncollectable(size_t lb, int kind)
     GC_DBG_COLLECT_AT_MALLOC(lb_orig);
     LOCK();
     lg = GC_size_map[lb];
-    opp = &GC_obj_kinds[kind].ok_freelist[lg];
+    opp = &ok->ok_freelist[lg];
     op = *opp;
     if (LIKELY(op != NULL)) {
       *opp = obj_link(op);
       obj_link(op) = NULL;
+      if (IS_INDIR_PER_OBJ_DESCR(ok->ok_descriptor))
+        GC_set_valid_ds_mark_obj(op);
       GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
       /*
        * Mark bit was already set on free list.  It will be cleared only
@@ -808,6 +816,14 @@ GC_free_internal(void *base, const hdr *hhdr, size_t clear_ofs,
     flh = &ok->ok_freelist[lg];
     obj_link(base) = *flh;
     *flh = (ptr_t)base;
+
+    if (IS_INDIR_PER_OBJ_DESCR(ok->ok_descriptor)) {
+      size_t bit_no
+          = MARK_BIT_NO((size_t)((ptr_t)base - (ptr_t)HBLKPTR(base)), lb);
+
+      GC_ASSERT(hdr_valid_ds_mark(hhdr->hb_valid_ds_bitmap, bit_no));
+      hdr_clear_valid_ds_mark(hhdr, bit_no);
+    }
   } else {
     if (clear_lb > 0)
       BZERO((ptr_t)base + clear_ofs, clear_lb);

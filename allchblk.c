@@ -329,6 +329,19 @@ GC_dump_regions(void)
 }
 #endif /* !NO_DEBUGGING */
 
+/* Setup `hhdr` to make it look like a valid block. */
+static void
+setup_fake_header(hdr *hhdr)
+{
+  GC_ASSERT(NULL == hhdr->hb_valid_ds_bitmap);
+  hhdr->hb_sz = HBLKSIZE;
+  hhdr->hb_descr = 0;
+#ifndef MARK_BIT_PER_OBJ
+  hhdr->hb_flags |= LARGE_BLOCK;
+  hhdr->hb_map = NULL;
+#endif
+}
+
 /*
  * Initialize `hhdr` for a `block` containing the indicated size
  * `lb_adjusted` and `kind` of objects.  Return `FALSE` on failure.
@@ -339,8 +352,10 @@ setup_header(hdr *hhdr, struct hblk *block, size_t lb_adjusted, int kind,
 {
   const struct obj_kind *ok;
   word descr;
+  size_t lg;
 
   GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(NULL == hhdr->hb_valid_ds_bitmap);
   GC_ASSERT(lb_adjusted >= ALIGNMENT);
 #ifndef MARK_BIT_PER_OBJ
   if (lb_adjusted > MAXOBJBYTES)
@@ -373,6 +388,7 @@ setup_header(hdr *hhdr, struct hblk *block, size_t lb_adjusted, int kind,
     descr += lb_adjusted;
   hhdr->hb_descr = descr;
 
+  lg = BYTES_TO_GRANULES(lb_adjusted);
 #ifdef MARK_BIT_PER_OBJ
   /*
    * Set `hb_inv_sz` as portably as possible.  We set it to the smallest
@@ -400,25 +416,22 @@ setup_header(hdr *hhdr, struct hblk *block, size_t lb_adjusted, int kind,
     hhdr->hb_inv_sz = inv_sz;
   }
 #else
-  {
-    size_t lg = BYTES_TO_GRANULES(lb_adjusted);
-
-    if (UNLIKELY(!GC_add_map_entry(lg))) {
-      /* Make it look like a valid block. */
-      hhdr->hb_sz = HBLKSIZE;
-      hhdr->hb_descr = 0;
-      hhdr->hb_flags |= LARGE_BLOCK;
-      hhdr->hb_map = NULL;
-      return FALSE;
-    }
-#  ifdef LINT2
-    if (lg > MAXOBJGRANULES && (hhdr->hb_flags & LARGE_BLOCK) == 0)
-      ABORT("Invalid GC_obj_map index");
-#  endif
-    hhdr->hb_map = GC_obj_map[(hhdr->hb_flags & LARGE_BLOCK) != 0 ? 0 : lg];
+  if (UNLIKELY(!GC_add_map_entry(lg))) {
+    setup_fake_header(hhdr);
+    return FALSE;
   }
+#  ifdef LINT2
+  if (lg > MAXOBJGRANULES && (hhdr->hb_flags & LARGE_BLOCK) == 0)
+    ABORT("Invalid GC_obj_map index");
+#  endif
+  hhdr->hb_map = GC_obj_map[(hhdr->hb_flags & LARGE_BLOCK) != 0 ? 0 : lg];
 #endif
 
+  if (IS_INDIR_PER_OBJ_DESCR(descr) && lg <= MAXOBJGRANULES
+      && UNLIKELY(!GC_alloc_valid_ds_bitmap(hhdr))) {
+    setup_fake_header(hhdr);
+    return FALSE;
+  }
   /* Clear mark bits. */
   GC_clear_hdr_marks(hhdr);
 
@@ -511,6 +524,7 @@ GC_add_to_fl(struct hblk *h, hdr *hhdr)
   size_t index = GC_hblk_fl_from_blocks(divHBLKSZ(hhdr->hb_sz));
   struct hblk *second = GC_hblkfreelist[index];
 
+  GC_ASSERT(NULL == hhdr->hb_valid_ds_bitmap);
 #if defined(GC_ASSERTIONS) && !defined(USE_MUNMAP) && !defined(CHERI_PURECAP)
   {
     const struct hblk *next = (struct hblk *)((ptr_t)h + hhdr->hb_sz);
@@ -1199,15 +1213,10 @@ retry:
 
   /* Set up the header. */
   GC_ASSERT(HDR(hbp) == hhdr);
-#ifdef MARK_BIT_PER_OBJ
-  (void)setup_header(hhdr, hbp, lb_adjusted, kind, flags);
-  /* Result is always `TRUE`, not checked to avoid a cppcheck warning. */
-#else
   if (UNLIKELY(!setup_header(hhdr, hbp, lb_adjusted, kind, flags))) {
     GC_remove_counts(hbp, size_needed);
     return NULL; /*< ditto */
   }
-#endif
 
 #ifndef GC_DISABLE_INCREMENTAL
   /*
@@ -1256,6 +1265,7 @@ GC_freehblk(struct hblk *hbp)
   size_t size;
 
   GET_HDR(hbp, hhdr);
+  GC_ASSERT(NULL == hhdr->hb_valid_ds_bitmap);
   size = HBLKSIZE * OBJ_SZ_TO_BLOCKS(hhdr->hb_sz);
   if ((size & SIZET_SIGNB) != 0) {
     /*
