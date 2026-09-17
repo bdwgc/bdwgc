@@ -54,7 +54,7 @@ mark_proc GC_mark_procs[MAX_MARK_PROCS];
 */
 
 #ifndef MARK_DESCR_OFFSET
-# define MARK_DESCR_OFFSET sizeof(word)
+# define MARK_DESCR_OFFSET (CPP_WORDSZ/8) /* sizeof(word) */
 #endif
 
 /*
