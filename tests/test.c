@@ -324,18 +324,22 @@ sexpr cons (sexpr x, sexpr y)
 #include "gc_mark.h"
 #include "gc_gcj.h"
 
+  /* This should match that of gc_pmark.h.      */
+# ifndef MARK_DESCR_OFFSET
+#   define MARK_DESCR_OFFSET (CPP_WORDSZ/8) /* sizeof(word) */
+# endif
+
 /* The following struct emulates the vtable in gcj.     */
-/* This assumes the default value of MARK_DESCR_OFFSET. */
 struct fake_vtable {
-  void * dummy;         /* class pointer in real gcj.   */
+  char dummy[MARK_DESCR_OFFSET]; /* class pointer in real gcj. */
   GC_word descr;
 };
 
-struct fake_vtable gcj_class_struct1 = { 0, sizeof(struct SEXPR)
+struct fake_vtable gcj_class_struct1 = { { 0 }, sizeof(struct SEXPR)
                                             + sizeof(struct fake_vtable *) };
                         /* length based descriptor.     */
 struct fake_vtable gcj_class_struct2 =
-                        { 0, ((GC_word)3 << (CPP_WORDSZ - 3)) | GC_DS_BITMAP};
+                    { { 0 }, ((GC_word)3 << (CPP_WORDSZ - 3)) | GC_DS_BITMAP };
                         /* Bitmap based descriptor.     */
 
 struct GC_ms_entry * fake_gcj_mark_proc(word * addr,

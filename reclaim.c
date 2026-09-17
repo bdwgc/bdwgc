@@ -316,6 +316,20 @@ GC_INNER ptr_t GC_reclaim_generic(struct hblk * hbp, hdr *hhdr, size_t sz,
       result = GC_reclaim_uninit(hbp, hhdr, sz, list, count);
     }
     if (IS_UNCOLLECTABLE(hhdr -> hb_obj_kind)) GC_set_hdr_marks(hhdr);
+
+    /* Clear "valid descriptor" mark for reclaimed objects in this block. */
+    if (hhdr -> hb_valid_ds_bitmap != NULL) {
+      ptr_t q, p = hbp -> hb_body;
+      ptr_t plim = p + HBLKSIZE - sz;
+
+      GC_ASSERT(IS_INDIR_PER_OBJ_DESCR(hhdr -> hb_descr));
+      for (q = result; q != NULL; q = (ptr_t)obj_link(q))
+        if ((word)q >= (word)p && (word)plim >= (word)q) {
+          size_t bit_no = MARK_BIT_NO((size_t)(q - (ptr_t)hbp), sz);
+
+          hdr_clear_valid_ds_mark(hhdr, bit_no);
+        }
+    }
     return result;
 }
 
@@ -358,6 +372,7 @@ STATIC void GC_reclaim_small_nonempty_block(struct hblk *hbp,
     if (hhdr -> hb_n_marks)
         *flh = flh_next;
     else {
+        GC_free_valid_ds_bitmap(hhdr);
         GC_bytes_found += HBLKSIZE;
         GC_freehblk(hbp);
     }
@@ -434,6 +449,7 @@ STATIC void GC_reclaim_block(struct hblk *hbp, word report_if_found)
           } else
 #       endif
           /* else */ {
+            GC_free_valid_ds_bitmap(hhdr);
             GC_bytes_found += HBLKSIZE;
             GC_freehblk(hbp);
           }

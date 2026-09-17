@@ -2840,6 +2840,11 @@
 # undef PARALLEL_MARK
 #endif
 
+#if defined(GC_GCJ_SUPPORT) && defined(THREAD_LOCAL_ALLOC) \
+    && !(MARK_DESCR_OFFSET > CPP_WORDSZ/8)
+# define THREAD_GCJ_FREELISTS
+#endif
+
 #if defined(PARALLEL_MARK) && !defined(DEFAULT_STACK_MAYBE_SMALL) \
     && (defined(HPUX) || defined(GC_DGUX386_THREADS) \
         || defined(NO_GETCONTEXT) /* e.g. musl */)

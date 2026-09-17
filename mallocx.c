@@ -282,7 +282,7 @@ GC_API void GC_CALL GC_generic_malloc_many(size_t lb, int k, void **result)
         /* the last one) to support multiple objects allocation.        */
         || GC_incremental
 #     endif
-       ) {
+        || IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor)) {
         op = GC_generic_malloc(lb - EXTRA_BYTES, k);
         if (EXPECT(0 != op, TRUE))
             obj_link(op) = 0;
