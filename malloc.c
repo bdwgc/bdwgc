@@ -113,9 +113,9 @@ GC_INNER void * GC_generic_malloc_inner(size_t lb, int k)
     GC_ASSERT(I_HOLD_LOCK());
     GC_ASSERT(k < MAXOBJKINDS);
     if (SMALL_OBJ(lb)) {
-        struct obj_kind * kind = GC_obj_kinds + k;
+        struct obj_kind * ok = &GC_obj_kinds[k];
         size_t lg = GC_size_map[lb];
-        void ** opp = &(kind -> ok_freelist[lg]);
+        void ** opp = &(ok -> ok_freelist[lg]);
 
         op = *opp;
         if (EXPECT(0 == op, FALSE)) {
@@ -133,12 +133,11 @@ GC_INNER void * GC_generic_malloc_inner(size_t lb, int k)
               GC_ASSERT(lg != 0);
             }
             /* Retry */
-            opp = &(kind -> ok_freelist[lg]);
+            opp = &(ok -> ok_freelist[lg]);
             op = *opp;
           }
           if (0 == op) {
-            if (0 == kind -> ok_reclaim_list &&
-                !GC_alloc_reclaim_list(kind))
+            if (0 == ok -> ok_reclaim_list && !GC_alloc_reclaim_list(ok))
               return NULL;
             op = GC_allocobj(lg, k);
             if (0 == op)
@@ -147,6 +146,8 @@ GC_INNER void * GC_generic_malloc_inner(size_t lb, int k)
         }
         *opp = obj_link(op);
         obj_link(op) = 0;
+        if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor))
+            GC_set_valid_ds_mark_obj(op);
         GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
     } else {
         size_t lb_adjusted = ADD_SLOP(lb);
@@ -247,6 +248,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_kind_global(size_t lb, int k)
 {
     GC_ASSERT(k < MAXOBJKINDS);
     if (SMALL_OBJ(lb)) {
+        struct obj_kind * ok = &GC_obj_kinds[k];
         void *op;
         void **opp;
         size_t lg = GC_size_map[lb];
@@ -254,7 +256,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_kind_global(size_t lb, int k)
 
         GC_DBG_COLLECT_AT_MALLOC(lb);
         LOCK();
-        opp = &GC_obj_kinds[k].ok_freelist[lg];
+        opp = &(ok -> ok_freelist[lg]);
         op = *opp;
         if (EXPECT(op != NULL, TRUE)) {
             if (k == PTRFREE) {
@@ -268,6 +270,8 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_malloc_kind_global(size_t lb, int k)
                 *opp = obj_link(op);
                 obj_link(op) = 0;
             }
+            if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor))
+                GC_set_valid_ds_mark_obj(op);
             GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
             UNLOCK();
             return op;
@@ -304,6 +308,7 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_generic_malloc_uncollectable(
 
     GC_ASSERT(k < MAXOBJKINDS);
     if (SMALL_OBJ(lb)) {
+        struct obj_kind * ok = &GC_obj_kinds[k];
         void **opp;
         size_t lg;
 
@@ -313,11 +318,13 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_generic_malloc_uncollectable(
                   /* collected anyway.                                  */
         lg = GC_size_map[lb];
         LOCK();
-        opp = &GC_obj_kinds[k].ok_freelist[lg];
+        opp = &(ok -> ok_freelist[lg]);
         op = *opp;
         if (EXPECT(op != NULL, TRUE)) {
             *opp = obj_link(op);
             obj_link(op) = 0;
+            if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor))
+                GC_set_valid_ds_mark_obj(op);
             GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
             /* Mark bit was already set on free list.  It will be       */
             /* cleared only temporarily during a collection, as a       */
@@ -573,6 +580,14 @@ GC_API void GC_CALL GC_free(void * p)
         flh = &(ok -> ok_freelist[ngranules]);
         obj_link(p) = *flh;
         *flh = (ptr_t)p;
+
+        if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor)) {
+            size_t bit_no
+                = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)HBLKPTR(p)), sz);
+
+            GC_ASSERT(hdr_valid_ds_mark(hhdr -> hb_valid_ds_bitmap, bit_no));
+            hdr_clear_valid_ds_mark(hhdr, bit_no);
+        }
         UNLOCK();
     } else {
         size_t nblocks = OBJ_SZ_TO_BLOCKS(sz);
@@ -618,6 +633,14 @@ GC_API void GC_CALL GC_free(void * p)
         flh = &(ok -> ok_freelist[ngranules]);
         obj_link(p) = *flh;
         *flh = (ptr_t)p;
+
+        if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor)) {
+            size_t bit_no
+                = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)HBLKPTR(p)), sz);
+
+            GC_ASSERT(hdr_valid_ds_mark(hhdr -> hb_valid_ds_bitmap, bit_no));
+            hdr_clear_valid_ds_mark(hhdr, bit_no);
+        }
     } else {
         size_t nblocks = OBJ_SZ_TO_BLOCKS(sz);
         GC_bytes_freed += sz;
