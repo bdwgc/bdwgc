@@ -350,6 +350,17 @@ GC_clear_marks(void)
 }
 
 GC_INNER void
+GC_set_valid_ds_mark_obj(const void *p)
+{
+  hdr *hhdr;
+  size_t bit_no = GC_get_hhdr_mark_bit_no(&hhdr, p);
+
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(!hdr_valid_ds_mark(hhdr->hb_valid_ds_bitmap, bit_no));
+  hdr_set_valid_ds_mark(hhdr, bit_no);
+}
+
+GC_INNER void
 GC_initiate_gc(void)
 {
   GC_ASSERT(I_HOLD_LOCK());
@@ -863,6 +874,18 @@ GC_mark_from(mse *mark_stack_top, const mse *mark_stack, mse *mark_stack_limit)
           if (UNLIKELY(NULL == type_descr)) {
             mark_stack_top--;
             continue;
+          }
+          if (IS_INDIR_PER_OBJ_DESCR(descr)) {
+            /* Use the bitmap to check if the object is on a free list. */
+            hdr *hhdr;
+            size_t bit_no = GC_get_hhdr_mark_bit_no(&hhdr, current_p);
+            const valid_ds_bitmap_t *bitmap = hhdr->hb_valid_ds_bitmap;
+
+            if (bitmap != NULL
+                && UNLIKELY(!hdr_valid_ds_mark(bitmap, bit_no))) {
+              mark_stack_top--;
+              continue;
+            }
           }
           descr = *(word *)(type_descr
                             - ((GC_signed_word)descr

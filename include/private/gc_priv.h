@@ -1240,6 +1240,11 @@ typedef unsigned short hb_map_entry_t;
 #  endif
 #endif /* !MARK_BIT_PER_OBJ */
 
+typedef union valid_ds_bitmap_u {
+  word marks[MARK_BITS_PER_HBLK / CPP_WORDSZ];
+  union valid_ds_bitmap_u *next; /*< used for chaining in the pool */
+} valid_ds_bitmap_t;
+
 struct hblkhdr {
   /*
    * Link field for `hblk` free list and for lists of chunks waiting to
@@ -1323,6 +1328,17 @@ struct hblkhdr {
    */
   hb_map_entry_t *hb_map;
 #endif
+
+  /*
+   * A bitmap which is used to skip free-list objects during marking when
+   * the block has a negative `GC_DS_PER_OBJECT` descriptor (with an offset
+   * larger than a pointer size).  The `i`-th bit is set to 1 when the
+   * indirect descriptor pointer of the object starting at granule `i` (or
+   * object `i` if `MARK_BIT_PER_OBJ`) is guaranteed to be valid or `NULL`.
+   * The bitmap is allocated on demand.  Should be accessed with the
+   * allocator lock held (or with the world stopped).
+   */
+  valid_ds_bitmap_t *hb_valid_ds_bitmap;
 
 #ifdef PARALLEL_MARK
   /*
@@ -1722,6 +1738,9 @@ struct _GC_arrays {
 
 #define GC_hdr_free_list GC_arrays._hdr_free_list
   hdr *_hdr_free_list;
+
+#define GC_free_valid_ds_bitmap_pool GC_arrays._free_valid_ds_bitmap_pool
+  valid_ds_bitmap_t *_free_valid_ds_bitmap_pool;
 
 #define GC_scratch_end_addr GC_arrays._scratch_end_addr
   word _scratch_end_addr; /*< the end point of the current scratch area */
@@ -2849,6 +2868,42 @@ GC_INNER void GC_push_all_register_sections(
     (void)(((word *)CAST_AWAY_VOLATILE_PVOID((hhdr)->hb_marks))[divWORDSZ(n)] \
            &= ~((word)1 << modWORDSZ(n)))
 #endif /* !USE_MARK_BYTES */
+
+/* The access macros for the object "valid descriptor" bitmap. */
+#define hdr_valid_ds_mark(bitmap, n) \
+  (((bitmap)->marks[divWORDSZ(n)] >> modWORDSZ(n)) & (word)1)
+#define hdr_set_valid_ds_mark(hhdr, n)                              \
+  (void)((hhdr)->hb_valid_ds_bitmap->marks[divWORDSZ(n)] |= (word)1 \
+                                                            << modWORDSZ(n))
+#define hdr_clear_valid_ds_mark(hhdr, n)                 \
+  (void)((hhdr)->hb_valid_ds_bitmap->marks[divWORDSZ(n)] \
+         &= ~((word)1 << modWORDSZ(n)))
+
+/*
+ * Set the "valid descriptor" mark for the given small object.  Called with
+ * the allocator lock held.  Assumes the corresponding `hb_valid_ds_bitmap`
+ * field is allocated.
+ */
+GC_INNER void GC_set_valid_ds_mark_obj(const void *);
+
+/*
+ * Allocate `hb_valid_ds_bitmap` for the given `hhdr`.  Called with the
+ * allocator lock held.  Return `FALSE` on failure.
+ */
+GC_INNER GC_bool GC_alloc_valid_ds_bitmap(hdr *hhdr);
+
+/* Move `hb_valid_ds_bitmap` entry to the pool for future reuse. */
+GC_INNER void GC_free_valid_ds_bitmap(hdr *hhdr);
+
+/*
+ * Is this a negative descriptor with an offset larger than a pointer size?
+ * (A valid negative `GC_DS_PER_OBJECT` descriptor is the only kind that has
+ * a negative numeric value, so a single signed comparison suffices to
+ * identify those with an offset larger than a pointer size.)
+ */
+#define IS_INDIR_PER_OBJ_DESCR(d) \
+  ((GC_signed_word)(d)            \
+   <= -(int)sizeof(ptr_t) - (GC_INDIR_PER_OBJ_BIAS - GC_DS_PER_OBJECT + 1))
 
 #ifdef MARK_BIT_PER_OBJ
 /*

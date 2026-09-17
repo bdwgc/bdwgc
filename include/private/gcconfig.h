@@ -3551,7 +3551,8 @@ extern ptr_t GC_data_start;
 #  undef HAS_WIN32_THREADS_DISCOVERY
 #endif
 
-#if defined(GC_GCJ_SUPPORT) && defined(THREAD_LOCAL_ALLOC)
+#if defined(GC_GCJ_SUPPORT) && defined(THREAD_LOCAL_ALLOC) \
+    && !(GC_GCJ_MARK_DESCR_OFFSET > GC_SIZEOF_PTR)
 #  define THREAD_GCJ_FREELISTS
 #endif
 

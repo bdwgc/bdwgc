@@ -324,12 +324,15 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
     GC_init();
   GC_ASSERT(NONNULL_ARG_NOT_NULL(result));
   GC_ASSERT(lb_adjusted != 0 && (lb_adjusted & (GC_GRANULE_BYTES - 1)) == 0);
+  GC_ASSERT(kind < MAXOBJKINDS);
+  ok = &GC_obj_kinds[kind];
   /* Currently a single object is always allocated if manual VDB. */
   /*
    * TODO: `GC_dirty` should be called for each linked object (but the
    * last one) to support multiple objects allocation.
    */
-  if (UNLIKELY(lb_adjusted > MAXOBJBYTES) || GC_manual_vdb) {
+  if (UNLIKELY(lb_adjusted > MAXOBJBYTES) || GC_manual_vdb
+      || IS_INDIR_PER_OBJ_DESCR(ok->ok_descriptor)) {
     op = GC_generic_malloc_aligned(lb_adjusted - EXTRA_BYTES, kind,
                                    0 /* `flags` */, 0 /* `align_m1` */);
     if (LIKELY(op != NULL))
@@ -344,7 +347,6 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
     return;
   }
 
-  GC_ASSERT(kind < MAXOBJKINDS);
   lg = BYTES_TO_GRANULES(lb_adjusted);
   if (UNLIKELY(get_have_errors()))
     GC_print_all_errors();
@@ -358,7 +360,6 @@ GC_generic_malloc_many(size_t lb_adjusted, int kind, void **result)
   }
 
   /* First see if we can reclaim a page of objects waiting to be reclaimed. */
-  ok = &GC_obj_kinds[kind];
   rlh = ok->ok_reclaim_list;
   if (rlh != NULL) {
     struct hblk *hbp;
