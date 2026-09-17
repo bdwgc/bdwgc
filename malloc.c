@@ -105,9 +105,9 @@ GC_INNER void * GC_generic_malloc_inner(size_t lb, int k)
     void *op;
 
     if(SMALL_OBJ(lb)) {
-        struct obj_kind * kind = GC_obj_kinds + k;
+        struct obj_kind * ok = &GC_obj_kinds[k];
         size_t lg = GC_size_map[lb];
-        void ** opp = &(kind -> ok_freelist[lg]);
+        void ** opp = &(ok -> ok_freelist[lg]);
 
         if( (op = *opp) == 0 ) {
             if (GC_size_map[lb] == 0) {
@@ -115,14 +115,16 @@ GC_INNER void * GC_generic_malloc_inner(size_t lb, int k)
               if (GC_size_map[lb] == 0) GC_extend_size_map(lb);
               return(GC_generic_malloc_inner(lb, k));
             }
-            if (kind -> ok_reclaim_list == 0) {
-                if (!GC_alloc_reclaim_list(kind)) goto out;
+            if (ok -> ok_reclaim_list == 0) {
+                if (!GC_alloc_reclaim_list(ok)) goto out;
             }
             op = GC_allocobj(lg, k);
             if (op == 0) goto out;
         }
         *opp = obj_link(op);
         obj_link(op) = 0;
+        if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor))
+            GC_set_valid_ds_mark_obj(op);
         GC_bytes_allocd += GRANULES_TO_BYTES(lg);
     } else {
         op = (ptr_t)GC_alloc_large_and_clear(ADD_SLOP(lb), k, 0);
@@ -508,6 +510,14 @@ GC_API void GC_CALL GC_free(void * p)
         flh = &(ok -> ok_freelist[ngranules]);
         obj_link(p) = *flh;
         *flh = (ptr_t)p;
+
+        if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor)) {
+            size_t bit_no
+                = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)HBLKPTR(p)), sz);
+
+            GC_ASSERT(hdr_valid_ds_mark(hhdr -> hb_valid_ds_bitmap, bit_no));
+            hdr_clear_valid_ds_mark(hhdr, bit_no);
+        }
         UNLOCK();
     } else {
         size_t nblocks = OBJ_SZ_TO_BLOCKS(sz);
@@ -552,6 +562,14 @@ GC_API void GC_CALL GC_free(void * p)
         flh = &(ok -> ok_freelist[ngranules]);
         obj_link(p) = *flh;
         *flh = (ptr_t)p;
+
+        if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor)) {
+            size_t bit_no
+                = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)HBLKPTR(p)), sz);
+
+            GC_ASSERT(hdr_valid_ds_mark(hhdr -> hb_valid_ds_bitmap, bit_no));
+            hdr_clear_valid_ds_mark(hhdr, bit_no);
+        }
     } else {
         size_t nblocks = OBJ_SZ_TO_BLOCKS(sz);
         GC_bytes_freed += sz;
