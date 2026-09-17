@@ -169,6 +169,8 @@ static hdr * alloc_hdr(void)
 
     if (NULL == GC_hdr_free_list) {
         result = (hdr *)GC_scratch_alloc(sizeof(hdr));
+        if (EXPECT(result != NULL, TRUE))
+            result -> hb_valid_ds_bitmap = NULL;
     } else {
         result = GC_hdr_free_list;
         GC_hdr_free_list = (hdr *) result -> hb_next;
@@ -176,8 +178,42 @@ static hdr * alloc_hdr(void)
     return(result);
 }
 
+GC_INNER GC_bool GC_alloc_valid_ds_bitmap(hdr *hhdr)
+{
+  valid_ds_bitmap_t *bitmap = GC_free_valid_ds_bitmap_pool;
+
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(NULL == hhdr -> hb_valid_ds_bitmap);
+  if (bitmap != NULL) {
+    GC_free_valid_ds_bitmap_pool = bitmap -> next;
+    bitmap -> next = NULL; /* the rest of bitmap is already cleared */
+  } else {
+    bitmap = (valid_ds_bitmap_t *)GC_scratch_alloc(sizeof(valid_ds_bitmap_t));
+    if (EXPECT(NULL == bitmap, FALSE))
+      return FALSE;
+    BZERO(bitmap, sizeof(valid_ds_bitmap_t));
+  }
+  hhdr -> hb_valid_ds_bitmap = bitmap;
+  return TRUE;
+}
+
+GC_INNER void GC_free_valid_ds_bitmap(hdr *hhdr)
+{
+  valid_ds_bitmap_t *bitmap = hhdr -> hb_valid_ds_bitmap;
+
+  GC_ASSERT(I_HOLD_LOCK());
+  if (NULL == bitmap)
+    return; /* was not allocated */
+
+  BZERO(bitmap, sizeof(valid_ds_bitmap_t));
+  bitmap -> next = GC_free_valid_ds_bitmap_pool;
+  GC_free_valid_ds_bitmap_pool = bitmap;
+  hhdr -> hb_valid_ds_bitmap = NULL;
+}
+
 GC_INLINE void free_hdr(hdr * hhdr)
 {
+    GC_ASSERT(NULL == hhdr -> hb_valid_ds_bitmap);
     hhdr -> hb_next = (struct hblk *) GC_hdr_free_list;
     GC_hdr_free_list = hhdr;
 }

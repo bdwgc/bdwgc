@@ -204,6 +204,17 @@ GC_INNER void GC_clear_marks(void)
     GC_scan_ptr = NULL;
 }
 
+GC_INNER void GC_set_valid_ds_mark_obj(const void *p)
+{
+  const struct hblk *h = HBLKPTR(p);
+  hdr * hhdr = HDR(h);
+  size_t bit_no = MARK_BIT_NO((size_t)((ptr_t)p - (ptr_t)h), hhdr -> hb_sz);
+
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(!hdr_valid_ds_mark(hhdr -> hb_valid_ds_bitmap, bit_no));
+  hdr_set_valid_ds_mark(hhdr, bit_no);
+}
+
 /* Initiate a garbage collection.  Initiates a full collection if the   */
 /* mark state is invalid.                                               */
 GC_INNER void GC_initiate_gc(void)
@@ -670,6 +681,20 @@ GC_INNER mse * GC_mark_from(mse *mark_stack_top, mse *mark_stack,
             if (EXPECT(0 == type_descr, FALSE)) {
                 mark_stack_top--;
                 continue;
+            }
+            if (IS_INDIR_PER_OBJ_DESCR(descr)) {
+              /* Use the bitmap to check if the object is on a free list. */
+              const struct hblk *h = HBLKPTR(current_p);
+              hdr * hhdr = HDR(h);
+              size_t bit_no = MARK_BIT_NO((size_t)(current_p - (ptr_t)h),
+                                          hhdr -> hb_sz);
+              const valid_ds_bitmap_t *bitmap = hhdr -> hb_valid_ds_bitmap;
+
+              if (bitmap != NULL
+                  && EXPECT(!hdr_valid_ds_mark(bitmap, bit_no), FALSE)) {
+                  mark_stack_top--;
+                  continue;
+              }
             }
             descr = *(word *)(type_descr
                               - ((signed_word)descr + (GC_INDIR_PER_OBJ_BIAS
