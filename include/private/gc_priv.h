@@ -937,6 +937,11 @@ union word_ptr_ao_u {
 # endif
 };
 
+typedef union valid_ds_bitmap_u {
+  word marks[MARK_BITS_PER_HBLK / CPP_WORDSZ];
+  union valid_ds_bitmap_u *next; /* used for chaining in the pool */
+} valid_ds_bitmap_t;
+
 struct hblkhdr {
     struct hblk * hb_next;      /* Link field for hblk free list         */
                                 /* and for lists of chunks waiting to be */
@@ -992,6 +997,17 @@ struct hblkhdr {
                                 /* mod BYTES_TO_GRANULES(hb_sz), except */
                                 /* for large blocks.  See GC_obj_map.   */
 #   endif
+    valid_ds_bitmap_t * hb_valid_ds_bitmap;
+                /* A bitmap which is used to skip free-list objects     */
+                /* during marking when the block has a negative         */
+                /* GC_DS_PER_OBJECT descriptor (with an offset larger   */
+                /* than a pointer size).  The i-th bit is set to 1 when */
+                /* the indirect descriptor pointer of the object        */
+                /* starting at granule i (or object i if                */
+                /* MARK_BIT_PER_OBJ) is guaranteed to be valid or NULL. */
+                /* The bitmap is allocated on demand.  Should be        */
+                /* accessed with the allocator lock held (or with the   */
+                /* world stopped).                                      */
     counter_t hb_n_marks;       /* Number of set mark bits, excluding   */
                                 /* the one always set at the end.       */
                                 /* Currently it is concurrently         */
@@ -1195,6 +1211,8 @@ struct _GC_arrays {
         /* Bytes of memory explicitly deallocated while         */
         /* finalizers were running.  Used to approximate mem.   */
         /* explicitly deallocated by finalizers.                */
+# define GC_free_valid_ds_bitmap_pool GC_arrays._free_valid_ds_bitmap_pool
+  valid_ds_bitmap_t *_free_valid_ds_bitmap_pool;
   ptr_t _scratch_end_ptr;
   ptr_t _scratch_last_end_ptr;
         /* Used by headers.c, and can easily appear to point to */
@@ -1604,6 +1622,37 @@ struct GC_traced_stack_sect_s {
               ((hhdr)->hb_marks[divWORDSZ(n)] &= ~((word)1 << modWORDSZ(n)))
 #endif /* !USE_MARK_BYTES */
 
+/* The access macros for the object "valid descriptor" bitmap. */
+#define hdr_valid_ds_mark(bitmap, n) \
+  (((bitmap)->marks[divWORDSZ(n)] >> modWORDSZ(n)) & (word)1)
+#define hdr_set_valid_ds_mark(hhdr, n) \
+  (void)((hhdr)->hb_valid_ds_bitmap->marks[divWORDSZ(n)] |= (word)1 \
+                                                            << modWORDSZ(n))
+#define hdr_clear_valid_ds_mark(hhdr, n) \
+  (void)((hhdr)->hb_valid_ds_bitmap->marks[divWORDSZ(n)] \
+         &= ~((word)1 << modWORDSZ(n)))
+
+/* Set the "valid descriptor" mark for the given small object.  Called  */
+/* with the allocator lock held.  Assumes the corresponding             */
+/* hb_valid_ds_bitmap field is allocated.                               */
+GC_INNER void GC_set_valid_ds_mark_obj(const void *);
+
+/* Allocate hb_valid_ds_bitmap for the given hhdr.  Called with the     */
+/* allocator lock held.  Return FALSE on failure.                       */
+GC_INNER GC_bool GC_alloc_valid_ds_bitmap(hdr *hhdr);
+
+/* Move hb_valid_ds_bitmap entry to the pool for future reuse. */
+GC_INNER void GC_free_valid_ds_bitmap(hdr *hhdr);
+
+/* Is this a negative descriptor with an offset larger than a pointer   */
+/* size?  (A valid negative GC_DS_PER_OBJECT descriptor is the only     */
+/* kind that has a negative numeric value, so a single signed           */
+/* comparison suffices to identify those with an offset larger than     */
+/* a pointer size.)                                                     */
+#define IS_INDIR_PER_OBJ_DESCR(d) \
+  ((signed_word)(d) \
+   <= -(int)sizeof(ptr_t) - (GC_INDIR_PER_OBJ_BIAS - GC_DS_PER_OBJECT + 1))
+
 #ifdef MARK_BIT_PER_OBJ
 #  define MARK_BIT_NO(offset, sz) (((unsigned)(offset))/(sz))
         /* Get the mark bit index corresponding to the given byte       */
@@ -1987,7 +2036,7 @@ GC_INNER ptr_t GC_allocobj(size_t sz, int kind);
 #ifdef THREAD_LOCAL_ALLOC
   GC_INNER void * GC_core_malloc(size_t);
   GC_INNER void * GC_core_malloc_atomic(size_t);
-# ifdef GC_GCJ_SUPPORT
+# ifdef THREAD_GCJ_FREELISTS
     GC_INNER void * GC_core_gcj_malloc(size_t, void *);
 # endif
 #endif /* THREAD_LOCAL_ALLOC */

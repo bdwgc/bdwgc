@@ -79,7 +79,7 @@
 typedef struct thread_local_freelists {
   void * ptrfree_freelists[TINY_FREELISTS];
   void * normal_freelists[TINY_FREELISTS];
-# ifdef GC_GCJ_SUPPORT
+# ifdef THREAD_GCJ_FREELISTS
     void * gcj_freelists[TINY_FREELISTS];
 #   define ERROR_FL ((void *)(word)-1)
         /* Value used for gcj_freelists[-1]; allocation is      */
