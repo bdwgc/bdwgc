@@ -4603,6 +4603,7 @@ uffdwp_dirty_open_files(void)
   struct uffdio_api api;
 
   GC_ASSERT(-1 == uffdwp_fd);
+  /* Let the dedicated monitor thread sleep in `read()` while idle. */
 #  ifndef UFFDWP_NOT_USER_MODE_ONLY
 #    ifndef UFFD_USER_MODE_ONLY
 #      define UFFD_USER_MODE_ONLY 1 /*< might be missing in Bionic */
@@ -4611,12 +4612,11 @@ uffdwp_dirty_open_files(void)
    * First try to request the mode which ignores the faults in the kernel.
    * This is to get past SELinux checks (needed on Android, at least).
    */
-  uffdwp_fd
-      = syscall(SYS_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY);
+  uffdwp_fd = syscall(SYS_userfaultfd, O_CLOEXEC | UFFD_USER_MODE_ONLY);
   if (-1 == uffdwp_fd)
 #  endif
   {
-    uffdwp_fd = syscall(SYS_userfaultfd, O_CLOEXEC | O_NONBLOCK);
+    uffdwp_fd = syscall(SYS_userfaultfd, O_CLOEXEC);
     if (-1 == uffdwp_fd) {
       GC_COND_LOG_PRINTF("userfaultfd syscall is not supported by kernel\n");
       return FALSE;
@@ -4675,7 +4675,7 @@ uffdwp_monitor_thread(void *arg)
     /* Wait for and get write-protect fault events. */
     res = PROC_READ(uffdwp_fd, msg_buf, sizeof(msg_buf));
     if (-1 == res) {
-      if (errno == EAGAIN || errno == EINTR)
+      if (errno == EINTR)
         continue;
       ABORT_ARG1("userfaultfd read failed", ": errno= %d", errno);
     }
