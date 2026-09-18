@@ -4646,11 +4646,22 @@ uffdwp_write_protect(void *start, size_t len, GC_bool allow_write)
 {
   struct uffdio_writeprotect wp;
 
+  GC_ASSERT(GC_page_size != 0);
   wp.range.start = ADDR(start);
   wp.range.len = len;
   wp.mode = allow_write ? 0 : UFFDIO_WRITEPROTECT_MODE_WP;
-  if (ioctl(uffdwp_fd, UFFDIO_WRITEPROTECT, &wp) == -1)
+  if (ioctl(uffdwp_fd, UFFDIO_WRITEPROTECT, &wp) == -1) {
+    /* Older kernels reject ranges spanning more than one VMA. */
+    if (errno == ENOENT && len > GC_page_size) {
+      size_t mid_len = ((len >> 1) + GC_page_size - 1) & ~(GC_page_size - 1);
+
+      /* Retrying is safe even if part of the range was already processed. */
+      uffdwp_write_protect(start, mid_len, allow_write);
+      uffdwp_write_protect((ptr_t)start + mid_len, len - mid_len, allow_write);
+      return;
+    }
     ABORT_ON_REMAP_FAIL("UFFDIO_WRITEPROTECT", start, len);
+  }
 }
 
 #  ifndef UFFDWP_MSG_BATCH_SIZE
