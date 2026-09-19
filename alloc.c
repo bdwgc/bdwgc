@@ -585,7 +585,11 @@ GC_maybe_gc(void)
   if (GC_time_limit != GC_TIME_UNLIMITED)
     GET_TIME(GC_start_time);
 #endif
-  if (GC_stopped_mark(GC_timeout_stop_func)) {
+  /* Allow parallel marking without a timeout or custom stop function. */
+  if (GC_stopped_mark(GC_time_limit == GC_TIME_UNLIMITED
+                              && GC_default_stop_func == GC_never_stop_func
+                          ? GC_never_stop_func
+                          : GC_timeout_stop_func)) {
     SAVE_CALLERS_TO_LAST_STACK();
     GC_finish_collection();
   } else if (!GC_is_full_gc) {
@@ -814,9 +818,12 @@ GC_collect_a_little_inner(size_t n_blocks)
           && GC_n_attempts < max_prior_attempts)
         GET_TIME(GC_start_time);
 #endif
-      if (GC_stopped_mark(GC_n_attempts < max_prior_attempts
-                              ? GC_timeout_stop_func
-                              : GC_never_stop_func)) {
+      if (GC_stopped_mark(
+              GC_n_attempts >= max_prior_attempts
+                      || (GC_time_limit == GC_TIME_UNLIMITED
+                          && GC_default_stop_func == GC_never_stop_func)
+                  ? GC_never_stop_func
+                  : GC_timeout_stop_func)) {
         GC_finish_collection();
       } else {
         GC_n_attempts++;
