@@ -260,6 +260,9 @@ GC_API GC_ATTR_MALLOC void * GC_CALL GC_gcj_malloc_ignore_off_page(size_t lb,
             }
         } else {
             GC_gcjobjfreelist[lg] = obj_link(op);
+#           if MARK_DESCR_OFFSET > CPP_WORDSZ/8
+                GC_set_valid_ds_mark_obj(op);
+#           endif
             GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
         }
     } else {
