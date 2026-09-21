@@ -633,10 +633,9 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
             /* See the comment in GC_malloc_explicitly_typed.   */
             lg = BYTES_TO_GRANULES(GC_size(op));
         } else {
+            GC_ASSERT(!IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor));
             *opp = obj_link(op);
             obj_link(op) = 0;
-            if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor))
-                GC_set_valid_ds_mark_obj(op);
             GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
             UNLOCK();
         }
