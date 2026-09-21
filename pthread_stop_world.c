@@ -819,8 +819,10 @@ GC_INNER void GC_start_world(void)
     pthread_t self = pthread_self();
     register int i;
     register GC_thread p;
-#   ifndef GC_OPENBSD_UTHREADS
+#   ifdef GC_NETBSD_THREADS_WORKAROUND
       register int n_live_threads = 0;
+#   endif
+#   ifndef GC_OPENBSD_UTHREADS
       register int result;
 #   endif
 
@@ -839,7 +841,7 @@ GC_INNER void GC_start_world(void)
         if (!THREAD_EQUAL(p -> id, self)) {
             if (p -> flags & FINISHED) continue;
             if (p -> thread_blocked) continue;
-#           ifndef GC_OPENBSD_UTHREADS
+#           ifdef GC_NETBSD_THREADS_WORKAROUND
               n_live_threads++;
 #           endif
 #           ifdef DEBUG_THREADS
@@ -859,7 +861,9 @@ GC_INNER void GC_start_world(void)
             switch(result) {
                 case ESRCH:
                     /* Not really there anymore.  Possible? */
+#                 ifdef GC_NETBSD_THREADS_WORKAROUND
                     n_live_threads--;
+#                 endif
                     break;
                 case 0:
                     break;
