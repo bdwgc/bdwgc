@@ -619,11 +619,12 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
     lb = SIZET_SAT_ADD(lb, TYPD_EXTRA_BYTES);
     if (SMALL_OBJ(lb)) {
         void **opp;
+        struct obj_kind * ok = &GC_obj_kinds[GC_explicit_kind];
 
         GC_DBG_COLLECT_AT_MALLOC(lb);
         LOCK();
         lg = GC_size_map[lb];
-        opp = &GC_obj_kinds[GC_explicit_kind].ok_freelist[lg];
+        opp = &(ok -> ok_freelist[lg]);
         op = (ptr_t)(*opp);
         if (EXPECT(0 == op, FALSE)) {
             UNLOCK();
@@ -634,6 +635,8 @@ GC_API GC_ATTR_MALLOC void * GC_CALL
         } else {
             *opp = obj_link(op);
             obj_link(op) = 0;
+            if (IS_INDIR_PER_OBJ_DESCR(ok -> ok_descriptor))
+                GC_set_valid_ds_mark_obj(op);
             GC_bytes_allocd += GRANULES_TO_BYTES((word)lg);
             UNLOCK();
         }
