@@ -1,3 +1,198 @@
+2026-09-23  Ivan Maidanski <ivmai@mail.ru>
+
+	* CMakeLists.txt (CMAKE_MINIMUM_REQUIRED): Move to the top of the file.
+
+2026-09-17  Ivan Maidanski <ivmai@mail.ru>
+
+	* allchblk.c (setup_fake_header): New `static` function (move part of
+	code from `setup_header()`).
+	* allchblk.c (setup_header): Rename `granules` local variable to `lg`
+	and move its definition (and initialization) to the beginning of
+	function (define the variable unconditionally); call
+	`setup_fake_header()` and `GC_alloc_valid_ds_bitmap()`.
+	* allchblk.c (setup_header): Use `IS_INDIR_PER_OBJ_DESCR()`.
+	* malloc.c (GC_generic_malloc_inner, GC_free): Likewise.
+	* malloc.c [THREADS] (GC_free_inner): Likewise.
+	* mallocx.c (GC_generic_malloc_many): Likewise.
+	* mark.c (GC_mark_from): Likewise.
+	* allchblk.c (setup_header, GC_add_to_fl, GC_freehblk): Add assertion
+	about `hhdr->hb_valid_ds_bitmap`.
+	* headers.c (free_hdr): Likewise.
+	* gcj_mlc.c (GC_core_gcj_malloc): Check `THREAD_GCJ_FREELISTS` instead
+	of `THREAD_LOCAL_ALLOC`.
+	* allchblk.c [MARK_BIT_PER_OBJ] (GC_allochblk_nth): Check result of
+	`setup_header()`.
+	* doc/tree.html (A picture): Add `hb_valid_ds_bitmap` field to `hdr`
+	in the diagram.
+	* gcj_mlc.c [GC_GCJ_SUPPORT && MARK_DESCR_OFFSET>CPP_WORDSZ/8]
+	(GC_core_gcj_malloc, GC_gcj_malloc_ignore_off_page): Call
+	`GC_set_valid_ds_mark_obj()`.
+	* malloc.c (GC_generic_malloc_inner): Likewise.
+	* headers.c (alloc_hdr): Clear `hb_valid_ds_bitmap` field after
+	`GC_scratch_alloc()` call.
+	* headers.c (GC_alloc_valid_ds_bitmap, GC_free_valid_ds_bitmap): New
+	`GC_INNER` function implementation.
+	* mark.c (GC_set_valid_ds_mark_obj): Likewise.
+	* include/private/gc_pmark.h [!MARK_DESCR_OFFSET] (MARK_DESCR_OFFSET):
+	Change from `sizeof(word)` to `CPP_WORDSZ/8` (a constant that is
+	usable by preprocessor).
+	* include/private/gc_priv.h (valid_ds_bitmap_t): New type.
+	* include/private/gc_priv.h (hblkhdr.hb_valid_ds_bitmap,
+	GC_arrays._free_valid_ds_bitmap_pool): New field.
+	* include/private/gc_priv.h (hdr_valid_ds_mark, hdr_set_valid_ds_mark,
+	hdr_clear_valid_ds_mark, IS_INDIR_PER_OBJ_DESCR): New macro.
+	* include/private/gc_priv.h (GC_set_valid_ds_mark_obj,
+	GC_alloc_valid_ds_bitmap, GC_free_valid_ds_bitmap): Declare `GC_INNER`
+	function.
+	* include/private/gc_priv.h (GC_core_gcj_malloc): Check
+	`THREAD_GCJ_FREELISTS` instead of `THREAD_LOCAL_ALLOC` and
+	`GC_GCJ_SUPPORT`.
+	* include/private/gcconfig.h [GC_GCJ_SUPPORT && THREAD_LOCAL_ALLOC
+	&& !(MARK_DESCR_OFFSET>CPP_WORDSZ/8)] (THREAD_GCJ_FREELISTS): New
+	macro.
+	* include/private/thread_local_alloc.h (GC_tlfs.gcj_freelists,
+	ERROR_FL): Check `THREAD_GCJ_FREELISTS` instead of `GC_GCJ_SUPPORT`.
+	* thread_local_alloc.c (return_freelists, GC_init_thread_local,
+	GC_destroy_thread_local, GC_gcj_malloc, GC_mark_thread_local_fls_for,
+	GC_check_tls_for): Likewise.
+	* malloc.c (GC_generic_malloc_inner): Rename `kind` local variable to
+	`ok`.
+	* malloc.c (GC_malloc_kind_global): Define `ok` local variable.
+	* malloc.c (GC_free): Call `hdr_clear_valid_ds_mark()`.
+	* malloc.c [THREADS] (GC_free_inner): Likewise.
+	* reclaim.c (GC_reclaim_generic): Likewise.
+	* mark.c (GC_mark_from): Define `bitmap` local variable; do not
+	dereference `type_descr` pointer unless `hdr_valid_ds_mark()`.
+	* ptr_chck.c (GC_is_visible): Likewise.
+	* mark.c (GC_mark_from): Define `h`, `hhdr` local variables.
+	* reclaim.c (GC_reclaim_generic): Add assertion about result of
+	`IS_INDIR_PER_OBJ_DESCR()`.
+	* reclaim.c (GC_reclaim_block): Call `GC_free_valid_ds_bitmap()` if
+	the block is empty (for small objects).
+	* tests/test.c [GC_GCJ_SUPPORT && !MARK_DESCR_OFFSET]
+	(MARK_DESCR_OFFSET): Define macro (to exactly the same value as in
+	gc_pmark.h).
+	* tests/test.c [GC_GCJ_SUPPORT] (fake_vtable.dummy): Change type from
+	void* to char[MARK_DESCR_OFFSET]; remove comment that only
+	MARK_DESCR_OFFSET is supported.
+	* tests/test.c [GC_GCJ_SUPPORT] (gcj_class_struct1, gcj_class_struct2):
+	Update initializer for the first field (from 0 to {0}).
+
+2026-08-29  Ivan Maidanski <ivmai@mail.ru>
+
+	* include/cord.h (CORD_cat): Fix file name (`string.h`) in comment.
+	* include/cord.h (CORD_dump): Fix typo ("implementation-defined") in
+	comment.
+	* include/cord.h (CORD_from_file): Change "descriptor" to "file" in
+	comment; change "file pointer" to "file position" in comment.
+	* include/cord.h (CORD_from_file_eager): Fix typo
+	("file will be closed") in comment.
+	* include/private/cord_pos.h (CORD_POS_INVALID): Fix typo
+	("the position") in comment.
+	* include/ec.h (CORD_ec_append_cord): Fix typo ("the structure") in
+	comment.
+
+2026-08-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/README.autoconf: Fix the system path where `libgc.so` is
+	installed (`/usr/local/lib`, not `/usr/local/bin`).
+
+2026-08-28  Ivan Maidanski <ivmai@mail.ru>
+
+	* extra/gc.c: Fix typo ("pthreads call") in comment.
+
+2026-07-22  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/debugging.html (Warning Messages About Needing to): Remove
+	`big_realloc` sample as it uses `GC_size()` incorrectly; update the
+	relevant guide about large blocks are allocated with `realloc`.
+
+2026-07-21  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/gc.man (.TH): Change date format (to the one that could be
+	parsed).
+	* doc/gc.man (.br, .LP): Remove empty (redundant) ones.
+
+2026-07-18  Ivan Maidanski <ivmai@mail.ru>
+
+	* doc/tree.html: Fix typos ("bits of the candidate pointer",
+	"pointed to by", "the key").
+
+2026-06-26  Ivan Maidanski <ivmai@mail.ru>
+
+	* misc.c [!THREADS] (GC_stack_last_cleared): Initialize to ~0
+	(instead of 0).
+
+2026-05-29  Ivan Maidanski <ivmai@mail.ru>
+
+	* darwin_stop_world.c [!DARWIN_DONT_PARSE_STACK] (GC_stack_range_for):
+	If kern_result is MACH_SEND_INVALID_DEST, then immediately return 0.
+	* darwin_stop_world.c (GC_push_all_stacks): Do not call
+	GC_push_all_stack(lo,hi) and adjust total_size by hi-lo if lo is NULL.
+
+2025-11-30  Ivan Maidanski <ivmai@mail.ru>
+
+	* win32_threads.c [!GC_NO_THREADS_DISCOVERY] (GC_start_world): Move `i`
+	local variable definition inside `if (GC_win32_dll_threads) { ... }`.
+
+2023-10-04  Ivan Maidanski <ivmai@mail.ru>
+
+	* misc.c [!THREADS] (GC_clear_stack): Compare GC_gc_no and
+	GC_stack_last_cleared using inequality operator (instead of
+	greater-than); compare GC_high_water to 0 (instead of comparing
+	GC_stack_last_cleared to 0); use EXPECT to compare GC_high_water.
+
+2017-04-20  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordbscs.c (CORD_cat_char_star, CORD_cat, CORD_from_fn_inner):
+	Add explicit cast in assignment of result->depth, result->len.
+	* cord/cordbscs.c (CORD_substr_checked): Change type of `j`, `lim`
+	local variables from int to size_t.
+	* cord/cordbscs.c (CORD_init_min_len): Add explicit cast (to int) in
+	assignment of CORD_max_len.
+	* cord/cordxtra.c (CORD_ncmp): Add explicit cast (to long) when `avail`
+	local variable is updated.
+	* cord/cordxtra.c (CORD_chr, CORD_rchr, CORD_from_file_eager): Add
+	explicit cast to char (from int) for `c` local variable in assignment
+	of d.target and in CORD_ec_append call.
+	* cord/cordxtra.c (refill_cache): Add explicit cast to long (from
+	size_t) for line_start in fseek call.
+	* cord/de.c (line_pos, fix_pos, do_command): Add explicit cast to
+	int in assignment of `*c`, `line`, `col`.
+	* cord/de.c (do_command): Reset line, col and file_pos variables
+	(of different types) in separate statements.
+	* cord/de_win.c (WinMain): Add explicit cast of msg.wParam to int
+	in return statement.
+
+2016-02-16  Ivan Maidanski <ivmai@mail.ru>
+
+	* finalize.c (HASH2, GC_grow_table): Cast 1 to `word` before shift to
+	avoid overflow.
+	* finalize.c (HASH2): Wrap `log_size` into parentheses.
+	* finalize.c (GC_finalize): Cast 1 to `size_t` before shift to avoid
+	overflow.
+
+2016-02-12  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/cordprnt.c (CORD_vsprintf): Explicitly cast `prec` to unsigned
+	(to avoid assignment of a signed value to a variable of a bigger
+	unsigned integer type).
+	* cord/cordxtra.c (CORD_nul_func, CORD_chars): Cast between pointer
+	and char via GC_word (instead of long); explicitly cast char to
+	unsigned char (to avoid a signed value cast to a bigger unsigned one).
+	* cord/de.c (replace_line): Explicitly cast `COLS` to unsigned
+	(when compared to `len` local variable).
+
+2012-06-16  Ivan Maidanski <ivmai@mail.ru>
+
+	* cord/de.c (retrieve_line): Change type of `eol` local variable
+	from int to size_t (to prevent "comparison between signed and unsigned"
+	compiler warning).
+	* cord/de_win.c (WinMain): Cast GetLastError() result to
+	unsigned int (to match printf format specifier).
+	* cord/de_win.c (AboutBoxCallback): Suppress "unused parameter"
+	compiler warning for `lParam` (by casting the later to void).
+
 2026-05-15  Ivan Maidanski <ivmai@mail.ru>
 
 	* configure: Regenerate.
