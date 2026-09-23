@@ -60,6 +60,7 @@ jobs:
         -Denable_gc_assertions=${{ matrix.gc_assertions }}
         -S ${{ github.workspace }}
         -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+        -Wno-deprecated
 
     - name: Build
       # Build the code with the given configuration.
