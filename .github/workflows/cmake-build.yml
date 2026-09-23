@@ -54,6 +54,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
         -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+        -Wno-deprecated
 
     - name: Build
       # Build the code with the given configuration.
