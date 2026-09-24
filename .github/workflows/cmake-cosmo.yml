@@ -54,7 +54,7 @@ jobs:
           -Denable_single_obj_compilation=${{ matrix.single_obj_compilation }}
           -Denable_threads=${{ matrix.enable_threads }}
           -Denable_werror=on
-          -Werror=dev
+          -Werror=author
 
       - name: Build
         run: >

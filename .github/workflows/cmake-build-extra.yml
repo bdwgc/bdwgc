@@ -87,7 +87,7 @@ jobs:
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DGC_BUILD_SHARED_LIBS=${{ matrix.shared_libs }}
           -Denable_werror=on
-          -Werror=dev
+          -Werror=author
           ${{ matrix.cmake_options }}
 
       - name: Build
