@@ -58,9 +58,9 @@ jobs:
         - NO_CLONE_LIBATOMIC_OPS=true
     - env:
         - MAKEFILE_TARGETS="distcheck"
-        - AUTOCONF_VER=2.72
-        - AUTOMAKE_VER=1.18.1
-        - LIBTOOL_VER=2.5.4
+        - AUTOCONF_VER=2.73
+        - AUTOMAKE_VER=1.19
+        - LIBTOOL_VER=2.6.2
         - M4_VER=1.4.21
         - NO_CLONE_LIBATOMIC_OPS=true
     - arch: s390x
