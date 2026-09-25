@@ -1015,7 +1015,7 @@ extern int _end[];
 #      define UFFDWP_VDB
 #    endif
 #  endif
-#  if !defined(REDIRECT_MALLOC) && !defined(E2K)
+#  if !defined(REDIRECT_MALLOC) && !(defined(E2K) && defined(GC_THREADS))
 /* Requires Linux 2.3.47 or later. */
 #    define MPROTECT_VDB
 #  else
@@ -1023,10 +1023,8 @@ extern int _end[];
  * We seem to get random errors in the incremental mode, possibly because
  * the Linux threads implementation itself is a `malloc` client and cannot
  * deal with the signals.  `fread()` uses `malloc()` too.
- * In case of e2k, unless `-fsemi-spec-ld` (or `-O0`) option is passed
- * to gcc (both when compiling the collector library and the client),
- * a semi-speculative optimization may lead to `SIGILL` (with `ILL_ILLOPN`
- * `si_code`) instead of `SIGSEGV`.
+ * TODO: For e2k, the fault handler causes significant performance degradation
+ * in multi-threaded code.
  */
 #  endif
 #endif /* LINUX */
