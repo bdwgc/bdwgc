@@ -84,7 +84,7 @@ jobs:
           path: libatomic_ops
 
       - name: Run cppcheck analysis
-        run: >-
+        run: >
           ~/cppcheck-install/bin/cppcheck --error-exitcode=2 --quiet
           -D CPPCHECK -I include -I libatomic_ops/src
           --check-level=exhaustive --safety ${{ matrix.args }}

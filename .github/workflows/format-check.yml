@@ -48,9 +48,8 @@ jobs:
 
       - name: Dry-run gersemi (CMake files check)
         if: ${{ matrix.type == 'cmake' }}
-        run: >-
-          python3 -m gersemi --check --diff CMakeLists.txt
-          Config.cmake.in
+        run: >
+          python3 -m gersemi --check --diff CMakeLists.txt Config.cmake.in
 
       - name: Lint .man files
         if: ${{ matrix.type == 'man' }}
