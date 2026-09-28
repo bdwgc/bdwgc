@@ -99,7 +99,7 @@ jobs:
       - name: Test
         working-directory: ${{ github.workspace }}/build
         # Execute tests defined by the CMake configuration.
-        run: >-
+        run: >
           ctest --build-config ${{ matrix.build_type }}
           --verbose --parallel 8
 
