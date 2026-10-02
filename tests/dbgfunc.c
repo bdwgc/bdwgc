@@ -43,11 +43,8 @@ static void *finalizer_obj;
 static void GC_CALLBACK
 test_finalizer(void *obj, void *client_data)
 {
-  finalizer_called = 1;
-  finalizer_obj = obj;
-  /* Store `client_data` for testing. */
-  if (NULL != client_data)
-    finalizer_obj = client_data;
+  finalizer_called++;
+  finalizer_obj = client_data != NULL ? client_data : obj;
 }
 #endif
 
@@ -269,21 +266,29 @@ static void
 test_finalizer_execution(void)
 {
 #ifndef GC_NO_FINALIZATION
-  void *obj;
+  int i;
 
   /* Reset finalizer state. */
   finalizer_called = 0;
   finalizer_obj = NULL;
 
-  /* Allocate object and register finalizer. */
-  obj = GC_MALLOC(100);
-  CHECK_OUT_OF_MEMORY(obj);
+  for (i = 0; i < 10; i++) {
+    /* Allocate object and register finalizer. */
+    void *obj = GC_MALLOC(100);
 
-  GC_REGISTER_FINALIZER(obj, test_finalizer, (void *)(GC_uintptr_t)0x7777,
-                        NULL, NULL);
+    CHECK_OUT_OF_MEMORY(obj);
+    GC_REGISTER_FINALIZER(obj, test_finalizer, (void *)(GC_uintptr_t)0x7777,
+                          NULL, NULL);
 
-  /* Force collection to trigger the finalizer. */
-  GC_gcollect();
+    /* Force collection to trigger the finalizer. */
+    GC_gcollect();
+    GC_invoke_finalizers();
+  }
+
+  if (!GC_get_find_leak()) {
+    TEST_ASSERT(finalizer_called > 0);
+    TEST_ASSERT(finalizer_obj == (void *)(GC_uintptr_t)0x7777);
+  }
 #endif
 }
 
