@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: ["0.16.0"]
+        zig_version: ["0.17.0"]
         ttriple:
           - aarch64-freebsd-none
           - aarch64-maccatalyst-none
@@ -35,15 +35,15 @@ jobs:
           - mips64el-openbsd-none
           - mipsel-netbsd-eabi
           - mipsel-netbsd-eabihf
-          - powerpc-netbsd-eabi
           - powerpc-netbsd-eabihf
           - powerpc-openbsd-eabihf
           - powerpc64-freebsd-none
           - powerpc64-openbsd-none
           - powerpc64le-freebsd-none
+          - riscv32-netbsd-none
           - riscv64-freebsd-none
+          - riscv64-netbsd-none
           - riscv64-openbsd-none
-          - sparc-netbsd-none
           - sparc64-netbsd-none
           - sparc64-openbsd-none
           - thumb-windows-gnu
@@ -67,38 +67,14 @@ jobs:
         exclude:
           - threads: true
             ttriple: wasm32-wasi-musl
-          # FIXME: undefined hidden symbol `__guard_local`
-          - linkage: dynamic
-            ttriple: aarch64-openbsd-none
-          - linkage: dynamic
-            ttriple: arm-openbsd-eabi
-          - linkage: dynamic
-            ttriple: mips64-openbsd-none
-          - linkage: dynamic
-            ttriple: mips64el-openbsd-none
-          - linkage: dynamic
-            ttriple: powerpc-openbsd-eabihf
-          - linkage: dynamic
-            ttriple: powerpc64-openbsd-none
-          - linkage: dynamic
-            ttriple: riscv64-openbsd-none
-          - linkage: dynamic
-            ttriple: sparc64-openbsd-none
-          - linkage: dynamic
-            ttriple: x86-openbsd-none
-          - linkage: dynamic
-            ttriple: x86_64-openbsd-none
-          # FIXME: SPARCv8 does not handle f128 in calls
-          - linkage: dynamic
-            ttriple: sparc-netbsd-none
-          - linkage: dynamic
-            ttriple: sparc64-netbsd-none
-          # FIXME: not stable yet
+          # FIXME: Recompile with -fPIC
           - linkage: dynamic
             ttriple: wasm32-wasi-musl
-          # FIXME: no available compatible targets
+          # FIXME: No available compatible targets
           - ttriple: m68k-netbsd-none
-          # FIXME: `stdlib.h` file not found
+          # FIXME: Unknown target CPU `generic`
+          - ttriple: sparc-netbsd-none
+          # FIXME: Unable to provide libc
           - ttriple: x86_64-dragonfly
           - ttriple: x86_64-haiku
           - ttriple: x86_64-serenity
