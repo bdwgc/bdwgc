@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: ["0.16.0"]
+        zig_version: ["0.17.0"]
         ttriple:
           - aarch64-linux-gnu
           - aarch64-linux-musl
@@ -54,11 +54,8 @@ jobs:
           - mipsel-linux-gnueabihf
           - mipsel-linux-musleabi
           - mipsel-linux-musleabihf
-          - powerpc-linux-gnueabi
-          - powerpc-linux-gnueabihf
           - powerpc-linux-musleabi
           - powerpc-linux-musleabihf
-          - powerpc64-linux-gnu
           - powerpc64-linux-musl
           - powerpc64le-linux-gnu
           - powerpc64le-linux-musl
@@ -107,6 +104,9 @@ jobs:
           # FIXME: No available targets compatible with triple
           - ttriple: m68k-linux-gnu
           - ttriple: m68k-linux-musl
+          - ttriple: powerpc-linux-gnueabi
+          - ttriple: powerpc-linux-gnueabihf
+          - ttriple: powerpc64-linux-gnu
 
     steps:
       - uses: actions/checkout@v6
