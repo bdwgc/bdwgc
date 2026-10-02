@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: ["0.16.0"]
+        zig_version: ["0.17.0"]
         ttriple:
           - aarch64-linux-gnu
           - aarch64-linux-musl
@@ -30,6 +30,8 @@ jobs:
           - armeb-linux-musleabi
           - armeb-linux-musleabihf
           - hexagon-linux-musl
+          - loongarch32-linux-gnu
+          - loongarch32-linux-gnusf
           - loongarch64-linux-gnu
           - loongarch64-linux-gnusf
           - loongarch64-linux-musl
@@ -53,11 +55,8 @@ jobs:
           - mipsel-linux-gnueabihf
           - mipsel-linux-musleabi
           - mipsel-linux-musleabihf
-          - powerpc-linux-gnueabi
-          - powerpc-linux-gnueabihf
           - powerpc-linux-musleabi
           - powerpc-linux-musleabihf
-          - powerpc64-linux-gnu
           - powerpc64-linux-musl
           - powerpc64le-linux-gnu
           - powerpc64le-linux-musl
@@ -75,8 +74,7 @@ jobs:
           - thumbeb-linux-musleabihf
           - x86-linux-gnu
           - x86-linux-musl
-          # test with a glibc version
-          - x86_64-linux-gnu.2.27
+          - x86_64-linux-gnu.2.44  # test with a glibc version
           - x86_64-linux-gnux32
           - x86_64-linux-musl
           - x86_64-linux-muslx32
@@ -84,28 +82,26 @@ jobs:
         linkage: [static, dynamic]
         threads: [false, true]
         exclude:
-          # FIXME: SPARCv8 does not handle f128 in calls
+          # FIXME: Unknown target CPU `generic`
           - linkage: dynamic
             ttriple: sparc-linux-gnu
-          # FIXME: recompile with -fPIC
-          - linkage: dynamic
-            ttriple: sparc64-linux-gnu
-          - linkage: dynamic
-            ttriple: x86_64-linux-gnux32
-          - linkage: dynamic
-            ttriple: x86_64-linux-muslx32
-          # FIXME: ignoring -fno-PIC option
+          # FIXME: Ignoring -fno-PIC option
           - linkage: static
             ttriple: mips64-linux-muslabi64
           - linkage: static
             ttriple: mips64el-linux-muslabi64
           # FIXME: __linux__ macro is not predefined
           - ttriple: arc-linux-gnu
-          # FIXME: LLVM error in memmoveFast
-          - ttriple: loongarch64-linux-gnusf
+          # FIXME: Unknown type name `__STD_TYPE` in libc header
+          - ttriple: loongarch32-linux-gnu
+          - ttriple: loongarch32-linux-gnusf
           # FIXME: No available targets compatible with triple
           - ttriple: m68k-linux-gnu
           - ttriple: m68k-linux-musl
+          # FIXME: Unable to provide libc
+          - ttriple: powerpc-linux-gnueabi
+          - ttriple: powerpc-linux-gnueabihf
+          - ttriple: powerpc64-linux-gnu
 
     steps:
       - uses: actions/checkout@v6
