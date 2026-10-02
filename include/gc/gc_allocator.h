@@ -50,7 +50,7 @@ namespace boehmgc
 #  define GC_ALLOCATOR_THROW_OR_ABORT() throw std::bad_alloc()
 #endif
 
-#if __cplusplus >= 201103L
+#if (__cplusplus >= 201103L) && !defined(__wasi__)
 #  define GC_ALLOCATOR_PTRDIFF_T std::ptrdiff_t
 #  define GC_ALLOCATOR_SIZE_T std::size_t
 #else
