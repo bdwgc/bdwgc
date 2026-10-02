@@ -831,6 +831,26 @@ GC_free_internal(void *base, const hdr *hhdr, size_t clear_ofs,
       GC_large_allocd_bytes -= HBLKSIZE * OBJ_SZ_TO_BLOCKS(lb);
     }
     GC_ASSERT(ADDR(HBLKPTR(base)) == ADDR(hhdr->hb_block));
+    /*
+     * Incremental marking can leave this object on the mark stack while
+     * the mutator explicitly frees it.  Releasing its blocks invalidates
+     * the header needed by a custom mark procedure, and reallocation can
+     * give the same address with a different descriptor.  Drop pending scans
+     * of this object before its storage becomes available for reuse.
+     */
+    if (GC_collection_in_progress()) {
+      mse *entry = GC_mark_stack;
+      mse *top = GC_mark_stack_top;
+
+      while (ADDR_GE((ptr_t)top, (ptr_t)entry)) {
+        if (ADDR_INSIDE(entry->mse_start, (ptr_t)base, (ptr_t)base + lb)) {
+          *entry = *top--;
+        } else {
+          ++entry;
+        }
+      }
+      GC_mark_stack_top = top;
+    }
     GC_freehblk(hhdr->hb_block);
   }
   FREE_PROFILER_HOOK(base);
