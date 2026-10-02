@@ -4,7 +4,7 @@
     // This is `PACKAGE_VERSION`, the version of the garbage collector.
     .version = "8.3.0",
     .paths = .{""},
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.17.0",
     // Unique package id, do not edit it.
     .fingerprint = 0x3e2d0033f8c486f2,
 }

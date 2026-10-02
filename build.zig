@@ -14,7 +14,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 
 // The Zig version here should match that in file `build.zig.zon`.
-const zig_min_required_version = "0.14.0";
+const zig_min_required_version = "0.17.0";
 
 // TODO: specify `PACKAGE_VERSION`.
 
@@ -26,7 +26,7 @@ const LIBGCCPP_SHARED_VERSION = "1.5.0";
 
 // Compared to the `cmake` script, some definitions and compiler options are
 // hard-coded here, which is natural because `build.zig` is only built with
-// the Zig build system and Zig ships with an embedded clang (as of zig 0.14).
+// the Zig build system and Zig ships with an embedded clang (as of zig 0.17).
 // As a consequence, we do not have to support lots of different compilers
 // (a notable exception is msvc target which implies use of the corresponding
 // native compiler).
@@ -55,7 +55,7 @@ pub fn build(b: *std.Build) void {
 
     // Customize build by passing "-D<option_name>[=false]" in command line.
     const enable_cplusplus = b.option(bool, "enable_cplusplus", "C++ support") orelse false;
-    const linkage = b.option(std.builtin.LinkMode, "linkage", "Build shared libraries (otherwise static ones)") orelse .dynamic;
+    const linkage = b.option(std.lang.LinkMode, "linkage", "Build shared libraries (otherwise static ones)") orelse .dynamic;
     const build_cord = b.option(bool, "build_cord", "Build cord library") orelse true;
     const cflags_extra = b.option([]const u8, "CFLAGS_EXTRA", "Extra user-defined cflags") orelse "";
     // TODO: support `enable_docs`
@@ -231,7 +231,7 @@ pub fn build(b: *std.Build) void {
     if (!enable_gc_dump) {
         flags.append(b.allocator, "-D NO_DEBUGGING") catch unreachable;
     }
-    if (optimize != .Debug) {
+    if (optimize != .debug) {
         flags.append(b.allocator, "-D NDEBUG") catch unreachable;
     }
 
@@ -394,16 +394,6 @@ pub fn build(b: *std.Build) void {
     if (t.os.tag != .windows) {
         // Define to use `dladdr` function (used for debugging).
         flags.append(b.allocator, "-D HAVE_DLADDR") catch unreachable;
-    }
-
-    // TODO: before zig 0.16, `exception.h` and `getsect.h` files were
-    // not provided by zig itself for Darwin target.
-    if (t.os.tag.isDarwin() and !target.query.isNative()) {
-        const ver0_16 = std.SemanticVersion.parse("0.16.0") catch unreachable;
-        if (builtin.zig_version.order(ver0_16) == .lt) {
-            flags.append(b.allocator, "-D MISSING_MACH_O_GETSECT_H") catch unreachable;
-            flags.append(b.allocator, "-D NO_MPROTECT_VDB") catch unreachable;
-        }
     }
 
     if (enable_cplusplus and enable_werror) {

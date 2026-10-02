@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zig_version: ["0.16.0"]
+        zig_version: ["0.17.0"]
         ttriple:
           - aarch64-freebsd-none
           - aarch64-maccatalyst-none
@@ -36,7 +36,6 @@ jobs:
           - mips64el-openbsd-none
           - mipsel-netbsd-eabi
           - mipsel-netbsd-eabihf
-          - powerpc-netbsd-eabi
           - powerpc-netbsd-eabihf
           - powerpc-openbsd-eabihf
           - powerpc64-freebsd-none
@@ -44,7 +43,6 @@ jobs:
           - powerpc64le-freebsd-none
           - riscv64-freebsd-none
           - riscv64-openbsd-none
-          - sparc-netbsd-none
           - sparc64-netbsd-none
           - sparc64-openbsd-none
           - thumb-windows-gnu
@@ -99,6 +97,8 @@ jobs:
             ttriple: wasm32-wasi-musl
           # FIXME: no available compatible targets
           - ttriple: m68k-netbsd-none
+          # FIXME: unknown target CPU 'generic'
+          - ttriple: sparc-netbsd-none
           # FIXME: `stdlib.h` file not found
           - ttriple: x86_64-dragonfly
           - ttriple: x86_64-haiku
