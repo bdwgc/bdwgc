@@ -140,7 +140,7 @@ Cautions:
 #  include <new> // for `std`, `bad_alloc`
 #endif
 
-#if defined(GC_INCLUDE_NEW) && (__cplusplus >= 201103L)
+#if defined(GC_INCLUDE_NEW) && (__cplusplus >= 201103L) && !defined(__wasi__)
 #  define GC_PTRDIFF_T std::ptrdiff_t
 #  define GC_SIZE_T std::size_t
 #else
