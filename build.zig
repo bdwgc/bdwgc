@@ -55,7 +55,7 @@ pub fn build(b: *std.Build) void {
 
     // Customize build by passing "-D<option_name>[=false]" in command line.
     const enable_cplusplus = b.option(bool, "enable_cplusplus", "C++ support") orelse false;
-    const linkage = b.option(std.builtin.LinkMode, "linkage", "Build shared libraries (otherwise static ones)") orelse .dynamic;
+    const linkage = b.option(std.lang.LinkMode, "linkage", "Build shared libraries (otherwise static ones)") orelse .dynamic;
     const build_cord = b.option(bool, "build_cord", "Build cord library") orelse true;
     const cflags_extra = b.option([]const u8, "CFLAGS_EXTRA", "Extra user-defined cflags") orelse "";
     // TODO: support `enable_docs`
@@ -231,7 +231,7 @@ pub fn build(b: *std.Build) void {
     if (!enable_gc_dump) {
         flags.append(b.allocator, "-D NO_DEBUGGING") catch unreachable;
     }
-    if (optimize != .Debug) {
+    if (optimize != .debug) {
         flags.append(b.allocator, "-D NDEBUG") catch unreachable;
     }
 
@@ -394,16 +394,6 @@ pub fn build(b: *std.Build) void {
     if (t.os.tag != .windows) {
         // Define to use `dladdr` function (used for debugging).
         flags.append(b.allocator, "-D HAVE_DLADDR") catch unreachable;
-    }
-
-    // TODO: before zig 0.16, `exception.h` and `getsect.h` files were
-    // not provided by zig itself for Darwin target.
-    if (t.os.tag.isDarwin() and !target.query.isNative()) {
-        const ver0_16 = std.SemanticVersion.parse("0.16.0") catch unreachable;
-        if (builtin.zig_version.order(ver0_16) == .lt) {
-            flags.append(b.allocator, "-D MISSING_MACH_O_GETSECT_H") catch unreachable;
-            flags.append(b.allocator, "-D NO_MPROTECT_VDB") catch unreachable;
-        }
     }
 
     if (enable_cplusplus and enable_werror) {
