@@ -7,12 +7,13 @@ name: cmake build
 jobs:
   build:
     name: >-
-      ${{ matrix.os }} ${{ matrix.c_compiler }}
-      thr:${{ matrix.enable_threads }}
-      rwlock:${{ matrix.enable_rwlock }}
+      ${{ matrix.os }}
+      ${{ matrix.c_compiler }}
+      thr:${{ matrix.threads }}
+      rwlock:${{ matrix.rwlock }}
       redir:${{ matrix.redirect_malloc }}
       dll:${{ matrix.shared_libs }}
-      cpp:${{ matrix.enable_cplusplus }}
+      cpp:${{ matrix.cplusplus }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 6
 
@@ -31,13 +32,13 @@ jobs:
         c_compiler: [cl, clang, gcc]
         cxx_compiler: [cl, clang++, g++]
         build_type: [Release]
-        enable_cplusplus: ["off", "on"]
-        enable_gc_dump: ["on"]
-        enable_rwlock: ["off", "on"]
-        enable_threads: ["off", "on"]
+        cplusplus: ["off", "on"]
         gc_assertions: ["on"]
+        gc_dump: ["on"]
         large_config: ["on"]
         redirect_malloc: ["off", "on"]
+        rwlock: ["off", "on"]
+        threads: ["off", "on"]
         shared_libs: ["off", "on"]
         exclude:
           - os: macos-26-intel
@@ -52,8 +53,8 @@ jobs:
             c_compiler: cl
           - os: ubuntu-latest
             c_compiler: cl
-          - enable_threads: "off"
-            enable_rwlock: "on"
+          - threads: "off"
+            rwlock: "on"
           - c_compiler: cl
             cxx_compiler: clang++
           - c_compiler: cl
@@ -67,32 +68,32 @@ jobs:
           - c_compiler: gcc
             cxx_compiler: clang++
           - os: macos-26-intel
-            enable_cplusplus: "off"
+            cplusplus: "off"
           - os: macos-latest
-            enable_cplusplus: "off"
+            cplusplus: "off"
           - os: ubuntu-24.04-arm
-            enable_cplusplus: "off"
+            cplusplus: "off"
           - os: ubuntu-latest
-            enable_cplusplus: "off"
+            cplusplus: "off"
           - os: windows-latest
             c_compiler: cl
-            enable_cplusplus: "off"
+            cplusplus: "off"
           - os: windows-11-arm
             c_compiler: cl
-            enable_cplusplus: "off"
+            cplusplus: "off"
           # TODO: replacement operator cannot be inline
           - os: windows-latest
             c_compiler: clang
-            enable_cplusplus: "on"
+            cplusplus: "on"
           - os: windows-latest
             c_compiler: gcc
-            enable_cplusplus: "off"
+            cplusplus: "off"
           - os: windows-11-arm
             c_compiler: clang
-            enable_cplusplus: "on"
+            cplusplus: "on"
           - os: windows-11-arm
             c_compiler: gcc
-            enable_cplusplus: "off"
+            cplusplus: "off"
         include:
           - os: windows-latest
             c_compiler: gcc
@@ -112,9 +113,7 @@ jobs:
 
       - name: Checkout libatomic_ops repository
         # Only if the compiler does not support GCC atomic intrinsics.
-        if: >-
-          ${{ matrix.c_compiler == 'cl'
-          && matrix.enable_threads == 'on' }}
+        if: ${{ matrix.c_compiler == 'cl' && matrix.threads == 'on' }}
         uses: actions/checkout@v6
         with:
           repository: bdwgc/libatomic_ops
@@ -130,13 +129,13 @@ jobs:
           -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DGC_BUILD_SHARED_LIBS=${{ matrix.shared_libs }}
-          -Denable_cplusplus=${{ matrix.enable_cplusplus }}
+          -Denable_cplusplus=${{ matrix.cplusplus }}
           -Denable_gc_assertions=${{ matrix.gc_assertions }}
-          -Denable_gc_dump=${{ matrix.enable_gc_dump }}
+          -Denable_gc_dump=${{ matrix.gc_dump }}
           -Denable_large_config=${{ matrix.large_config }}
           -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
-          -Denable_rwlock=${{ matrix.enable_rwlock }}
-          -Denable_threads=${{ matrix.enable_threads }}
+          -Denable_rwlock=${{ matrix.rwlock }}
+          -Denable_threads=${{ matrix.threads }}
           -Denable_werror=on
           -Werror=author
 
