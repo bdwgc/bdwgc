@@ -8,8 +8,7 @@ name: zig cross-compile
 jobs:
   build:
     name: >-
-      ${{ matrix.ttriple }} ${{ matrix.linkage }}
-      thr:${{ matrix.enable_threads }}
+      ${{ matrix.ttriple }} ${{ matrix.linkage }} thr:${{ matrix.threads }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -81,9 +80,9 @@ jobs:
           - x86_64-linux-gnux32
           - x86_64-linux-musl
           - x86_64-linux-muslx32
-        enable_cplusplus: [true]
-        enable_threads: [false, true]
+        cplusplus: [true]
         linkage: [static, dynamic]
+        threads: [false, true]
         exclude:
           # FIXME: SPARCv8 does not handle f128 in calls
           - linkage: dynamic
@@ -120,6 +119,6 @@ jobs:
           zig build
           -Dtarget=${{ matrix.ttriple }}
           -Dlinkage=${{ matrix.linkage }}
-          -Denable_cplusplus=${{ matrix.enable_cplusplus }}
-          -Denable_threads=${{ matrix.enable_threads }}
+          -Denable_cplusplus=${{ matrix.cplusplus }}
+          -Denable_threads=${{ matrix.threads }}
           -Denable_werror

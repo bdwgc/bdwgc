@@ -7,7 +7,8 @@ name: cmake cosmo
 jobs:
   build:
     name: >-
-      ${{ matrix.os }} thr:${{ matrix.enable_threads }}
+      ${{ matrix.os }}
+      thr:${{ matrix.threads }}
       single-obj:${{ matrix.single_obj_compilation }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 4
@@ -19,14 +20,14 @@ jobs:
         # TODO: macos-latest, windows-latest
         os: [ubuntu-latest]
         build_type: [Debug]
-        enable_cplusplus: ["on"]
-        enable_gc_dump: ["on"]
-        enable_rwlock: ["off"]
-        # TODO: on
-        enable_threads: ["off"]
+        cplusplus: ["on"]
         gc_assertions: ["on"]
+        gc_dump: ["on"]
         large_config: ["on"]
         redirect_malloc: ["off"]
+        rwlock: ["off"]
+        # TODO: threads on
+        threads: ["off"]
         single_obj_compilation: ["off", "on"]
 
     steps:
@@ -45,14 +46,14 @@ jobs:
           -DCMAKE_CXX_COMPILER=cosmoc++
           -DCMAKE_C_COMPILER=cosmocc
           -DGC_BUILD_SHARED_LIBS=off
-          -Denable_cplusplus=${{ matrix.enable_cplusplus }}
+          -Denable_cplusplus=${{ matrix.cplusplus }}
           -Denable_gc_assertions=${{ matrix.gc_assertions }}
-          -Denable_gc_dump=${{ matrix.enable_gc_dump }}
+          -Denable_gc_dump=${{ matrix.gc_dump }}
           -Denable_large_config=${{ matrix.large_config }}
           -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
-          -Denable_rwlock=${{ matrix.enable_rwlock }}
+          -Denable_rwlock=${{ matrix.rwlock }}
           -Denable_single_obj_compilation=${{ matrix.single_obj_compilation }}
-          -Denable_threads=${{ matrix.enable_threads }}
+          -Denable_threads=${{ matrix.threads }}
           -Denable_werror=on
           -Werror=author
 
