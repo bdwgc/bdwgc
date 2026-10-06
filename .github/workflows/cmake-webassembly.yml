@@ -1,0 +1,68 @@
+---
+# This workflow is to test WebAssembly/WASI target.
+name: cmake webassembly
+
+"on": [push, pull_request]
+
+jobs:
+  build:
+    name: wasm32-wasi ${{ matrix.build_type }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: [Debug]
+        # TODO: cplusplus on (requires `-lc++ -lunwind`).
+        cplusplus: ["off"]
+        gc_assertions: ["on"]
+        large_config: ["on"]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install wasi-sdk
+        run: |
+          WASI_SDK_VER=34
+          WASI_SDK_TC=share/cmake/wasi-sdk-p1.cmake
+          WS_URL=https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${WASI_SDK_VER}/wasi-sdk-${WASI_SDK_VER}.0-x86_64-linux.tar.gz
+          mkdir -p /tmp/wasi-sdk
+          wget -O - ${WS_URL} | tar xzf - -C /tmp/wasi-sdk --strip-components=1
+          echo "WASI_TC_FILE=/tmp/wasi-sdk/${WASI_SDK_TC}" >> "$GITHUB_ENV"
+
+      - name: Install wasmtime
+        run: |
+          WASMTIME_VER=49.0.1
+          WT_URL=https://github.com/bytecodealliance/wasmtime/releases/download/v${WASMTIME_VER}/wasmtime-v${WASMTIME_VER}-x86_64-linux.tar.xz
+          mkdir -p /tmp/wasmtime
+          wget -O - ${WT_URL} | tar xJf - -C /tmp/wasmtime --strip-components=1
+          echo "/tmp/wasmtime" >> "$GITHUB_PATH"
+
+      - name: Configure CMake with wasi-sdk and wasmtime
+        run: >
+          cmake -B ${{ github.workspace }}/build
+          -S ${{ github.workspace }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CROSSCOMPILING_EMULATOR="wasmtime;run;--dir=."
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.WASI_TC_FILE }}
+          -DGC_BUILD_SHARED_LIBS=off
+          -Denable_cplusplus=${{ matrix.cplusplus }}
+          -Denable_gc_assertions=${{ matrix.gc_assertions }}
+          -Denable_large_config=${{ matrix.large_config }}
+          -Denable_threads=off
+          -Denable_werror=on
+          -Werror=author
+
+      - name: Build
+        run: >
+          cmake --build ${{ github.workspace }}/build
+          --config ${{ matrix.build_type }} --verbose --parallel
+
+      - name: Test
+        working-directory: ${{ github.workspace }}/build
+        # FIXME: `gctest` fail on WASI.
+        run: >
+          ctest --build-config ${{ matrix.build_type }} --verbose --parallel
+          -E "gctest"
