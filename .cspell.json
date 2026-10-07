@@ -45,6 +45,7 @@
     "CRTDBGREPORT",
     "CRTMEM",
     "crtn",
+    "csky",
     "ctest",
     "Dalvik",
     "DATAEND",

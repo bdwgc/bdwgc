@@ -2750,6 +2750,7 @@ GC_INNER void *GC_get_mem(size_t lb);
 #  endif
 #elif defined(DOS4GW) || defined(EMBOX) || defined(KOS) || defined(NEXT) \
     || defined(NONSTOP) || defined(RTEMS) || defined(__CC_ARM)           \
+    || (defined(CSKY) && defined(NOSYS))                                 \
     || (defined(SOLARIS) && !defined(USE_MMAP))
 /* TODO: Use `page_alloc()` directly on Embox. */
 #  if defined(REDIRECT_MALLOC) && !defined(CPPCHECK)
