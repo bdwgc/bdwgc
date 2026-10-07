@@ -29,6 +29,8 @@ jobs:
           - armeb-linux-gnueabihf
           - armeb-linux-musleabi
           - armeb-linux-musleabihf
+          - csky-linux-gnueabi
+          - csky-linux-gnueabihf
           - hexagon-linux-musl
           - loongarch32-linux-gnu
           - loongarch32-linux-gnusf
@@ -96,6 +98,8 @@ jobs:
           - ttriple: loongarch32-linux-gnu
           - ttriple: loongarch32-linux-gnusf
           # FIXME: No available targets compatible with triple
+          - ttriple: csky-linux-gnueabi
+          - ttriple: csky-linux-gnueabihf
           - ttriple: m68k-linux-gnu
           - ttriple: m68k-linux-musl
           # FIXME: Unable to provide libc
