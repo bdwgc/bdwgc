@@ -195,6 +195,11 @@ EXTERN_C_BEGIN
 #    define mach_type_known
 #  endif
 #endif
+#if defined(__csky__) && !defined(LINUX)
+#  define CSKY
+#  define NOSYS
+#  define mach_type_known
+#endif
 #if defined(__riscv) && !defined(ANY_BSD) && !defined(LINUX)
 #  define RISCV
 #  define NOSYS
@@ -514,6 +519,9 @@ EXTERN_C_BEGIN
 #    define CRIS
 #  endif
 #  define mach_type_known
+#elif defined(__csky__) && defined(LINUX)
+#  define CSKY
+#  define mach_type_known
 #elif defined(__e2k__) && defined(LINUX)
 #  define E2K
 #  define mach_type_known
@@ -605,6 +613,7 @@ EXTERN_C_BEGIN
  *     `OPENBSD`, `QNX`, `SN_TARGET_PSP2`, `SYMBIAN`);
  *   - `AVR32`: Atmel RISC (running `LINUX`);
  *   - `CRIS`: Axis Etrax (running `LINUX`);
+ *   - `CSKY`: C-SKY (running `LINUX`, `NOSYS` environment);
  *   - `E2K`: Elbrus 2000 32/64-bit (running `LINUX`);
  *   - `HEXAGON`: Qualcomm Hexagon (running `LINUX`);
  *   - `HP_PA`: HP9000/700 and HP9000/800 32/64-bit (running `HPUX`, `LINUX`,
@@ -2514,6 +2523,27 @@ extern int __data_start[] __attribute__((__weak__));
 #    endif
 #  endif
 #endif /* ARC */
+
+#ifdef CSKY
+#  define MACH_TYPE "CSKY"
+#  define CPP_WORDSZ 32
+#  ifdef LINUX
+extern int __data_start[] __attribute__((__weak__));
+#    define DATASTART ((ptr_t)__data_start)
+#  endif
+#  ifdef NOSYS
+#    define OS_TYPE "NOSYS"
+extern char etext[];
+#    define DATASTART ((ptr_t)etext)
+/* FIXME: This is probably wrong. */
+#    define STACKBOTTOM DATASTART
+#    define GETPAGESIZE() 4096
+#    define NO_CLOCK
+#    define NO_GETENV
+#    undef USE_MMAP
+#    undef USE_MUNMAP
+#  endif
+#endif /* CSKY */
 
 #ifdef HEXAGON
 #  define MACH_TYPE "HEXAGON"
