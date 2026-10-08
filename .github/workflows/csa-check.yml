@@ -43,7 +43,7 @@ jobs:
               -D USE_MUNMAP
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check C/C++ files by CSA
         run: >

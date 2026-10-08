@@ -50,7 +50,7 @@ jobs:
               tests/*.c tests/*.cc tools/*.c
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set cppcheck version
         id: version
@@ -78,7 +78,7 @@ jobs:
             FILESDIR=~/cppcheck-install PREFIX=~/cppcheck-install install
 
       - name: Checkout libatomic_ops repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: bdwgc/libatomic_ops
           path: libatomic_ops

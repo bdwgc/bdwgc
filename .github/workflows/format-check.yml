@@ -17,7 +17,7 @@ jobs:
         type: [c, cmake, man, md, yaml, zig]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install gersemi
         if: ${{ matrix.type == 'cmake' }}

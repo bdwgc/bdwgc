@@ -68,12 +68,12 @@ jobs:
               -DCFLAGS_EXTRA='-DLINT2 -analyze'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Checkout libatomic_ops repository
         # Only if the compiler does not support GCC atomic intrinsics.
         if: ${{ matrix.c_compiler == 'cl' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: bdwgc/libatomic_ops
           path: libatomic_ops

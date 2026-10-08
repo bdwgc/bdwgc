@@ -443,11 +443,11 @@ jobs:
             #   cflags_extra: -fno-omit-frame-pointer -fsanitize=thread -O3
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Checkout libatomic_ops repository
         if: ${{ matrix.fetch_libatomic_ops }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: bdwgc/libatomic_ops
           path: libatomic_ops
