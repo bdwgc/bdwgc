@@ -67,7 +67,7 @@ jobs:
 
       - name: Dry-run markdownlint
         if: ${{ matrix.type == 'md' }}
-        uses: DavidAnson/markdownlint-cli2-action@v17
+        uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: |
             **/*.md
