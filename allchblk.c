@@ -915,6 +915,14 @@ GC_allochblk(size_t lb_adjusted, int kind,
     ++start_list;
   }
   for (; start_list <= split_limit; ++start_list) {
+    /*
+     * Skip empty free lists without a call.  After a collection that
+     * freed most blocks, these are coalesced into a few large ones,
+     * so allocating a single block would otherwise call
+     * `GC_allochblk_nth` for each of the (mostly empty) lists in between.
+     */
+    if (NULL == GC_hblkfreelist[start_list])
+      continue;
     result = GC_allochblk_nth(lb_adjusted, kind, flags, start_list, may_split,
                               align_m1);
     if (result != NULL)
