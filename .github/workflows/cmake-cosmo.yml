@@ -65,5 +65,4 @@ jobs:
       - name: Test
         working-directory: ${{ github.workspace }}/build
         run: >
-          ctest --build-config ${{ matrix.build_type }}
-          --verbose --parallel 8
+          ctest --build-config ${{ matrix.build_type }} --verbose --parallel
