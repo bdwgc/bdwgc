@@ -1,0 +1,103 @@
+---
+# This workflow is to build Linux non-arm64/x86 targets.
+name: cmake qemu
+
+"on": [push, pull_request]
+
+jobs:
+  build:
+    name: >-
+      ${{ matrix.target.arch }}
+      thr:${{ matrix.threads }} shared:${{ matrix.shared_libs }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      # Deliver the feedback for all matrix combinations.
+      fail-fast: false
+
+      matrix:
+        build_type: [Release]
+        cplusplus: ["on"]
+        gc_assertions: ["on"]
+        gc_debug: ["off"]
+        gc_dump: ["on"]
+        large_config: ["on"]
+        redirect_malloc: ["off"]
+        shared_libs: ["off", "on"]
+        threads: ["off", "on"]
+        target:
+          - arch: arc
+            triple: arc-linux-gnu
+          - arch: armv7
+            triple: arm-linux-gnueabihf
+          - arch: hp_pa
+            triple: hppa-linux-gnu
+          - arch: m68k
+            triple: m68k-linux-gnu
+          - arch: mips64el
+            triple: mips64el-linux-gnuabi64
+          - arch: powerpc
+            triple: powerpc-linux-gnu
+          - arch: ppc64
+            triple: powerpc64-linux-gnu
+          - arch: riscv64
+            triple: riscv64-linux-gnu
+          - arch: s390
+            triple: s390x-linux-gnu
+          - arch: sh
+            triple: sh4-linux-gnu
+          - arch: sparc
+            triple: sparc64-linux-gnu
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install apt cross toolchain
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          key: apt-cache-${{ matrix.target.arch }}
+          packages: |
+            gcc-${{ matrix.target.triple }}
+            g++-${{ matrix.target.triple }}
+          version: 1.0
+
+      - name: Generate CMake toolchain file
+        run: |
+          set -eux
+          tc_file="/tmp/toolchain-${{ matrix.target.arch }}.cmake"
+          {
+            echo "set(CMAKE_C_COMPILER ${{ matrix.target.triple }}-gcc)"
+            echo "set(CMAKE_CXX_COMPILER ${{ matrix.target.triple }}-g++)"
+            echo "set(CMAKE_FIND_ROOT_PATH /usr/${{ matrix.target.triple }})"
+            echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)"
+            echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"
+            echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)"
+            echo "set(CMAKE_SYSTEM_NAME Linux)"
+            echo "set(CMAKE_SYSTEM_PROCESSOR ${{ matrix.target.arch }})"
+          } > "$tc_file"
+          echo "Generated toolchain file:"
+          cat "$tc_file"
+          echo "TC_FILE=$tc_file" >> "$GITHUB_ENV"
+
+      - name: Configure CMake
+        run: >
+          cmake -B ${{ github.workspace }}/build
+          -S ${{ github.workspace }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.TC_FILE }}
+          -DGC_BUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+          -Denable_cplusplus=${{ matrix.cplusplus }}
+          -Denable_gc_assertions=${{ matrix.gc_assertions }}
+          -Denable_gc_debug=${{ matrix.gc_debug }}
+          -Denable_gc_dump=${{ matrix.gc_dump }}
+          -Denable_large_config=${{ matrix.large_config }}
+          -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
+          -Denable_threads=${{ matrix.threads }}
+          -Denable_werror=on
+          -Werror=author
+
+      - name: Build
+        run: >
+          cmake --build ${{ github.workspace }}/build
+          --config ${{ matrix.build_type }} --verbose --parallel
