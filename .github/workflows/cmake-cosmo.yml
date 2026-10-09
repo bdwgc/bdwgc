@@ -37,10 +37,17 @@ jobs:
         with:
           version: latest
 
+      - name: Install ninja-build
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: ninja-build
+          version: 1.0
+
       - name: Configure CMake targetting Cosmo
         run: >
           cmake -B ${{ github.workspace }}/build
           -S ${{ github.workspace }}
+          -G Ninja
           -DCMAKE_AR=`type -p cosmoar`
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_CXX_COMPILER=cosmoc++
