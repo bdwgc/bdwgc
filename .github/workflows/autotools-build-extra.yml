@@ -379,7 +379,7 @@ jobs:
             conf_options: >-
               --enable-cplusplus --enable-gc-assertions
               --with-libatomic-ops=yes
-            cflags_extra: -D VERY_SMALL_CONFIG
+            cflags_extra: -D EMULATE_PTHREAD_SEMAPHORE -D VERY_SMALL_CONFIG
             c_compiler: gcc
             install_libatomic_ops: true
           - os: ubuntu-latest
