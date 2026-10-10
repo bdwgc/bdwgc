@@ -20,21 +20,21 @@
 
 #include "gc_priv.h"
 
+#ifndef EMULATE_PTHREAD_SEMAPHORE
+#  include <semaphore.h>
+
+#else
 /*
  * This is a very simple semaphore implementation based on `pthreads`.
  * It is not async-signal safe.  But this is not a problem because
  * signals are not used to suspend threads on the target.
  */
 
-#if !defined(DARWIN) && !defined(GC_WIN32_THREADS) || !defined(GC_PTHREADS)
-#  error darwin_semaphore.h included for improper target
-#endif
+#  include <errno.h>
 
-#include <errno.h>
-
-#ifdef __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
 typedef struct {
   pthread_mutex_t mutex;
@@ -116,6 +116,26 @@ sem_wait(sem_t *sem)
   return 0;
 }
 
+#  ifdef PTHREAD_STOP_WORLD_IMPL
+GC_INLINE int
+sem_getvalue(sem_t *sem, int *pval)
+{
+  int err = pthread_mutex_lock(&sem->mutex);
+
+  if (UNLIKELY(err != 0)) {
+    errno = err;
+    return -1;
+  }
+  *pval = sem->value;
+  err = pthread_mutex_unlock(&sem->mutex);
+  if (UNLIKELY(err != 0)) {
+    errno = err;
+    return -1;
+  }
+  return 0;
+}
+#  endif
+
 GC_INLINE int
 sem_destroy(sem_t *sem)
 {
@@ -133,8 +153,9 @@ sem_destroy(sem_t *sem)
   return 0;
 }
 
-#ifdef __cplusplus
+#  ifdef __cplusplus
 } /* extern "C" */
-#endif
+#  endif
+#endif /* EMULATE_PTHREAD_SEMAPHORE */
 
 #endif

@@ -31,14 +31,11 @@
 #ifdef THREADS
 
 #  ifdef GC_PTHREADS
-#    if defined(DARWIN) \
-        || (defined(GC_WIN32_THREADS) && defined(EMULATE_PTHREAD_SEMAPHORE))
-#      include "private/darwin_semaphore.h"
-#    elif !defined(PLATFORM_THREADS) && !defined(SN_TARGET_PSP2)
-#      include <semaphore.h>
-#    endif
 #    include <errno.h>
-#  endif /* GC_PTHREADS */
+#    if !defined(PLATFORM_THREADS) && !defined(SN_TARGET_PSP2)
+#      include "private/darwin_semaphore.h"
+#    endif
+#  endif
 
 #  if !defined(GC_WIN32_THREADS)
 #    include <sched.h>
