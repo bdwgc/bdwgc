@@ -3697,10 +3697,16 @@ extern ptr_t GC_data_start;
  * Workaround "failed to create new win32 semaphore" Cygwin fatal error
  * during semaphores fixup-after-fork.
  */
-#if defined(CYGWIN) && defined(THREADS) && defined(CAN_HANDLE_FORK) \
-    && !defined(CYGWIN_SEM_FIXUP_AFTER_FORK_BUG_FIXED)              \
+#if ((defined(CYGWIN) && defined(THREADS) && defined(CAN_HANDLE_FORK) \
+      && !defined(CYGWIN_SEM_FIXUP_AFTER_FORK_BUG_FIXED))             \
+     || defined(DARWIN))                                              \
     && !defined(EMULATE_PTHREAD_SEMAPHORE)
 #  define EMULATE_PTHREAD_SEMAPHORE
+#endif
+
+#if defined(EMULATE_PTHREAD_SEMAPHORE) && defined(PTHREAD_STOP_WORLD_IMPL)
+/* No implementation. */
+#  define DONT_TIMEDWAIT_ACK_SEM
 #endif
 
 #if defined(CAN_HANDLE_FORK) && !defined(CAN_CALL_ATFORK)      \

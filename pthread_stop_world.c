@@ -23,8 +23,8 @@
 #  ifdef NACL
 #    include <sys/time.h>
 #  else
+#    include "private/darwin_semaphore.h"
 #    include <errno.h>
-#    include <semaphore.h>
 #    include <signal.h>
 #    include <time.h>
 #  endif /* !NACL */
@@ -486,9 +486,9 @@ resend_lost_signals(int n_live_threads, int (*suspend_restart_all)(void))
     unsigned long wait_usecs = 0; /*< total wait since retry */
     int retry = 0;
     int prev_sent = 0;
+    int ack_count = 0;
 
     for (;;) {
-      int ack_count;
 
       if (sem_getvalue(&GC_suspend_ack_sem, &ack_count) == -1)
         ABORT("sem_getvalue failed");
