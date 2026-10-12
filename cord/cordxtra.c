@@ -667,27 +667,30 @@ CORD_from_file_lazy_inner(FILE *f, size_t len)
   return CORD_from_fn(CORD_lf_func, state, len);
 }
 
-CORD
-CORD_from_file_lazy(FILE *f)
+static long
+file_get_len_and_seek_begin(FILE *f)
 {
   long len;
 
-  if (fseek(f, 0l, SEEK_END) != 0 || (len = ftell(f)) < 0
-      || fseek(f, 0l, SEEK_SET) != 0) {
-    ABORT("Bad f argument or I/O failure");
-  }
-  return CORD_from_file_lazy_inner(f, (size_t)len);
+  if (fseek(f, 0l, SEEK_END) != 0)
+    ABORT("Bad f argument or I/O failure (fseek end)");
+  len = ftell(f);
+  if (len < 0 || fseek(f, 0l, SEEK_SET) != 0)
+    ABORT("Bad f argument or I/O failure (ftell or fseek set)");
+  return len;
+}
+
+CORD
+CORD_from_file_lazy(FILE *f)
+{
+  return CORD_from_file_lazy_inner(f, (size_t)file_get_len_and_seek_begin(f));
 }
 
 CORD
 CORD_from_file(FILE *f)
 {
-  long len;
+  long len = file_get_len_and_seek_begin(f);
 
-  if (fseek(f, 0l, SEEK_END) != 0 || (len = ftell(f)) < 0
-      || fseek(f, 0l, SEEK_SET) != 0) {
-    ABORT("Bad f argument or I/O failure");
-  }
   if (len < LAZY_THRESHOLD) {
     return CORD_from_file_eager(f);
   }
