@@ -63,4 +63,6 @@ jobs:
           ${{ matrix.curses_opt }}
 
       - name: Test enforcing mprotect-based VDB
-        run: sh -c 'GC_USE_GETWRITEWATCH=0 ./gctest'
+        env:
+          GC_USE_GETWRITEWATCH: "0"
+        run: sh -c ./gctest

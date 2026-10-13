@@ -104,6 +104,7 @@ jobs:
 
       - name: Test enforcing mprotect-based VDB
         working-directory: ${{ github.workspace }}/build
-        run: >-
-          sh -c 'GC_USE_GETWRITEWATCH=0 ctest --build-config
-          ${{ matrix.build_type }} --verbose'
+        env:
+          GC_USE_GETWRITEWATCH: "0"
+        run: >
+          ctest --build-config ${{ matrix.build_type }} --verbose

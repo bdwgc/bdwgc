@@ -488,14 +488,15 @@ jobs:
           sudo apt install -y gcc-multilib
 
       - name: Configure project
+        env:
+          CC: ${{ matrix.c_compiler == '' && 'clang' || matrix.c_compiler }}
+          CXX: ${{ matrix.c_compiler == 'gcc' && 'g++' || 'clang++' }}
+          CFLAGS: ${{ matrix.conf_cflags == '' && '-g -O2'
+                      || matrix.conf_cflags }}
         run: |
           mkdir build
           cd build
-          CC=${{ matrix.c_compiler == '' && 'clang' || matrix.c_compiler }} \
-            CXX=${{ matrix.c_compiler == 'gcc' && 'g++' || 'clang++' }} \
-            CFLAGS="${{ matrix.conf_cflags == '' && '-g -O2'
-              || matrix.conf_cflags }}" \
-            ../configure ${{ matrix.conf_options }} --enable-werror
+          ../configure ${{ matrix.conf_options }} --enable-werror
           echo "Contents of config.h:"
           cat include/config.h
 
@@ -525,11 +526,13 @@ jobs:
 
       - name: Test enforcing mprotect-based VDB
         if: ${{ !matrix.skip_tests }}
-        run: GC_USE_GETWRITEWATCH=0 build/gctest
+        env:
+          GC_USE_GETWRITEWATCH: "0"
+        run: build/gctest
 
       - name: Run tests with Sanitizer runtime options
         if: ${{ matrix.extra_sanitizer_checks }}
-        run: >
-          ASAN_OPTIONS="detect_leaks=1"
-          UBSAN_OPTIONS="halt_on_error=1"
-          make -C build check-without-test-driver
+        env:
+          ASAN_OPTIONS: "detect_leaks=1"
+          UBSAN_OPTIONS: "halt_on_error=1"
+        run: make -C build check-without-test-driver
