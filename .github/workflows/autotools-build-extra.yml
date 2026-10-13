@@ -453,7 +453,7 @@ jobs:
           path: libatomic_ops
 
       - name: Install GNU autotools (OS X)
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ runner.os == 'macOS' }}
         uses: tecolicom/actions-use-homebrew-tools@v1
         with:
           tools: autoconf automake libtool
@@ -462,30 +462,28 @@ jobs:
         run: ./autogen.sh
 
       - name: Install libatomic-ops-dev (Ubuntu)
-        if: ${{ matrix.install_libatomic_ops }}
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: libatomic-ops-dev
-          version: 1.0
-
-      - name: Install musl-tools (Ubuntu)
-        if: ${{ matrix.install_musl }}
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: musl-tools
-          version: 1.0
-
-      - name: Install gcc-mingw-w64 (Ubuntu)
-        if: ${{ matrix.install_mingw_w64 }}
-        # Note: cache-apt-pkgs-action fails sometimes.
-        run: sudo apt install -y gcc-mingw-w64
-
-      - name: Install gcc-multilib (Ubuntu)
-        if: ${{ matrix.install_multilib }}
-        # Note: cache-apt-pkgs-action fails sometimes.
+        if: ${{ matrix.install_libatomic_ops && runner.os == 'Linux' }}
         run: |
           sudo apt update
-          sudo apt install -y gcc-multilib
+          sudo apt install -y --no-install-recommends libatomic-ops-dev
+
+      - name: Install musl-tools (Ubuntu)
+        if: ${{ matrix.install_musl && runner.os == 'Linux' }}
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends musl-tools
+
+      - name: Install gcc-mingw-w64 (Ubuntu)
+        if: ${{ matrix.install_mingw_w64 && runner.os == 'Linux' }}
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends gcc-mingw-w64
+
+      - name: Install gcc-multilib (Ubuntu)
+        if: ${{ matrix.install_multilib && runner.os == 'Linux' }}
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends gcc-multilib
 
       - name: Configure project
         env:
