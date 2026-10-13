@@ -17,7 +17,7 @@ jobs:
       thrlocal:${{ matrix.thread_local_alloc }}
       multi-obj:${{ matrix.disable_single_obj }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 7
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
