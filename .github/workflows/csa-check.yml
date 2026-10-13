@@ -50,6 +50,6 @@ jobs:
           set -o pipefail;
           clang --analyze -Xanalyzer -analyzer-output=text -Werror
           -I include ${{ join(matrix.cflags_extra, ' ') }}
-          `find . -iname '*.c' -o -iname '*.cc'` 2>&1
+          `find . -name '*.c' -o -name '*.cc'` 2>&1
           | tee clang-analyzer-output.log;
           if [ -s clang-analyzer-output.log ]; then exit 1; fi

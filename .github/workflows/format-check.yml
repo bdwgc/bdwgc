@@ -42,8 +42,7 @@ jobs:
         if: ${{ matrix.type == 'c' }}
         run: |
           clang-format --version
-          find . -iname '*.c' -o -iname '*.cc' -o -iname '*.cpp' \
-            -o -iname '*.h' \
+          find . -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.h' \
             | xargs clang-format --dry-run --Werror
 
       - name: Dry-run gersemi (CMake files check)
