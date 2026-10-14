@@ -9,7 +9,7 @@ jobs:
     name: >-
       ${{ matrix.target.arch }}
       thr:${{ matrix.threads }} shared:${{ matrix.shared_libs }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
 
     strategy:
@@ -37,11 +37,11 @@ jobs:
           - arch: hp_pa
             triple: hppa-linux-gnu
             tc_provider: apt
+          - arch: loongarch
+            triple: loongarch64-linux-gnu
+            tc_provider: apt
           - arch: m68k
             triple: m68k-linux-gnu
-            tc_provider: apt
-          - arch: mips64el
-            triple: mips64el-linux-gnuabi64
             tc_provider: apt
           - arch: powerpc
             triple: powerpc-linux-gnu
@@ -64,6 +64,10 @@ jobs:
           # Bootlin prebuilt toolchains:
           - arch: mips32
             triple: mips-linux
+            tc_provider: bootlin
+            tc_ver: "2026.08-1"
+          - arch: mips64el
+            triple: mips64el-linux
             tc_provider: bootlin
             tc_ver: "2026.08-1"
           - arch: nios2
@@ -117,6 +121,7 @@ jobs:
         run: |
           set -eu
           case "${{ matrix.target.arch }}" in
+            mips64el) bootlin_arch="mips64el-n32" ;;
             or1k) bootlin_arch="openrisc" ;;
             riscv32) bootlin_arch="riscv32-ilp32d" ;;
             *) bootlin_arch="${{ matrix.target.arch }}" ;;
