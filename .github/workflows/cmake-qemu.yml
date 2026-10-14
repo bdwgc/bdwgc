@@ -27,33 +27,71 @@ jobs:
         shared_libs: ["off", "on"]
         threads: ["off", "on"]
         target:
+          # apt cross-gcc toolchains (Ubuntu universe):
           - arch: arc
             triple: arc-linux-gnu
+            tc_provider: apt
           - arch: armv7
             triple: arm-linux-gnueabihf
+            tc_provider: apt
           - arch: hp_pa
             triple: hppa-linux-gnu
+            tc_provider: apt
           - arch: m68k
             triple: m68k-linux-gnu
+            tc_provider: apt
           - arch: mips64el
             triple: mips64el-linux-gnuabi64
+            tc_provider: apt
           - arch: powerpc
             triple: powerpc-linux-gnu
+            tc_provider: apt
           - arch: ppc64
             triple: powerpc64-linux-gnu
+            tc_provider: apt
           - arch: riscv64
             triple: riscv64-linux-gnu
+            tc_provider: apt
           - arch: s390
             triple: s390x-linux-gnu
+            tc_provider: apt
           - arch: sh
             triple: sh4-linux-gnu
+            tc_provider: apt
           - arch: sparc
             triple: sparc64-linux-gnu
+            tc_provider: apt
+          # Bootlin prebuilt toolchains:
+          - arch: mips32
+            triple: mips-linux
+            tc_provider: bootlin
+            tc_ver: "2026.08-1"
+          - arch: nios2
+            triple: nios2-linux
+            tc_provider: bootlin
+            tc_ver: "2024.05-1"
+          - arch: or1k
+            triple: or1k-linux
+            tc_provider: bootlin
+            tc_ver: "2026.08-1"
+          - arch: riscv32
+            triple: riscv32-linux
+            tc_provider: bootlin
+            tc_ver: "2026.08-1"
+        exclude:
+          # FIXME: Undefined reference to `__data_start`
+          - shared_libs: "on"
+            target:
+              arch: nios2
+          - shared_libs: "on"
+            target:
+              arch: or1k
 
     steps:
       - uses: actions/checkout@v7
 
       - name: Install apt cross toolchain
+        if: ${{ matrix.target.tc_provider == 'apt' }}
         # Note: no caching of apt install, as it gives minor speedup.
         run: |
           set -eu
@@ -62,14 +100,50 @@ jobs:
             gcc-${{ matrix.target.triple }} \
             g++-${{ matrix.target.triple }}
 
+      - name: Cache downloaded toolchain
+        if: ${{ matrix.target.tc_ver != '' }}
+        uses: actions/cache@v6
+        id: cache-toolchain
+        with:
+          path: /tmp/toolchain
+          key: toolchain-${{ matrix.target.arch }}-${{ matrix.target.tc_ver }}
+
+      - name: Download and extract Bootlin toolchain
+        env:
+          DOWNLOAD_BOOTLIN: >-
+            ${{ steps.cache-toolchain.outputs.cache-hit != 'true'
+                && matrix.target.tc_provider == 'bootlin' }}
+        if: ${{ env.DOWNLOAD_BOOTLIN == 'true' }}
+        run: |
+          set -eu
+          case "${{ matrix.target.arch }}" in
+            or1k) bootlin_arch="openrisc" ;;
+            riscv32) bootlin_arch="riscv32-ilp32d" ;;
+            *) bootlin_arch="${{ matrix.target.arch }}" ;;
+          esac
+          base="https://toolchains.bootlin.com/downloads/releases/toolchains"
+          name="${bootlin_arch}--glibc--stable-${{ matrix.target.tc_ver }}"
+          url="$base/${bootlin_arch}/tarballs/$name.tar.xz"
+          tc_dir="/tmp/toolchain"
+          mkdir -p "$tc_dir"
+          wget -O - $url | tar xJf - -C "$tc_dir" --strip-components=1
+
       - name: Generate CMake toolchain file
         run: |
           set -eu
+          # Add toolchain/bin path to `PATH`.
+          if [ "v${{ matrix.target.tc_ver }}" != "v" ]; then
+            tc_dir="/tmp/toolchain"
+            PATH="$PATH:$tc_dir/bin"
+            echo "$tc_dir/bin" >> "$GITHUB_PATH"
+          fi
+          cc=${{ matrix.target.triple }}-gcc
+          sysroot="$($cc --print-sysroot)"
           tc_file="/tmp/toolchain-${{ matrix.target.arch }}.cmake"
           {
-            echo "set(CMAKE_C_COMPILER ${{ matrix.target.triple }}-gcc)"
             echo "set(CMAKE_CXX_COMPILER ${{ matrix.target.triple }}-g++)"
-            echo "set(CMAKE_FIND_ROOT_PATH /usr/${{ matrix.target.triple }})"
+            echo "set(CMAKE_C_COMPILER $cc)"
+            echo "set(CMAKE_FIND_ROOT_PATH $sysroot)"
             echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)"
             echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"
             echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)"
