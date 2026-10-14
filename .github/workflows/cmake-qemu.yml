@@ -53,23 +53,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Cache apt packages and sysroots
-        uses: actions/cache@v6
-        id: cache-apt
-        with:
-          path: |
-            /var/cache/apt
-            /var/lib/apt
-            /usr/lib/${{ matrix.target.triple }}
-            /usr/include/${{ matrix.target.triple }}
-          key: apt-${{ runner.os }}-${{ matrix.target.triple }}-v1
-          restore-keys: |
-            apt-${{ runner.os }}-${{ matrix.target.triple }}-
-
       - name: Install apt cross toolchain
-        if: steps.cache-apt.outputs.cache-hit != 'true'
+        # Note: no caching of apt install, as it gives minor speedup.
         run: |
-          set -eux
+          set -eu
           sudo apt update
           sudo apt install -y --no-install-recommends \
             gcc-${{ matrix.target.triple }} \
@@ -77,7 +64,7 @@ jobs:
 
       - name: Generate CMake toolchain file
         run: |
-          set -eux
+          set -eu
           tc_file="/tmp/toolchain-${{ matrix.target.arch }}.cmake"
           {
             echo "set(CMAKE_C_COMPILER ${{ matrix.target.triple }}-gcc)"
