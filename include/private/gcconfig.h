@@ -553,7 +553,9 @@ EXTERN_C_BEGIN
 #  define mach_type_known
 #elif (defined(__NIOS2__) || defined(__NIOS2) || defined(__nios2__)) \
     && defined(LINUX)
-#  define NIOS2 /*< Altera NIOS2 */
+#  ifndef NIOS2
+#    define NIOS2
+#  endif
 #  define mach_type_known
 #elif defined(__or1k__) && defined(LINUX)
 #  define OR1K /*< OpenRISC (or1k) */
