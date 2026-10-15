@@ -85,6 +85,10 @@ jobs:
           # Elbrus (LCC toolchain):
           - arch: e2k
             tc_provider: lcc
+          # Hexagon (Qualcomm Hexagon DSP):
+          - arch: hexagon
+            tc_provider: qualcomm
+            tc_ver: "22.1.8"
         exclude:
           # FIXME: Undefined reference to `__data_start`
           - shared_libs: "on"
@@ -136,6 +140,23 @@ jobs:
           mkdir -p "$tc_dir"
           wget -O - $url | tar xJf - -C "$tc_dir" --strip-components=1
 
+      - name: Download and extract Qualcomm Hexagon toolchain
+        env:
+          DOWNLOAD_QC: >-
+            ${{ steps.cache-toolchain.outputs.cache-hit != 'true'
+                && matrix.target.tc_provider == 'qualcomm' }}
+        if: ${{ env.DOWNLOAD_QC == 'true' }}
+        run: |
+          set -eu
+          artifactory="https://artifacts.codelinaro.org/artifactory"
+          base="$artifactory/codelinaro-toolchain-for-hexagon"
+          name_prefix="clang+llvm-${{ matrix.target.tc_ver }}-cross"
+          name="${name_prefix}-hexagon-unknown-linux-musl_x86_64-linux-gnu"
+          url="$base/${{ matrix.target.tc_ver }}________/${name}.tar.zst"
+          tc_dir="/tmp/toolchain"
+          mkdir -p "$tc_dir"
+          wget -O - $url | tar -xf - -I unzstd -C $tc_dir --strip-components=2
+
       - name: Install e2k (lcc) toolchain
         if: ${{ matrix.target.tc_provider == 'lcc' }}
         uses: mrognor/lcc-env-action@main
@@ -155,6 +176,10 @@ jobs:
               cc="lcc"
               cxx="l++"
               ;;
+            qualcomm)
+              cc="hexagon-unknown-linux-musl-clang"
+              cxx="hexagon-unknown-linux-musl-clang++"
+              ;;
             *)
               cc="${{ matrix.target.triple }}-gcc"
               cxx="${{ matrix.target.triple }}-g++"
@@ -163,6 +188,7 @@ jobs:
           # Determine `sysroot`.
           case "${{ matrix.target.tc_provider }}" in
             lcc) sysroot="." ;;
+            qualcomm) sysroot="$tc_dir/target/hexagon-unknown-linux-musl" ;;
             *) sysroot="$($cc --print-sysroot)" ;;
           esac
           tc_file="/tmp/toolchain-${{ matrix.target.arch }}.cmake"
