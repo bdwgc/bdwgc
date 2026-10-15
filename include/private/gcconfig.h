@@ -3205,6 +3205,7 @@ EXTERN_C_BEGIN
      || defined(DARWIN) || defined(HAIKU) || defined(HURD)                 \
      || defined(OPENBSD) || defined(QNX) || defined(RTEMS)                 \
      || defined(SERENITY) || defined(HOST_ANDROID)                         \
+     || (defined(HEXAGON) && !defined(__GLIBC__))                          \
      || (defined(LINUX) && !defined(__gnu_linux__)))                       \
     && !defined(NO_GETCONTEXT)
 #  define NO_GETCONTEXT 1
