@@ -1026,7 +1026,10 @@ extern int _end[];
 #      define UFFDWP_VDB
 #    endif
 #  endif
-#  if !defined(REDIRECT_MALLOC) && !(defined(E2K) && defined(GC_THREADS))
+#  if !defined(REDIRECT_MALLOC) && !(defined(E2K) && defined(GC_THREADS))     \
+      && !defined(ARC) && !defined(AVR32) && !defined(CRIS) && !defined(M32R) \
+      && !defined(NIOS2) && !defined(OR1K) && !defined(SH)                    \
+      && !defined(TILEGX) && !defined(TILEPRO)
 /* Requires Linux 2.3.47 or later. */
 #    define MPROTECT_VDB
 #  else
