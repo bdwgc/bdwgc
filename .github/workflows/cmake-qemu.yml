@@ -1,5 +1,5 @@
 ---
-# This workflow is to build Linux non-arm64/x86 targets.
+# This workflow is to test Linux non-arm64/x86 targets using qemu-user.
 name: cmake qemu
 
 "on": [push, pull_request]
@@ -9,8 +9,9 @@ jobs:
     name: >-
       ${{ matrix.target.arch }}
       thr:${{ matrix.threads }} shared:${{ matrix.shared_libs }}
+      test:${{ matrix.target.build_testing || 'on' }}
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     strategy:
       # Deliver the feedback for all matrix combinations.
@@ -30,6 +31,8 @@ jobs:
           # apt cross-gcc toolchains (Ubuntu universe):
           - arch: arc
             triple: arc-linux-gnu
+            # qemu-arc is no longer available.
+            build_testing: "off"
             tc_provider: apt
           - arch: armv7
             triple: arm-linux-gnueabihf
@@ -37,12 +40,28 @@ jobs:
           - arch: hp_pa
             triple: hppa-linux-gnu
             tc_provider: apt
+            # TODO: `SIGILL` in disclaimtest, gctest, threadkeytest
+            target_threads: "on"
+            build_testing: "off"
+          - arch: hp_pa
+            triple: hppa-linux-gnu
+            tc_provider: apt
+            # Prevent `SIGILL` in cordtest.
+            cflags_extra: "-D AO_DISABLE_GCC_ATOMICS"
+            target_threads: "off"
           - arch: loongarch
             triple: loongarch64-linux-gnu
             tc_provider: apt
           - arch: m68k
             triple: m68k-linux-gnu
             tc_provider: apt
+            # TODO: crash in subthreadcreatetest, threadkeytest
+            target_threads: "on"
+            build_testing: "off"
+          - arch: m68k
+            triple: m68k-linux-gnu
+            tc_provider: apt
+            target_threads: "off"
           - arch: powerpc
             triple: powerpc-linux-gnu
             tc_provider: apt
@@ -58,9 +77,23 @@ jobs:
           - arch: sh
             triple: sh4-linux-gnu
             tc_provider: apt
+            # TODO: Signals delivery fails constantly in gctest, weakmaptest
+            target_threads: "on"
+            build_testing: "off"
+          - arch: sh
+            triple: sh4-linux-gnu
+            tc_provider: apt
+            target_threads: "off"
           - arch: sparc
             triple: sparc64-linux-gnu
             tc_provider: apt
+            # TODO: cpptest, gctest, realloctest are very slow
+            target_shared_libs: "on"
+            build_testing: "off"
+          - arch: sparc
+            triple: sparc64-linux-gnu
+            tc_provider: apt
+            target_shared_libs: "off"
           # Bootlin prebuilt toolchains:
           - arch: mips32
             triple: mips-linux
@@ -72,6 +105,8 @@ jobs:
             tc_ver: "2026.08-1"
           - arch: nios2
             triple: nios2-linux
+            # qemu-nios2 is no longer available.
+            build_testing: "off"
             tc_provider: bootlin
             tc_ver: "2024.05-1"
           - arch: or1k
@@ -84,9 +119,13 @@ jobs:
             tc_ver: "2026.08-1"
           # Elbrus (LCC toolchain):
           - arch: e2k
+            # TODO: enable testing on qemu-e2k-static
+            build_testing: "off"
             tc_provider: lcc
           # Hexagon (Qualcomm Hexagon DSP):
           - arch: hexagon
+            # TODO: enable testing
+            build_testing: "off"
             tc_provider: qualcomm
             tc_ver: "22.1.8"
         exclude:
@@ -97,6 +136,18 @@ jobs:
           - shared_libs: "on"
             target:
               arch: or1k
+          - shared_libs: "off"
+            target:
+              target_shared_libs: "on"
+          - shared_libs: "on"
+            target:
+              target_shared_libs: "off"
+          - threads: "off"
+            target:
+              target_threads: "on"
+          - threads: "on"
+            target:
+              target_threads: "off"
 
     steps:
       - uses: actions/checkout@v7
@@ -161,6 +212,14 @@ jobs:
         if: ${{ matrix.target.tc_provider == 'lcc' }}
         uses: mrognor/lcc-env-action@main
 
+      - name: Install qemu
+        if: ${{ matrix.target.build_testing != 'off' }}
+        # Note: there seems no profit in caching of apt install.
+        run: |
+          set -eu
+          sudo apt update
+          sudo apt install -y --no-install-recommends qemu-user-binfmt
+
       - name: Generate CMake toolchain file
         run: |
           set -eu
@@ -191,8 +250,29 @@ jobs:
             qualcomm) sysroot="$tc_dir/target/hexagon-unknown-linux-musl" ;;
             *) sysroot="$($cc --print-sysroot)" ;;
           esac
+          # Determine qemu `-L` path.
+          case "${{ matrix.target.tc_provider }}" in
+            apt) qemu_ld_prefix="/usr/${{ matrix.target.triple }}" ;;
+            *) qemu_ld_prefix="$sysroot" ;;
+          esac
+          # Determine name of qemu emulator to run.
+          case "${{ matrix.target.arch }}" in
+            armv7) qemu_arch="arm" ;;
+            hp_pa) qemu_arch="hppa" ;;
+            loongarch) qemu_arch="loongarch64" ;;
+            powerpc) qemu_arch="ppc" ;;
+            s390) qemu_arch="s390x" ;;
+            sh) qemu_arch="sh4" ;;
+            sparc) qemu_arch="sparc64" ;;
+            mips32) qemu_arch="mips" ;;
+            mips64el) qemu_arch="mipsn32el" ;;
+            *) qemu_arch="${{ matrix.target.arch }}" ;;
+          esac
+          qemu_bin="qemu-${qemu_arch}"
           tc_file="/tmp/toolchain-${{ matrix.target.arch }}.cmake"
           {
+            echo "set(CMAKE_CROSSCOMPILING_EMULATOR" \
+                      " \"$qemu_bin;-L;$qemu_ld_prefix\")"
             echo "set(CMAKE_CXX_COMPILER $cxx)"
             echo "set(CMAKE_C_COMPILER $cc)"
             echo "set(CMAKE_FIND_ROOT_PATH $sysroot)"
@@ -210,6 +290,7 @@ jobs:
         run: >
           cmake -B ${{ github.workspace }}/build
           -S ${{ github.workspace }}
+          -DCFLAGS_EXTRA="${{ matrix.target.cflags_extra || '' }}"
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE=${{ env.TC_FILE }}
           -DGC_BUILD_SHARED_LIBS=${{ matrix.shared_libs }}
@@ -227,3 +308,9 @@ jobs:
         run: >
           cmake --build ${{ github.workspace }}/build
           --config ${{ matrix.build_type }} --verbose --parallel
+
+      - name: Execute tests in qemu-user
+        if: ${{ matrix.target.build_testing != 'off' }}
+        working-directory: ${{ github.workspace }}/build
+        run: >
+          ctest --build-config ${{ matrix.build_type }} --verbose --parallel
