@@ -119,9 +119,15 @@ jobs:
             tc_ver: "2026.08-1"
           # Elbrus (LCC toolchain):
           - arch: e2k
-            # TODO: enable testing on qemu-e2k-static
-            build_testing: "off"
             tc_provider: lcc
+            # Signals delivery fails constantly in qemu unlike real HW.
+            target_threads: "on"
+            build_testing: "off"
+          - arch: e2k
+            tc_provider: lcc
+            # Exception handling is unimplemented in qemu for e2k.
+            cflags_extra: "-D NO_INCREMENTAL"
+            target_threads: "off"
           # Hexagon (Qualcomm Hexagon DSP):
           - arch: hexagon
             # TODO: enable testing
@@ -213,7 +219,11 @@ jobs:
         uses: mrognor/lcc-env-action@main
 
       - name: Install qemu
-        if: ${{ matrix.target.build_testing != 'off' }}
+        env:
+          INSTALL_QEMU: >-
+            ${{ matrix.target.build_testing != 'off'
+                && matrix.target.tc_provider != 'lcc' }}
+        if: ${{ env.INSTALL_QEMU == 'true' }}
         # Note: there seems no profit in caching of apt install.
         run: |
           set -eu
@@ -252,8 +262,22 @@ jobs:
           esac
           # Determine qemu `-L` path.
           case "${{ matrix.target.tc_provider }}" in
-            apt) qemu_ld_prefix="/usr/${{ matrix.target.triple }}" ;;
-            *) qemu_ld_prefix="$sysroot" ;;
+            apt)
+              qemu_ld_prefix="/usr/${{ matrix.target.triple }}"
+              ;;
+            lcc)
+              ld_path=$(find /opt/mcst -name ld-linux.so.2 \
+                        -path "*/fs/lib64/ld-linux.so.2" | head -n 1)
+              if [ -z "$ld_path" ]; then
+                echo "Error: ld-linux.so.2 not found"
+                exit 1
+              fi
+              # Strip `lib64/ld-linux.so.2` from the path.
+              qemu_ld_prefix=$(dirname $(dirname "$ld_path"))
+              ;;
+            *)
+              qemu_ld_prefix="$sysroot"
+              ;;
           esac
           # Determine name of qemu emulator to run.
           case "${{ matrix.target.arch }}" in
@@ -268,7 +292,10 @@ jobs:
             mips64el) qemu_arch="mipsn32el" ;;
             *) qemu_arch="${{ matrix.target.arch }}" ;;
           esac
-          qemu_bin="qemu-${qemu_arch}"
+          case "${{ matrix.target.tc_provider }}" in
+            lcc) qemu_bin="qemu-e2k-static" ;;
+            *) qemu_bin="qemu-${qemu_arch}" ;;
+          esac
           tc_file="/tmp/toolchain-${{ matrix.target.arch }}.cmake"
           {
             echo "set(CMAKE_CROSSCOMPILING_EMULATOR" \
