@@ -173,8 +173,8 @@ jobs:
         uses: actions/cache@v6
         id: cache-toolchain
         with:
-          path: /tmp/toolchain
-          key: toolchain-${{ matrix.target.arch }}-${{ matrix.target.tc_ver }}
+          path: /tmp/toolchain-${{ matrix.target.arch }}
+          key: toolchain2-${{ matrix.target.arch }}-${{ matrix.target.tc_ver }}
 
       - name: Download and extract Bootlin toolchain
         env:
@@ -193,7 +193,7 @@ jobs:
           base="https://toolchains.bootlin.com/downloads/releases/toolchains"
           name="${bootlin_arch}--glibc--stable-${{ matrix.target.tc_ver }}"
           url="$base/${bootlin_arch}/tarballs/$name.tar.xz"
-          tc_dir="/tmp/toolchain"
+          tc_dir="/tmp/toolchain-${{ matrix.target.arch }}"
           mkdir -p "$tc_dir"
           wget -O - $url | tar xJf - -C "$tc_dir" --strip-components=1
 
@@ -210,7 +210,7 @@ jobs:
           name_prefix="clang+llvm-${{ matrix.target.tc_ver }}-cross"
           name="${name_prefix}-hexagon-unknown-linux-musl_x86_64-linux-gnu"
           url="$base/${{ matrix.target.tc_ver }}________/${name}.tar.zst"
-          tc_dir="/tmp/toolchain"
+          tc_dir="/tmp/toolchain-${{ matrix.target.arch }}"
           mkdir -p "$tc_dir"
           wget -O - $url | tar -xf - -I unzstd -C $tc_dir --strip-components=2
 
@@ -235,7 +235,7 @@ jobs:
           set -eu
           # Add toolchain/bin path to `PATH`.
           if [ "v${{ matrix.target.tc_ver }}" != "v" ]; then
-            tc_dir="/tmp/toolchain"
+            tc_dir="/tmp/toolchain-${{ matrix.target.arch }}"
             PATH="$PATH:$tc_dir/bin"
             echo "$tc_dir/bin" >> "$GITHUB_PATH"
           fi
