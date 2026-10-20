@@ -1026,13 +1026,10 @@ extern int _end[];
 #      define UFFDWP_VDB
 #    endif
 #  endif
-#  if !defined(REDIRECT_MALLOC) && !(defined(E2K) && defined(GC_THREADS))     \
-      && !defined(ARC) && !defined(AVR32) && !defined(CRIS) && !defined(M32R) \
-      && !defined(NIOS2) && !defined(OR1K) && !defined(SH)                    \
-      && !defined(TILEGX) && !defined(TILEPRO)
-/* Requires Linux 2.3.47 or later. */
-#    define MPROTECT_VDB
-#  else
+#  if defined(REDIRECT_MALLOC) || defined(ARC) || defined(AVR32)           \
+      || defined(CRIS) || defined(M32R) || defined(NIOS2) || defined(OR1K) \
+      || defined(SH) || defined(TILEGX) || defined(TILEPRO)                \
+      || (defined(GC_THREADS) && (defined(E2K) || defined(HP_PA)))
 /*
  * We seem to get random errors in the incremental mode, possibly because
  * the Linux threads implementation itself is a `malloc` client and cannot
@@ -1040,6 +1037,9 @@ extern int _end[];
  * TODO: For e2k, the fault handler causes significant performance degradation
  * in multi-threaded code.
  */
+#  else
+/* Requires Linux 2.3.47 or later. */
+#    define MPROTECT_VDB
 #  endif
 #endif /* LINUX */
 
