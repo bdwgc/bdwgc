@@ -50,13 +50,12 @@ namespace boehmgc
 #  define GC_ALLOCATOR_THROW_OR_ABORT() throw std::bad_alloc()
 #endif
 
-#if (__cplusplus >= 201103L) && !defined(__wasi__)
-#  define GC_ALLOCATOR_PTRDIFF_T std::ptrdiff_t
+#if __cplusplus >= 201103L
 #  define GC_ALLOCATOR_SIZE_T std::size_t
 #else
-#  define GC_ALLOCATOR_PTRDIFF_T ptrdiff_t
 #  define GC_ALLOCATOR_SIZE_T size_t
 #endif
+#define GC_ALLOCATOR_PTRDIFF_T ptrdiff_t
 
 // First some helpers to allow us to dispatch on whether or not a type
 // is known to be pointer-free.  These are private, except that the client
