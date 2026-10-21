@@ -128,12 +128,12 @@ jobs:
             # Exception handling is unimplemented in qemu for e2k.
             cflags_extra: "-D NO_INCREMENTAL"
             target_threads: "off"
-          # Hexagon (Qualcomm Hexagon DSP):
+          # Qualcomm Hexagon DSP:
           - arch: hexagon
             # TODO: enable testing
             build_testing: "off"
             tc_provider: qualcomm
-            tc_ver: "22.1.8"
+            tc_ver: "23.1.0-rc1"
         exclude:
           # FIXME: Undefined reference to `__data_start`
           - shared_libs: "on"
@@ -195,7 +195,7 @@ jobs:
           url="$base/${bootlin_arch}/tarballs/$name.tar.xz"
           tc_dir="/tmp/toolchain-${{ matrix.target.arch }}"
           mkdir -p "$tc_dir"
-          wget -O - $url | tar xJf - -C "$tc_dir" --strip-components=1
+          curl -Lf "$url" | tar xJf - -C "$tc_dir" --strip-components=1
 
       - name: Download and extract Qualcomm Hexagon toolchain
         env:
@@ -209,10 +209,10 @@ jobs:
           base="$artifactory/codelinaro-toolchain-for-hexagon"
           name_prefix="clang+llvm-${{ matrix.target.tc_ver }}-cross"
           name="${name_prefix}-hexagon-unknown-linux-musl_x86_64-linux-gnu"
-          url="$base/${{ matrix.target.tc_ver }}________/${name}.tar.zst"
+          url="$base/${{ matrix.target.tc_ver }}/${name}.tar.zst"
           tc_dir="/tmp/toolchain-${{ matrix.target.arch }}"
           mkdir -p "$tc_dir"
-          wget -O - $url | tar -xf - -I unzstd -C $tc_dir --strip-components=2
+          curl -Lf "$url" | tar -xf - -I unzstd -C $tc_dir --strip-components=2
 
       - name: Install e2k (lcc) toolchain
         if: ${{ matrix.target.tc_provider == 'lcc' }}
