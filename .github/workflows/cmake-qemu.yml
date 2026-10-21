@@ -130,10 +130,10 @@ jobs:
             target_threads: "off"
           # Qualcomm Hexagon DSP:
           - arch: hexagon
-            # TODO: enable testing
-            build_testing: "off"
             tc_provider: qualcomm
             tc_ver: "23.1.0-rc1"
+            # TODO: Assertion failures and other crashes if `-O1` or higher
+            cflags_extra: "-O0"
         exclude:
           # FIXME: Undefined reference to `__data_start`
           - shared_libs: "on"
