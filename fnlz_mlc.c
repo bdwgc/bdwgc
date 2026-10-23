@@ -101,7 +101,7 @@ GC_init_finalized_malloc(void)
       = GC_new_kind_inner(GC_new_free_list_inner(), GC_DS_LENGTH, TRUE, TRUE);
   GC_ASSERT(GC_finalized_kind != 0);
   GC_register_disclaim_proc_inner(GC_finalized_kind, GC_finalized_disclaim,
-                                  TRUE);
+                                  TRUE /* `mark_unconditionally` */);
   UNLOCK();
 }
 
