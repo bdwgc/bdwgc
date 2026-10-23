@@ -41,15 +41,17 @@ typedef int(GC_CALLBACK *GC_disclaim_proc)(void * /* `obj` */);
  * reclaim the object on this collection cycle (`proc()` should not try to
  * resurrect the object otherwise); objects reachable from `proc()`
  * (including the referred closure object) will be protected from collection
- * if `mark_from_all` is nonzero, but at the expense that long chains of
- * objects will take many cycles to reclaim.  Any call to `GC_free()`
- * (or friends) deallocates the object (pointed by the argument) without
- * inquiring `proc()`.  Acquires the allocator lock.  No-op in the find-leak
- * mode.
+ * if `mark_unconditionally` is nonzero, but at the expense that long chains
+ * of objects will take many cycles to reclaim.  A non-zero value of
+ * `mark_unconditionally` implies the client should be careful not to create
+ * a pointer cycle involving the allocated object, as it would prevent
+ * collection of the object.  Any call to `GC_free()` (or friends) deallocates
+ * the object (pointed to by the argument) without inquiring `proc()`.
+ * Acquires the allocator lock.  No-op in the find-leak mode.
  */
-GC_API void GC_CALL GC_register_disclaim_proc(int /* `kind` */,
-                                              GC_disclaim_proc /* `proc` */,
-                                              int /* `mark_from_all` */);
+GC_API void GC_CALL
+GC_register_disclaim_proc(int /* `kind` */, GC_disclaim_proc /* `proc` */,
+                          int /* `mark_unconditionally` */);
 
 /** The finalizer closure used by `GC_finalized_malloc`. */
 struct GC_finalizer_closure {
@@ -66,10 +68,12 @@ struct GC_finalizer_closure {
  * (thus, `fc->proc()` should not try to resurrect the object).
  * The other objects reachable from `fc->proc()` (including the closure
  * object in case it is a heap-allocated one) will be protected from
- * collection.  Note that `GC_size()` (applied to such allocated object)
- * returns a value slightly bigger than the specified allocation size,
- * and that `GC_base()` result points to a "pointer-sized" word prior
- * to the start of the allocated object.
+ * collection.  As a consequence, the client should guarantee no pointer
+ * cycles involving the allocated object, otherwise this would prevent
+ * collection of the object.  Note also that `GC_size()` (for the
+ * allocated object) returns a value slightly bigger than the specified
+ * allocation size, and that `GC_base()` result points to a "pointer-sized"
+ * word prior to the start of the allocated object.
  * The disclaim procedure is not invoked in the find-leak mode.
  * There is no debugging variant of this allocation function.
  */
