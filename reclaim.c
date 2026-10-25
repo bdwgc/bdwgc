@@ -873,11 +873,11 @@ GC_start_reclaim(GC_bool report_if_found)
     struct obj_kind *ok = &GC_obj_kinds[kind];
     struct hblk **rlist = ok->ok_reclaim_list;
 
-    if (NULL == rlist) {
-      /* Means this object kind is not used. */
-      continue;
-    }
-
+    /*
+     * Note: the free lists should be cleared even if the reclaim list is
+     * not allocated yet, as `GC_generic_malloc_many()` does not create it
+     * but `GC_free()` may still put objects of the kind on them.
+     */
     if (!report_if_found) {
       size_t lg;
 
@@ -893,7 +893,8 @@ GC_start_reclaim(GC_bool report_if_found)
     } else {
       /* Free-list objects are marked, and it is safe to leave them. */
     }
-    BZERO(rlist, (MAXOBJGRANULES + 1) * sizeof(void *));
+    if (rlist != NULL)
+      BZERO(rlist, (MAXOBJGRANULES + 1) * sizeof(void *));
   }
 
   /*
