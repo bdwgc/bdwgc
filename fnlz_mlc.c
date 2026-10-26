@@ -82,10 +82,11 @@ GC_init_finalized_malloc(void)
   }
 
   /*
-   * The finalizer closure is placed in the first pointer of the
-   * object in order to use the lower bits to distinguish live
-   * objects from objects on the free list.  The downside of this is
-   * that we need one-pointer offset interior pointers, and that
+   * The finalizer closure is placed in the first pointer of the object in
+   * order to use the lower bits to distinguish live objects from objects on
+   * the free list.  The downside of this is that we need one-pointer offset
+   * interior pointers, the returned object is not aligned to the allocation
+   * granule (unless the granule size matches that of a pointer), and that
    * `GC_base()` does not return the start of the user region.
    */
   GC_register_displacement_inner(sizeof(ptr_t));
