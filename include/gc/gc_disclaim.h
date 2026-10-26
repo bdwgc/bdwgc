@@ -70,7 +70,9 @@ struct GC_finalizer_closure {
  * object in case it is a heap-allocated one) will be protected from
  * collection.  As a consequence, the client should guarantee no pointer
  * cycles involving the allocated object, otherwise this would prevent
- * collection of the object.  Note also that `GC_size()` (for the
+ * collection of the object.  The start of the allocated object is
+ * pointer-aligned but not granule-aligned (having the default granule size,
+ * unlike `GC_malloc` function).  Note also that `GC_size()` (for the
  * allocated object) returns a value slightly bigger than the specified
  * allocation size, and that `GC_base()` result points to a "pointer-sized"
  * word prior to the start of the allocated object.
