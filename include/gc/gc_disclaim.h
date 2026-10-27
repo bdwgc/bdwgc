@@ -48,6 +48,11 @@ typedef int(GC_CALLBACK *GC_disclaim_proc)(void * /* `obj` */);
  * collection of the object.  Any call to `GC_free()` (or friends) deallocates
  * the object (pointed to by the argument) without inquiring `proc()`.
  * Acquires the allocator lock.  No-op in the find-leak mode.
+ * Note: the internal `GC_disclaim_and_reclaim()` invokes the disclaim
+ * callback for every slot (including free-list fragments) in a heap block
+ * that has no mark bit set - client should take care not to misinterpret
+ * the object's first "pointer-sized" which is also used as a link pointer to
+ * the next free object.
  */
 GC_API void GC_CALL
 GC_register_disclaim_proc(int /* `kind` */, GC_disclaim_proc /* `proc` */,
