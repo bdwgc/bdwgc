@@ -694,7 +694,7 @@ static unsigned __stdcall
 #  else
 static THREAD_RET_TYPE_CALL_CONV
 #  endif
-    tiny_reverse_test(void *p_resumed)
+tiny_reverse_test(void *p_resumed)
 {
 #  ifdef TEST_THREAD_SUSPENDED
   if (p_resumed != NULL) {
@@ -2260,7 +2260,8 @@ window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   return ret;
 }
 
-static DWORD __stdcall thr_window(void *arg)
+static DWORD __stdcall
+thr_window(void *arg)
 {
   WNDCLASS win_class = { CS_NOCLOSE,
                          window_proc,

@@ -570,8 +570,8 @@ GC_INNER void GC_suspend_self_blocked(ptr_t thread_me, void *context);
 #      define GC_INNER_PTHRSTART GC_INNER
 #    endif
 
-GC_INNER_PTHRSTART void *GC_CALLBACK
-GC_pthread_start_inner(struct GC_stack_base *sb, void *arg);
+GC_INNER_PTHRSTART void *
+    GC_CALLBACK GC_pthread_start_inner(struct GC_stack_base *sb, void *arg);
 
 /*
  * Called from `GC_pthread_start_inner()`.  Defined in `pthread_support.c`

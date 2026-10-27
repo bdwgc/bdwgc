@@ -501,7 +501,8 @@ GC_mark_thread(void *id)
 DWORD WINAPI
 GC_mark_thread(LPVOID id)
 #    else
-unsigned __stdcall GC_mark_thread(void *id)
+unsigned __stdcall
+GC_mark_thread(void *id)
 #    endif
 {
   word my_mark_no = 0;
