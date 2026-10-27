@@ -2127,7 +2127,10 @@ GC_push_marked(struct hblk *h, const hdr *hhdr)
   GC_n_rescuing_pages++;
 #endif
   GC_objects_are_marked = TRUE;
-  switch (BYTES_TO_GRANULES(sz)) {
+#ifdef USE_PUSH_MARKED_ACCELERATORS
+  switch (BYTES_TO_GRANULES(sz))
+#endif
+  {
 #ifdef USE_PUSH_MARKED_ACCELERATORS
   case 1:
     GC_push_marked1(h, hhdr);
@@ -2141,11 +2144,9 @@ GC_push_marked(struct hblk *h, const hdr *hhdr)
     GC_push_marked4(h, hhdr);
     break;
 #    endif
-#  endif /* !UNALIGNED_PTRS */
-#else
-  case 1: /*< to suppress "switch statement contains no case" warning */
-#endif
+#  endif
   default:
+#endif
     plim = sz > MAXOBJBYTES ? h->hb_body
                             : CAST_THRU_UINTPTR(ptr_t, (h + 1)->hb_body) - sz;
     mark_stack_top = GC_mark_stack_top;
