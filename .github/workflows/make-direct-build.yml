@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [macos-latest, ubuntu-24.04-arm, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-26.04-arm, ubuntu-latest, windows-latest]
         c_compiler: [clang, gcc]
         cxx_compiler: [clang++, g++]
         cflags_extra:

@@ -25,7 +25,7 @@ jobs:
         os:
           - macos-26-intel
           - macos-latest
-          - ubuntu-24.04-arm
+          - ubuntu-26.04-arm
           - ubuntu-latest
           - windows-11-arm
           - windows-latest
@@ -49,7 +49,7 @@ jobs:
             c_compiler: cl
           - os: macos-latest
             c_compiler: gcc
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             c_compiler: cl
           - os: ubuntu-latest
             c_compiler: cl
@@ -71,7 +71,7 @@ jobs:
             cplusplus: "off"
           - os: macos-latest
             cplusplus: "off"
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             cplusplus: "off"
           - os: ubuntu-latest
             cplusplus: "off"

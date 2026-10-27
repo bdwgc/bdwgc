@@ -24,7 +24,7 @@ jobs:
             shared_libs: "on"
             cmake_options: >-
               -Denable_atomic_uncollectable=on -Denable_munmap=off
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             build_type: MinSizeRel
             c_compiler: clang
             shared_libs: "on"

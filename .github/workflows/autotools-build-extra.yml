@@ -22,13 +22,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             c_compiler: gcc
           - os: ubuntu-latest
             conf_options: >-
               --disable-atomic-uncollectible --disable-shared
               --enable-cplusplus --enable-rwlock
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --disable-disclaim
           - os: ubuntu-latest
             conf_options: >-
@@ -54,10 +54,10 @@ jobs:
             conf_options: >-
               --disable-gc-dump --disable-handle-fork --enable-cplusplus
               --enable-large-config
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --disable-gc-dump --enable-cplusplus
             c_compiler: gcc
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --disable-gcj-support --enable-cplusplus
             cflags_extra: -D SIMULATE_LOST_SIGNALS -D TRACE_BUF -O3
             c_compiler: gcc
@@ -148,7 +148,7 @@ jobs:
               --disable-shared --disable-thread-local-alloc
               --enable-cplusplus
             cflags_extra: -D NO_UFFDWP_VDB
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --disable-shared --disable-threads
             c_compiler: gcc
           - os: macos-latest
@@ -167,7 +167,7 @@ jobs:
             cflags_extra: >-
               -fno-common -fno-omit-frame-pointer -fsanitize=undefined
             extra_sanitizer_checks: true
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: >-
               --disable-shared --enable-cplusplus --enable-gc-assertions
             cflags_extra: >-
@@ -181,7 +181,7 @@ jobs:
             cflags_extra: >-
               -fno-common -fno-omit-frame-pointer -fsanitize=address
             extra_sanitizer_checks: true
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: >-
               --disable-shared --enable-cplusplus --enable-gc-assertions
               --enable-valgrind-tracking
@@ -200,7 +200,7 @@ jobs:
               --disable-shared --enable-cplusplus
               --enable-single-obj-compilation
             cflags_extra: -D NTHREADS=10 -O3 -march=native
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --disable-shared --enable-cplusplus
             cflags_extra: >-
               -D PREFER_MMAP_PROT_NONE -D _FORTIFY_SOURCE=2 -O3 -flto=auto
@@ -245,7 +245,7 @@ jobs:
             c_compiler: x86_64-w64-mingw32-gcc
             install_mingw_w64: true
             skip_tests: true
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --disable-threads
             c_compiler: gcc
           - os: ubuntu-latest
@@ -265,7 +265,7 @@ jobs:
             cflags_extra: -D SOFT_VDB -O3
             c_compiler: musl-gcc
             install_musl: true
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: >-
               --disable-threads --enable-gc-debug
               --enable-redirect-malloc --enable-uncollectable-redirection
@@ -309,7 +309,7 @@ jobs:
             conf_options: --enable-cplusplus
             cflags_extra: -D NO_GETENV -D SMALL_CONFIG
             c_compiler: gcc
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --enable-cplusplus
             cflags_extra: -D NO_MPROTECT_VDB -O3
             c_compiler: gcc
@@ -317,7 +317,7 @@ jobs:
             conf_options: --enable-cplusplus
             cflags_extra: -O3 -fanalyzer -march=native
             c_compiler: gcc
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: >-
               --enable-cplusplus --enable-dynamic-pointer-mask
               --enable-gc-assertions
@@ -330,7 +330,7 @@ jobs:
               -D EMPTY_GETENV_RESULTS -D ENABLE_TRACE
               -D GC_ALWAYS_MULTITHREADED -D GC_NETBSD_THREADS_WORKAROUND
             c_compiler: gcc
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: --enable-cplusplus --enable-gc-assertions
             cflags_extra: -D NO_MANUAL_VDB -D NO_MPROTECT_VDB
           - os: ubuntu-latest
@@ -374,7 +374,7 @@ jobs:
             conf_options: >-
               --enable-cplusplus --enable-gc-assertions --enable-rwlock
             cflags_extra: -O3 -D NO_MPROTECT_VDB -D NO_UFFDWP_VDB
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_options: >-
               --enable-cplusplus --enable-gc-assertions
               --with-libatomic-ops=yes
@@ -414,7 +414,7 @@ jobs:
             fetch_libatomic_ops: true
             install_mingw_w64: true
             skip_tests: true
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             conf_cflags: -D AO_USE_PTHREAD_DEFS
             conf_options: --without-libatomic-ops
             cflags_extra: -D GC_NO_FINALIZATION
