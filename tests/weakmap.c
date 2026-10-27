@@ -490,8 +490,8 @@ main(void)
   GC_set_mprotect_vdb_allowed(0);
 #endif
   GC_INIT();
-  /* Register the displacements. */
-  GC_init_finalized_malloc();
+  GC_register_displacement(sizeof(void *));
+  GC_register_displacement(FINALIZER_CLOSURE_FLAG);
 
 #ifndef NO_INCREMENTAL
   GC_enable_incremental();
