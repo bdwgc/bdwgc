@@ -133,7 +133,7 @@ STATIC void
 GC_extend_size_map(size_t i)
 {
   size_t original_lg = ALLOC_REQUEST_GRANS(i);
-  size_t lg;
+  size_t lg = original_lg;
   /*
    * The size we try to preserve.  Close to `i`, unless this would
    * introduce too many distinct sizes.
@@ -146,16 +146,16 @@ GC_extend_size_map(size_t i)
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(0 == GC_size_map[i]);
-  if (0 == GC_size_map[smaller_than_i]) {
-    low_limit = byte_sz - (byte_sz >> 2); /*< much smaller than `i` */
-    lg = original_lg;
-    while (GC_size_map[low_limit] != 0)
-      low_limit++;
-  } else {
-    low_limit = smaller_than_i + 1;
-    while (GC_size_map[low_limit] != 0)
-      low_limit++;
-
+  low_limit = GC_size_map[smaller_than_i] != 0 ? smaller_than_i + 1
+                                               : byte_sz - (byte_sz >> 2);
+  for (;; low_limit++) {
+    /* Workaround GCC analyzer "infinite loop" FP warning. */
+    if (low_limit > i)
+      ABORT("GC_size_map overrun");
+    if (0 == GC_size_map[low_limit])
+      break;
+  }
+  if (GC_size_map[smaller_than_i] != 0) {
     lg = ALLOC_REQUEST_GRANS(low_limit);
     lg += lg >> 3;
     if (lg < original_lg)
