@@ -40,20 +40,7 @@
 
 #include "gc/gc_typed.h"
 
-/* Object kind for objects with indirect (possibly extended) descriptors. */
-STATIC int GC_explicit_kind = 0;
-
-/*
- * Object kind for objects with complex descriptors and
- * `GC_array_mark_proc`.
- */
-STATIC int GC_array_kind = 0;
-
 #define ED_INITIAL_SIZE 100
-
-/* Indices of the typed mark procedures. */
-STATIC unsigned GC_typed_mark_proc_index = 0;
-STATIC unsigned GC_array_mark_proc_index = 0;
 
 STATIC void
 GC_push_typed_structures_proc(void)
@@ -154,15 +141,15 @@ GC_init_explicit_typing(void)
    * Descriptor is in the last `word` of the object.
    */
   GC_typed_mark_proc_index = GC_new_proc_inner(GC_typed_mark_proc);
-  GC_explicit_kind = (int)GC_new_kind_inner(
+  GC_typed_explicit_kind = (int)GC_new_kind_inner(
       GC_new_free_list_inner(),
       (PTRS_TO_BYTES(GC_WORD_MAX) | GC_DS_PER_OBJECT), TRUE, TRUE);
 
   /* Set up object kind with array descriptor. */
-  GC_array_mark_proc_index = GC_new_proc_inner(GC_array_mark_proc);
-  GC_array_kind = (int)GC_new_kind_inner(
-      GC_new_free_list_inner(), GC_MAKE_PROC(GC_array_mark_proc_index, 0),
-      FALSE, TRUE);
+  GC_typed_array_kind = (int)GC_new_kind_inner(
+      GC_new_free_list_inner(),
+      GC_MAKE_PROC(GC_new_proc_inner(GC_array_mark_proc), 0),
+      FALSE /* `adjust` */, TRUE /* `clear` */);
 }
 
 STATIC mse *GC_CALLBACK
@@ -315,7 +302,7 @@ GC_malloc_explicitly_typed(size_t lb, GC_descr d)
     lb = sizeof(ptr_t) - sizeof(GC_descr) + 1;
   }
   op = (ptr_t)GC_malloc_kind(SIZET_SAT_ADD(lb, sizeof(GC_descr) - EXTRA_BYTES),
-                             GC_explicit_kind);
+                             GC_typed_explicit_kind);
   set_obj_descr(op, d);
   return op;
 }
@@ -336,7 +323,7 @@ GC_malloc_explicitly_typed_ignore_off_page(size_t lb, GC_descr d)
    */
   op = (ptr_t)GC_clear_stack(
       GC_generic_malloc_aligned(SIZET_SAT_ADD(lb, sizeof(GC_descr)),
-                                GC_explicit_kind, IGNORE_OFF_PAGE, 0));
+                                GC_typed_explicit_kind, IGNORE_OFF_PAGE, 0));
   set_obj_descr(op, d);
   return op;
 }
@@ -571,7 +558,7 @@ GC_calloc_do_explicitly_typed(const struct GC_calloc_typed_descr_s *p_ctd,
     ABORT_RET("Bad descriptor type");
     return NULL;
   }
-  op = GC_malloc_kind((size_t)p_ctd->alloc_lb, GC_array_kind);
+  op = GC_malloc_kind((size_t)p_ctd->alloc_lb, GC_typed_array_kind);
   if (UNLIKELY(NULL == op))
     return NULL;
 
@@ -708,7 +695,7 @@ get_complex_descr(ptr_t *p, size_t lpw)
   return (complex_descriptor *)p[lpw - 1];
 }
 
-/* Used by `GC_calloc_do_explicitly_typed()` via `GC_array_kind`. */
+/* Used by `GC_calloc_do_explicitly_typed()` via `GC_typed_array_kind`. */
 STATIC mse *GC_CALLBACK
 GC_array_mark_proc(word *addr, mse *mark_stack_top, mse *mark_stack_limit,
                    word env)
