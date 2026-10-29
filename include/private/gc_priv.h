@@ -2385,6 +2385,24 @@ struct _GC_arrays {
   pthread_t _parent_pthread_self;
 #endif
 
+  /*
+   * Object kind for typed objects with indirect (possibly extended)
+   * descriptors.
+   */
+#define GC_typed_explicit_kind GC_arrays._typed_explicit_kind
+  int _typed_explicit_kind;
+
+  /*
+   * Object kind for typed objects with complex descriptors and
+   * `GC_array_mark_proc`.
+   */
+#define GC_typed_array_kind GC_arrays._typed_array_kind
+  int _typed_array_kind;
+
+  /* Index of the typed explicit mark procedure. */
+#define GC_typed_mark_proc_index GC_arrays._typed_mark_proc_index
+  unsigned _typed_mark_proc_index;
+
   /* Points to array of extended descriptors. */
 #define GC_ext_descriptors GC_arrays._ext_descriptors
   typed_ext_descr_t *_ext_descriptors;
