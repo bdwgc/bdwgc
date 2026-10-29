@@ -51,10 +51,10 @@ static DWORD WINAPI
 test(LPVOID arg)
 #endif
 {
-  int *p[N_TESTS];
+  void *p[N_TESTS];
   int i;
   for (i = 0; i < N_TESTS; ++i) {
-    p[i] = (int *)malloc(sizeof(int) + i);
+    p[i] = malloc(sizeof(int) + i);
     CHECK_OUT_OF_MEMORY(p[i]);
   }
   CHECK_LEAKS();
