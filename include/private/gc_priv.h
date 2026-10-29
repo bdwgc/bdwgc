@@ -2320,8 +2320,8 @@ struct _GC_arrays {
 #  ifdef BROKEN_EXCEPTION_HANDLING
 #    define GC_darwin_last_fault_addr GC_arrays._darwin_last_fault_addr
 #    define GC_darwin_fault_count GC_arrays._darwin_fault_count
-  static const char *_darwin_last_fault_addr;
-  static int _darwin_fault_count;
+  const char *_darwin_last_fault_addr;
+  int _darwin_fault_count;
 #  endif
 #endif
 
