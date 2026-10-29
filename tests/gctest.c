@@ -1257,27 +1257,63 @@ alloc_small(int n)
 
 #include "gc/gc_inline.h"
 
+static void *
+test_tfl_words(void **tiny_fl)
+{
+  void *result;
+
+  GC_MALLOC_WORDS(result, 11, tiny_fl);
+  CHECK_OUT_OF_MEMORY(result);
+  return result;
+}
+
+static void *
+test_tfl_atomic_words(void **tiny_fl)
+{
+  void *result;
+
+  GC_MALLOC_ATOMIC_WORDS(result, 20, tiny_fl);
+  CHECK_OUT_OF_MEMORY(result);
+  return result;
+}
+
+#if !defined(CPPCHECK)
+static void *
+test_tfl_cons(void **tiny_fl, void *first, void *second)
+{
+  void *result;
+
+  /* Workaround "variable l can be declared as pointer to const" warning. */
+  GC_CONS(result, first, second, tiny_fl);
+  CHECK_OUT_OF_MEMORY(result);
+  return result;
+}
+#endif
+
 static void
 test_tfls(void)
 {
-  void *results[3];
+  void *results[2];
   void *tfls[3][GC_TINY_FREELISTS];
 
   if (!GC_get_dont_add_byte_at_end() && GC_get_all_interior_pointers()) {
     /* Skip. */
     return;
   }
-
   BZERO(tfls, sizeof(tfls));
+  /*
+   * Test the tiny-free-list allocation macros in separate functions (one per
+   * kind) to avoid "stack-based buffer overflow" FP warning reported by the
+   * gcc static analyzer.
+   */
+  results[0] = test_tfl_words(tfls[0]);
+  results[1] = test_tfl_atomic_words(tfls[1]);
   /* TODO: Improve testing of `GC_FAST_MALLOC_GRANS` functionality. */
-  GC_MALLOC_WORDS(results[0], 11, tfls[0]);
-  CHECK_OUT_OF_MEMORY(results[0]);
-  GC_MALLOC_ATOMIC_WORDS(results[1], 20, tfls[1]);
-  CHECK_OUT_OF_MEMORY(results[1]);
-#if !defined(CPPCHECK)
-  /* Workaround "variable l can be declared as pointer to const" warning. */
-  GC_CONS(results[2], results[0], results[1], tfls[2]);
-  CHECK_OUT_OF_MEMORY(results[2]);
+#if defined(CPPCHECK)
+  GC_noop1_ptr(results[0]);
+  GC_noop1_ptr(results[1]);
+#else
+  GC_noop1_ptr(test_tfl_cons(tfls[2], results[0], results[1]));
 #endif
 }
 
