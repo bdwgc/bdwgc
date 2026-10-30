@@ -37,20 +37,21 @@
 #  include <floss.h>
 #endif
 
-#ifdef THREADS
+#if defined(GC_PTHREADS)                                       \
+    && (defined(USE_SPIN_LOCK) || !defined(USE_PTHREAD_LOCKS)) \
+    && (!defined(GC_WIN32_THREADS) || defined(USE_PTHREAD_LOCKS))
 #  if defined(SN_TARGET_PSP2)
 GC_INNER WapiMutex GC_allocate_ml_PSP2 = { 0, NULL };
-#  elif defined(GC_DEFN_ALLOCATE_ML) && !defined(USE_RWLOCK) \
-      || defined(SN_TARGET_PS3)
-#    include <pthread.h>
+#  endif
+#  if defined(USE_PTHREAD_LOCKS) && !defined(USE_RWLOCK)
 GC_INNER pthread_mutex_t GC_allocate_ml;
-#  else
+#  endif
+#else
 /*
  * For other platforms with threads, the allocator lock and, possibly,
  * `GC_lock_holder` are defined in the code for multi-threading support.
  */
-#  endif
-#endif /* THREADS */
+#endif
 
 #ifdef DYNAMIC_LOADING
 /*
