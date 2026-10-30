@@ -80,7 +80,8 @@ jobs:
               --disable-threads-discovery --enable-cplusplus
               --without-libatomic-ops
             cflags_extra: >-
-              -D AO_DISABLE_GCC_ATOMICS -D _FORTIFY_SOURCE=2 -march=native
+              -D AO_DISABLE_GCC_ATOMICS -D BROKEN_EXCEPTION_HANDLING
+              -D _FORTIFY_SOURCE=2 -march=native
             fetch_libatomic_ops: true
           - os: ubuntu-latest
             conf_options: >-
