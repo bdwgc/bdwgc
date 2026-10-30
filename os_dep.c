@@ -5461,10 +5461,8 @@ GC_mprotect_thread(void *arg)
 STATIC int GC_sigbus_count = 0;
 
 STATIC void
-GC_darwin_sigbus(int num, siginfo_t *sip, void *context)
+GC_darwin_sigbus(int num)
 {
-  UNUSED_ARG(sip);
-  UNUSED_ARG(context);
   if (num != SIGBUS)
     ABORT("Got a non-sigbus signal in the sigbus handler");
 
@@ -5576,7 +5574,7 @@ GC_dirty_init(void)
 #  ifdef BROKEN_EXCEPTION_HANDLING
   {
     struct sigaction sa, oldsa;
-    sa.sa_handler = (SIG_HNDLR_PTR)GC_darwin_sigbus;
+    sa.sa_handler = GC_darwin_sigbus;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART | SA_SIGINFO;
     /* `sa.sa_restorer` is deprecated and should not be initialized. */
