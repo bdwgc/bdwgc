@@ -91,9 +91,9 @@ pub fn build(b: *std.Build) void {
     const install_headers = b.option(bool, "install_headers", "Install header and pkg-config metadata files") orelse true;
     // TODO: support `with_libatomic_ops`, `without_libatomic_ops`
 
-    var source_files: std.ArrayListUnmanaged([]const u8) = .empty;
+    var source_files: std.ArrayList([]const u8) = .empty;
     defer source_files.deinit(b.allocator);
-    var flags: std.ArrayListUnmanaged([]const u8) = .empty;
+    var flags: std.ArrayList([]const u8) = .empty;
     defer flags.deinit(b.allocator);
 
     // Always enabled.
@@ -633,11 +633,11 @@ fn linkLibCpp(lib: *std.Build.Step.Compile) void {
     }
 }
 
-fn addTest(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.Step, flags: std.ArrayListUnmanaged([]const u8), testname: []const u8, filename: []const u8) void {
+fn addTest(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.Step, flags: std.ArrayList([]const u8), testname: []const u8, filename: []const u8) void {
     addTestExt(b, gc, test_step, flags, testname, filename, .{});
 }
 
-fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.Step, flags: std.ArrayListUnmanaged([]const u8), testname: []const u8, filename: []const u8, ext_args: struct {
+fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.Step, flags: std.ArrayList([]const u8), testname: []const u8, filename: []const u8, ext_args: struct {
     filename2: ?[]const u8 = null,
     rc_filename: ?[]const u8 = null,
     lib2: ?*std.Build.Step.Compile = null,
