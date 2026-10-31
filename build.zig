@@ -397,7 +397,7 @@ pub fn build(b: *std.Build) void {
     }
 
     if (enable_cplusplus and enable_werror) {
-        if (linkage == .dynamic and t.os.tag == .windows or t.abi == .msvc) {
+        if ((linkage == .dynamic and t.os.tag == .windows) or t.abi == .msvc) {
             // Avoid "replacement operator new[] cannot be declared inline"
             // warnings.
             flags.append(b.allocator, "-Wno-inline-new-delete") catch unreachable;
