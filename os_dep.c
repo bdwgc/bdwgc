@@ -3097,10 +3097,67 @@ GC_unmap_gap(ptr_t start1, size_t bytes1, ptr_t start2, size_t bytes2)
 #endif /* USE_MUNMAP */
 
 /*
- * Routine for pushing any additional roots.  In the multi-threaded
- * environment, this is also responsible for marking from thread stacks.
+ * Routine for pushing any additional roots. This is also responsible for
+ * marking from all stacks.
  */
 #ifndef THREADS
+
+/* In the single-threaded case, schedule the entire stack for scanning. In
+   multi-threaded case it is the responsibility of GC_push_all_stacks. */
+STATIC void
+GC_push_current_stack(void)
+{
+  GC_push_all_stack_sections(GC_approx_sp(), GC_stackbottom,
+                             GC_traced_stack_sect);
+#  ifdef IA64
+  /*
+   * We also need to push the register stack backing store.
+   * This should really be done in the same way as the regular stack.
+   * For now we fudge it a bit.  Note that the backing store grows up.
+   */
+  {
+    ptr_t bsp = GC_save_regs_ret_val;
+#    ifndef NO_ALL_INTERIOR_POINTERS
+    ptr_t cold_gc_bs_pointer = bsp - 2048;
+
+    if (GC_all_interior_pointers
+        && ADDR_LT(GC_register_stackbottom, cold_gc_bs_pointer)) {
+      /*
+       * Adjust `cold_gc_bs_pointer` if below our innermost
+       * "traced stack section" in backing store.
+       */
+      if (GC_traced_stack_sect != NULL
+          && ADDR_LT(cold_gc_bs_pointer,
+                     GC_traced_stack_sect->backing_store_end)) {
+        cold_gc_bs_pointer = GC_traced_stack_sect->backing_store_end;
+      }
+      GC_push_all_register_sections(GC_register_stackbottom,
+                                    cold_gc_bs_pointer, FALSE,
+                                    GC_traced_stack_sect);
+      GC_push_all_eager(cold_gc_bs_pointer, bsp);
+    } else
+#    endif
+      /* else */ {
+      GC_push_all_register_sections(GC_register_stackbottom, bsp,
+                                    TRUE /* `eager` */, GC_traced_stack_sect);
+    }
+    /*
+     * All values should be sufficiently aligned that we do not have to
+     * worry about the boundary.
+     */
+  }
+#  elif defined(E2K)
+  /* We also need to push procedure stack store.  Procedure stack grows up. */
+  {
+    ptr_t bs_lo;
+    size_t stack_size;
+
+    /* TODO: Support `ps_ofs` here and in `GC_do_blocking_inner`. */
+    GET_PROCEDURE_STACK_LOCAL(0, &bs_lo, &stack_size);
+    GC_push_all_eager(bs_lo, bs_lo + stack_size);
+  }
+#  endif
+}
 
 #  if defined(EMSCRIPTEN) && defined(EMSCRIPTEN_ASYNCIFY)
 #    include <emscripten.h>
@@ -3114,12 +3171,17 @@ scan_regs_cb(void *begin, void *finish)
 STATIC void GC_CALLBACK
 GC_default_push_other_roots(void)
 {
+  GC_push_current_stack();
   /* Note: this needs `-sASYNCIFY` linker flag. */
   emscripten_scan_registers(scan_regs_cb);
 }
 
 #  else
-#    define GC_default_push_other_roots 0
+STATIC void GC_CALLBACK
+GC_default_push_other_roots(void)
+{
+  GC_push_current_stack();
+}
 #  endif
 
 #else /* THREADS */
