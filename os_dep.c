@@ -3102,6 +3102,16 @@ GC_unmap_gap(ptr_t start1, size_t bytes1, ptr_t start2, size_t bytes2)
  */
 #ifndef THREADS
 
+#  if defined(EMSCRIPTEN) && defined(EMSCRIPTEN_ASYNCIFY)
+#    include <emscripten.h>
+
+static void
+scan_regs_cb(void *begin, void *finish)
+{
+  GC_push_all_stack(begin, finish);
+}
+#  endif
+
 /* In the single-threaded case, schedule the entire stack for scanning. In
    multi-threaded case it is the responsibility of GC_push_all_stacks. */
 STATIC void
@@ -3156,33 +3166,19 @@ GC_push_current_stack(void)
     GET_PROCEDURE_STACK_LOCAL(0, &bs_lo, &stack_size);
     GC_push_all_eager(bs_lo, bs_lo + stack_size);
   }
-#  endif
-}
-
-#  if defined(EMSCRIPTEN) && defined(EMSCRIPTEN_ASYNCIFY)
-#    include <emscripten.h>
-
-static void
-scan_regs_cb(void *begin, void *finish)
-{
-  GC_push_all_stack(begin, finish);
-}
-
-STATIC void GC_CALLBACK
-GC_default_push_other_roots(void)
-{
-  GC_push_current_stack();
+#  elif defined(EMSCRIPTEN) && defined(EMSCRIPTEN_ASYNCIFY)
   /* Note: this needs `-sASYNCIFY` linker flag. */
-  emscripten_scan_registers(scan_regs_cb);
+  {
+    emscripten_scan_registers(scan_regs_cb);
+  }
+#  endif
 }
 
-#  else
 STATIC void GC_CALLBACK
 GC_default_push_other_roots(void)
 {
   GC_push_current_stack();
 }
-#  endif
 
 #else /* THREADS */
 
