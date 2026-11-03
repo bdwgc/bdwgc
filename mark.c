@@ -546,6 +546,27 @@ GC_mark_some(ptr_t cold_gc_frame)
       GC_mark_state = MS_PUSH_UNCOLLECTABLE;
       break;
     }
+#ifdef ENABLE_DISCLAIM
+    /*
+     * Redo the unconditional-marking pass which was possibly discarded by
+     * `GC_invalidate_mark_state()` or `reset_mark_scan()`, before rescan
+     * of the marked objects (whose pushed content might have been discarded
+     * too); but ignore the request if no kinds requiring unconditional
+     * marking are registered.
+     */
+    if (GC_mark_state == MS_INVALID && GC_uncond_rescan_needed) {
+      if (!GC_has_mark_uncond_kinds) {
+        GC_uncond_rescan_needed = FALSE;
+      } else if (ADDR_LT((ptr_t)GC_mark_stack_top,
+                         (ptr_t)(GC_mark_stack + GC_mark_stack_size / 4))) {
+        GC_scan_ptr = GC_push_next_marked_uncollectable(GC_scan_ptr);
+        if (NULL == GC_scan_ptr)
+          GC_uncond_rescan_needed = FALSE;
+        GC_ASSERT(GC_mark_state == MS_INVALID);
+        break;
+      }
+    }
+#endif
     if (ADDR_GE((ptr_t)GC_mark_stack_top, (ptr_t)GC_mark_stack)) {
       MARK_FROM_MARK_STACK();
       GC_ASSERT(GC_mark_state == MS_PARTIALLY_INVALID
@@ -679,17 +700,38 @@ handle_thr_start:
 }
 #endif /* WRAP_MARK_SOME */
 
+static void
+reset_mark_scan(void)
+{
+  GC_mark_state = MS_INVALID;
+#ifdef ENABLE_DISCLAIM
+  GC_uncond_rescan_needed = TRUE;
+  GC_scan_ptr = NULL; /*< restart heap scan for unconditional marking */
+#endif
+}
+
 GC_INNER void
 GC_invalidate_mark_state(void)
 {
   GC_mark_state = MS_INVALID;
+#ifdef ENABLE_DISCLAIM
+  /*
+   * Request the unconditional-marking pass to be redone before the rescan
+   * of the marked objects, so that blocks of the kinds requiring
+   * unconditional marking (e.g., the one used by `GC_finalized_malloc`)
+   * are re-pushed even when the mark bits have not been cleared (as in
+   * partial collections).  The request is ignored by `GC_mark_some()`
+   * if no such kinds are registered.
+   */
+  GC_uncond_rescan_needed = TRUE;
+#endif
   GC_mark_stack_top = GC_mark_stack - 1;
 }
 
 STATIC mse *
 GC_signal_mark_stack_overflow(mse *msp)
 {
-  GC_mark_state = MS_INVALID;
+  reset_mark_scan();
 #ifdef PARALLEL_MARK
   /*
    * We are using a `local_mark_stack` in parallel mode, so do
@@ -1179,7 +1221,7 @@ GC_return_mark_stack(mse *low, mse *high)
   if ((word)(my_start - GC_mark_stack + stack_size)
       > (word)GC_mark_stack_size) {
     GC_COND_LOG_PRINTF("No room to copy back mark stack\n");
-    GC_mark_state = MS_INVALID;
+    reset_mark_scan();
     GC_mark_stack_too_small = TRUE;
     /* We drop the local mark stack.  We will fix things later. */
   } else {

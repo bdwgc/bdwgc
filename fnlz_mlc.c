@@ -67,6 +67,8 @@ GC_register_disclaim_proc_inner(unsigned kind, GC_disclaim_proc proc,
 
   GC_obj_kinds[kind].ok_disclaim_proc = proc;
   GC_obj_kinds[kind].ok_mark_unconditionally = mark_unconditionally;
+  if (mark_unconditionally)
+    GC_has_mark_uncond_kinds = TRUE;
 }
 
 GC_API void GC_CALL
