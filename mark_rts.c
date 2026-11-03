@@ -774,36 +774,11 @@ GC_push_all_stack_part_eager_sections(
 }
 #  endif /* !THREADS */
 
-/*
- * Push enough of the current stack eagerly to ensure that callee-save
- * registers saved in GC frames are scanned.  In the single-threaded case,
- * schedule the entire stack for scanning.  The 2nd argument (`context`)
- * is a pointer to the (possibly `NULL`) thread context, for (currently
- * hypothetical) more precise stack scanning.  In the presence of threads,
- * push enough of the current stack to ensure that callee-save registers
- * saved in collector frames have been seen.
- */
-/* TODO: Merge it with per-thread stuff. */
+/* Push the current stack. */
 STATIC void
-GC_push_current_stack(ptr_t cold_gc_frame, void *context)
+GC_push_current_stack(void)
 {
-  UNUSED_ARG(context);
-  GC_ASSERT(I_HOLD_LOCK());
-#  ifdef THREADS
-  /* `cold_gc_frame` is non-`NULL`. */
-#    ifdef STACK_GROWS_UP
-  GC_push_all_eager(cold_gc_frame, GC_approx_sp());
-#    else
-  GC_push_all_eager(GC_approx_sp(), cold_gc_frame);
-  /*
-   * For IA-64, the register stack backing store is handled in the
-   * thread-specific code.
-   */
-#    endif
-#  else
-  GC_push_all_stack_part_eager_sections(GC_approx_sp(), GC_stackbottom,
-                                        cold_gc_frame, GC_traced_stack_sect);
-#    ifdef IA64
+#  ifdef IA64
   /*
    * We also need to push the register stack backing store.
    * This should really be done in the same way as the regular stack.
@@ -812,7 +787,7 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
    */
   {
     ptr_t bsp = GC_save_regs_ret_val;
-#      ifndef NO_ALL_INTERIOR_POINTERS
+#    ifndef NO_ALL_INTERIOR_POINTERS
     ptr_t cold_gc_bs_pointer = bsp - 2048;
 
     if (GC_all_interior_pointers
@@ -831,8 +806,8 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
                                     GC_traced_stack_sect);
       GC_push_all_eager(cold_gc_bs_pointer, bsp);
     } else
-#      endif
-    /* else */ {
+#    endif
+      /* else */ {
       GC_push_all_register_sections(GC_register_stackbottom, bsp,
                                     TRUE /* `eager` */, GC_traced_stack_sect);
     }
@@ -841,7 +816,7 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
      * worry about the boundary.
      */
   }
-#    elif defined(E2K)
+#  elif defined(E2K)
   /* We also need to push procedure stack store.  Procedure stack grows up. */
   {
     ptr_t bs_lo;
@@ -851,7 +826,35 @@ GC_push_current_stack(ptr_t cold_gc_frame, void *context)
     GET_PROCEDURE_STACK_LOCAL(0, &bs_lo, &stack_size);
     GC_push_all_eager(bs_lo, bs_lo + stack_size);
   }
+#  endif
+}
+
+/*
+ * Push enough of the current stack eagerly to ensure that callee-save registers
+ * saved in GC frames are scanned. The 2nd argument (`context`) is a pointer to
+ * the (possibly `NULL`) thread context, for (currently hypothetical) more
+ * precise stack scanning.
+ */
+STATIC void
+GC_push_enough_stack(ptr_t cold_gc_frame, void *context)
+{
+  UNUSED_ARG(context);
+  GC_ASSERT(I_HOLD_LOCK());
+#  ifdef THREADS
+  /* `cold_gc_frame` is non-`NULL`. */
+#    ifdef STACK_GROWS_UP
+  GC_push_all_eager(cold_gc_frame, GC_approx_sp());
+#    else
+  GC_push_all_eager(GC_approx_sp(), cold_gc_frame);
+  /*
+   * For IA-64, the register stack backing store is handled in the
+   * thread-specific code.
+   */
 #    endif
+#  else
+  GC_push_all_stack_part_eager_sections(GC_approx_sp(), GC_stackbottom,
+                                        cold_gc_frame, GC_traced_stack_sect);
+  GC_push_current_stack();
 #  endif
 }
 
@@ -930,7 +933,7 @@ GC_push_regs_and_stack(ptr_t cold_gc_frame)
     return;
   }
 #  endif
-  GC_with_callee_saves_pushed(GC_push_current_stack, cold_gc_frame);
+  GC_with_callee_saves_pushed(GC_push_enough_stack, cold_gc_frame);
 }
 
 #endif /* !STACK_NOT_SCANNED */
