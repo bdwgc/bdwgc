@@ -238,7 +238,8 @@ weakmap_add(struct weakmap *wm, void *obj, size_t obj_size)
   }
 
   /* Create new object. */
-  new_base = (void **)GC_generic_malloc(sizeof(void *) + wm->obj_size,
+  new_base = (void **)GC_generic_malloc((wm->obj_size + 2 * sizeof(void *) - 1)
+                                            & ~(sizeof(void *) - 1),
                                         (int)wm->weakobj_kind);
   CHECK_OUT_OF_MEMORY(new_base);
   *new_base = CPTR_SET_FLAGS(wm, FINALIZER_CLOSURE_FLAG);
