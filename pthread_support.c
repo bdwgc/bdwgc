@@ -1570,16 +1570,19 @@ fork_prepare_proc(void)
   DISABLE_CANCEL(fork_cancel_state);
   GC_parent_pthread_self = pthread_self();
   /* The following waits may include cancellation points. */
-#    ifdef PARALLEL_MARK
-  if (GC_parallel)
-    wait_for_reclaim_atfork();
-#    endif
   if (is_thread_registered_inner()) {
     /* `fork()` is called from a thread registered in the collector. */
     GC_wait_for_gc_completion(TRUE);
   }
 #    ifdef PARALLEL_MARK
   if (GC_parallel) {
+    /*
+     * Wait for the free-list builders to finish only after waiting for the
+     * collection completion, because the latter may temporarily release
+     * the allocator lock, thus allowing the free-list builders to restart.
+     */
+    wait_for_reclaim_atfork();
+
 #      if defined(THREAD_SANITIZER) && defined(GC_ASSERTIONS) \
           && defined(CAN_CALL_ATFORK)
     /*
