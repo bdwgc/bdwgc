@@ -2072,8 +2072,6 @@ GC_API
 BOOL WINAPI
 GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
 {
-  thread_id_t self_id;
-
   UNUSED_ARG(inst);
   /*
    * Note that `GC_use_threads_discovery` should be called by the client
@@ -2101,22 +2099,9 @@ GC_DllMain(HINSTANCE inst, ULONG reason, LPVOID reserved)
     /* FALLTHRU */
   case DLL_PROCESS_ATTACH:
     /* This may run with the collector uninitialized. */
-    self_id = GetCurrentThreadId();
-    if (GC_is_initialized && GC_main_thread_id != self_id) {
-      GC_thread me;
-      struct GC_stack_base sb;
+    if (GC_is_initialized && GetCurrentThreadId() != GC_main_thread_id) {
       /* Do not lock here. */
-#    ifdef GC_ASSERTIONS
-      int sb_result =
-#    endif
-          GC_get_stack_base(&sb);
-      GC_ASSERT(sb_result == GC_SUCCESS);
-      me = GC_register_my_thread_inner(&sb, self_id);
-#    ifdef THREAD_LOCAL_ALLOC
-      GC_init_thread_local(&me->tlfs); /*< lock-free */
-#    else
-      (void)me;
-#    endif
+      GC_register_my_detached_thread();
     } else {
       /* We already did it during `GC_thr_init()`, called by `GC_init()`. */
     }
