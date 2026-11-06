@@ -1405,6 +1405,13 @@ STATIC unsigned long GC_mark_lock_holder = NO_THREAD;
 
 IF_CANCEL(static int fork_cancel_state;) /*< protected by the allocator lock */
 
+/* Whether `fork()` is called from a thread registered in the collector. */
+static GC_bool forker_thread_registered;
+
+#    ifndef HAS_WIN32_THREADS_DISCOVERY
+STATIC void GC_register_my_detached_thread(void);
+#    endif
+
 #    ifdef PARALLEL_MARK
 #      ifdef THREAD_SANITIZER
 #        if defined(GC_ASSERTIONS) && defined(CAN_CALL_ATFORK)
@@ -1452,7 +1459,8 @@ GC_remove_all_threads_but_me(void)
 
     for (p = GC_threads[hv]; p != NULL; p = next) {
       next = p->tm.next;
-      if (THREAD_EQUAL(p->pthread_id, GC_parent_pthread_self) && me == NULL) {
+      if (THREAD_EQUAL(p->pthread_id, GC_parent_pthread_self) && me == NULL
+          && !KNOWN_FINISHED(p)) {
         /* Ignore dead threads with the same id. */
         me = p;
         p->tm.next = NULL;
@@ -1487,8 +1495,20 @@ GC_remove_all_threads_but_me(void)
     store_to_threads_table(hv, NULL);
   }
 
-  if (NULL == me)
-    return; /*< `fork()` is called from an unregistered thread */
+  if (NULL == me) {
+    if (!forker_thread_registered)
+      return; /*< `fork()` is called from an unregistered thread */
+
+    /*
+     * The registration entry of the thread which called `fork()` has been
+     * lost (e.g., removed because of a race caused by a thread id reuse).
+     * Re-register the current thread (the only one which survived the fork).
+     * This is safe because `fork_prepare_proc()` has already waited for the
+     * collection completion, so the heap is in a quiescent state.
+     */
+    GC_register_my_detached_thread();
+    return;
+  }
 
   /*
    * Update `pthreads` id as it is not guaranteed to be the same between
@@ -1570,8 +1590,10 @@ fork_prepare_proc(void)
   DISABLE_CANCEL(fork_cancel_state);
   GC_parent_pthread_self = pthread_self();
   /* The following waits may include cancellation points. */
+  forker_thread_registered = FALSE;
   if (is_thread_registered_inner()) {
     /* `fork()` is called from a thread registered in the collector. */
+    forker_thread_registered = TRUE;
     GC_wait_for_gc_completion(TRUE);
   }
 #    ifdef PARALLEL_MARK
@@ -2029,6 +2051,33 @@ GC_thr_init(void)
 }
 
 #  endif /* !GC_WIN32_THREADS */
+
+#  if defined(CAN_HANDLE_FORK) || defined(HAS_WIN32_THREADS_DISCOVERY)
+#    ifdef HAS_WIN32_THREADS_DISCOVERY
+GC_INNER
+#    else
+STATIC
+#    endif
+void
+GC_register_my_detached_thread(void)
+{
+  GC_thread me;
+  struct GC_stack_base sb;
+
+  if (GC_get_stack_base(&sb) != GC_SUCCESS)
+    ABORT("Failed to get thread stack base");
+  me = GC_register_my_thread_inner(&sb, thread_id_self());
+#    ifdef GC_PTHREADS
+  /* Treat as detached (pointer result is not needed). */
+  me->flags |= DETACHED;
+#    endif
+#    ifdef THREAD_LOCAL_ALLOC
+  GC_init_thread_local(&me->tlfs); /*< lock-free */
+#    else
+  (void)me;
+#    endif
+}
+#  endif
 
 GC_INNER void
 GC_init_parallel(void)

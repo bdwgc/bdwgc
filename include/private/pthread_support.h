@@ -469,6 +469,13 @@ GC_EXTERN thread_id_t GC_main_thread_id;
 
 #    ifdef HAS_WIN32_THREADS_DISCOVERY
 /*
+ * Get the stack base of the current thread, register the thread in the
+ * collector as a detached one and initialize its thread-local free lists.
+ * Note: the allocator lock is not held if called from `GC_DllMain()`.
+ */
+GC_INNER void GC_register_my_detached_thread(void);
+
+/*
  * Search in `dll_thread_table` and return the `GC_thread[]` entity
  * corresponding to the given thread `id`.
  * May be called without a lock, but should be called in contexts in
