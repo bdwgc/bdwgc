@@ -93,18 +93,20 @@ GC_INNER int GC_print_stats = 0;
 
 #ifdef MAKE_BACK_GRAPH
 #  ifdef GC_PRINT_BACK_HEIGHT
-GC_INNER GC_bool GC_print_back_height = TRUE;
+#    define PRINT_BACK_HEIGHT_INIT TRUE
 #  else
-GC_INNER GC_bool GC_print_back_height = FALSE;
+#    define PRINT_BACK_HEIGHT_INIT FALSE
 #  endif
+GC_INNER GC_bool GC_print_back_height = PRINT_BACK_HEIGHT_INIT;
 #endif
 
 #ifndef NO_DEBUGGING
 #  ifdef GC_DUMP_REGULARLY
-GC_INNER GC_bool GC_dump_regularly = TRUE;
+#    define DUMP_REGULARLY_INIT TRUE
 #  else
-GC_INNER GC_bool GC_dump_regularly = FALSE;
+#    define DUMP_REGULARLY_INIT FALSE
 #  endif
+GC_INNER GC_bool GC_dump_regularly = DUMP_REGULARLY_INIT;
 #endif
 
 #ifdef KEEP_BACK_PTRS
@@ -112,55 +114,60 @@ GC_INNER long GC_backtraces = 0;
 #endif
 
 #ifdef FIND_LEAK
-int GC_find_leak = 1;
+#  define FIND_LEAK_INIT 1
 #else
-int GC_find_leak = 0;
+#  define FIND_LEAK_INIT 0
 #endif
+int GC_find_leak = FIND_LEAK_INIT;
 
 #if !defined(NO_FIND_LEAK) && !defined(SHORT_DBG_HDRS)
 #  ifdef GC_FINDLEAK_DELAY_FREE
-GC_INNER GC_bool GC_findleak_delay_free = TRUE;
+#    define FINDLEAK_DELAY_FREE_INIT TRUE
 #  else
-GC_INNER GC_bool GC_findleak_delay_free = FALSE;
+#    define FINDLEAK_DELAY_FREE_INIT FALSE
 #  endif
+GC_INNER GC_bool GC_findleak_delay_free = FINDLEAK_DELAY_FREE_INIT;
 #endif /* !NO_FIND_LEAK && !SHORT_DBG_HDRS */
 
 #ifndef NO_ALL_INTERIOR_POINTERS
 #  ifdef ALL_INTERIOR_POINTERS
-int GC_all_interior_pointers = 1;
+#    define ALL_INTERIOR_POINTERS_INIT 1
 #  else
-int GC_all_interior_pointers = 0;
+#    define ALL_INTERIOR_POINTERS_INIT 0
 #  endif
+int GC_all_interior_pointers = ALL_INTERIOR_POINTERS_INIT;
 #endif
 
 #ifdef FINALIZE_ON_DEMAND
-int GC_finalize_on_demand = 1;
+#  define FINALIZE_ON_DEMAND_INIT 1
 #else
-int GC_finalize_on_demand = 0;
+#  define FINALIZE_ON_DEMAND_INIT 0
 #endif
+int GC_finalize_on_demand = FINALIZE_ON_DEMAND_INIT;
 
 #ifdef JAVA_FINALIZATION
-int GC_java_finalization = 1;
+#  define JAVA_FINALIZATION_INIT 1
 #else
-int GC_java_finalization = 0;
+#  define JAVA_FINALIZATION_INIT 0
 #endif
+int GC_java_finalization = JAVA_FINALIZATION_INIT;
 
 /* All accesses to it should be synchronized to avoid data race. */
 GC_finalizer_notifier_proc GC_finalizer_notifier
     = (GC_finalizer_notifier_proc)0;
 
 #ifdef GC_FORCE_UNMAP_ON_GCOLLECT
-GC_INNER GC_bool GC_force_unmap_on_gcollect = TRUE;
+#  define FORCE_UNMAP_ON_GCOLLECT_INIT TRUE
 #else
-GC_INNER GC_bool GC_force_unmap_on_gcollect = FALSE;
+#  define FORCE_UNMAP_ON_GCOLLECT_INIT FALSE
 #endif
-
-#ifndef GC_LARGE_ALLOC_WARN_INTERVAL
-#  define GC_LARGE_ALLOC_WARN_INTERVAL 5
-#endif
+GC_INNER GC_bool GC_force_unmap_on_gcollect = FORCE_UNMAP_ON_GCOLLECT_INIT;
 
 #ifndef NO_BLACK_LISTING
-GC_INNER long GC_large_alloc_warn_interval = GC_LARGE_ALLOC_WARN_INTERVAL;
+#  ifndef GC_LARGE_ALLOC_WARN_INTERVAL
+#    define GC_LARGE_ALLOC_WARN_INTERVAL 5
+#  endif
+GC_INNER long GC_large_alloc_warn_interval = (GC_LARGE_ALLOC_WARN_INTERVAL);
 #endif
 
 STATIC void *GC_CALLBACK
@@ -175,10 +182,11 @@ GC_oom_func GC_oom_fn = GC_default_oom_fn;
 
 #ifdef CAN_HANDLE_FORK
 #  ifdef HANDLE_FORK
-GC_INNER int GC_handle_fork = 1;
+#    define HANDLE_FORK_INIT 1
 #  else
-GC_INNER int GC_handle_fork = FALSE;
+#    define HANDLE_FORK_INIT 0
 #  endif
+GC_INNER int GC_handle_fork = HANDLE_FORK_INIT;
 
 #elif !defined(HAVE_NO_FORK)
 GC_API void GC_CALL
@@ -915,10 +923,11 @@ callee_saves_pushed_dummy_fn(ptr_t data, void *context)
 #endif
 
 #ifdef MANUAL_VDB
-static GC_bool manual_vdb_allowed = TRUE;
+#  define MANUAL_VDB_INIT TRUE
 #else
-static GC_bool manual_vdb_allowed = FALSE;
+#  define MANUAL_VDB_INIT FALSE
 #endif
+static GC_bool manual_vdb_allowed = MANUAL_VDB_INIT;
 
 GC_API void GC_CALL
 GC_set_manual_vdb_allowed(int value)

@@ -69,10 +69,11 @@ typedef long unsigned int caddr_t;
 #endif
 
 #ifdef NO_EXECUTE_PERMISSION
-STATIC GC_bool GC_pages_executable = FALSE;
+#  define PAGES_EXECUTABLE_INIT FALSE
 #else
-STATIC GC_bool GC_pages_executable = TRUE;
+#  define PAGES_EXECUTABLE_INIT TRUE
 #endif
+STATIC GC_bool GC_pages_executable = PAGES_EXECUTABLE_INIT;
 
 /* Note: it is undefined later on `GC_pages_executable` real use. */
 #define IGNORE_PAGES_EXECUTABLE 1

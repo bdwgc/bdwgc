@@ -18,10 +18,11 @@
 #include "private/gc_priv.h"
 
 #ifdef GC_USE_ENTIRE_HEAP
-int GC_use_entire_heap = TRUE;
+#  define USE_ENTIRE_HEAP_INIT TRUE
 #else
-int GC_use_entire_heap = FALSE;
+#  define USE_ENTIRE_HEAP_INIT FALSE
 #endif
+int GC_use_entire_heap = USE_ENTIRE_HEAP_INIT;
 
 /*
  * Free heap blocks are kept on one of several free lists, depending on
