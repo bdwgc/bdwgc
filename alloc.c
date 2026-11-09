@@ -137,15 +137,16 @@ GC_is_incremental_mode(void)
 int GC_parallel = FALSE; /*< parallel collection is off by default */
 #endif
 
-#ifdef GC_FULL_FREQ
-int GC_full_freq = GC_FULL_FREQ;
-#else
 /*
  * Every `GC_full_freq + 1` collection is a full collection, whether we
  * need it or not.
  */
-int GC_full_freq = 19;
+#ifdef GC_FULL_FREQ
+#  define FULL_FREQ_INIT (GC_FULL_FREQ)
+#else
+#  define FULL_FREQ_INIT 19
 #endif
+int GC_full_freq = FULL_FREQ_INIT;
 
 #ifdef THREAD_LOCAL_ALLOC
 GC_INNER GC_bool GC_world_stopped = FALSE;
@@ -207,16 +208,19 @@ GC_get_dont_add_byte_at_end(void)
 /* Some more variables. */
 
 #ifdef GC_DONT_EXPAND
-int GC_dont_expand = TRUE;
+#  define DONT_EXPAND_INIT TRUE
 #else
-int GC_dont_expand = FALSE;
+#  define DONT_EXPAND_INIT FALSE
 #endif
+int GC_dont_expand = DONT_EXPAND_INIT;
 
 #ifdef GC_FREE_SPACE_DIVISOR
-word GC_free_space_divisor = GC_FREE_SPACE_DIVISOR; /*< must be positive */
+#  define FREE_SPACE_DIVISOR_INIT \
+    (GC_FREE_SPACE_DIVISOR) /*< must be positive */
 #else
-word GC_free_space_divisor = 3;
+#  define FREE_SPACE_DIVISOR_INIT 3
 #endif
+word GC_free_space_divisor = FREE_SPACE_DIVISOR_INIT;
 
 GC_INNER int GC_CALLBACK
 GC_never_stop_func(void)
@@ -225,20 +229,21 @@ GC_never_stop_func(void)
 }
 
 #ifdef GC_TIME_LIMIT
-/*
- * We try to keep pause times from exceeding this by much.
- * In milliseconds.
- */
-unsigned long GC_time_limit = GC_TIME_LIMIT;
+#  define TIME_LIMIT_INIT (GC_TIME_LIMIT)
 #elif defined(PARALLEL_MARK)
 /*
  * The parallel marker cannot be interrupted for now, so the time limit
  * is absent by default.
  */
-unsigned long GC_time_limit = GC_TIME_UNLIMITED;
+#  define TIME_LIMIT_INIT GC_TIME_UNLIMITED
 #else
-unsigned long GC_time_limit = 15;
+#  define TIME_LIMIT_INIT 15
 #endif
+/*
+ * We try to keep pause times from exceeding this by much.
+ * In milliseconds.
+ */
+unsigned long GC_time_limit = TIME_LIMIT_INIT;
 
 #ifndef NO_CLOCK
 /*
@@ -1846,10 +1851,11 @@ GC_expand_hp(size_t bytes)
  * in the incremental mode.
  */
 #ifdef GC_ALLOCD_BYTES_PER_FINALIZER
-STATIC word GC_allocd_bytes_per_finalizer = GC_ALLOCD_BYTES_PER_FINALIZER;
+#  define ALLOCD_BYTES_PER_FINALIZER_INIT (GC_ALLOCD_BYTES_PER_FINALIZER)
 #else
-STATIC word GC_allocd_bytes_per_finalizer = 10000;
+#  define ALLOCD_BYTES_PER_FINALIZER_INIT 10000
 #endif
+STATIC word GC_allocd_bytes_per_finalizer = ALLOCD_BYTES_PER_FINALIZER_INIT;
 
 GC_API void GC_CALL
 GC_set_allocd_bytes_per_finalizer(GC_word value)
