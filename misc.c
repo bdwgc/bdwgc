@@ -1899,11 +1899,11 @@ GC_write(const char *buf, size_t len)
   /* There is no `CrtDbgReport()` in WinCE. */
   {
     WCHAR wbuf[1024];
+    int wlen = MultiByteToWideChar(CP_ACP, 0 /* `dwFlags` */, buf, len, wbuf,
+                                   sizeof(wbuf) / sizeof(wbuf[0]) - 1);
 
+    wbuf[wlen] = 0;
     /* Always use Unicode variant of `OutputDebugString()`. */
-    wbuf[MultiByteToWideChar(CP_ACP, 0 /* `dwFlags` */, buf, len, wbuf,
-                             sizeof(wbuf) / sizeof(wbuf[0]) - 1)]
-        = 0;
     OutputDebugStringW(wbuf);
   }
 #    else
