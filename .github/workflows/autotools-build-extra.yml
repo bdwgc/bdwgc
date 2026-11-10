@@ -474,11 +474,37 @@ jobs:
           sudo apt update
           sudo apt install -y --no-install-recommends musl-tools
 
+      - name: Prepare APT cache for gcc-mingw-w64 (Ubuntu)
+        if: ${{ matrix.install_mingw_w64 && runner.os == 'Linux' }}
+        id: prepare-apt-mingw-w64
+        run: |
+          sudo apt update
+          sudo chown -R "$USER:" /var/cache/apt/archives
+          echo "key=$(apt-cache policy \
+            binutils-mingw-w64-i686 \
+            binutils-mingw-w64-x86-64 \
+            gcc-mingw-w64 \
+            gcc-mingw-w64-i686 \
+            gcc-mingw-w64-x86-64 \
+            mingw-w64-common \
+            | sed -n 's/^ *Candidate: //p' | sha256sum | cut -c1-12)" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: Cache gcc-mingw-w64 APT packages (Ubuntu)
+        if: ${{ matrix.install_mingw_w64 && runner.os == 'Linux' }}
+        uses: actions/cache@v6
+        with:
+          path: /var/cache/apt/archives
+          key: apt-mingw-w64-${{ steps.prepare-apt-mingw-w64.outputs.key }}
+          restore-keys: apt-mingw-w64-
+
       - name: Install gcc-mingw-w64 (Ubuntu)
         if: ${{ matrix.install_mingw_w64 && runner.os == 'Linux' }}
         run: |
-          sudo apt update
-          sudo apt install -y --no-install-recommends gcc-mingw-w64
+          sudo apt install -y --no-install-recommends \
+            -o APT::Keep-Downloaded-Packages=true \
+            gcc-mingw-w64
+          sudo chown -R "$USER:" /var/cache/apt/archives
 
       - name: Install gcc-multilib (Ubuntu)
         if: ${{ matrix.install_multilib && runner.os == 'Linux' }}
