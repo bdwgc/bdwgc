@@ -826,6 +826,9 @@ GC_print_free_list(int kind, size_t lg)
 
   GC_ASSERT(kind < MAXOBJKINDS);
   GC_ASSERT(lg <= MAXOBJGRANULES);
+  if (!GC_is_initialized)
+    return;
+
   flh_next = GC_obj_kinds[kind].ok_freelist[lg];
   for (n = 0; flh_next != NULL; n++) {
     GC_printf("Free object in heap block %p [%d]: %p\n",

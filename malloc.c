@@ -779,6 +779,7 @@ GC_free_internal(void *base, const hdr *hhdr, size_t clear_ofs,
   int kind = hhdr->hb_obj_kind;
 
   GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(GC_is_initialized);
 #ifdef LOG_ALLOCS
   GC_log_printf("Free %p after GC #%lu\n", base, (unsigned long)GC_gc_no);
 #endif
