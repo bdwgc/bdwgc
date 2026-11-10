@@ -151,6 +151,7 @@ jobs:
             cflags_extra: -D NO_UFFDWP_VDB
           - os: ubuntu-26.04-arm
             conf_options: --disable-shared --disable-threads
+            cflags_extra: -D GC_VAR_ATTR=__thread
             c_compiler: gcc
           - os: macos-latest
             conf_options: >-
