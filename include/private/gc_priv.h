@@ -4814,7 +4814,8 @@ void *GC_find_limit(void *p, int up);
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(UNIX_LIKE) && !defined(NO_DEBUGGING))        \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
-    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
+    || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
+        && !defined(MSWIN32))
 typedef void (*GC_fault_handler_t)(int);
 GC_INNER void GC_set_and_save_fault_handler(GC_fault_handler_t);
 #endif
