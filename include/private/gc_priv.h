@@ -4808,6 +4808,21 @@ void *GC_find_limit(void *p, int up);
 #  endif
 #endif
 
+#if defined(WRAP_MARK_SOME) && defined(MSWIN32)
+#  ifdef THREADS
+/*
+ * `EXCEPTION_GUARD_PAGE` might be raised when the marker reads a guard page
+ * of a suspended thread which was frozen while growing its stack; note that
+ * the guard flag of the page is cleared at the exception delivery, so the
+ * restarted collection can read that page without any fault.
+ */
+#    define IS_WRAP_MARK_EXCEPTION(ec) \
+      ((ec) == EXCEPTION_ACCESS_VIOLATION || (ec) == EXCEPTION_GUARD_PAGE)
+#  else
+#    define IS_WRAP_MARK_EXCEPTION(ec) ((ec) == EXCEPTION_ACCESS_VIOLATION)
+#  endif
+#endif
+
 #if defined(NEED_FIND_LIMIT)                                 \
     || (defined(UNIX_LIKE) && !defined(NO_DEBUGGING))        \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \

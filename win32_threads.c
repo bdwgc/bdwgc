@@ -851,6 +851,39 @@ may_be_in_stack(ptr_t s)
 }
 
 /*
+ * Return the lowest address not less than `lo` which is inside a committed
+ * (writable, non-guard) stack page; return `stack_end` if there is no such
+ * address below `stack_end`.  Needed because `sp` of a suspended thread might
+ * point to (or below) the guard page of the thread stack if the thread was
+ * frozen while growing its stack (e.g., in the middle of a deep recursion);
+ * reading a guard page raises `EXCEPTION_GUARD_PAGE` (0x80000001).
+ * Although `GC_mark_some()` fault handlers (both the SEH filter and the
+ * VEH-based one) can recover from it by restarting the collection, avoiding
+ * the fault entirely is cheaper at least (and the recovery used to miss this
+ * exception, as it handled access violations only).
+ */
+static ptr_t
+clamp_to_committed_stack(ptr_t lo, ptr_t stack_end)
+{
+  GC_ASSERT(I_HOLD_LOCK());
+  while (HOTTER_THAN(lo, stack_end)) {
+    MEMORY_BASIC_INFORMATION buf;
+
+    if (VirtualQuery(lo, &buf, sizeof(buf)) != sizeof(buf))
+      ABORT("VirtualQuery failed");
+    if (buf.State == MEM_COMMIT && (buf.Protect & PAGE_READWRITE) != 0
+        && (buf.Protect & PAGE_GUARD) == 0)
+      break; /*< `lo` is inside a committed stack page */
+    if (ADDR((ptr_t)buf.BaseAddress) > GC_WORD_MAX - buf.RegionSize)
+      ABORT("VirtualQuery returned wrong base/size"); /*< an overflow */
+
+    /* Skip the whole region of unsuitable (guard/reserved) pages. */
+    lo = (ptr_t)buf.BaseAddress + buf.RegionSize;
+  }
+  return lo;
+}
+
+/*
  * Copy all registers that might point into the heap.  Frame pointer
  * registers are included in case client code was compiled with the
  * "omit frame pointer" optimization.  The context register values are
@@ -1144,6 +1177,13 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
   GC_ASSERT(GC_dont_query_stack_min || stack_min == GC_get_stack_min(stack_end)
             || (ADDR_GE(sp, stack_min) && ADDR_LT(stack_min, stack_end)
                 && ADDR_LT(GC_get_stack_min(stack_end), stack_min)));
+
+#  ifdef MSWINCE
+  if (!GC_dont_query_stack_min)
+#  endif
+  {
+    stack_min = clamp_to_committed_stack(stack_min, stack_end);
+  }
 
   if (ADDR_INSIDE(sp, stack_min, stack_end)) {
 #  ifdef DEBUG_THREADS

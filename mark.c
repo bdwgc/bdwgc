@@ -656,7 +656,7 @@ GC_mark_some(ptr_t cold_gc_frame)
 #    endif
     __try {
       ret_val = GC_mark_some_inner(cold_gc_frame);
-    } __except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION
+    } __except (IS_WRAP_MARK_EXCEPTION(GetExceptionCode())
                     ? EXCEPTION_EXECUTE_HANDLER
                     : EXCEPTION_CONTINUE_SEARCH) {
       goto handle_ex;
