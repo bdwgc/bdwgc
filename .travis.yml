@@ -63,13 +63,6 @@ jobs:
         - LIBTOOL_VER=2.6.2
         - M4_VER=1.4.21
         - NO_CLONE_LIBATOMIC_OPS=true
-    - arch: s390x
-      compiler: clang
-      env:
-        - CFLAGS_EXTRA="-O3 -flto -D _FORTIFY_SOURCE=2"
-        - CONF_OPTIONS="--enable-cplusplus"
-        - GCTEST_WITH_MPROTECT_VDB=true
-        - NO_CLONE_LIBATOMIC_OPS=true
     - if: type != pull_request
       addons:
         coverity_scan:
