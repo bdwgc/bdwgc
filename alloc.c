@@ -677,7 +677,6 @@ GC_try_to_collect_inner(GC_stop_func stop_func)
     /* TODO: Notify `GC_EVENT_ABANDON`. */
     return FALSE;
   }
-  GC_invalidate_mark_state(); /*< flush mark stack */
   GC_clear_marks();
   SAVE_CALLERS_TO_LAST_STACK();
   GC_is_full_gc = TRUE;
@@ -688,7 +687,7 @@ GC_try_to_collect_inner(GC_stop_func stop_func)
        * We are partially done and have no way to complete or use
        * current work.  Reestablish invariants as cheaply as possible.
        */
-      GC_invalidate_mark_state();
+      GC_invalidate_mark_stack();
       GC_unpromote_black_lists();
     } else {
       /*

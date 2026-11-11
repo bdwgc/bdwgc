@@ -3012,23 +3012,20 @@ GC_INNER void GC_mark_init(void);
 
 /*
  * Clear mark bits in all allocated heap blocks (i.e. for all heap objects).
- * This invalidates the marker invariant, and sets `GC_mark_state` to
- * reflect this.  (This implicitly starts marking to reestablish the
- * invariant.)
+ * This invalidates the marker invariant (including the mark stack), and
+ * sets `GC_mark_state` to reflect this.  (This implicitly starts marking
+ * to reestablish the invariant.)
  */
 GC_INNER void GC_clear_marks(void);
 
 /*
- * Tell the marker that marked objects may point to unmarked ones, and
- * roots may point to unmarked objects.  Switch the mark phase to
- * `MS_INVALID` and reset the mark stack.  Also, if `ENABLE_DISCLAIM` is
- * defined, request the unconditional-marking pass to be redone before
- * the rescan of the marked objects.
- * Note: this does not restart the heap scan; callers are responsible for
- * resetting `GC_scan_ptr` where a full rescan of the heap is required
- * (as done on the exception and mark-stack overflow paths).
+ * Tell the marker that marked objects may point to unmarked ones, and roots
+ * may point to unmarked objects.  Switch the mark phase to `MS_INVALID` and
+ * reset the mark stack (drop all its entries) and restart the heap scan.
+ * Also, if `ENABLE_DISCLAIM` is defined, request the unconditional-marking
+ * pass to be redone before the rescan of the marked objects.
  */
-GC_INNER void GC_invalidate_mark_state(void);
+GC_INNER void GC_invalidate_mark_stack(void);
 
 /*
  * Perform a small amount of marking.  We try to touch roughly a page

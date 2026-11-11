@@ -345,8 +345,32 @@ GC_clear_marks(void)
 
   GC_apply_to_all_blocks(clear_marks_for_block, NULL);
   GC_objects_are_marked = FALSE;
+  GC_invalidate_mark_stack(); /*< flush mark stack */
+}
+
+static void
+reset_mark_scan(void)
+{
   GC_mark_state = MS_INVALID;
-  GC_scan_ptr = NULL;
+  GC_scan_ptr = NULL; /*< restart heap scan */
+#ifdef ENABLE_DISCLAIM
+  /*
+   * Request the unconditional-marking pass to be redone before the rescan
+   * of the marked objects, so that blocks of the kinds requiring
+   * unconditional marking (e.g., the one used by `GC_finalized_malloc`)
+   * are re-pushed even when the mark bits have not been cleared (as in
+   * partial collections).  The request is ignored by `GC_mark_some()`
+   * if no such kinds are registered.
+   */
+  GC_uncond_rescan_needed = TRUE;
+#endif
+}
+
+GC_INNER void
+GC_invalidate_mark_stack(void)
+{
+  reset_mark_scan();
+  GC_mark_stack_top = GC_mark_stack - 1;
 }
 
 GC_INNER void
@@ -549,10 +573,9 @@ GC_mark_some(ptr_t cold_gc_frame)
 #ifdef ENABLE_DISCLAIM
     /*
      * Redo the unconditional-marking pass which was possibly discarded by
-     * `GC_invalidate_mark_state()` or `reset_mark_scan()`, before rescan
-     * of the marked objects (whose pushed content might have been discarded
-     * too); but ignore the request if no kinds requiring unconditional
-     * marking are registered.
+     * `reset_mark_scan()`, before rescan of the marked objects (whose pushed
+     * content might have been discarded too); but ignore the request if no
+     * kinds requiring unconditional marking are registered.
      */
     if (GC_mark_state == MS_INVALID && GC_uncond_rescan_needed) {
       if (!GC_has_mark_uncond_kinds) {
@@ -694,39 +717,10 @@ handle_thr_start:
     GC_push_root_idx_p1 = 0;
   }
 #  endif
-  GC_invalidate_mark_state();
-  GC_scan_ptr = NULL;
+  GC_invalidate_mark_stack();
   return FALSE;
 }
 #endif /* WRAP_MARK_SOME */
-
-static void
-reset_mark_scan(void)
-{
-  GC_mark_state = MS_INVALID;
-#ifdef ENABLE_DISCLAIM
-  GC_uncond_rescan_needed = TRUE;
-  GC_scan_ptr = NULL; /*< restart heap scan for unconditional marking */
-#endif
-}
-
-GC_INNER void
-GC_invalidate_mark_state(void)
-{
-  GC_mark_state = MS_INVALID;
-#ifdef ENABLE_DISCLAIM
-  /*
-   * Request the unconditional-marking pass to be redone before the rescan
-   * of the marked objects, so that blocks of the kinds requiring
-   * unconditional marking (e.g., the one used by `GC_finalized_malloc`)
-   * are re-pushed even when the mark bits have not been cleared (as in
-   * partial collections).  The request is ignored by `GC_mark_some()`
-   * if no such kinds are registered.
-   */
-  GC_uncond_rescan_needed = TRUE;
-#endif
-  GC_mark_stack_top = GC_mark_stack - 1;
-}
 
 STATIC mse *
 GC_signal_mark_stack_overflow(mse *msp)
