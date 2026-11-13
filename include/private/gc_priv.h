@@ -3632,15 +3632,25 @@ GC_INNER void *GC_generic_malloc_aligned(size_t lb, int kind, unsigned flags,
  */
 GC_INNER void *GC_generic_malloc_inner(size_t lb, int kind, unsigned flags);
 
+struct collect_expand_retry_s {
+  word prev_gc_no;
+  word prev_heapsize;
+#ifdef USE_MUNMAP
+  word prev_unmapped;
+#endif
+  int total_cnt; /*< total number of attempts */
+  int stuck_cnt; /*< number of subsequent attempts with no progress */
+};
+
 /*
  * Collect or expand heap in an attempt make the indicated number of
  * free blocks available.  Should be called until the blocks are
- * available (setting `retry` value to `TRUE` unless this is the first
- * call in a loop) or until it fails by returning `FALSE`.  The `flags`
- * argument should be `IGNORE_OFF_PAGE` or 0.
+ * available or until it fails by returning `FALSE`.  The `flags` argument
+ * should be either `IGNORE_OFF_PAGE` or 0.  `*p_retry` should be cleared
+ * before the first call in a loop.
  */
 GC_INNER GC_bool GC_collect_or_expand(word needed_blocks, unsigned flags,
-                                      GC_bool retry);
+                                      struct collect_expand_retry_s *p_retry);
 
 /*
  * Make the indicated object free list nonempty, and return its head (the

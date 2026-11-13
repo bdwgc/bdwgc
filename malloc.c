@@ -48,13 +48,7 @@ GC_alloc_reclaim_list(struct obj_kind *ok)
 STATIC ptr_t
 GC_alloc_large(size_t lb_adjusted, int kind, unsigned flags, size_t align_m1)
 {
-  /*
-   * TODO: It is unclear which retries limit is sufficient (value of 3 leads
-   * to fail in some 32-bit applications, 10 is a kind of arbitrary value).
-   */
-#define MAX_ALLOCLARGE_RETRIES 10
-
-  int retry_cnt;
+  struct collect_expand_retry_s retry_info;
   size_t n_blocks; /*< includes alignment */
   struct hblk *h;
   ptr_t result;
@@ -79,14 +73,10 @@ GC_alloc_large(size_t lb_adjusted, int kind, unsigned flags, size_t align_m1)
     h = GC_allochblk(lb_adjusted, kind, flags, align_m1);
   }
 #endif
-  for (retry_cnt = 0; NULL == h; retry_cnt++) {
-    /*
-     * Only a few iterations are expected at most, otherwise something
-     * is wrong in one of the functions called below.
-     */
-    if (retry_cnt > MAX_ALLOCLARGE_RETRIES)
-      ABORT("Too many retries in GC_alloc_large");
-    if (UNLIKELY(!GC_collect_or_expand(n_blocks, flags, retry_cnt > 0)))
+  BZERO(&retry_info, sizeof(retry_info));
+  /* Only a few iterations happen typically. */
+  while (NULL == h) {
+    if (UNLIKELY(!GC_collect_or_expand(n_blocks, flags, &retry_info)))
       return NULL;
     h = GC_allochblk(lb_adjusted, kind, flags, align_m1);
   }

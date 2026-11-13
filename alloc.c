@@ -1869,8 +1869,28 @@ GC_get_allocd_bytes_per_finalizer(void)
   return GC_allocd_bytes_per_finalizer;
 }
 
+/*
+ * Maximum number of subsequent `GC_collect_or_expand` attempts that make
+ * no progress (i.e. no collection is completed, the heap is not expanded
+ * and the amount of unmapped memory does not change) while the free list
+ * is still empty.  Exceeding this value means something is wrong in the
+ * collector or its usage is incorrect.
+ */
+#define MAX_ALLOCOBJ_STUCK_RETRIES 3
+
+/*
+ * Similar to `MAX_ALLOCOBJ_STUCK_RETRIES` but for the maximum total number
+ * of subsequent attempts, even if every attempt makes some progress.
+ * This is a safety net against endless heap expansion without ever satisfying
+ * the request; the default value is proven to be enough in practice.
+ */
+#ifndef MAX_ALLOCOBJ_RETRIES
+#  define MAX_ALLOCOBJ_RETRIES 100
+#endif
+
 GC_INNER GC_bool
-GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
+GC_collect_or_expand(word needed_blocks, unsigned flags,
+                     struct collect_expand_retry_s *p_retry)
 {
   static GC_VAR_ATTR word last_fo_entries, last_bytes_finalized;
   GC_bool gc_not_stopped = TRUE;
@@ -1879,6 +1899,30 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
 
   GC_ASSERT(I_HOLD_LOCK());
   GC_ASSERT(GC_is_initialized);
+
+  /*
+   * Allow to repeat the request as long as this function is making progress
+   * (a new collection is completed, the heap is expanded or the amount of
+   * unmapped memory changes).
+   */
+  if (p_retry->stuck_cnt >= MAX_ALLOCOBJ_STUCK_RETRIES
+      || p_retry->total_cnt >= MAX_ALLOCOBJ_RETRIES)
+    ABORT("Too many retries to collect/expand");
+  if (p_retry->prev_gc_no == GC_gc_no
+#ifdef USE_MUNMAP
+      && p_retry->prev_unmapped == GC_unmapped_bytes
+#endif
+      && p_retry->prev_heapsize == GC_heapsize) {
+    p_retry->stuck_cnt++;
+  } else {
+    p_retry->stuck_cnt = 0;
+  }
+  p_retry->prev_gc_no = GC_gc_no;
+#ifdef USE_MUNMAP
+  p_retry->prev_unmapped = GC_unmapped_bytes;
+#endif
+  p_retry->prev_heapsize = GC_heapsize;
+
   DISABLE_CANCEL(cancel_state);
   if (!GC_incremental && !GC_dont_gc
       && ((GC_dont_expand && GC_bytes_allocd > 0)
@@ -1894,10 +1938,10 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
      * expansion is disabled).
      */
     gc_not_stopped = GC_try_to_collect_inner(
-        GC_bytes_allocd > 0 && (!GC_dont_expand || !retry)
+        GC_bytes_allocd > 0 && (!GC_dont_expand || 0 == p_retry->total_cnt)
             ? GC_default_stop_func
             : GC_never_stop_func);
-    if (gc_not_stopped || !retry) {
+    if (gc_not_stopped || 0 == p_retry->total_cnt) {
       /*
        * Either the collection has not been aborted or this is the
        * first attempt (in a loop).
@@ -1905,6 +1949,7 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
       last_fo_entries = GC_fo_entries;
       last_bytes_finalized = GC_bytes_finalized;
       RESTORE_CANCEL(cancel_state);
+      p_retry->total_cnt++;
       return TRUE;
     }
   }
@@ -1959,6 +2004,7 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
     GC_unmap_old(0);
   }
 #endif
+  p_retry->total_cnt++;
   if (!GC_expand_hp_inner(blocks_to_get)
       && (blocks_to_get == needed_blocks
           || !GC_expand_hp_inner(needed_blocks))) {
@@ -2000,8 +2046,7 @@ GC_collect_or_expand(word needed_blocks, unsigned flags, GC_bool retry)
 GC_INNER ptr_t
 GC_allocobj(size_t lg, int kind)
 {
-#define MAX_ALLOCOBJ_RETRIES 3
-  int retry_cnt = 0;
+  struct collect_expand_retry_s retry_info;
   void **flh;
 #ifndef GC_DISABLE_INCREMENTAL
   GC_bool tried_minor = FALSE;
@@ -2014,13 +2059,9 @@ GC_allocobj(size_t lg, int kind)
   GC_ASSERT(lg <= MAXOBJGRANULES);
 
   flh = &GC_obj_kinds[kind].ok_freelist[lg];
+  BZERO(&retry_info, sizeof(retry_info));
+  /* Only a few iterations happen typically. */
   while (NULL == *flh) {
-    /*
-     * Only a few iterations are expected at most, otherwise something
-     * is wrong in one of the functions called below.
-     */
-    if (retry_cnt > MAX_ALLOCOBJ_RETRIES)
-      ABORT("Too many retries in GC_allocobj");
 #ifndef GC_DISABLE_INCREMENTAL
     if (GC_incremental && GC_time_limit != GC_TIME_UNLIMITED && !GC_dont_gc) {
       /*
@@ -2055,9 +2096,8 @@ GC_allocobj(size_t lg, int kind)
       continue;
     }
 #endif
-    if (UNLIKELY(!GC_collect_or_expand(1, 0 /* `flags` */, retry_cnt > 0)))
+    if (UNLIKELY(!GC_collect_or_expand(1, 0 /* `flags` */, &retry_info)))
       return NULL;
-    retry_cnt++;
   }
   /* Successful allocation; reset failure count. */
   GC_alloc_fail_count = 0;
