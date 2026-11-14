@@ -1541,6 +1541,26 @@ GC_mark_init(void)
   alloc_mark_stack(INITIAL_MARK_STACK_SIZE);
 }
 
+GC_INNER void
+GC_mark_stack_remove_range(ptr_t bottom, ptr_t limit)
+{
+  mse *entry = GC_mark_stack;
+  mse *top = GC_mark_stack_top;
+
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(ADDR_LT(bottom, limit));
+  while (ADDR_GE((ptr_t)top, (ptr_t)entry)) {
+    if (ADDR_INSIDE(entry->mse_start, bottom, limit)) {
+      entry->mse_start = top->mse_start;
+      entry->mse_descr = top->mse_descr;
+      top--;
+    } else {
+      entry++;
+    }
+  }
+  GC_mark_stack_top = top;
+}
+
 GC_API void GC_CALL
 GC_push_all(void *bottom, void *top)
 {
