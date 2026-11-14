@@ -829,19 +829,9 @@ GC_free_internal(void *base, const hdr *hhdr, size_t clear_ofs,
      * give the same address with a different descriptor.  Drop pending scans
      * of this object before its storage becomes available for reuse.
      */
-    if (GC_collection_in_progress()) {
-      mse *entry = GC_mark_stack;
-      mse *top = GC_mark_stack_top;
+    if (UNLIKELY(GC_collection_in_progress()))
+      GC_mark_stack_remove_range((ptr_t)base, (ptr_t)base + lb);
 
-      while (ADDR_GE((ptr_t)top, (ptr_t)entry)) {
-        if (ADDR_INSIDE(entry->mse_start, (ptr_t)base, (ptr_t)base + lb)) {
-          *entry = *top--;
-        } else {
-          ++entry;
-        }
-      }
-      GC_mark_stack_top = top;
-    }
     GC_freehblk(hhdr->hb_block);
   }
   FREE_PROFILER_HOOK(base);
