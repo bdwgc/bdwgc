@@ -169,20 +169,26 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     )
 endif()
 
-add_definitions("-DALL_INTERIOR_POINTERS")
-add_definitions("-DNO_EXECUTE_PERMISSION")
+# Compile definitions, compile options and include directories collected to be
+# applied to all the targets of this project.
+set(GC_DEFINITIONS)
+set(GC_COMPILE_OPTIONS)
+set(GC_INCLUDE_DIRS)
+
+list(APPEND GC_DEFINITIONS ALL_INTERIOR_POINTERS NO_EXECUTE_PERMISSION)
 
 # Set struct packing alignment to word (instead of 1-byte).
 if(BORLAND)
-    add_compile_options(/a4)
+    list(APPEND GC_COMPILE_OPTIONS /a4)
 elseif(WATCOM)
-    add_compile_options(/zp4)
+    list(APPEND GC_COMPILE_OPTIONS /zp4)
 endif()
 
 # Output all warnings.
 if(BORLAND)
     # All warnings except for particular ones.
-    add_compile_options(
+    list(
+        APPEND GC_COMPILE_OPTIONS
         /w
         /w-aus
         /w-ccc
@@ -193,31 +199,30 @@ if(BORLAND)
     )
 elseif(MSVC)
     # All warnings but ignoring "conditional expression is constant" one.
-    add_compile_options(/W4 /wd4127)
+    list(APPEND GC_COMPILE_OPTIONS /W4 /wd4127)
 elseif(WATCOM)
-    add_compile_options(/wx)
+    list(APPEND GC_COMPILE_OPTIONS /wx)
     if(enable_gc_assertions)
         # Suppress "unreachable code" warning in `GC_ASSERT()` if some constant
         # nonzero expression is given as the argument.
-        add_compile_options(/wcd=201)
+        list(APPEND GC_COMPILE_OPTIONS /wcd=201)
     endif()
     if(enable_threads)
         # Suppress "missing return value" wcc warning for `AO_test_and_set_full()`
         # and `AO_char_fetch_and_add_full()` in AO `msftc/x86.h` file.
-        add_compile_options($<$<COMPILE_LANGUAGE:C>:/wcd=107>)
+        list(APPEND GC_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:C>:/wcd=107>)
     endif(enable_threads)
 else()
-    add_compile_options(-Wall)
-    add_compile_options(-Wextra)
+    list(APPEND GC_COMPILE_OPTIONS -Wall -Wextra)
     # TODO: add `-[W]pedantic -Wno-long-long`
 endif()
 
 if(WIN32)
     # Disable MS crt security warnings reported e.g. for `getenv`, `strcpy`.
-    add_definitions("-D_CRT_SECURE_NO_DEPRECATE")
+    list(APPEND GC_DEFINITIONS _CRT_SECURE_NO_DEPRECATE)
 endif()
 
-include_directories(include)
+list(APPEND GC_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(SRC
     allchblk.c
@@ -260,7 +265,7 @@ endif()
 if(enable_threads)
     find_package(Threads REQUIRED)
     message(STATUS "Thread library: ${CMAKE_THREAD_LIBS_INIT}")
-    include_directories(${Threads_INCLUDE_DIR})
+    list(APPEND GC_INCLUDE_DIRS ${Threads_INCLUDE_DIR})
     if(with_libatomic_ops)
         set(ATOMIC_OPS_LIBS "-latomic_ops")
         find_package(Atomic_ops CONFIG)
@@ -270,14 +275,17 @@ if(enable_threads)
                 Atomic_ops::atomic_ops
                 INTERFACE_INCLUDE_DIRECTORIES
             )
-            include_directories(${AO_INCLUDE_DIRS})
+            list(APPEND GC_INCLUDE_DIRS ${AO_INCLUDE_DIRS})
             message(STATUS "AO_INCLUDE_DIRS = ${AO_INCLUDE_DIRS}")
             set(ATOMIC_OPS_LIBS_CMAKE Atomic_ops::atomic_ops)
         else()
             set(ATOMIC_OPS_LIBS_CMAKE ${ATOMIC_OPS_LIBS})
         endif()
     elseif(without_libatomic_ops)
-        include_directories(libatomic_ops/src)
+        list(
+            APPEND GC_INCLUDE_DIRS
+            "${CMAKE_CURRENT_SOURCE_DIR}/libatomic_ops/src"
+        )
         # In the tests we use the source files directly from `libatomic_ops`
         # subtree.
         set(NODIST_SRC libatomic_ops/src/atomic_ops.c)
@@ -287,12 +295,15 @@ if(enable_threads)
             set(NODIST_SRC ${NODIST_SRC} libatomic_ops/src/atomic_ops_sysdeps.S)
         endif()
     elseif(BORLAND OR MSVC OR WATCOM)
-        include_directories(libatomic_ops/src)
+        list(
+            APPEND GC_INCLUDE_DIRS
+            "${CMAKE_CURRENT_SOURCE_DIR}/libatomic_ops/src"
+        )
         # Note: alternatively, use `CFLAGS_EXTRA` to
         # pass `-I<...>/libatomic_ops/src`.
     else()
         # Assume the compiler supports GCC atomic intrinsics.
-        add_definitions("-DGC_BUILTIN_ATOMIC")
+        list(APPEND GC_DEFINITIONS GC_BUILTIN_ATOMIC)
     endif()
     set(THREADDLLIBS_LIST ${CMAKE_THREAD_LIBS_INIT})
     if(${CMAKE_DL_LIBS} MATCHES ^[^-].*)
@@ -315,14 +326,14 @@ if(enable_threads)
             endif()
         endif()
         # Common defines for POSIX platforms.
-        add_definitions("-D_REENTRANT")
+        list(APPEND GC_DEFINITIONS _REENTRANT)
         message("Explicit GC_INIT() calls may be required.")
         if(HOST MATCHES .*-.*-hpux11.*)
             message("Only HP/UX 11 POSIX threads are supported.")
-            add_definitions("-D_POSIX_C_SOURCE=199506L")
+            list(APPEND GC_DEFINITIONS _POSIX_C_SOURCE=199506L)
             set(NEED_LIB_RT ON)
         elseif(HOST MATCHES .*-.*-netbsd.*)
-            add_definitions("-D_PTHREADS")
+            list(APPEND GC_DEFINITIONS _PTHREADS)
             set(NEED_LIB_RT ON)
         elseif(CMAKE_C_COMPILER_ID STREQUAL "SunPro")
             set(NEED_LIB_RT ON)
@@ -330,10 +341,10 @@ if(enable_threads)
         if(WIN32) # AND NOT CYGWIN
             # Does not provide process `fork` functionality.
         elseif(enable_handle_fork AND NOT disable_handle_fork)
-            add_definitions("-DHANDLE_FORK")
+            list(APPEND GC_DEFINITIONS HANDLE_FORK)
         endif()
     elseif(CMAKE_USE_WIN32_THREADS_INIT)
-        add_definitions("-DEMPTY_GETENV_RESULTS")
+        list(APPEND GC_DEFINITIONS EMPTY_GETENV_RESULTS)
         # Add `pthread_start.c` file just in case client defines
         # `GC_WIN32_PTHREADS` macro.
         set(SRC ${SRC} pthread_start.c)
@@ -341,19 +352,18 @@ if(enable_threads)
     elseif(CMAKE_HP_PTHREADS_INIT OR CMAKE_USE_SPROC_INIT)
         message(FATAL_ERROR "Unsupported thread package")
     endif()
-    add_definitions("-DGC_THREADS")
+    list(APPEND GC_DEFINITIONS GC_THREADS)
     if(enable_parallel_mark)
-        add_definitions("-DPARALLEL_MARK")
+        list(APPEND GC_DEFINITIONS PARALLEL_MARK)
     endif()
     if(enable_thread_local_alloc)
-        add_definitions("-DTHREAD_LOCAL_ALLOC")
+        list(APPEND GC_DEFINITIONS THREAD_LOCAL_ALLOC)
         set(SRC ${SRC} specific.c thread_local_alloc.c)
     endif()
     if(BORLAND)
         # Workaround "cannot locate assembly file" and "out of hash space"
         # compilation errors, "restarting compile using assembly" warning.
-        add_definitions("-DAO_NO_ASM_XADD")
-        add_definitions("-DAO_NO_ASM_XCHG")
+        list(APPEND GC_DEFINITIONS AO_NO_ASM_XADD AO_NO_ASM_XCHG)
     endif()
 endif(enable_threads)
 
@@ -376,104 +386,103 @@ endif(NEED_LIB_RT)
 
 if(disable_handle_fork)
     # Ignore `enable_handle_fork` as its default value is ON.
-    add_definitions("-DNO_HANDLE_FORK")
+    list(APPEND GC_DEFINITIONS NO_HANDLE_FORK)
 endif()
 
 if(enable_gcj_support)
-    add_definitions("-DGC_GCJ_SUPPORT")
+    list(APPEND GC_DEFINITIONS GC_GCJ_SUPPORT)
     if(
         enable_threads
         AND NOT (enable_thread_local_alloc AND HOST MATCHES .*-.*-kfreebsd.*-gnu)
     )
         # FIXME: For a reason, `gctest` hangs up on kFreeBSD if both of
         # `THREAD_LOCAL_ALLOC` and `GC_ENABLE_SUSPEND_THREAD` are defined.
-        add_definitions("-DGC_ENABLE_SUSPEND_THREAD")
+        list(APPEND GC_DEFINITIONS GC_ENABLE_SUSPEND_THREAD)
     endif()
     set(SRC ${SRC} gcj_mlc.c)
 endif(enable_gcj_support)
 
 if(enable_disclaim)
-    add_definitions("-DENABLE_DISCLAIM")
+    list(APPEND GC_DEFINITIONS ENABLE_DISCLAIM)
     set(SRC ${SRC} fnlz_mlc.c)
 endif()
 
 if(enable_dynamic_pointer_mask)
-    add_definitions("-DDYNAMIC_POINTER_MASK")
+    list(APPEND GC_DEFINITIONS DYNAMIC_POINTER_MASK)
 endif()
 
 if(enable_java_finalization)
-    add_definitions("-DJAVA_FINALIZATION")
+    list(APPEND GC_DEFINITIONS JAVA_FINALIZATION)
 endif()
 
 if(enable_atomic_uncollectable)
-    add_definitions("-DGC_ATOMIC_UNCOLLECTABLE")
+    list(APPEND GC_DEFINITIONS GC_ATOMIC_UNCOLLECTABLE)
 endif()
 
 if(enable_valgrind_tracking)
-    add_definitions("-DVALGRIND_TRACKING")
+    list(APPEND GC_DEFINITIONS VALGRIND_TRACKING)
 endif()
 
 if(enable_gc_debug)
-    add_definitions("-DDBG_HDRS_ALL")
-    add_definitions("-DKEEP_BACK_PTRS")
+    list(APPEND GC_DEFINITIONS DBG_HDRS_ALL KEEP_BACK_PTRS)
     if(HOST MATCHES i.86-.*-dgux.*|.*-.*-.*linux.*)
-        add_definitions("-DMAKE_BACK_GRAPH")
+        list(APPEND GC_DEFINITIONS MAKE_BACK_GRAPH)
         if(HOST MATCHES .*-.*-.*linux.* AND NOT (HOST MATCHES e2k-.*-linux.*))
-            add_definitions("-DSAVE_CALL_COUNT=8")
+            list(APPEND GC_DEFINITIONS SAVE_CALL_COUNT=8)
         endif()
         set(SRC ${SRC} backgraph.c)
     endif()
 endif(enable_gc_debug)
 
 if(NOT enable_gc_dump)
-    add_definitions("-DNO_DEBUGGING")
+    list(APPEND GC_DEFINITIONS NO_DEBUGGING)
 elseif(WINCE)
     # Read environment variables from `<program>.gc.env` file.
-    add_definitions("-DGC_READ_ENV_FILE")
+    list(APPEND GC_DEFINITIONS GC_READ_ENV_FILE)
 endif()
 
 if(enable_redirect_malloc)
-    add_definitions("-DREDIRECT_MALLOC")
+    list(APPEND GC_DEFINITIONS REDIRECT_MALLOC)
     if(enable_gc_debug)
         # Instruct the collector to redefine `malloc`, `realloc` and `free` to
         # the debug variant of the corresponding collector routines.
-        add_definitions("-DREDIRECT_MALLOC_DEBUG")
+        list(APPEND GC_DEFINITIONS REDIRECT_MALLOC_DEBUG)
     endif()
     if(enable_uncollectable_redirection)
         # Instruct the collector to redefine `malloc` to the relevant
         # uncollectible variant of `GC_malloc` routine.
-        add_definitions("-DREDIRECT_MALLOC_UNCOLLECTABLE")
+        list(APPEND GC_DEFINITIONS REDIRECT_MALLOC_UNCOLLECTABLE)
     endif()
     if(WIN32)
-        add_definitions("-DREDIRECT_MALLOC_IN_HEADER")
+        list(APPEND GC_DEFINITIONS REDIRECT_MALLOC_IN_HEADER)
     else()
-        add_definitions("-DGC_USE_DLOPEN_WRAP")
+        list(APPEND GC_DEFINITIONS GC_USE_DLOPEN_WRAP)
     endif()
 elseif(enable_uncollectable_redirection)
     message(FATAL_ERROR "Redirection of malloc is not enabled explicitly")
 endif()
 
 if(enable_mmap OR enable_munmap)
-    add_definitions("-DUSE_MMAP")
+    list(APPEND GC_DEFINITIONS USE_MMAP)
     if(enable_munmap)
-        add_definitions("-DUSE_MUNMAP")
+        list(APPEND GC_DEFINITIONS USE_MUNMAP)
     endif(enable_munmap)
 endif()
 
 if(NOT enable_dynamic_loading)
-    add_definitions("-DIGNORE_DYNAMIC_LOADING")
+    list(APPEND GC_DEFINITIONS IGNORE_DYNAMIC_LOADING)
 endif()
 
 if(NOT enable_register_main_static_data)
-    add_definitions("-DGC_DONT_REGISTER_MAIN_STATIC_DATA")
+    list(APPEND GC_DEFINITIONS GC_DONT_REGISTER_MAIN_STATIC_DATA)
 endif()
 
 if(enable_large_config)
-    add_definitions("-DLARGE_CONFIG")
+    list(APPEND GC_DEFINITIONS LARGE_CONFIG)
 endif()
 
 if(enable_gc_assertions)
-    add_definitions("-DGC_ASSERTIONS")
+    list(APPEND GC_DEFINITIONS GC_ASSERTIONS)
     # TODO: pass `-Wno-missing-prototypes` (if supported) to turn off the clang
     # warning for `STATIC` functions.
 endif()
@@ -486,7 +495,7 @@ if(enable_sigrt_signals)
         )
     endif()
     if(CMAKE_USE_PTHREADS_INIT)
-        add_definitions("-DGC_USESIGRT_SIGNALS")
+        list(APPEND GC_DEFINITIONS GC_USESIGRT_SIGNALS)
     endif()
 endif()
 
@@ -498,7 +507,7 @@ if(enable_rwlock)
         )
     endif()
     # Use `rwlock` for the allocator lock instead of mutex.
-    add_definitions("-DUSE_RWLOCK")
+    list(APPEND GC_DEFINITIONS USE_RWLOCK)
 endif()
 
 if(enable_checksums)
@@ -508,22 +517,22 @@ if(enable_checksums)
             "CHECKSUMS not compatible with USE_MUNMAP or threads"
         )
     endif()
-    add_definitions("-DCHECKSUMS")
+    list(APPEND GC_DEFINITIONS CHECKSUMS)
     set(SRC ${SRC} checksums.c)
 endif(enable_checksums)
 
 if(enable_werror)
     if(BORLAND)
-        add_compile_options(/w!)
+        list(APPEND GC_COMPILE_OPTIONS /w!)
     elseif(MSVC)
-        add_compile_options(/WX)
+        list(APPEND GC_COMPILE_OPTIONS /WX)
         # Workaround "typedef ignored on left of ..." warning reported in
         # `imagehlp.h` file of e.g. Windows Kit 8.1.
-        add_compile_options(/wd4091)
+        list(APPEND GC_COMPILE_OPTIONS /wd4091)
     elseif(WATCOM)
-        add_compile_options(/we)
+        list(APPEND GC_COMPILE_OPTIONS /we)
     else()
-        add_compile_options(-Werror)
+        list(APPEND GC_COMPILE_OPTIONS -Werror)
     endif()
 endif(enable_werror)
 
@@ -543,7 +552,7 @@ if(
         AND CMAKE_USE_PTHREADS_INIT
         AND NOT (APPLE OR CYGWIN OR WIN32)
     )
-        add_definitions("-DGC_PTHREAD_START_STANDALONE")
+        list(APPEND GC_DEFINITIONS GC_PTHREAD_START_STANDALONE)
         set(SRC ${SRC} pthread_start.c)
     endif()
 endif()
@@ -589,25 +598,25 @@ if(NOT (BORLAND OR MSVC OR WATCOM))
     # Prevent "__builtin_return_address with nonzero argument is unsafe" warning.
     check_c_compiler_flag(-Wno-frame-address HAVE_FLAG_WNO_FRAME_ADDRESS)
     if(HAVE_FLAG_WNO_FRAME_ADDRESS)
-        add_compile_options(-Wno-frame-address)
+        list(APPEND GC_COMPILE_OPTIONS -Wno-frame-address)
     endif(HAVE_FLAG_WNO_FRAME_ADDRESS)
 endif()
 
 if(GC_BUILD_SHARED_LIBS)
-    add_definitions("-DGC_DLL")
+    list(APPEND GC_DEFINITIONS GC_DLL)
     # Pass `-fvisibility=hidden` option if supported.
     check_c_compiler_flag(-fvisibility=hidden HAVE_FLAG_F_VISIBILITY_HIDDEN)
     if(HAVE_FLAG_F_VISIBILITY_HIDDEN)
-        add_definitions("-DGC_VISIBILITY_HIDDEN_SET")
-        add_compile_options(-fvisibility=hidden)
+        list(APPEND GC_DEFINITIONS GC_VISIBILITY_HIDDEN_SET)
+        list(APPEND GC_COMPILE_OPTIONS -fvisibility=hidden)
     else()
-        add_definitions("-DGC_NO_VISIBILITY")
+        list(APPEND GC_DEFINITIONS GC_NO_VISIBILITY)
     endif()
 else()
-    add_definitions("-DGC_NOT_DLL")
+    list(APPEND GC_DEFINITIONS GC_NOT_DLL)
     if(WIN32)
         # Do not require the clients to link with `user32` system library.
-        add_definitions("-DDONT_USE_USER32_DLL")
+        list(APPEND GC_DEFINITIONS DONT_USE_USER32_DLL)
     endif(WIN32)
 endif()
 
@@ -623,24 +632,24 @@ endif()
 # Extra user-defined flags to pass both to C and C++ compilers.
 if(DEFINED CFLAGS_EXTRA)
     separate_arguments(CFLAGS_EXTRA_LIST UNIX_COMMAND "${CFLAGS_EXTRA}")
-    add_compile_options(${CFLAGS_EXTRA_LIST})
+    list(APPEND GC_COMPILE_OPTIONS ${CFLAGS_EXTRA_LIST})
 endif()
 
 # Check whether platform `execinfo.h` file is present.
 check_include_file(execinfo.h HAVE_EXECINFO_H)
 if(NOT HAVE_EXECINFO_H)
-    add_definitions("-DGC_MISSING_EXECINFO_H")
+    list(APPEND GC_DEFINITIONS GC_MISSING_EXECINFO_H)
 endif()
 
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
 if(HAVE_SYS_TYPES_H)
-    add_definitions("-DHAVE_SYS_TYPES_H")
+    list(APPEND GC_DEFINITIONS HAVE_SYS_TYPES_H)
 endif()
 
 if(NOT WIN32)
     check_include_file(unistd.h HAVE_UNISTD_H)
     if(HAVE_UNISTD_H)
-        add_definitions("-DHAVE_UNISTD_H")
+        list(APPEND GC_DEFINITIONS HAVE_UNISTD_H)
     endif()
 endif()
 
@@ -661,7 +670,7 @@ int main(void) { ucontext_t ctxt; (void)getcontext(&ctxt); return 0; }"
         endif()
     endif()
     if(NOT HAVE_GETCONTEXT)
-        add_definitions("-DNO_GETCONTEXT")
+        list(APPEND GC_DEFINITIONS NO_GETCONTEXT)
     endif()
 endif()
 
@@ -669,7 +678,7 @@ endif()
 if(NOT (APPLE OR CYGWIN OR WIN32))
     check_function_exists(dl_iterate_phdr HAVE_DL_ITERATE_PHDR)
     if(HAVE_DL_ITERATE_PHDR)
-        add_definitions("-DHAVE_DL_ITERATE_PHDR")
+        list(APPEND GC_DEFINITIONS HAVE_DL_ITERATE_PHDR)
     endif(HAVE_DL_ITERATE_PHDR)
 endif()
 
@@ -686,20 +695,20 @@ int main(void) { sigset_t t; (void)pthread_sigmask(SIG_BLOCK, 0, &t); return 0; 
         )
         if(HAVE_PTHREAD_SIGMASK)
             # Define to use `pthread_sigmask` function if needed.
-            add_definitions("-DGC_HAVE_PTHREAD_SIGMASK")
+            list(APPEND GC_DEFINITIONS GC_HAVE_PTHREAD_SIGMASK)
         endif(HAVE_PTHREAD_SIGMASK)
     endif()
 endif()
 
 check_symbol_exists(sigsetjmp setjmp.h HAVE_SIGSETJMP)
 if(NOT HAVE_SIGSETJMP)
-    add_definitions("-DGC_NO_SIGSETJMP")
+    list(APPEND GC_DEFINITIONS GC_NO_SIGSETJMP)
 endif()
 
 # Build with `GC_wcsdup` support if possible.
 check_symbol_exists(wcslen wchar.h HAVE_WCSLEN)
 if(HAVE_WCSLEN)
-    add_definitions("-DGC_REQUIRE_WCSDUP")
+    list(APPEND GC_DEFINITIONS GC_REQUIRE_WCSDUP)
 endif()
 
 # `pthread_setname_np`, if available, may have 1, 2 or 3 arguments.
@@ -713,7 +722,7 @@ int main(void) { (void)pthread_setname_np(\"thread-name\"); return 0; }"
     )
     if(HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID)
         # Define to use `pthread_setname_np(const char *)`.
-        add_definitions("-DHAVE_PTHREAD_SETNAME_NP_WITHOUT_TID")
+        list(APPEND GC_DEFINITIONS HAVE_PTHREAD_SETNAME_NP_WITHOUT_TID)
     else()
         check_c_source_compiles(
             "
@@ -725,7 +734,7 @@ int main(void) {\n
         )
         if(HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG)
             # Define to use `pthread_setname_np(pthread_t, const char *, void *)`.
-            add_definitions("-DHAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG")
+            list(APPEND GC_DEFINITIONS HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG)
         else()
             check_c_source_compiles(
                 "
@@ -737,7 +746,7 @@ int main(void) {\n
             )
             if(HAVE_PTHREAD_SETNAME_NP_WITH_TID)
                 # Define to use `pthread_setname_np(pthread_t, const char *)`.
-                add_definitions("-DHAVE_PTHREAD_SETNAME_NP_WITH_TID")
+                list(APPEND GC_DEFINITIONS HAVE_PTHREAD_SETNAME_NP_WITH_TID)
             else()
                 check_c_source_compiles(
                     "
@@ -749,7 +758,7 @@ int main(void) {\n
                 )
                 if(HAVE_PTHREAD_SET_NAME_NP)
                     # Define to use `pthread_set_name_np(pthread_t, const char *)`.
-                    add_definitions("-DHAVE_PTHREAD_SET_NAME_NP")
+                    list(APPEND GC_DEFINITIONS HAVE_PTHREAD_SET_NAME_NP)
                 endif()
             endif(HAVE_PTHREAD_SETNAME_NP_WITH_TID)
         endif(HAVE_PTHREAD_SETNAME_NP_WITH_TID_AND_ARG)
@@ -766,7 +775,7 @@ int main(void) { Dl_info info; (void)dladdr(\"\", &info); return 0; }"
 )
 if(HAVE_DLADDR)
     # Define to use `dladdr` function.
-    add_definitions("-DHAVE_DLADDR")
+    list(APPEND GC_DEFINITIONS HAVE_DLADDR)
 endif()
 
 # Check for `emscripten`; use `asyncify` feature if requested.
@@ -782,7 +791,7 @@ if(EMSCRIPTEN AND enable_emscripten_asyncify)
     # Use this option if your program is targeting `-sASYNCIFY`.  The latter is
     # required to scan the stack, `ASYNCIFY_STACK_SIZE` is probably needed for
     # `gctest` only.
-    add_definitions("-DEMSCRIPTEN_ASYNCIFY")
+    list(APPEND GC_DEFINITIONS EMSCRIPTEN_ASYNCIFY)
     set(CMAKE_EXE_LINKER_FLAGS
         "${CMAKE_EXE_LINKER_FLAGS} -sASYNCIFY -sASYNCIFY_STACK_SIZE=128000"
     )
@@ -801,6 +810,16 @@ target_include_directories(
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
 )
+
+# Apply the compile definitions, compile options and include directories
+# collected above to the exported `gc` library target (same for `gccpp`,
+# `gctba` and `cord` below).
+# Note: linking the exported library target with `gc_build_flags` is not
+# possible as otherwise it would require the latter to be present in the
+# `BDWgcTargets` export set as long as a static library could be built.
+target_compile_definitions(gc PRIVATE ${GC_DEFINITIONS})
+target_compile_options(gc PRIVATE ${GC_COMPILE_OPTIONS})
+target_include_directories(gc PRIVATE ${GC_INCLUDE_DIRS})
 
 if(enable_cplusplus)
     if(BORLAND OR MSVC OR WATCOM)
@@ -821,6 +840,9 @@ if(enable_cplusplus)
             "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
             "$<INSTALL_INTERFACE:include>"
     )
+    target_compile_definitions(gccpp PRIVATE ${GC_DEFINITIONS})
+    target_compile_options(gccpp PRIVATE ${GC_COMPILE_OPTIONS})
+    target_include_directories(gccpp PRIVATE ${GC_INCLUDE_DIRS})
     if(enable_throw_bad_alloc_library)
         # The same as `gccpp` but contains only `gc_badalc`.
         if(BORLAND OR MSVC OR WATCOM)
@@ -841,6 +863,9 @@ if(enable_cplusplus)
                 "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                 "$<INSTALL_INTERFACE:include>"
         )
+        target_compile_definitions(gctba PRIVATE ${GC_DEFINITIONS})
+        target_compile_options(gctba PRIVATE ${GC_COMPILE_OPTIONS})
+        target_include_directories(gctba PRIVATE ${GC_INCLUDE_DIRS})
     endif(enable_throw_bad_alloc_library)
 endif()
 
@@ -859,6 +884,9 @@ if(build_cord)
             "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
             "$<INSTALL_INTERFACE:include>"
     )
+    target_compile_definitions(cord PRIVATE ${GC_DEFINITIONS})
+    target_compile_options(cord PRIVATE ${GC_COMPILE_OPTIONS})
+    target_include_directories(cord PRIVATE ${GC_INCLUDE_DIRS})
     string(
         REGEX REPLACE "([^.]+).+"
         "\\1"
@@ -1013,10 +1041,17 @@ if(install_headers)
 endif(install_headers)
 
 if(BUILD_TESTING)
+    # The interface target that supplies the compile definitions, compile
+    # options and include directories collected above.
+    add_library(gc_build_flags INTERFACE)
+    target_compile_definitions(gc_build_flags INTERFACE ${GC_DEFINITIONS})
+    target_compile_options(gc_build_flags INTERFACE ${GC_COMPILE_OPTIONS})
+    target_include_directories(gc_build_flags INTERFACE ${GC_INCLUDE_DIRS})
+
     set(CTEST_ENVIRONMENT "GC_PROMPT_DISABLED=1")
     if(build_cord)
         add_executable(cordtest cord/tests/cordtest.c ${NODIST_SRC})
-        target_link_libraries(cordtest PRIVATE cord gc)
+        target_link_libraries(cordtest PRIVATE cord gc gc_build_flags)
         add_test(NAME cordtest COMMAND cordtest)
 
         if(WIN32) # AND NOT CYGWIN
@@ -1032,26 +1067,30 @@ if(BUILD_TESTING)
                 ${NODIST_SRC}
             )
             set_target_properties(de PROPERTIES WIN32_EXECUTABLE TRUE)
-            target_link_libraries(de PRIVATE cord gc gdi32)
+            target_link_libraries(de PRIVATE cord gc gdi32 gc_build_flags)
         endif()
     endif(build_cord)
 
     # Compile some tests as C++ to test `extern "C"` in header files.
     if(enable_cplusplus)
-        set_source_files_properties(tests/leak.c PROPERTIES LANGUAGE CXX)
         if(BORLAND OR MSVC OR WATCOM)
             # `WinMain`-based test hangs at startup if compiled by VC as C++ code.
+            set_source_files_properties(tests/leak.c PROPERTIES LANGUAGE CXX)
         else()
-            set_source_files_properties(tests/gctest.c PROPERTIES LANGUAGE CXX)
-            # To avoid "treating 'c' input as 'c++' when in C++ mode" Clang warning.
-            add_compile_options(-x c++)
+            # The `-x c++` compile option is to workaround
+            # "treating c input as c++ when in C++ mode" Clang warning.
+            set_source_files_properties(
+                tests/gctest.c
+                tests/leak.c
+                PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-x;c++"
+            )
         endif()
     endif(enable_cplusplus)
 
     add_executable(gctest WIN32 tests/gctest.c ${NODIST_SRC})
     target_link_libraries(
         gctest
-        PRIVATE gc ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST}
+        PRIVATE gc gc_build_flags ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST}
     )
     add_test(NAME gctest COMMAND gctest)
     if(WATCOM AND NOT enable_gc_assertions)
@@ -1061,31 +1100,31 @@ if(BUILD_TESTING)
     endif()
 
     add_executable(dbgfunctest tests/dbgfunc.c ${NODIST_SRC})
-    target_link_libraries(dbgfunctest PRIVATE gc)
+    target_link_libraries(dbgfunctest PRIVATE gc gc_build_flags)
     add_test(NAME dbgfunctest COMMAND dbgfunctest)
 
     add_executable(hugetest tests/huge.c ${NODIST_SRC})
-    target_link_libraries(hugetest PRIVATE gc)
+    target_link_libraries(hugetest PRIVATE gc gc_build_flags)
     add_test(NAME hugetest COMMAND hugetest)
 
     add_executable(leaktest tests/leak.c ${NODIST_SRC})
-    target_link_libraries(leaktest PRIVATE gc)
+    target_link_libraries(leaktest PRIVATE gc gc_build_flags)
     add_test(NAME leaktest COMMAND leaktest)
 
     add_executable(middletest tests/middle.c ${NODIST_SRC})
-    target_link_libraries(middletest PRIVATE gc)
+    target_link_libraries(middletest PRIVATE gc gc_build_flags)
     add_test(NAME middletest COMMAND middletest)
 
     add_executable(realloctest tests/realloc.c ${NODIST_SRC})
-    target_link_libraries(realloctest PRIVATE gc)
+    target_link_libraries(realloctest PRIVATE gc gc_build_flags)
     add_test(NAME realloctest COMMAND realloctest)
 
     add_executable(smashtest tests/smash.c ${NODIST_SRC})
-    target_link_libraries(smashtest PRIVATE gc)
+    target_link_libraries(smashtest PRIVATE gc gc_build_flags)
     add_test(NAME smashtest COMMAND smashtest)
 
     add_executable(typedtest tests/typed.c ${NODIST_SRC})
-    target_link_libraries(typedtest PRIVATE gc)
+    target_link_libraries(typedtest PRIVATE gc gc_build_flags)
     add_test(NAME typedtest COMMAND typedtest)
 
     if(NOT (GC_BUILD_SHARED_LIBS AND WIN32))
@@ -1100,20 +1139,20 @@ if(BUILD_TESTING)
             staticroots_lib2_test
             PRIVATE "-DSTATICROOTSLIB2"
         )
-        target_link_libraries(staticroots_lib_test PRIVATE gc)
-        target_link_libraries(staticroots_lib2_test PRIVATE gc)
+        target_link_libraries(staticroots_lib_test PRIVATE gc gc_build_flags)
+        target_link_libraries(staticroots_lib2_test PRIVATE gc gc_build_flags)
         add_executable(staticrootstest tests/staticroots.c ${NODIST_SRC})
         target_compile_options(staticrootstest PRIVATE "-DSTATICROOTSLIB2")
         target_link_libraries(
             staticrootstest
-            PRIVATE gc staticroots_lib_test staticroots_lib2_test
+            PRIVATE gc gc_build_flags staticroots_lib_test staticroots_lib2_test
         )
         add_test(NAME staticrootstest COMMAND staticrootstest)
     endif()
 
     if(enable_gc_debug)
         add_executable(tracetest tests/trace.c ${NODIST_SRC})
-        target_link_libraries(tracetest PRIVATE gc)
+        target_link_libraries(tracetest PRIVATE gc gc_build_flags)
         add_test(NAME tracetest COMMAND tracetest)
     endif()
 
@@ -1121,14 +1160,14 @@ if(BUILD_TESTING)
         add_executable(atomicopstest tests/atomicops.c ${NODIST_SRC})
         target_link_libraries(
             atomicopstest
-            PRIVATE ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST}
+            PRIVATE gc_build_flags ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST}
         )
         add_test(NAME atomicopstest COMMAND atomicopstest)
 
         add_executable(initfromthreadtest tests/initfromthread.c ${NODIST_SRC})
         target_link_libraries(
             initfromthreadtest
-            PRIVATE gc ${THREADDLLIBS_LIST}
+            PRIVATE gc gc_build_flags ${THREADDLLIBS_LIST}
         )
         add_test(NAME initfromthreadtest COMMAND initfromthreadtest)
 
@@ -1139,45 +1178,62 @@ if(BUILD_TESTING)
         )
         target_link_libraries(
             subthreadcreatetest
-            PRIVATE gc ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST}
+            PRIVATE
+                gc
+                gc_build_flags
+                ${ATOMIC_OPS_LIBS_CMAKE}
+                ${THREADDLLIBS_LIST}
         )
         add_test(NAME subthreadcreatetest COMMAND subthreadcreatetest)
 
         add_executable(threadleaktest tests/threadleak.c ${NODIST_SRC})
-        target_link_libraries(threadleaktest PRIVATE gc ${THREADDLLIBS_LIST})
+        target_link_libraries(
+            threadleaktest
+            PRIVATE gc gc_build_flags ${THREADDLLIBS_LIST}
+        )
         add_test(NAME threadleaktest COMMAND threadleaktest)
 
         if(NOT WIN32)
             add_executable(threadkeytest tests/threadkey.c ${NODIST_SRC})
-            target_link_libraries(threadkeytest PRIVATE gc ${THREADDLLIBS_LIST})
+            target_link_libraries(
+                threadkeytest
+                PRIVATE gc gc_build_flags ${THREADDLLIBS_LIST}
+            )
             add_test(NAME threadkeytest COMMAND threadkeytest)
         endif()
     endif(enable_threads)
 
     if(enable_cplusplus)
         add_executable(cpptest WIN32 tests/cpp.cc ${NODIST_SRC})
-        target_link_libraries(cpptest PRIVATE gc gccpp)
+        target_link_libraries(cpptest PRIVATE gc gccpp gc_build_flags)
         add_test(NAME cpptest COMMAND cpptest)
         if(enable_throw_bad_alloc_library)
             add_executable(treetest tests/tree.cc ${NODIST_SRC})
-            target_link_libraries(treetest PRIVATE gc gctba)
+            target_link_libraries(treetest PRIVATE gc gctba gc_build_flags)
             add_test(NAME treetest COMMAND treetest)
         endif(enable_throw_bad_alloc_library)
     endif()
 
     if(enable_disclaim)
         add_executable(disclaim_bench tests/disclaim_bench.c ${NODIST_SRC})
-        target_link_libraries(disclaim_bench PRIVATE gc)
+        target_link_libraries(disclaim_bench PRIVATE gc gc_build_flags)
         add_test(NAME disclaim_bench COMMAND disclaim_bench)
 
         add_executable(disclaimtest tests/disclaim.c ${NODIST_SRC})
-        target_link_libraries(disclaimtest PRIVATE gc ${THREADDLLIBS_LIST})
+        target_link_libraries(
+            disclaimtest
+            PRIVATE gc gc_build_flags ${THREADDLLIBS_LIST}
+        )
         add_test(NAME disclaimtest COMMAND disclaimtest)
 
         add_executable(weakmaptest tests/weakmap.c ${NODIST_SRC})
         target_link_libraries(
             weakmaptest
-            PRIVATE gc ${ATOMIC_OPS_LIBS_CMAKE} ${THREADDLLIBS_LIST}
+            PRIVATE
+                gc
+                gc_build_flags
+                ${ATOMIC_OPS_LIBS_CMAKE}
+                ${THREADDLLIBS_LIST}
         )
         add_test(NAME weakmaptest COMMAND weakmaptest)
     endif(enable_disclaim)
