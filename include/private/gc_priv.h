@@ -3011,12 +3011,12 @@ GC_INNER struct hblk *GC_prev_block(const struct hblk *h);
 GC_INNER void GC_mark_init(void);
 
 /*
- * Remove the pending mark stack scans of [`bottom`, `limit`) address range
- * (e.g., to be called before the storage in the range could be reused or
- * deallocated).  Assumes the allocator lock is held.  Does nothing if the
- * mark stack is empty.
+ * Remove the pending mark stack scans of [`b`, `e`) address range (e.g., to
+ * be called before the storage in the range could be reused or deallocated).
+ * Assumes the allocator lock is held.  Does nothing if the mark stack is
+ * empty.
  */
-GC_INNER void GC_mark_stack_remove_range(ptr_t bottom, ptr_t limit);
+GC_INNER void GC_mark_stack_remove_range(ptr_t b, ptr_t e);
 
 /*
  * Clear mark bits in all allocated heap blocks (i.e. for all heap objects).
