@@ -990,7 +990,7 @@ GC_get_stack_base(struct GC_stack_base *sb)
     || (defined(UNIX_LIKE) && !defined(NO_DEBUGGING))        \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
     || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
-        && !defined(MSWIN32))
+        && !defined(MSWIN32) && !defined(MSWINCE))
 
 #  include <signal.h>
 
@@ -1058,7 +1058,7 @@ GC_set_and_save_fault_handler(GC_fault_handler_t h)
     || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE))
 GC_INNER GC_VAR_ATTR JMP_BUF GC_jmp_buf;
 
-#  if defined(MSWIN32) && defined(NO_SEH_AVAILABLE)
+#  if defined(NO_SEH_AVAILABLE) && (defined(MSWIN32) || defined(MSWINCE))
 static GC_VAR_ATTR PVOID fault_handler_veh;
 static GC_VAR_ATTR DWORD fault_handler_thread_id;
 static GC_VAR_ATTR unsigned fault_handler_nesting;
