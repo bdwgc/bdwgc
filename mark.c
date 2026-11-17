@@ -1542,23 +1542,23 @@ GC_mark_init(void)
 }
 
 GC_INNER void
-GC_mark_stack_remove_range(ptr_t bottom, ptr_t limit)
+GC_mark_stack_remove_range(ptr_t b, ptr_t e)
 {
   mse *entry = GC_mark_stack;
-  mse *top = GC_mark_stack_top;
+  mse *mark_stack_top = GC_mark_stack_top;
 
   GC_ASSERT(I_HOLD_LOCK());
-  GC_ASSERT(ADDR_LT(bottom, limit));
-  while (ADDR_GE((ptr_t)top, (ptr_t)entry)) {
-    if (ADDR_INSIDE(entry->mse_start, bottom, limit)) {
-      entry->mse_start = top->mse_start;
-      entry->mse_descr = top->mse_descr;
-      top--;
+  GC_ASSERT(b != NULL && ADDR_LT(b, e));
+  while (ADDR_GE((ptr_t)mark_stack_top, (ptr_t)entry)) {
+    if (ADDR_INSIDE(entry->mse_start, b, e)) {
+      entry->mse_start = mark_stack_top->mse_start;
+      entry->mse_descr = mark_stack_top->mse_descr;
+      mark_stack_top--;
     } else {
       entry++;
     }
   }
-  GC_mark_stack_top = top;
+  GC_mark_stack_top = mark_stack_top;
 }
 
 GC_API void GC_CALL
