@@ -40,10 +40,17 @@ jobs:
           wget -O - ${WT_URL} | tar xJf - -C /tmp/wasmtime --strip-components=1
           echo "/tmp/wasmtime" >> "$GITHUB_PATH"
 
+      - name: Install ninja-build
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: ninja-build
+          version: 1.0
+
       - name: Configure CMake with wasi-sdk and wasmtime
         run: >
           cmake -B ${{ github.workspace }}/build
           -S ${{ github.workspace }}
+          -G Ninja
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_CROSSCOMPILING_EMULATOR="wasmtime;run;--dir=."
           -DCMAKE_TOOLCHAIN_FILE=${{ env.WASI_TC_FILE }}
