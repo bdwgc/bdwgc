@@ -62,6 +62,15 @@ jobs:
           ${{ matrix.cflags_target }}"
           ${{ matrix.curses_opt }}
 
+      - name: Print tests output (Windows)
+        if: ${{ runner.os == 'Windows' && (success() || failure()) }}
+        shell: bash
+        run: |
+          find . -name '*.gc.log' | while read -r file; do
+            echo "Contents of $file:"
+            cat "$file"
+          done
+
       - name: Test enforcing mprotect-based VDB
         env:
           GC_USE_GETWRITEWATCH: "0"

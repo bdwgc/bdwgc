@@ -150,3 +150,12 @@ jobs:
           -Denable_threads=${{ matrix.threads }}
           -Denable_werror
           test
+
+      - name: Print tests output (Windows)
+        if: ${{ runner.os == 'Windows' && (success() || failure()) }}
+        shell: bash
+        run: |
+          find . -name '*.gc.log' | while read -r file; do
+            echo "Contents of $file:"
+            cat "$file"
+          done
