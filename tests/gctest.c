@@ -2022,6 +2022,14 @@ check_heap_stats(void)
 #if defined(USE_MMAP) || defined(MSWIN32)
   max_heap_sz = NUMBER_ROUND_UP(max_heap_sz, 4 * 1024 * 1024);
 #endif
+#ifndef GC_DISABLE_INCREMENTAL
+  /*
+   * The incremental collection could lag behind the allocation on low-end
+   * (or CPU-constrained) machines, thus causing an additional heap growth.
+   */
+  if (GC_is_incremental_mode())
+    max_heap_sz += max_heap_sz / 4;
+#endif
   /* Add 1% for recycled blocks. */
   init_heap_sz += init_heap_sz / 100;
   if (max_heap_sz < init_heap_sz)
