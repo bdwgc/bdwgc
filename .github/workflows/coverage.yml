@@ -1,0 +1,85 @@
+---
+# This workflow is for test coverage reporting.
+name: coverage
+
+"on": [push, pull_request]
+
+jobs:
+  coverage:
+    name: ubuntu
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install lcov
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends lcov
+
+      - name: Configure CMake
+        env:
+          # Note: use "-Dname" (not "-D name") as CMake de-duplicates options.
+          CFLAGS_EXTRA: >-
+            --coverage -fprofile-update=atomic -DNTHREADS=20 -DTEST_COVERAGE
+            -DUSE_CUSTOM_SPECIFIC -O0
+        run: >
+          cmake -B ${{ github.workspace }}/build
+          -S ${{ github.workspace }}
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_EXE_LINKER_FLAGS=--coverage
+          -DGC_BUILD_SHARED_LIBS=off
+          -Denable_cplusplus=on
+          -Denable_gc_assertions=on
+          -Denable_single_obj_compilation=on
+          -Denable_valgrind_tracking=on
+          -Denable_werror=on
+          -DCFLAGS_EXTRA="$CFLAGS_EXTRA"
+          -Werror=author
+
+      - name: Build
+        run: >
+          cmake --build ${{ github.workspace }}/build
+          --config Debug --verbose --parallel
+
+      - name: Test
+        # Run serially to avoid concurrent writes to shared gcov data files.
+        working-directory: ${{ github.workspace }}/build
+        run: |
+          lcov --zerocounters --directory .
+          ctest --build-config Debug --verbose
+          lcov --capture --base-directory .. --directory . \
+            --rc geninfo_unexecuted_blocks=1 \
+            --output-file ../coverage-normal.info
+
+      - name: Test enforcing mprotect-based VDB
+        working-directory: ${{ github.workspace }}/build
+        env:
+          GC_USE_GETWRITEWATCH: "0"
+        run: |
+          lcov --zerocounters --directory .
+          ctest --build-config Debug --verbose -R '^gctest$'
+          lcov --capture --base-directory .. --directory . \
+            --rc geninfo_unexecuted_blocks=1 \
+            --output-file ../coverage-mprotect.info
+
+      - name: Generate test coverage report
+        run: |
+          lcov --add-tracefile coverage-normal.info \
+            --add-tracefile coverage-mprotect.info --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' 'cord/tests/*' 'tests/*' \
+            --output-file coverage.info
+          lcov --list coverage.info
+
+      - name: Upload test coverage report to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.info
+
+      - name: Upload test coverage report to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage.info

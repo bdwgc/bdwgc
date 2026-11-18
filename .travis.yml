@@ -8,26 +8,6 @@ git:
 
 jobs:
   include:
-    - addons:
-        apt:
-          packages:
-            - lcov
-      compiler: gcc
-      env:
-        - >-
-          CONF_OPTIONS="--enable-single-obj-compilation --enable-cplusplus
-          --disable-shared --enable-gc-assertions
-          --enable-valgrind-tracking"
-        - >-
-          CFLAGS_EXTRA="--coverage -fprofile-update=atomic -O0 -D TEST_COVERAGE
-          -D NTHREADS=20 -D USE_CUSTOM_SPECIFIC"
-        - CC_FOR_CHECK=g++
-        - MAKEFILE_TARGETS="all"
-        - MAKEFILE_TARGETS_CHECK="check"
-        - NO_CLONE_LIBATOMIC_OPS=true
-        - REPORT_COVERAGE=true
-        - GCTEST_WITH_MPROTECT_VDB=true
-        - TESTS_CUSTOM_RUN=true
     - env:
         - MAKEFILE_TARGETS="dist"
     - os: freebsd
@@ -79,12 +59,6 @@ jobs:
         - COVERITY_SCAN_BRANCH=1
 
 before_install:
-  - if [[ "$REPORT_COVERAGE" == true ]]; then
-      mkdir -p ../coveralls;
-      wget -O - https://coveralls.io/coveralls-linux.tar.gz
-        | tar xf - --gz --directory ../coveralls;
-      export PATH=`pwd`/../coveralls:$PATH;
-    fi
   - if [[ "$AUTOCONF_VER" != "" || "$AUTOMAKE_VER" != ""
       || "$LIBTOOL_VER" != "" || "$M4_VER" != "" ]]; then
       GNUTOOLS_ROOT=`pwd`/../gnu-tools;
@@ -153,24 +127,8 @@ script:
   - if [ -f threadkeytest.log ]; then cat threadkeytest.log; fi
   - if [ -f threadleaktest.log ]; then cat threadleaktest.log; fi
   - if [ -f weakmaptest.log ]; then cat weakmaptest.log; fi
-  - if [[ "$TESTS_CUSTOM_RUN" == true ]]; then
-      ASAN_OPTIONS="detect_leaks=1" UBSAN_OPTIONS="halt_on_error=1"
-        make check-without-test-driver;
-    fi
   - if [[ "$GCTEST_WITH_MPROTECT_VDB" == true ]]; then
       GC_USE_GETWRITEWATCH=0 ./gctest;
-    fi
-
-after_success:
-  - if [[ "$REPORT_COVERAGE" == true ]]; then
-      lcov --capture --base-directory . --directory .
-        --output-file coverage.info
-      && lcov --remove coverage.info '/usr/*' 'cord/tests/*' 'tests/*'
-        --output-file coverage.info
-      && lcov --list coverage.info;
-      coveralls report coverage.info -r ${COVERALLS_REPO_TOKEN};
-      bash <(curl -s https://codecov.io/bash) -f coverage.info
-        -t ${CODECOV_TOKEN};
     fi
 
 before_deploy:
