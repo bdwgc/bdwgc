@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1993-1994 by Xerox Corporation.  All rights reserved.
+ * Modified in 2026 to preserve embedded NUL characters in extensible cords.
  *
  * THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY EXPRESSED
  * OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
@@ -18,6 +19,7 @@
 
 #include "gc.h"
 #include "gc/cord.h"
+#include "gc/ec.h"
 
 /*
  * This is a very incomplete test of the cord package.  It knows about
@@ -848,6 +850,59 @@ test_vsprintf(void)
 }
 
 static void
+test_extensible_binary(void)
+{
+  static const size_t lengths[] = { 0, 1, 7, 127, 128, 129, 300, 1024 };
+  size_t length_index;
+  unsigned pattern;
+
+  for (length_index = 0; length_index < sizeof(lengths) / sizeof(lengths[0]);
+       ++length_index) {
+    size_t len = lengths[length_index];
+
+    for (pattern = 0; pattern < 5; ++pattern) {
+      CORD_ec ec;
+      CORD result;
+      char expected[1024];
+      char *actual;
+      size_t i;
+
+      CORD_ec_init(ec);
+      for (i = 0; i < len; ++i) {
+        char c = (char)('a' + i % 26);
+
+        if ((pattern == 1 && i == 0) || (pattern == 2 && i == len / 2)
+            || (pattern == 3 && i == len - 1) || (pattern == 4 && i % 37 == 0))
+          c = '\0';
+        expected[i] = c;
+        CORD_ec_append(ec, c);
+      }
+      result = CORD_ec_to_cord(ec);
+      if (CORD_len(result) != len)
+        ABORT("extensible cord has incorrect length");
+      actual = CORD_to_char_star(result);
+      if (memcmp(actual, expected, len) != 0 || actual[len] != '\0')
+        ABORT("extensible cord lost binary data");
+      /* Reusing the staging buffer must not alter a retained cord. */
+      CORD_ec_flush_buf(ec);
+      CORD_ec_append(ec, 'z');
+      if (CORD_len(CORD_ec_to_cord(ec)) != len + 1)
+        ABORT("reused extensible cord has incorrect length");
+      GC_gcollect();
+      result = CORD_balance(CORD_cat(result, "tail"));
+      if (CORD_len(result) != len + 4)
+        ABORT("concatenated extensible cord has incorrect length");
+      for (i = 0; i < len; ++i) {
+        if (CORD_fetch(result, i) != expected[i])
+          ABORT("balanced extensible cord lost binary data");
+      }
+      if (CORD_cmp(CORD_substr(result, len, 4), "tail") != 0)
+        ABORT("extensible cord lost appended tail");
+    }
+  }
+}
+
+static void
 test_dump(void)
 {
 #ifndef TEST_COVERAGE
@@ -886,6 +941,7 @@ main(void)
   test_substr();
   test_vsprintf();
   test_dump();
+  test_extensible_binary();
 
   GC_gcollect(); /*< to close `f2` before the file removal */
   if (remove(FNAME2) != 0) {
