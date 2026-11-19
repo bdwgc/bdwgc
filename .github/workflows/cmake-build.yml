@@ -141,9 +141,11 @@ jobs:
 
       - name: Build
         # Build the code with the given configuration.
+        # Build serially on Windows to avoid Strawberry `gmake -Otarget` fail.
         run: >
           cmake --build ${{ github.workspace }}/build
-          --config ${{ matrix.build_type }} --verbose --parallel
+          --config ${{ matrix.build_type }} --verbose
+          --parallel ${{ runner.os == 'Windows' && '1' || '8' }}
 
       - name: Test
         working-directory: ${{ github.workspace }}/build
