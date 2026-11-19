@@ -433,6 +433,12 @@ CORD_str(CORD x, size_t start, CORD s)
   return match_pos;
 }
 
+static char
+CORD_ec_buf_char(size_t i, void *client_data)
+{
+  return ((char *)client_data)[i];
+}
+
 void
 CORD_ec_flush_buf(CORD_ec x)
 {
@@ -446,7 +452,13 @@ CORD_ec_flush_buf(CORD_ec x)
     OUT_OF_MEMORY;
   memcpy(s, x[0].ec_buf, len);
   s[len] = '\0';
-  x[0].ec_cord = CORD_cat_char_star(x[0].ec_cord, s, len);
+  if (memchr(s, '\0', len) != NULL) {
+    /* A string leaf cannot represent embedded NUL characters. */
+    x[0].ec_cord
+        = CORD_cat(x[0].ec_cord, CORD_from_fn(CORD_ec_buf_char, s, len));
+  } else {
+    x[0].ec_cord = CORD_cat_char_star(x[0].ec_cord, s, len);
+  }
   x[0].ec_bufptr = x[0].ec_buf;
 }
 
