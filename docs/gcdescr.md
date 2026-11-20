@@ -175,17 +175,6 @@ variables are located, it scans the following _root segments_ for pointers:
   assembly code, or by calling a `setjmp`-like function which saves register
   contents on the stack.
 
-* The stack(s). In the case of a single-threaded application, on most
-  platforms this is done by scanning the memory between (an approximation of)
-  the current stack pointer and `GC_stackbottom`. (For Intel Itanium, the
-  register stack scanned separately.) The `GC_stackbottom` variable is set in
-  a highly platform-specific way depending on the appropriate configuration
-  information in `include/private/gcconfig.h` file. Note that the currently
-  active stack needs to be scanned carefully, since callee-save registers of
-  client code may appear inside collector stack frames, which may change
-  during the mark process. This is addressed by scanning some sections of the
-  stack _eagerly_, effectively capturing a snapshot at one point in time.
-
 * Static data region(s). In the simplest case, this is the region between
   `DATASTART` and `DATAEND`, as defined in `include/private/gcconfig.h` file.
   However, in most cases, this will also involve static data regions
@@ -197,6 +186,20 @@ variables are located, it scans the following _root segments_ for pointers:
   the block. If no layout information is available for the block, then the
   descriptor is simply a length. (For other possibilities, see `gc_mark.h`
   file.)
+
+* Other roots. Other roots are usually arrays with dynamic ranges that depend on
+  the runtime. Scanning the stack(s) is installed as the default scanner.
+
+* The stack(s). In the case of a single-threaded application, on most
+  platforms this is done by scanning the memory between (an approximation of)
+  the current stack pointer and `GC_stackbottom`. (For Intel Itanium, the
+  register stack scanned separately.) The `GC_stackbottom` variable is set in
+  a highly platform-specific way depending on the appropriate configuration
+  information in `include/private/gcconfig.h` file. Note that the currently
+  active stack needs to be scanned carefully, since callee-save registers of
+  client code may appear inside collector stack frames, which may change
+  during the mark process. This is addressed by scanning some sections of the
+  stack _eagerly_, effectively capturing a snapshot at one point in time.
 
 At the beginning of the mark phase, all root segments (as described above) are
 pushed on the stack by `GC_push_roots`. (Registers and eagerly scanned stack
