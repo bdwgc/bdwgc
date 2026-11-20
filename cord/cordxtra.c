@@ -437,7 +437,7 @@ CORD_str(CORD x, size_t start, CORD s)
 static char
 CORD_ec_buf_char(size_t i, void *client_data)
 {
-  return ((const char *)client_data)[i];
+  return ((char *)client_data)[i];
 }
 
 void

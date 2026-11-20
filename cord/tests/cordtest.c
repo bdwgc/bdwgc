@@ -864,7 +864,7 @@ test_extensible_binary(void)
       CORD_ec ec;
       CORD result;
       char expected[1024];
-      char *actual;
+      const char *actual;
       size_t i;
 
       CORD_ec_init(ec);
