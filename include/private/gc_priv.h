@@ -4826,7 +4826,7 @@ void *GC_find_limit(void *p, int up);
 #  endif
 #endif
 
-#if defined(WRAP_MARK_SOME) && defined(MSWIN32)
+#if defined(WRAP_MARK_SOME) && (defined(MSWIN32) || !defined(NO_SEH_AVAILABLE))
 #  ifdef THREADS
 /*
  * `EXCEPTION_GUARD_PAGE` might be raised when the marker reads a guard page
