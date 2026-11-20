@@ -4826,7 +4826,7 @@ void *GC_find_limit(void *p, int up);
 #  endif
 #endif
 
-#if defined(WRAP_MARK_SOME) && (defined(MSWIN32) || defined(MSWINCE))
+#if defined(WRAP_MARK_SOME) && defined(MSWIN32)
 #  ifdef THREADS
 /*
  * `EXCEPTION_GUARD_PAGE` might be raised when the marker reads a guard page
@@ -4845,7 +4845,7 @@ void *GC_find_limit(void *p, int up);
     || (defined(UNIX_LIKE) && !defined(NO_DEBUGGING))        \
     || (defined(USE_PROC_FOR_LIBRARIES) && defined(THREADS)) \
     || (defined(WRAP_MARK_SOME) && defined(NO_SEH_AVAILABLE) \
-        && !defined(MSWIN32) && !defined(MSWINCE))
+        && !defined(MSWIN32))
 typedef void (*GC_fault_handler_t)(int);
 GC_INNER void GC_set_and_save_fault_handler(GC_fault_handler_t);
 #endif
