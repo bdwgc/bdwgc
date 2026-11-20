@@ -45,6 +45,25 @@ jobs:
           repository: bdwgc/libatomic_ops
           path: libatomic_ops
 
+      - name: Find clang++ (Windows)
+        # Workaround STL "unexpected compiler version" error (use the Clang
+        # bundled with Visual Studio).
+        if: ${{ runner.os == 'Windows' && matrix.c_compiler == 'clang' }}
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path "${env:ProgramFiles(x86)}" `
+            "Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Llvm.Clang `
+            -property installationPath
+          $llvmBin = Join-Path $vsPath "VC\Tools\Llvm\x64\bin"
+          $clangxx = Join-Path $llvmBin "clang++.exe"
+          if (-not (Test-Path $clangxx)) {
+            throw "Visual Studio Clang compiler not found: $clangxx"
+          }
+          & $clangxx --version
+          Add-Content -Path $env:GITHUB_PATH -Value $llvmBin
+
       - name: Build
         run: >
           make -j8 -f Makefile.direct
