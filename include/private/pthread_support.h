@@ -534,13 +534,11 @@ GC_INNER GC_thread GC_lookup_thread(thread_id_t id);
 #  define GC_self_thread_inner() GC_lookup_thread(thread_id_self())
 
 /*
- * Wait until an in-progress collection has finished.
- * We hold the allocator lock and repeatedly release it in order to wait.
- * If `wait_for_all`, then we exit with the allocator lock held and
- * no collection is in progress; otherwise we just wait for the current
- * collection to finish.
+ * Wait until no collection is in progress.  We hold the allocator lock and
+ * repeatedly release it in order to wait. We exit with the allocator lock
+ * held.
  */
-GC_INNER void GC_wait_for_gc_completion(GC_bool wait_for_all);
+GC_INNER void GC_wait_for_gc_completion(void);
 
 #  ifdef NACL
 GC_INNER void GC_nacl_initialize_gc_thread(GC_thread);

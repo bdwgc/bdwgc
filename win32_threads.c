@@ -1421,7 +1421,7 @@ GC_start_mark_threads_inner(void)
   ASSERT_CANCEL_DISABLED();
   if (GC_available_markers_m1 <= 0 || GC_parallel)
     return;
-  GC_wait_for_gc_completion(TRUE);
+  GC_wait_for_gc_completion();
 
   GC_ASSERT(0 == GC_fl_builder_count);
   /*

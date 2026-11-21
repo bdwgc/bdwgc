@@ -610,7 +610,7 @@ GC_start_mark_threads_inner(void)
     /* Skip if parallel markers disabled or already started (or starting). */
     return;
   }
-  GC_wait_for_gc_completion(TRUE);
+  GC_wait_for_gc_completion();
 
 #    ifdef CAN_HANDLE_FORK
   /*
@@ -1339,7 +1339,7 @@ collection_in_progress(void)
 #  endif
 
 GC_INNER void
-GC_wait_for_gc_completion(GC_bool wait_for_all)
+GC_wait_for_gc_completion(void)
 {
 #  if !defined(THREAD_SANITIZER) || !defined(CAN_CALL_ATFORK)
   /*
@@ -1349,12 +1349,8 @@ GC_wait_for_gc_completion(GC_bool wait_for_all)
   GC_ASSERT(I_HOLD_LOCK());
 #  endif
   ASSERT_CANCEL_DISABLED();
-#  ifdef GC_DISABLE_INCREMENTAL
-  (void)wait_for_all;
-#  else
+#  ifndef GC_DISABLE_INCREMENTAL
   if (GC_incremental && collection_in_progress()) {
-    word old_gc_no = GC_gc_no;
-
     /*
      * Make sure that no part of our stack is still on the mark stack,
      * since it is about to be unmapped.
@@ -1380,8 +1376,7 @@ GC_wait_for_gc_completion(GC_bool wait_for_all)
       sched_yield();
 #    endif
       LOCK();
-    } while (GC_incremental && collection_in_progress()
-             && (wait_for_all || old_gc_no == GC_gc_no));
+    } while (GC_incremental && collection_in_progress());
   }
 #  endif
 }
@@ -1594,7 +1589,7 @@ fork_prepare_proc(void)
   if (is_thread_registered_inner()) {
     /* `fork()` is called from a thread registered in the collector. */
     forker_thread_registered = TRUE;
-    GC_wait_for_gc_completion(TRUE);
+    GC_wait_for_gc_completion();
   }
 #    ifdef PARALLEL_MARK
   if (GC_parallel) {
@@ -2522,10 +2517,10 @@ GC_unregister_my_thread(void)
   LOCK();
   DISABLE_CANCEL(cancel_state);
   /*
-   * Wait for any collection that may be marking from our stack to complete
-   * before we remove this thread.
+   * Wait until no collection is in progress (and, hence, no part of our
+   * stack is still on the mark stack) before we remove this thread.
    */
-  GC_wait_for_gc_completion(FALSE);
+  GC_wait_for_gc_completion();
   me = GC_self_thread_inner();
   GC_ASSERT(THREAD_ID_EQUAL(me->id, thread_id_self()));
   GC_unregister_my_thread_inner(me);
@@ -2716,7 +2711,7 @@ GC_thread_exit_proc(void *arg)
 #    endif
   LOCK();
   DISABLE_CANCEL(cancel_state);
-  GC_wait_for_gc_completion(FALSE);
+  GC_wait_for_gc_completion();
   GC_unregister_my_thread_inner(me);
   RESTORE_CANCEL(cancel_state);
   UNLOCK();
