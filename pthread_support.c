@@ -359,6 +359,66 @@ GC_check_tls(void)
 #    define GC_INNER_WIN32THREAD STATIC
 #  endif
 
+#  ifndef GC_DISABLE_INCREMENTAL
+#    if defined(CAN_HANDLE_FORK) && defined(THREAD_SANITIZER)
+#      include "private/gc_pmark.h" /*< for `MS_NONE` */
+
+/*
+ * Workaround for TSan which does not notice that the allocator lock
+ * is acquired in `fork_prepare_proc()`.
+ */
+GC_ATTR_NO_SANITIZE_THREAD
+static GC_bool
+collection_in_progress(void)
+{
+  return GC_mark_state != MS_NONE;
+}
+#    else
+#      define collection_in_progress() GC_collection_in_progress()
+#    endif
+
+GC_INNER_WIN32THREAD void
+GC_wait_for_gc_completion(void)
+{
+#    if !defined(THREAD_SANITIZER) || !defined(CAN_CALL_ATFORK)
+  /*
+   * `GC_lock_holder` is accessed with the allocator lock held, so
+   * there is no data race actually (unlike what is reported by TSan).
+   */
+  GC_ASSERT(I_HOLD_LOCK());
+#    endif
+  ASSERT_CANCEL_DISABLED();
+  if (GC_incremental && collection_in_progress()) {
+    /*
+     * Make sure that no part of our stack is still on the mark stack,
+     * since it is about to be unmapped.
+     */
+#    ifdef LINT2
+    /*
+     * Note: do not transform this `if`-`do`-`while` construction into
+     * a single while statement because it might cause some static code
+     * analyzers to report a false positive (FP) code defect about
+     * missing unlock after lock.
+     */
+#    endif
+    do {
+      GC_ASSERT(!GC_in_thread_creation);
+      GC_in_thread_creation = TRUE;
+      GC_collect_a_little_inner(1);
+      GC_in_thread_creation = FALSE;
+
+      UNLOCK();
+#    ifdef GC_WIN32_THREADS
+      Sleep(0);
+#    else
+      sched_yield();
+#    endif
+      LOCK();
+    } while (GC_incremental && collection_in_progress());
+  }
+}
+#  endif
+
 #  if defined(HAVE_PTHREAD_SETNAME_NP_WITH_TID) \
       && (defined(PARALLEL_MARK) || defined(UFFDWP_VDB))
 #    ifdef UFFDWP_VDB
@@ -1320,67 +1380,6 @@ GC_get_nprocs_present(void)
   return atoi(&stat_buf[2]) + 1;
 }
 #  endif /* LINUX && ARM32 */
-
-#  if defined(CAN_HANDLE_FORK) && defined(THREAD_SANITIZER) \
-      && !defined(GC_DISABLE_INCREMENTAL)
-#    include "private/gc_pmark.h" /*< for `MS_NONE` */
-
-/*
- * Workaround for TSan which does not notice that the allocator lock
- * is acquired in `fork_prepare_proc()`.
- */
-GC_ATTR_NO_SANITIZE_THREAD
-static GC_bool
-collection_in_progress(void)
-{
-  return GC_mark_state != MS_NONE;
-}
-#  else
-#    define collection_in_progress() GC_collection_in_progress()
-#  endif
-
-GC_INNER void
-GC_wait_for_gc_completion(void)
-{
-#  if !defined(THREAD_SANITIZER) || !defined(CAN_CALL_ATFORK)
-  /*
-   * `GC_lock_holder` is accessed with the allocator lock held, so
-   * there is no data race actually (unlike what is reported by TSan).
-   */
-  GC_ASSERT(I_HOLD_LOCK());
-#  endif
-  ASSERT_CANCEL_DISABLED();
-#  ifndef GC_DISABLE_INCREMENTAL
-  if (GC_incremental && collection_in_progress()) {
-    /*
-     * Make sure that no part of our stack is still on the mark stack,
-     * since it is about to be unmapped.
-     */
-#    ifdef LINT2
-    /*
-     * Note: do not transform this `if`-`do`-`while` construction into
-     * a single while statement because it might cause some static code
-     * analyzers to report a false positive (FP) code defect about
-     * missing unlock after lock.
-     */
-#    endif
-    do {
-      GC_ASSERT(!GC_in_thread_creation);
-      GC_in_thread_creation = TRUE;
-      GC_collect_a_little_inner(1);
-      GC_in_thread_creation = FALSE;
-
-      UNLOCK();
-#    ifdef GC_WIN32_THREADS
-      Sleep(0);
-#    else
-      sched_yield();
-#    endif
-      LOCK();
-    } while (GC_incremental && collection_in_progress());
-  }
-#  endif
-}
 
 #  if defined(GC_ASSERTIONS) && defined(GC_PTHREADS_PARAMARK)
 STATIC unsigned long GC_mark_lock_holder = NO_THREAD;
