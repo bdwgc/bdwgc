@@ -1321,7 +1321,8 @@ GC_get_nprocs_present(void)
 }
 #  endif /* LINUX && ARM32 */
 
-#  if defined(CAN_HANDLE_FORK) && defined(THREAD_SANITIZER)
+#  if defined(CAN_HANDLE_FORK) && defined(THREAD_SANITIZER) \
+      && !defined(GC_DISABLE_INCREMENTAL)
 #    include "private/gc_pmark.h" /*< for `MS_NONE` */
 
 /*
