@@ -2022,6 +2022,13 @@ check_heap_stats(void)
 #if defined(USE_MMAP) || defined(MSWIN32)
   max_heap_sz = NUMBER_ROUND_UP(max_heap_sz, 4 * 1024 * 1024);
 #endif
+#if defined(REDIRECT_MALLOC) && defined(THREADS) && defined(LINUX)
+  /*
+   * Garbage collection is disabled temporarily on thread startup, thus
+   * allocation in other threads could cause additional heap growth.
+   */
+  max_heap_sz += max_heap_sz / 2;
+#endif
 #ifndef GC_DISABLE_INCREMENTAL
   /*
    * The incremental collection could lag behind the allocation on low-end
