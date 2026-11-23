@@ -1237,6 +1237,14 @@ if(BUILD_TESTING)
         )
         add_test(NAME weakmaptest COMMAND weakmaptest)
     endif(enable_disclaim)
+
+    # Apply the common environment (e.g. `GC_PROMPT_DISABLED`) to all tests
+    # registered above.
+    get_property(test_names DIRECTORY PROPERTY TESTS)
+    set_tests_properties(
+        ${test_names}
+        PROPERTIES ENVIRONMENT "${CTEST_ENVIRONMENT}"
+    )
 endif()
 
 if(enable_docs)
