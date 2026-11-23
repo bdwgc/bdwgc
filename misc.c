@@ -1822,8 +1822,9 @@ GC_CreateLogFile(void)
     extParams.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
     extParams.dwFileFlags
         = GC_print_stats == VERBOSE ? 0 : FILE_FLAG_WRITE_THROUGH;
-    hFile = CreateFile2(pathBuf, GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS,
-                        &extParams);
+    hFile = CreateFile2(pathBuf, GENERIC_WRITE,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        CREATE_ALWAYS, &extParams);
   }
 
 #  else
@@ -1863,7 +1864,13 @@ GC_CreateLogFile(void)
 #    endif
   }
 
-  hFile = CreateFile(logPath, GENERIC_WRITE, FILE_SHARE_READ,
+  /*
+   * Note: `FILE_SHARE_WRITE` and `FILE_SHARE_DELETE` allow multiple
+   * instances of a program (e.g., run in parallel from the same directory)
+   * to open the same log file.
+   */
+  hFile = CreateFile(logPath, GENERIC_WRITE,
+                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                      NULL /* `lpSecurityAttributes` */,
                      appendToFile ? OPEN_ALWAYS : CREATE_ALWAYS,
                      GC_print_stats == VERBOSE
