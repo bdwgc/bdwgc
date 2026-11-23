@@ -1174,16 +1174,27 @@ GC_push_stack_for(GC_thread thread, thread_id_t self_id, GC_bool *pfound_me)
     }
   }
 
-  GC_ASSERT(GC_dont_query_stack_min || stack_min == GC_get_stack_min(stack_end)
-            || (ADDR_GE(sp, stack_min) && ADDR_LT(stack_min, stack_end)
-                && ADDR_LT(GC_get_stack_min(stack_end), stack_min)));
-
 #  ifdef MSWINCE
   if (!GC_dont_query_stack_min)
 #  endif
   {
     stack_min = clamp_to_committed_stack(stack_min, stack_end);
   }
+
+  /*
+   * Check the computed stack minimum against the current state of the thread
+   * stack.  The check is performed after the clamping to the committed stack
+   * region because `sp` of a suspended thread might point to a guard page
+   * (or even below it) if the thread is frozen while growing its stack.
+   * Likewise, the stack of a thread being terminated might be already
+   * unmapped (this is tolerated because of a race with `GC_DllMain()` in
+   * accessing `pending_delete_thread`), in which case `stack_min` is equal
+   * to `stack_end`, thus nothing is pushed.
+   */
+  GC_ASSERT(GC_dont_query_stack_min || stack_min == stack_end
+            || stack_min == GC_get_stack_min(stack_end)
+            || (ADDR_GE(sp, stack_min) && ADDR_LT(stack_min, stack_end)
+                && ADDR_LT(GC_get_stack_min(stack_end), stack_min)));
 
   if (ADDR_INSIDE(sp, stack_min, stack_end)) {
 #  ifdef DEBUG_THREADS
