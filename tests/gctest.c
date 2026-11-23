@@ -2130,12 +2130,15 @@ check_heap_stats(void)
     GC_printf("Incorrect execution - missed some allocations\n");
     FAIL;
   }
-  if (GC_get_heap_size() + GC_get_unmapped_bytes() > max_heap_sz
-      && !GC_get_find_leak()) {
+  /*
+   * The heap size is a high-water mark, which could be large temporarily
+   * if garbage collection is disabled (e.g. during `dlopen`).  Check the
+   * memory in use after the repeated collections instead.
+   */
+  if (GC_get_memory_use() > max_heap_sz && !GC_get_find_leak()) {
     GC_printf("Unexpected heap growth - collector may be broken"
-              " (heapsize: %lu, expected: %lu)\n",
-              (unsigned long)(GC_get_heap_size() + GC_get_unmapped_bytes()),
-              (unsigned long)max_heap_sz);
+              " (memory use: %lu, expected: %lu)\n",
+              (unsigned long)GC_get_memory_use(), (unsigned long)max_heap_sz);
     FAIL;
   }
 #ifdef USE_MUNMAP
