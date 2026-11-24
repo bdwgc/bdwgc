@@ -123,6 +123,25 @@ jobs:
             rwlock: true
             parallel_mark: false
 
+    env:
+      ZIG_BUILD_FLAGS: >-
+        -Dtarget=${{ matrix.ttriple }}
+        -Dlinkage=${{ matrix.linkage }}
+        -Dbuild_cord=${{ matrix.build_cord }}
+        -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
+        -Ddisable_single_obj_compilation=${{ matrix.disable_single_obj }}
+        -Denable_cplusplus=${{ matrix.cplusplus }}
+        -Denable_gc_assertions=${{ matrix.gc_assertions }}
+        -Denable_gc_debug=${{ matrix.gc_debug }}
+        -Denable_large_config=${{ matrix.large_config }}
+        -Denable_munmap=${{ matrix.munmap }}
+        -Denable_parallel_mark=${{ matrix.parallel_mark }}
+        -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
+        -Denable_rwlock=${{ matrix.rwlock }}
+        -Denable_thread_local_alloc=${{ matrix.thread_local_alloc }}
+        -Denable_threads=${{ matrix.threads }}
+        -Denable_werror
+
     steps:
       - uses: actions/checkout@v7
 
@@ -130,26 +149,14 @@ jobs:
         with:
           version: ${{ matrix.zig_version }}
 
+      - name: Build libraries
+        # Note: use `bash` because of `$<var>` syntax.
+        shell: bash
+        run: zig build $ZIG_BUILD_FLAGS
+
       - name: Build and run tests
-        run: >
-          zig build
-          -Dtarget=${{ matrix.ttriple }}
-          -Dlinkage=${{ matrix.linkage }}
-          -Dbuild_cord=${{ matrix.build_cord }}
-          -Ddisable_handle_fork=${{ matrix.disable_handle_fork }}
-          -Ddisable_single_obj_compilation=${{ matrix.disable_single_obj }}
-          -Denable_cplusplus=${{ matrix.cplusplus }}
-          -Denable_gc_assertions=${{ matrix.gc_assertions }}
-          -Denable_gc_debug=${{ matrix.gc_debug }}
-          -Denable_large_config=${{ matrix.large_config }}
-          -Denable_munmap=${{ matrix.munmap }}
-          -Denable_parallel_mark=${{ matrix.parallel_mark }}
-          -Denable_redirect_malloc=${{ matrix.redirect_malloc }}
-          -Denable_rwlock=${{ matrix.rwlock }}
-          -Denable_thread_local_alloc=${{ matrix.thread_local_alloc }}
-          -Denable_threads=${{ matrix.threads }}
-          -Denable_werror
-          test
+        shell: bash
+        run: zig build $ZIG_BUILD_FLAGS test
 
       - name: Print tests output (Windows)
         if: ${{ always() && runner.os == 'Windows' }}
