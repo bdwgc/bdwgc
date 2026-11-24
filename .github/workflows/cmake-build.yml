@@ -155,7 +155,7 @@ jobs:
 
       - name: Print tests output (Windows)
         # The collector output goes to .gc.log files in Windows GUI apps.
-        if: ${{ runner.os == 'Windows' && (success() || failure()) }}
+        if: ${{ always() && runner.os == 'Windows' }}
         shell: bash
         run: |
           find . -name '*.gc.log' | while read -r file; do

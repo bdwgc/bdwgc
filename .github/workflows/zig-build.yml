@@ -152,7 +152,7 @@ jobs:
           test
 
       - name: Print tests output (Windows)
-        if: ${{ runner.os == 'Windows' && (success() || failure()) }}
+        if: ${{ always() && runner.os == 'Windows' }}
         shell: bash
         run: |
           find . -name '*.gc.log' | while read -r file; do
