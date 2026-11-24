@@ -148,6 +148,7 @@ jobs:
           --parallel ${{ runner.os == 'Windows' && '1' || '8' }}
 
       - name: Test
+        timeout-minutes: 4
         working-directory: ${{ github.workspace }}/build
         # Execute tests defined by the CMake configuration.
         run: >

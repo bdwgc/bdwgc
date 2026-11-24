@@ -73,6 +73,7 @@ jobs:
           ${{ matrix.cflags_target }}"
 
       - name: Test
+        timeout-minutes: 4
         run: >
           make -f Makefile.direct check cord/de
           CC=${{ matrix.c_compiler }}
