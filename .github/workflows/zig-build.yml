@@ -155,6 +155,7 @@ jobs:
         run: zig build $ZIG_BUILD_FLAGS
 
       - name: Build and run tests
+        timeout-minutes: 7
         shell: bash
         run: zig build $ZIG_BUILD_FLAGS test
 
