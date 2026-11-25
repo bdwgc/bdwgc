@@ -434,7 +434,7 @@ pub fn build(b: *std.Build) void {
     });
     gc.root_module.addIncludePath(b.path("include"));
     if (linkage == .dynamic and t.abi == .msvc) {
-        gc.root_module.linkSystemLibrary("user32", .{});
+        gc.root_module.linkSystemLibrary("user32", .{ .use_pkg_config = .no });
     }
 
     var gccpp: *std.Build.Step.Compile = undefined;
@@ -673,10 +673,14 @@ fn addTestExt(b: *std.Build, gc: *std.Build.Step.Compile, test_step: *std.Build.
         test_exe.root_module.linkLibrary(ext_args.lib2.?);
     }
     if (ext_args.sysLibName != null) {
-        test_exe.root_module.linkSystemLibrary(ext_args.sysLibName.?, .{});
+        test_exe.root_module.linkSystemLibrary(ext_args.sysLibName.?, .{
+            .use_pkg_config = .no,
+        });
     }
     if (ext_args.sysLibName2 != null) {
-        test_exe.root_module.linkSystemLibrary(ext_args.sysLibName2.?, .{});
+        test_exe.root_module.linkSystemLibrary(ext_args.sysLibName2.?, .{
+            .use_pkg_config = .no,
+        });
     }
     const run_test_exe = b.addRunArtifact(test_exe);
     run_test_exe.setEnvironmentVariable("GC_PROMPT_DISABLED", "1");
