@@ -2654,6 +2654,7 @@ main(void)
   (void)GC_get_is_valid_displacement_print_proc();
   (void)GC_get_is_visible_print_proc();
   (void)GC_get_pages_executable();
+  (void)GC_get_unmapped_bytes();
   (void)GC_get_warn_proc();
   GC_finish_and_disable();
   (void)GC_is_disabled();
