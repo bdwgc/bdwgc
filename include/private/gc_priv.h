@@ -2842,7 +2842,6 @@ struct blocking_data {
   void *client_data; /*< and result */
 };
 
-#ifdef THREADS
 /*
  * Process all "traced stack sections" - scan entire stack except for
  * frames belonging to the user functions invoked by `GC_do_blocking`.
@@ -2851,6 +2850,7 @@ GC_INNER void
 GC_push_all_stack_sections(ptr_t lo, ptr_t hi,
                            struct GC_traced_stack_sect_s *traced_stack_sect);
 
+#ifdef THREADS
 /*
  * The total size, in bytes, of all stacks.
  * Updated on every `GC_push_all_stacks()` call.

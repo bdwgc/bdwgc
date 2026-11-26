@@ -659,7 +659,6 @@ GC_push_all_register_sections(ptr_t bs_lo, ptr_t bs_hi, GC_bool eager,
 }
 #endif /* IA64 */
 
-#ifdef THREADS
 GC_INNER void
 GC_push_all_stack_sections(ptr_t lo /* top */, ptr_t hi /* bottom */,
                            struct GC_traced_stack_sect_s *traced_stack_sect)
@@ -667,191 +666,42 @@ GC_push_all_stack_sections(ptr_t lo /* top */, ptr_t hi /* bottom */,
   GC_ASSERT(I_HOLD_LOCK());
   while (traced_stack_sect != NULL) {
     GC_ASSERT(HOTTER_THAN(lo, (ptr_t)traced_stack_sect));
-#  ifdef STACK_GROWS_UP
+#ifdef STACK_GROWS_UP
     GC_push_all_stack(traced_stack_sect, lo);
-#  else
+#else
     GC_push_all_stack(lo, traced_stack_sect);
-#  endif
+#endif
     lo = traced_stack_sect->saved_stack_ptr;
     GC_ASSERT(lo != NULL);
     traced_stack_sect = traced_stack_sect->prev;
   }
   GC_ASSERT(!HOTTER_THAN(hi, lo));
-#  ifdef STACK_GROWS_UP
+#ifdef STACK_GROWS_UP
   /* We got them backwards! */
   GC_push_all_stack(hi, lo);
-#  else
+#else
   GC_push_all_stack(lo, hi);
-#  endif
+#endif
 }
-#endif /* THREADS */
 
 #ifndef STACK_NOT_SCANNED
 
-#  ifndef THREADS
 /*
- * Similar to `GC_push_all_eager`, but only the part hotter than
- * `cold_gc_frame` is scanned immediately.  Needed to ensure that
- * callee-save registers are not missed.  Treats all interior pointers
- * as valid and scans part of the area immediately, to make sure that
- * saved register values are not lost.  `cold_gc_frame` delimits the
- * stack section that must be scanned eagerly; a `NULL` value indicates
- * that no eager scanning is needed.  We do not need to worry about
- * the manual VDB case here, since this is only called in the
- * single-threaded case.  We assume that we cannot collect between
- * an assignment and the corresponding `GC_dirty()` call.
+ * Push enough of the current stack eagerly to ensure that callee-save registers
+ * saved in GC frames are scanned. The 2nd argument (`context`) is a pointer to
+ * the (possibly `NULL`) thread context, for (currently hypothetical) more
+ * precise stack scanning.
  */
 STATIC void
-GC_push_all_stack_partially_eager(ptr_t bottom, ptr_t top, ptr_t cold_gc_frame)
-{
-#    if (!defined(NEED_FIXUP_POINTER) || defined(DYNAMIC_POINTER_MASK)) \
-        && !defined(NO_ALL_INTERIOR_POINTERS)
-  if (GC_all_interior_pointers
-#      ifdef DYNAMIC_POINTER_MASK
-      && GC_pointer_mask == GC_WORD_MAX && 0 == GC_pointer_shift
-#      endif
-  ) {
-    /*
-     * Push the hot end of the stack eagerly, so that register values saved
-     * inside GC frames are marked before they disappear.  The rest of the
-     * marking can be deferred until later.
-     */
-    if (NULL == cold_gc_frame) {
-      GC_push_all_stack(bottom, top);
-      return;
-    }
-    GC_ASSERT(ADDR_GE(cold_gc_frame, bottom) && ADDR_GE(top, cold_gc_frame));
-#      ifdef STACK_GROWS_UP
-    GC_push_all(bottom, cold_gc_frame + sizeof(ptr_t));
-    GC_push_all_eager(cold_gc_frame, top);
-#      else
-    GC_push_all(cold_gc_frame - sizeof(ptr_t), top);
-    GC_push_all_eager(bottom, cold_gc_frame);
-#      endif
-  } else
-#    endif
-  /* else */ {
-    GC_push_all_eager(bottom, top);
-    UNUSED_ARG(cold_gc_frame);
-  }
-#    ifdef TRACE_BUF
-  GC_add_trace_entry("GC_push_all_stack", bottom, top);
-#    endif
-}
-
-/* Similar to `GC_push_all_stack_sections()` but also uses `cold_gc_frame`. */
-STATIC void
-GC_push_all_stack_part_eager_sections(
-    ptr_t lo /* top */, ptr_t hi /* bottom */, ptr_t cold_gc_frame,
-    struct GC_traced_stack_sect_s *traced_stack_sect)
-{
-  GC_ASSERT(traced_stack_sect == NULL || cold_gc_frame == NULL
-            || HOTTER_THAN(cold_gc_frame, (ptr_t)traced_stack_sect));
-
-  while (traced_stack_sect != NULL) {
-    GC_ASSERT(HOTTER_THAN(lo, (ptr_t)traced_stack_sect));
-#    ifdef STACK_GROWS_UP
-    GC_push_all_stack_partially_eager((ptr_t)traced_stack_sect, lo,
-                                      cold_gc_frame);
-#    else
-    GC_push_all_stack_partially_eager(lo, (ptr_t)traced_stack_sect,
-                                      cold_gc_frame);
-#    endif
-    lo = traced_stack_sect->saved_stack_ptr;
-    GC_ASSERT(lo != NULL);
-    traced_stack_sect = traced_stack_sect->prev;
-    /* Note: use at most once. */
-    cold_gc_frame = NULL;
-  }
-
-  GC_ASSERT(!HOTTER_THAN(hi, lo));
-#    ifdef STACK_GROWS_UP
-  /* We got them backwards! */
-  GC_push_all_stack_partially_eager(hi, lo, cold_gc_frame);
-#    else
-  GC_push_all_stack_partially_eager(lo, hi, cold_gc_frame);
-#    endif
-}
-#  endif /* !THREADS */
-
-/*
- * Push enough of the current stack eagerly to ensure that callee-save
- * registers saved in GC frames are scanned.  In the single-threaded case,
- * schedule the entire stack for scanning.  The 2nd argument (`context`)
- * is a pointer to the (possibly `NULL`) thread context, for (currently
- * hypothetical) more precise stack scanning.  In the presence of threads,
- * push enough of the current stack to ensure that callee-save registers
- * saved in collector frames have been seen.
- */
-/* TODO: Merge it with per-thread stuff. */
-STATIC void
-GC_push_current_stack(ptr_t cold_gc_frame, void *context)
+GC_push_enough_stack(ptr_t cold_gc_frame, void *context)
 {
   UNUSED_ARG(context);
   GC_ASSERT(I_HOLD_LOCK());
-#  ifdef THREADS
   /* `cold_gc_frame` is non-`NULL`. */
-#    ifdef STACK_GROWS_UP
+#  ifdef STACK_GROWS_UP
   GC_push_all_eager(cold_gc_frame, GC_approx_sp());
-#    else
-  GC_push_all_eager(GC_approx_sp(), cold_gc_frame);
-  /*
-   * For IA-64, the register stack backing store is handled in the
-   * thread-specific code.
-   */
-#    endif
 #  else
-  GC_push_all_stack_part_eager_sections(GC_approx_sp(), GC_stackbottom,
-                                        cold_gc_frame, GC_traced_stack_sect);
-#    ifdef IA64
-  /*
-   * We also need to push the register stack backing store.
-   * This should really be done in the same way as the regular stack.
-   * For now we fudge it a bit.  Note that the backing store grows up,
-   * so we cannot use `GC_push_all_stack_partially_eager`.
-   */
-  {
-    ptr_t bsp = GC_save_regs_ret_val;
-#      ifndef NO_ALL_INTERIOR_POINTERS
-    ptr_t cold_gc_bs_pointer = bsp - 2048;
-
-    if (GC_all_interior_pointers
-        && ADDR_LT(GC_register_stackbottom, cold_gc_bs_pointer)) {
-      /*
-       * Adjust `cold_gc_bs_pointer` if below our innermost
-       * "traced stack section" in backing store.
-       */
-      if (GC_traced_stack_sect != NULL
-          && ADDR_LT(cold_gc_bs_pointer,
-                     GC_traced_stack_sect->backing_store_end)) {
-        cold_gc_bs_pointer = GC_traced_stack_sect->backing_store_end;
-      }
-      GC_push_all_register_sections(GC_register_stackbottom,
-                                    cold_gc_bs_pointer, FALSE,
-                                    GC_traced_stack_sect);
-      GC_push_all_eager(cold_gc_bs_pointer, bsp);
-    } else
-#      endif
-    /* else */ {
-      GC_push_all_register_sections(GC_register_stackbottom, bsp,
-                                    TRUE /* `eager` */, GC_traced_stack_sect);
-    }
-    /*
-     * All values should be sufficiently aligned that we do not have to
-     * worry about the boundary.
-     */
-  }
-#    elif defined(E2K)
-  /* We also need to push procedure stack store.  Procedure stack grows up. */
-  {
-    ptr_t bs_lo;
-    size_t stack_size;
-
-    /* TODO: Support `ps_ofs` here and in `GC_do_blocking_inner`. */
-    GET_PROCEDURE_STACK_LOCAL(0, &bs_lo, &stack_size);
-    GC_push_all_eager(bs_lo, bs_lo + stack_size);
-  }
-#    endif
+  GC_push_all_eager(GC_approx_sp(), cold_gc_frame);
 #  endif
 }
 
@@ -924,13 +774,11 @@ STATIC void
 GC_push_regs_and_stack(ptr_t cold_gc_frame)
 {
   GC_ASSERT(I_HOLD_LOCK());
-#  ifdef THREADS
   if (NULL == cold_gc_frame) {
-    /* `GC_push_all_stacks` should push registers and stack. */
+    /* `GC_push_{current,all}_stacks{,s}` should push registers and stack. */
     return;
   }
-#  endif
-  GC_with_callee_saves_pushed(GC_push_current_stack, cold_gc_frame);
+  GC_with_callee_saves_pushed(GC_push_enough_stack, cold_gc_frame);
 }
 
 #endif /* !STACK_NOT_SCANNED */
