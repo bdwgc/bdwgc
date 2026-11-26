@@ -788,42 +788,47 @@ GC_collect_a_little_inner(size_t n_blocks)
   GC_ASSERT(GC_is_initialized);
   DISABLE_CANCEL(cancel_state);
   if (GC_incremental && GC_collection_in_progress()) {
-    size_t i;
     size_t max_deficit = GC_rate * n_blocks;
 
-    ENTER_GC();
-#ifdef PARALLEL_MARK
-    if (GC_time_limit != GC_TIME_UNLIMITED)
-      GC_parallel_mark_disabled = TRUE;
-#endif
-    for (i = GC_mark_deficit; i < max_deficit; i++) {
-      if (GC_mark_some(NULL))
-        break;
-    }
-#ifdef PARALLEL_MARK
-    GC_parallel_mark_disabled = FALSE;
-#endif
-    EXIT_GC();
+    if (GC_mark_deficit < max_deficit) {
+      size_t i = GC_mark_deficit;
 
-    if (i < max_deficit && !GC_dont_gc) {
-      GC_ASSERT(!GC_collection_in_progress());
-      /* Need to follow up with a full collection. */
-      SAVE_CALLERS_TO_LAST_STACK();
+      ENTER_GC();
+      GC_setup_fault_handler_per_gc();
 #ifdef PARALLEL_MARK
-      if (GC_parallel)
-        GC_wait_for_reclaim();
+      if (GC_time_limit != GC_TIME_UNLIMITED)
+        GC_parallel_mark_disabled = TRUE;
+#endif
+      while (!GC_mark_some(NULL)) {
+        if (++i >= max_deficit)
+          break;
+      }
+#ifdef PARALLEL_MARK
+      GC_parallel_mark_disabled = FALSE;
+#endif
+      GC_reset_fault_handler_per_gc();
+      EXIT_GC();
+
+      if (i < max_deficit && !GC_dont_gc) {
+        GC_ASSERT(!GC_collection_in_progress());
+        /* Need to follow up with a full collection. */
+        SAVE_CALLERS_TO_LAST_STACK();
+#ifdef PARALLEL_MARK
+        if (GC_parallel)
+          GC_wait_for_reclaim();
 #endif
 #ifndef NO_CLOCK
-      if (GC_time_limit != GC_TIME_UNLIMITED
-          && GC_n_attempts < max_prior_attempts)
-        GET_TIME(GC_start_time);
+        if (GC_time_limit != GC_TIME_UNLIMITED
+            && GC_n_attempts < max_prior_attempts)
+          GET_TIME(GC_start_time);
 #endif
-      if (GC_stopped_mark(GC_n_attempts < max_prior_attempts
-                              ? GC_timeout_stop_func
-                              : GC_never_stop_func)) {
-        GC_finish_collection();
-      } else {
-        GC_n_attempts++;
+        if (GC_stopped_mark(GC_n_attempts < max_prior_attempts
+                                ? GC_timeout_stop_func
+                                : GC_never_stop_func)) {
+          GC_finish_collection();
+        } else {
+          GC_n_attempts++;
+        }
       }
     }
     if (GC_mark_deficit > 0) {
@@ -948,6 +953,7 @@ GC_stopped_mark(GC_stop_func stop_func)
   if (GC_on_collection_event)
     GC_on_collection_event(GC_EVENT_PRE_STOP_WORLD);
 #endif
+  GC_setup_fault_handler_per_gc();
   STOP_WORLD();
 #ifdef THREADS
   if (GC_on_collection_event)
@@ -1018,6 +1024,7 @@ GC_stopped_mark(GC_stop_func stop_func)
   GC_world_stopped = FALSE;
 #endif
   START_WORLD();
+  GC_reset_fault_handler_per_gc();
 #ifdef THREADS
   if (GC_on_collection_event)
     GC_on_collection_event(GC_EVENT_POST_START_WORLD);

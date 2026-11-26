@@ -328,9 +328,11 @@ GC_INLINE void
 GC_complete_ongoing_collection(void)
 {
   if (UNLIKELY(GC_collection_in_progress())) {
+    GC_setup_fault_handler_per_gc();
     while (!GC_mark_some(NULL)) {
       /* Empty. */
     }
+    GC_reset_fault_handler_per_gc();
   }
 }
 
