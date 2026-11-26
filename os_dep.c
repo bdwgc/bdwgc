@@ -1061,7 +1061,6 @@ GC_INNER GC_VAR_ATTR JMP_BUF GC_jmp_buf;
 #  if defined(MSWIN32) && defined(NO_SEH_AVAILABLE)
 static GC_VAR_ATTR PVOID fault_handler_veh;
 static GC_VAR_ATTR DWORD fault_handler_thread_id;
-static GC_VAR_ATTR unsigned fault_handler_nesting;
 
 /*
  * The C-runtime emulation of `SIGSEGV` delivery does not work for threads
@@ -1081,6 +1080,32 @@ fault_handler_win32(PEXCEPTION_POINTERS ep)
     LONGJMP(GC_jmp_buf, 1);
   return EXCEPTION_CONTINUE_SEARCH;
 }
+
+GC_INNER void
+GC_setup_fault_handler_per_gc(void)
+{
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(NULL == fault_handler_veh && 0 == fault_handler_thread_id);
+#    ifdef THREAD_LOCAL_ALLOC
+  GC_ASSERT(!GC_world_stopped);
+#    endif
+  fault_handler_veh
+      = AddVectoredExceptionHandler(1 /*< first */, fault_handler_win32);
+  if (NULL == fault_handler_veh)
+    ABORT("AddVectoredExceptionHandler failed");
+}
+
+GC_INNER void
+GC_reset_fault_handler_per_gc(void)
+{
+  GC_ASSERT(I_HOLD_LOCK());
+  GC_ASSERT(fault_handler_veh != NULL && 0 == fault_handler_thread_id);
+#    ifdef THREAD_LOCAL_ALLOC
+  GC_ASSERT(!GC_world_stopped);
+#    endif
+  (void)RemoveVectoredExceptionHandler(fault_handler_veh);
+  fault_handler_veh = NULL;
+}
 #  else
 STATIC void
 GC_fault_handler(int sig)
@@ -1098,12 +1123,10 @@ GC_setup_temporary_fault_handler(void)
    * at a time.
    */
   GC_ASSERT(I_HOLD_LOCK());
-#  if defined(MSWIN32) && defined(NO_SEH_AVAILABLE) && defined(WRAP_MARK_SOME)
+#  if defined(MSWIN32) && defined(NO_SEH_AVAILABLE)
+  GC_ASSERT(fault_handler_veh != NULL && 0 == fault_handler_thread_id);
   fault_handler_thread_id = GetCurrentThreadId();
-  if (fault_handler_nesting++ == 0) {
-    fault_handler_veh
-        = AddVectoredExceptionHandler(1 /*< first */, fault_handler_win32);
-  }
+  GC_ASSERT(fault_handler_thread_id != 0);
 #  else
   GC_set_and_save_fault_handler(GC_fault_handler);
 #  endif
@@ -1112,10 +1135,9 @@ GC_setup_temporary_fault_handler(void)
 GC_INNER void
 GC_reset_fault_handler(void)
 {
-#  if defined(MSWIN32) && defined(NO_SEH_AVAILABLE) && defined(WRAP_MARK_SOME)
-  GC_ASSERT(fault_handler_nesting > 0);
-  if (--fault_handler_nesting == 0)
-    RemoveVectoredExceptionHandler(fault_handler_veh);
+#  if defined(MSWIN32) && defined(NO_SEH_AVAILABLE)
+  GC_ASSERT(fault_handler_thread_id != 0);
+  fault_handler_thread_id = 0;
 #  elif defined(USE_SEGV_SIGACT)
   (void)sigaction(SIGSEGV, &old_segv_act, NULL);
 #    ifdef USE_BUS_SIGACT
